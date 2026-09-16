@@ -12,7 +12,7 @@ export async function exportHtmlToPdf({
   element,
   filename,
 }: ExportPdfOptions): Promise<void> {
-  // Ensure DOM is fully loaded and fonts are ready
+  // 1. Ensure DOM is fully loaded and fonts are ready
   if (typeof document !== "undefined" && document.fonts) {
     try {
       await document.fonts.ready;
@@ -28,27 +28,34 @@ export async function exportHtmlToPdf({
     throw new Error("لم يتم العثور على عنصر استمارة المساءلة لتوليد الـ PDF.");
   }
 
-  // Ensure element has rendered dimensions
-  if (targetElement.scrollWidth === 0 || targetElement.scrollHeight === 0) {
-    // Wait one rendering frame for offscreen element to settle
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
+  // 2. Allow element styling and layout to stabilize in DOM
+  await new Promise((resolve) => setTimeout(resolve, 150));
 
-  // Generate canvas with high-DPI scaling and fixed scroll offsets
+  // 3. Generate high-resolution canvas with scale 3 for crisp Arabic text
   const canvas = await html2canvas(targetElement, {
-    scale: 2.5,
+    scale: 3,
     useCORS: true,
     logging: false,
     backgroundColor: "#ffffff",
     scrollX: 0,
     scrollY: 0,
-    windowWidth: targetElement.scrollWidth || 794, // 210mm in ~96dpi pixels
-    windowHeight: targetElement.scrollHeight || 1123, // 297mm in ~96dpi pixels
+    windowWidth: 794, // Standard 210mm in ~96 DPI screen pixels
+    windowHeight: 1123, // Standard 297mm in ~96 DPI screen pixels
+    onclone: (clonedDoc) => {
+      // Ensure visibility in cloned document
+      const clonedElement = clonedDoc.getElementById(
+        targetElement.id || "absence-a4-pdf-document"
+      );
+      if (clonedElement) {
+        clonedElement.style.visibility = "visible";
+        clonedElement.style.display = "block";
+      }
+    },
   });
 
-  const imgData = canvas.toDataURL("image/jpeg", 0.98);
+  const imgData = canvas.toDataURL("image/png");
 
-  // Initialize jsPDF A4 Document in millimeters (210mm x 297mm)
+  // 4. Initialize jsPDF A4 Document in millimeters (210mm x 297mm)
   const pdf = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -59,17 +66,10 @@ export async function exportHtmlToPdf({
   const pageWidth = 210;
   const pageHeight = 297;
 
-  // Calculate scaled height to fit within A4
-  const imgWidth = pageWidth;
-  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  // Add image exactly scaled to 210mm width and 297mm height
+  pdf.addImage(imgData, "PNG", 0, 0, pageWidth, pageHeight, undefined, "FAST");
 
-  if (imgHeight <= pageHeight) {
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
-  } else {
-    // Fit precisely within single page to prevent multi-page spill
-    pdf.addImage(imgData, "JPEG", 0, 0, imgWidth, pageHeight, undefined, "FAST");
-  }
-
-  // Trigger download
-  pdf.save(filename);
+  // 5. Trigger download
+  pdf.save(filename.endsWith(".pdf") ? filename : `${filename}.pdf`);
 }
+

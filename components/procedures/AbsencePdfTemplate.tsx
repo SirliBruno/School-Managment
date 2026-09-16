@@ -24,13 +24,21 @@ export const AbsencePdfTemplate = forwardRef<
 >(({ record, teacher }, ref) => {
   if (!record || !teacher) return null;
 
-  // Determine Arabic day safely
+  // Determine Arabic day name safely
   const dateObj = new Date(record.date);
   const dayIndex = dateObj.getDay();
   const arabicDayName =
     !isNaN(dayIndex) && dayIndex >= 0 && dayIndex < 7
       ? ARABIC_DAYS[dayIndex]
       : "................";
+
+  const teacherFullName = teacher.fullName || teacher.name || "معلمة";
+  const teacherUsername = teacher.username || teacher.jobNumber || "—";
+  const teacherSpecialty = teacher.specialty || teacher.teachingField || "عام";
+  const teacherJobTitle = teacher.jobTitle || "معلم";
+  const teacherEmploymentStatus = teacher.employmentStatus || "دائم";
+  const absenceCount = teacher.totalAbsences ?? 0;
+  const absenceReason = record.reason?.trim() || "—";
 
   return (
     <div
@@ -53,271 +61,686 @@ export const AbsencePdfTemplate = forwardRef<
           backgroundColor: "#ffffff",
           color: "#0f172a",
           fontFamily: "var(--font-cairo), 'Segoe UI', Tahoma, sans-serif",
-          padding: "12mm 15mm",
+          padding: "10mm 12mm",
           lineHeight: "1.4",
+          fontSize: "11pt",
+          textAlign: "right",
+          direction: "rtl",
         }}
-        className="text-[12px]"
       >
         {/* Outer Frame with Dashed Teal Border */}
         <div
           style={{
-            border: "3px dashed #0f766e",
-            padding: "10mm",
-            minHeight: "273mm",
+            border: "2px dashed #0f766e",
+            padding: "8mm 9mm",
+            minHeight: "277mm",
             boxSizing: "border-box",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
           }}
         >
-          {/* Top Header Section */}
+          {/* TOP SECTION: Header & Details */}
           <div>
-            <div className="flex items-center justify-between border-b-2 border-teal-800 pb-3">
-              {/* Right: State & Ministry Details */}
-              <div className="text-right text-[11px] font-bold leading-relaxed space-y-0.5">
-                <p>المملكة العربية السعودية</p>
-                <p>وزارة التعليم</p>
-                <p>إدارة تعليم البنات بمنطقة مكة المكرمة</p>
-                <p className="text-teal-800">الثانوية الخامسة مسارات</p>
-              </div>
-
-              {/* Center: Model Number Box */}
-              <div className="text-center">
-                <div className="border-2 border-teal-800 px-6 py-1.5 rounded font-extrabold text-[13px] tracking-wide bg-teal-50/40">
-                  نموذج رقم ( ٢٠ )
-                </div>
-              </div>
-
-              {/* Left: Ministry Emblem SVG */}
-              <div className="flex flex-col items-center justify-center pl-2">
-                <svg
-                  width="110"
-                  height="45"
-                  viewBox="0 0 110 45"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <g fill="#0f766e">
-                    <circle cx="55" cy="8" r="3" />
-                    <circle cx="48" cy="13" r="2.5" />
-                    <circle cx="62" cy="13" r="2.5" />
-                    <circle cx="42" cy="19" r="2" />
-                    <circle cx="55" cy="17" r="2.5" />
-                    <circle cx="68" cy="19" r="2" />
-                    <circle cx="37" cy="26" r="1.8" />
-                    <circle cx="48" cy="24" r="2.2" />
-                    <circle cx="62" cy="24" r="2.2" />
-                    <circle cx="73" cy="26" r="1.8" />
-                    <circle cx="55" cy="26" r="2.5" />
-                  </g>
-                  <text
-                    x="55"
-                    y="36"
-                    textAnchor="middle"
-                    fill="#0f766e"
-                    fontSize="9"
-                    fontWeight="bold"
-                    fontFamily="var(--font-cairo), sans-serif"
+            {/* 3-Column Header Table */}
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                borderBottom: "2px solid #0f766e",
+                paddingBottom: "8px",
+                marginBottom: "8px",
+              }}
+            >
+              <tbody>
+                <tr>
+                  {/* Right Column: Ministry & School Info */}
+                  <td
+                    style={{
+                      width: "36%",
+                      verticalAlign: "top",
+                      textAlign: "right",
+                      fontSize: "10pt",
+                      fontWeight: "bold",
+                      lineHeight: "1.35",
+                      color: "#0f172a",
+                    }}
                   >
-                    وزارة التعليم
-                  </text>
-                  <text
-                    x="55"
-                    y="43"
-                    textAnchor="middle"
-                    fill="#115e59"
-                    fontSize="5"
-                    fontWeight="600"
-                    fontFamily="sans-serif"
-                  >
-                    Ministry of Education
-                  </text>
-                </svg>
-              </div>
-            </div>
+                    <div>المملكة العربية السعودية</div>
+                    <div>وزارة التعليم</div>
+                    <div>إدارة تعليم البنات بمنطقة مكة المكرمة</div>
+                    <div style={{ color: "#0f766e", fontWeight: "800" }}>
+                      الثانوية الخامسة مسارات
+                    </div>
+                  </td>
 
-            {/* Model Title & Code Bar */}
-            <div className="flex items-center justify-between font-extrabold text-[12.5px] py-2 px-1 text-slate-900 border-b border-teal-700/40">
-              <div>
-                <span>اسم النموذج: </span>
-                <span className="text-teal-900 font-black">مساءلة غياب</span>
-              </div>
-              <div className="text-slate-700 font-mono text-[11px]">
-                رمز النموذج ( و.م.ع.ن - ٠٢ - ٠٤ )
-              </div>
-            </div>
+                  {/* Center Column: Logo & Form Model Box */}
+                  <td
+                    style={{
+                      width: "28%",
+                      verticalAlign: "middle",
+                      textAlign: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <svg
+                        width="85"
+                        height="38"
+                        viewBox="0 0 110 45"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <g fill="#0f766e">
+                          <circle cx="55" cy="8" r="3" />
+                          <circle cx="48" cy="13" r="2.5" />
+                          <circle cx="62" cy="13" r="2.5" />
+                          <circle cx="42" cy="19" r="2" />
+                          <circle cx="55" cy="17" r="2.5" />
+                          <circle cx="68" cy="19" r="2" />
+                          <circle cx="37" cy="26" r="1.8" />
+                          <circle cx="48" cy="24" r="2.2" />
+                          <circle cx="62" cy="24" r="2.2" />
+                          <circle cx="73" cy="26" r="1.8" />
+                          <circle cx="55" cy="26" r="2.5" />
+                        </g>
+                        <text
+                          x="55"
+                          y="36"
+                          textAnchor="middle"
+                          fill="#0f766e"
+                          fontSize="9"
+                          fontWeight="bold"
+                          fontFamily="var(--font-cairo), sans-serif"
+                        >
+                          وزارة التعليم
+                        </text>
+                        <text
+                          x="55"
+                          y="43"
+                          textAnchor="middle"
+                          fill="#115e59"
+                          fontSize="5"
+                          fontWeight="600"
+                          fontFamily="sans-serif"
+                        >
+                          Ministry of Education
+                        </text>
+                      </svg>
+                      <div
+                        style={{
+                          border: "1.5px solid #0f766e",
+                          padding: "2px 10px",
+                          borderRadius: "4px",
+                          fontWeight: "800",
+                          fontSize: "10.5pt",
+                          backgroundColor: "#f0fdfa",
+                          color: "#115e59",
+                          display: "inline-block",
+                        }}
+                      >
+                        نموذج رقم ( ٢٠ )
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Left Column: Form Info */}
+                  <td
+                    style={{
+                      width: "36%",
+                      verticalAlign: "top",
+                      textAlign: "left",
+                      fontSize: "9.5pt",
+                      fontWeight: "bold",
+                      lineHeight: "1.4",
+                      color: "#334155",
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: "#64748b" }}>اسم النموذج: </span>
+                      <span style={{ color: "#0f766e", fontWeight: "800" }}>مساءلة غياب</span>
+                    </div>
+                    <div>
+                      <span style={{ color: "#64748b" }}>رمز النموذج: </span>
+                      <span style={{ fontFamily: "monospace", color: "#1e293b" }}>
+                        ( و.م.ع.ن - ٠٢ - ٠٤ )
+                      </span>
+                    </div>
+                    <div>
+                      <span style={{ color: "#64748b" }}>العام الدراسي: </span>
+                      <span style={{ color: "#1e293b" }}>١٤٤٨ هـ</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
             {/* Table 1: School Info & Civil Registry */}
-            <div className="mt-3 border border-teal-800 text-[11.5px]">
-              <div className="grid grid-cols-12 border-b border-teal-800">
-                <div className="col-span-3 bg-teal-50/70 p-1.5 font-bold text-teal-950 border-l border-teal-800 text-center">
-                  المدرسة
-                </div>
-                <div className="col-span-9 p-1.5 font-extrabold text-center text-teal-900">
-                  الثانوية الخامسة مسارات
-                </div>
-              </div>
-              <div className="grid grid-cols-12">
-                <div className="col-span-3 bg-teal-50/70 p-1.5 font-bold text-teal-950 border-l border-teal-800 text-center">
-                  رقم السجل المدني / اسم المستخدم
-                </div>
-                <div className="col-span-9 p-1.5 font-mono font-bold text-center text-slate-800">
-                  {teacher.username || teacher.jobNumber || "—"}
-                </div>
-              </div>
-            </div>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                border: "1px solid #0f766e",
+                marginBottom: "8px",
+                fontSize: "10pt",
+              }}
+            >
+              <tbody>
+                <tr style={{ borderBottom: "1px solid #0f766e" }}>
+                  <td
+                    style={{
+                      width: "25%",
+                      backgroundColor: "#f0fdfa",
+                      color: "#115e59",
+                      fontWeight: "bold",
+                      padding: "5px 8px",
+                      borderLeft: "1px solid #0f766e",
+                      textAlign: "center",
+                    }}
+                  >
+                    المدرسة
+                  </td>
+                  <td
+                    style={{
+                      width: "75%",
+                      fontWeight: "800",
+                      padding: "5px 12px",
+                      textAlign: "right",
+                      color: "#0f172a",
+                    }}
+                  >
+                    الثانوية الخامسة مسارات
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    style={{
+                      width: "25%",
+                      backgroundColor: "#f0fdfa",
+                      color: "#115e59",
+                      fontWeight: "bold",
+                      padding: "5px 8px",
+                      borderLeft: "1px solid #0f766e",
+                      textAlign: "center",
+                    }}
+                  >
+                    رقم السجل المدني / اسم المستخدم
+                  </td>
+                  <td
+                    style={{
+                      width: "75%",
+                      fontFamily: "monospace",
+                      fontWeight: "bold",
+                      padding: "5px 12px",
+                      textAlign: "right",
+                      color: "#0f172a",
+                    }}
+                  >
+                    {teacherUsername}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-            {/* Table 2: Teacher Comprehensive Details */}
-            <div className="mt-3 border border-teal-800 text-[11px] text-center">
-              <div className="grid grid-cols-12 bg-teal-50/80 font-bold text-teal-950 border-b border-teal-800">
-                <div className="col-span-3 p-1.5 border-l border-teal-800">
-                  اسم الموظفة
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  التخصص
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  المستوى / الرتبة
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  رقم الوظيفة
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  حالة التوظيف
-                </div>
-                <div className="col-span-1 p-1.5">عدد الغياب</div>
-              </div>
+            {/* Table 2: Teacher Comprehensive Details (Fixed Width, No Overflow) */}
+            <table
+              style={{
+                width: "100%",
+                tableLayout: "fixed",
+                borderCollapse: "collapse",
+                border: "1px solid #0f766e",
+                marginBottom: "8px",
+                fontSize: "9.5pt",
+              }}
+            >
+              <thead>
+                <tr
+                  style={{
+                    backgroundColor: "#f0fdfa",
+                    color: "#115e59",
+                    fontWeight: "bold",
+                    borderBottom: "1px solid #0f766e",
+                    textAlign: "center",
+                  }}
+                >
+                  <th
+                    style={{
+                      width: "30%",
+                      padding: "5px 6px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    اسم الموظفة
+                  </th>
+                  <th
+                    style={{
+                      width: "18%",
+                      padding: "5px 6px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    التخصص
+                  </th>
+                  <th
+                    style={{
+                      width: "14%",
+                      padding: "5px 4px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    المستوى / الرتبة
+                  </th>
+                  <th
+                    style={{
+                      width: "14%",
+                      padding: "5px 4px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    رقم الوظيفة
+                  </th>
+                  <th
+                    style={{
+                      width: "12%",
+                      padding: "5px 4px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    حالة التوظيف
+                  </th>
+                  <th
+                    style={{
+                      width: "12%",
+                      padding: "5px 4px",
+                    }}
+                  >
+                    عدد الغياب
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  style={{
+                    fontWeight: "bold",
+                    color: "#0f172a",
+                    textAlign: "center",
+                    backgroundColor: "#ffffff",
+                  }}
+                >
+                  <td
+                    style={{
+                      padding: "6px 8px",
+                      borderLeft: "1px solid #0f766e",
+                      textAlign: "right",
+                      fontWeight: "800",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {teacherFullName}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 8px",
+                      borderLeft: "1px solid #0f766e",
+                      textAlign: "right",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {teacherSpecialty}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    {teacherJobTitle}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      borderLeft: "1px solid #0f766e",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    {teacherUsername}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      borderLeft: "1px solid #0f766e",
+                    }}
+                  >
+                    {teacherEmploymentStatus}
+                  </td>
+                  <td
+                    style={{
+                      padding: "6px 4px",
+                      fontFamily: "monospace",
+                      fontWeight: "900",
+                      color: "#be123c",
+                    }}
+                  >
+                    {absenceCount}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
 
-              <div className="grid grid-cols-12 font-bold text-slate-900 bg-white">
-                <div className="col-span-3 p-1.5 border-l border-teal-800 truncate font-extrabold">
-                  {teacher.fullName || teacher.name}
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800 truncate">
-                  {teacher.specialty || teacher.teachingField || "عام"}
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  {teacher.jobTitle || "معلم"}
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800 font-mono">
-                  {teacher.username || teacher.jobNumber}
-                </div>
-                <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  {teacher.employmentStatus || "دائم"}
-                </div>
-                <div className="col-span-1 p-1.5 font-mono font-black text-rose-700">
-                  {teacher.totalAbsences || 0}
-                </div>
-              </div>
-            </div>
-
-            {/* Absence Period Text */}
-            <div className="mt-3.5 p-2 bg-slate-50 border border-slate-300 rounded text-[11px] leading-relaxed">
-              <p>
+            {/* Absence Statement & Phrasing Box */}
+            <div
+              style={{
+                backgroundColor: "#f8fafc",
+                border: "1px solid #cbd5e1",
+                borderRadius: "4px",
+                padding: "6px 10px",
+                marginBottom: "8px",
+                fontSize: "10pt",
+                lineHeight: "1.4",
+              }}
+            >
+              <div>
                 إنه في يوم{" "}
-                <strong className="text-teal-900 font-bold">
+                <strong style={{ color: "#0f766e", fontWeight: "800" }}>
                   ({arabicDayName})
                 </strong>{" "}
-                الموافق :{" "}
-                <strong className="font-mono font-bold text-teal-900">
-                  {record.date}
+                الموافق:{" "}
+                <strong
+                  style={{
+                    fontFamily: "monospace",
+                    color: "#0f766e",
+                    fontWeight: "800",
+                  }}
+                >
+                  {record.date} م
                 </strong>{" "}
-                تغيبت عن العمل
-              </p>
-              <p className="mt-1">
-                نوع الغياب المسجل :{" "}
-                <strong className="text-teal-950 font-bold">
+                ، تغيبت الموظفة عن العمل.
+              </div>
+              <div style={{ marginTop: "3px" }}>
+                <span>نوع الغياب المسجل: </span>
+                <strong
+                  style={{
+                    color: "#0f766e",
+                    fontWeight: "800",
+                    border: "1px solid #99f6e4",
+                    backgroundColor: "#f0fdfa",
+                    padding: "1px 8px",
+                    borderRadius: "4px",
+                    display: "inline-block",
+                  }}
+                >
                   {record.type}
                 </strong>
-              </p>
+              </div>
             </div>
 
-            {/* Section 1: طلب الإفادة */}
-            <div className="mt-3 pt-2 border-t border-slate-300 space-y-1.5 text-[11px]">
-              <div className="font-bold text-teal-950 flex items-center justify-between">
-                <span>( ١ ) طلب الإفادة : المكرمة / {teacher.fullName || teacher.name}</span>
+            {/* SECTION 1: طلب الإفادة */}
+            <div
+              style={{
+                borderTop: "1px solid #cbd5e1",
+                paddingTop: "6px",
+                marginBottom: "8px",
+                fontSize: "9.5pt",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontWeight: "bold",
+                  color: "#0f766e",
+                  marginBottom: "2px",
+                }}
+              >
+                <span>( ١ ) طلب الإفادة : المكرمة / {teacherFullName}</span>
                 <span>وفقكِ الله</span>
               </div>
-              <p className="font-bold text-slate-700">
+              <div style={{ fontWeight: "bold", color: "#334155", marginBottom: "2px" }}>
                 السلام عليكم ورحمة الله وبركاته ،، وبعد :
-              </p>
-              <p className="text-justify leading-relaxed text-slate-800 text-[10.5px]">
-                من خلال متابعة سجل العمل تبين غيابكم خلال الفترة الموضحة بعاليه
-                ، آمل الإفادة عن أسباب ذلك وعليكم تقديم ما يؤيد عذركم خلال أسبوع
-                من تاريخه علماً بأنه في حالة عدم الالتزام سيتم اتخاذ اللازم حسب
-                الأنظمة والتعليمات.
-              </p>
-              <div className="flex items-center justify-between pt-1 font-bold text-[10.5px]">
-                <div>اسم الرئيسة المباشرة : فاطمة فلاتة</div>
-                <div>التوقيع : ........................</div>
-                <div>التاريخ : {record.date} م</div>
               </div>
+              <div
+                style={{
+                  textAlign: "justify",
+                  color: "#1e293b",
+                  lineHeight: "1.4",
+                  fontSize: "9pt",
+                }}
+              >
+                من خلال متابعة سجل الدوام والعمل تبين غيابكم خلال اليوم الموضح بعاليه،
+                آمل الإفادة عن أسباب ذلك وعليكم تقديم ما يؤيد عذركم خلال أسبوع من
+                تاريخه علماً بأنه في حالة عدم الالتزام سيتم اتخاذ اللازم حسب الأنظمة
+                والتعليمات.
+              </div>
+              <table
+                style={{
+                  width: "100%",
+                  marginTop: "6px",
+                  fontSize: "9pt",
+                  fontWeight: "bold",
+                }}
+              >
+                <tbody>
+                  <tr>
+                    <td style={{ width: "40%", textAlign: "right" }}>
+                      اسم الرئيسة المباشرة : فاطمة فلاتة
+                    </td>
+                    <td style={{ width: "35%", textAlign: "center" }}>
+                      التوقيع : ........................
+                    </td>
+                    <td style={{ width: "25%", textAlign: "left" }}>
+                      التاريخ : {record.date} م
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            {/* Section 2: الإفادة */}
-            <div className="mt-3 pt-2 border-t-2 border-dashed border-teal-800/60 space-y-1.5 text-[11px]">
-              <div className="font-bold text-teal-950 flex items-center justify-between">
+            {/* SECTION 2: الإفادة */}
+            <div
+              style={{
+                borderTop: "1.5px dashed #0f766e",
+                paddingTop: "6px",
+                marginBottom: "8px",
+                fontSize: "9.5pt",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontWeight: "bold",
+                  color: "#0f766e",
+                  marginBottom: "2px",
+                }}
+              >
                 <span>( ٢ ) الإفادة : المكرمة / قائدة المدرسة . فاطمة فلاتة</span>
                 <span>وفقكِ الله</span>
               </div>
-              <p className="font-bold text-slate-700">
+              <div style={{ fontWeight: "bold", color: "#334155", marginBottom: "2px" }}>
                 السلام عليكم ورحمة الله وبركاته ،، وبعد :
-              </p>
-              <p className="leading-relaxed text-[11px]">
+              </div>
+              <div style={{ fontSize: "9pt", marginBottom: "3px" }}>
                 أفيدكم أن غيابي كان للأسباب التالية :
-              </p>
-              <div className="p-2 bg-slate-50 border border-slate-300 rounded min-h-[38px] font-bold text-teal-950 text-[10.5px]">
-                {record.reason}
               </div>
-              <p className="text-[10px] text-slate-600">
+              {/* Reason Box */}
+              <div
+                style={{
+                  backgroundColor: "#f8fafc",
+                  border: "1px solid #cbd5e1",
+                  borderRadius: "4px",
+                  padding: "5px 10px",
+                  minHeight: "36px",
+                  fontWeight: "bold",
+                  color: "#0f172a",
+                  fontSize: "9pt",
+                  wordBreak: "break-word",
+                  lineHeight: "1.35",
+                }}
+              >
+                {absenceReason}
+              </div>
+              <div style={{ fontSize: "8pt", color: "#64748b", marginTop: "2px" }}>
                 وسأقوم بتقديم ما يثبت ذلك خلال أسبوع من تاريخه .
-              </p>
-              <div className="flex items-center justify-between pt-1 font-bold text-[10.5px]">
-                <div>اسم الموظفة : {teacher.fullName || teacher.name}</div>
-                <div>التوقيع : ........................</div>
-                <div>التاريخ : {record.date} م</div>
               </div>
+              <table
+                style={{
+                  width: "100%",
+                  marginTop: "4px",
+                  fontSize: "9pt",
+                  fontWeight: "bold",
+                }}
+              >
+                <tbody>
+                  <tr>
+                    <td style={{ width: "40%", textAlign: "right" }}>
+                      اسم الموظفة : {teacherFullName}
+                    </td>
+                    <td style={{ width: "35%", textAlign: "center" }}>
+                      التوقيع : ........................
+                    </td>
+                    <td style={{ width: "25%", textAlign: "left" }}>
+                      التاريخ : {record.date} م
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
-            {/* Section 3: مديرة المدرسة */}
-            <div className="mt-3 pt-2 border-t-2 border-dashed border-teal-800/60 space-y-1.5 text-[11px]">
-              <div className="font-bold text-teal-950">
+            {/* SECTION 3: قرار مديرة المدرسة */}
+            <div
+              style={{
+                borderTop: "1.5px dashed #0f766e",
+                paddingTop: "6px",
+                fontSize: "9.5pt",
+              }}
+            >
+              <div
+                style={{
+                  fontWeight: "bold",
+                  color: "#0f766e",
+                  marginBottom: "4px",
+                }}
+              >
                 ( ٣ ) قرار مديرة المدرسة :
               </div>
-              <div className="space-y-1 pr-3 text-[10px] text-slate-800 font-medium">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 border border-slate-600 rounded-xs inline-block"></span>
-                  <span>تحتسب لها إجازة مرضية بعد التأكد من نظامية التقرير الطبي المعتمد .</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 border border-slate-600 rounded-xs inline-block"></span>
+              <div
+                style={{
+                  paddingRight: "6px",
+                  fontSize: "8.5pt",
+                  color: "#1e293b",
+                  lineHeight: "1.45",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: "11px",
+                      height: "11px",
+                      border: "1px solid #475569",
+                      borderRadius: "2px",
+                    }}
+                  />
                   <span>
-                    يحتسب غيابها من رصيدها للإجازات الاضطرارية لقبول عذرها إذا
-                    كان رصيدها يسمح وإلا يحسم عليها .
+                    تحتسب لها إجازة مرضية بعد التأكد من نظامية التقرير الطبي المعتمد .
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 border border-slate-600 rounded-xs inline-block"></span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: "11px",
+                      height: "11px",
+                      border: "1px solid #475569",
+                      borderRadius: "2px",
+                    }}
+                  />
+                  <span>
+                    يحتسب غيابها من رصيدها للإجازات الاضطرارية لقبول عذرها إذا كان
+                    رصيدها يسمح وإلا يحسم عليها .
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      width: "11px",
+                      height: "11px",
+                      border: "1px solid #475569",
+                      borderRadius: "2px",
+                    }}
+                  />
                   <span>يعتمد الحسم لعدم قبول عذرها .</span>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1 font-bold text-[10.5px]">
-                <div>اسم الرئيسة المباشرة : فاطمة فلاتة</div>
-                <div>التوقيع : ........................</div>
-                <div>التاريخ : ..... / ..... / 144 هـ</div>
-              </div>
+              <table
+                style={{
+                  width: "100%",
+                  marginTop: "6px",
+                  fontSize: "9pt",
+                  fontWeight: "bold",
+                }}
+              >
+                <tbody>
+                  <tr>
+                    <td style={{ width: "40%", textAlign: "right" }}>
+                      اسم الرئيسة المباشرة : فاطمة فلاتة
+                    </td>
+                    <td style={{ width: "35%", textAlign: "center" }}>
+                      التوقيع : ........................
+                    </td>
+                    <td style={{ width: "25%", textAlign: "left" }}>
+                      التاريخ : ..... / ..... / ١٤٤٨ هـ
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Section 4: ملحوظات هامة (Footer Notes) */}
-          <div className="pt-2 border-t-2 border-teal-800 text-[9.5px] leading-tight text-slate-700 bg-slate-50/50 p-2 rounded">
-            <p className="font-bold text-teal-950 mb-1">ملحوظات هامة :</p>
-            <div className="space-y-0.5 pr-2">
-              <p>➢ تستكمل الاستمارة من المديرة المباشرة وإصدار القرار الإداري بموجبه .</p>
-              <p>➢ إذا سبق إجازة نهاية الأسبوع غياب وألحقها غياب تحتسب مدة الغياب كاملة .</p>
-              <p>➢ يجب أن توضح المتغيبة أسباب غيابها فور تسلمها الاستمارة وتعيدها لمديرتها المباشرة .</p>
-              <p>➢ تعطى المتغيبة مدة أسبوع لتقديم ما يؤيد عذرها فإذا انقضت المدة الزمنية تستكمل الاستمارة ويتم الحسم .</p>
+          {/* BOTTOM SECTION: Footer Notes */}
+          <div
+            style={{
+              borderTop: "2px solid #0f766e",
+              backgroundColor: "#f8fafc",
+              padding: "5px 8px",
+              borderRadius: "4px",
+              fontSize: "8pt",
+              lineHeight: "1.3",
+              color: "#334155",
+              marginTop: "4px",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: "bold",
+                color: "#0f766e",
+                marginBottom: "2px",
+              }}
+            >
+              ملحوظات هامة :
             </div>
+            <ul
+              dir="rtl"
+              style={{
+                margin: "0",
+                paddingRight: "16px",
+                listStyleType: "disc",
+              }}
+            >
+              <li>تستكمل الاستمارة من المديرة المباشرة وإصدار القرار الإداري بموجبه .</li>
+              <li>إذا سبق إجازة نهاية الأسبوع غياب وألحقها غياب تحتسب مدة الغياب كاملة .</li>
+              <li>يجب أن توضح المتغيبة أسباب غيابها فور تسلمها الاستمارة وتعيدها لمديرتها المباشرة .</li>
+              <li>تعطى المتغيبة مدة أسبوع لتقديم ما يؤيد عذرها فإذا انقضت المدة الزمنية تستكمل الاستمارة ويتم الحسم .</li>
+            </ul>
           </div>
         </div>
       </div>
@@ -326,3 +749,4 @@ export const AbsencePdfTemplate = forwardRef<
 });
 
 AbsencePdfTemplate.displayName = "AbsencePdfTemplate";
+
