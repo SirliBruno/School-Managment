@@ -78,7 +78,7 @@ export const AbsencePdfTemplate = forwardRef<
           color: "#0f172a",
           fontFamily: "var(--font-cairo), 'Segoe UI', Tahoma, sans-serif",
           padding: "8mm 10mm",
-          lineHeight: "1.35",
+          lineHeight: "1.4",
           fontSize: "10pt",
           textAlign: "right",
           direction: "rtl",
@@ -89,7 +89,7 @@ export const AbsencePdfTemplate = forwardRef<
         <div
           style={{
             border: "2px dashed #0f766e",
-            padding: "7mm 8mm",
+            padding: "8mm 9mm",
             height: "281mm",
             boxSizing: "border-box",
             display: "flex",
@@ -97,167 +97,130 @@ export const AbsencePdfTemplate = forwardRef<
             justifyContent: "space-between",
           }}
         >
-          {/* TOP SECTION */}
-          <div>
-            {/* 1. HEADER SECTION (Row 1: 3 Columns & Row 2: Centered Title Bar) */}
+          {/* TOP & MAIN BODY CONTAINER */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            {/* 1. HEADER SECTION: 3-Column CSS Grid (No Absolute Positioning) */}
             <div
               style={{
+                display: "grid",
+                gridTemplateColumns: "1fr auto 1fr",
+                alignItems: "start",
+                width: "100%",
                 borderBottom: "2px solid #0f766e",
-                paddingBottom: "8px",
-                marginBottom: "8px",
+                paddingBottom: "10px",
+                marginBottom: "14px",
               }}
             >
-              {/* Row 1: 3 Balanced Columns with Flexbox */}
+              {/* Right Column: Ministry Text (Right Aligned) */}
+              <div
+                style={{
+                  textAlign: "right",
+                  fontSize: "9.5pt",
+                  fontWeight: "bold",
+                  lineHeight: "1.4",
+                  color: "#0f172a",
+                }}
+              >
+                <div>المملكة العربية السعودية</div>
+                <div>وزارة التعليم</div>
+                <div>إدارة تعليم البنات بمنطقة مكة المكرمة</div>
+              </div>
+
+              {/* Center Column: Official Logo + Model Box */}
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "space-between",
+                  flexDirection: "column",
                   alignItems: "center",
-                  width: "100%",
+                  justifyContent: "center",
+                  gap: "4px",
+                  padding: "0 10px",
                 }}
               >
-                {/* Right Column: Ministry text (right-aligned) */}
-                <div
-                  style={{
-                    width: "33%",
-                    textAlign: "right",
-                    fontSize: "9.5pt",
-                    fontWeight: "bold",
-                    lineHeight: "1.35",
-                    color: "#0f172a",
-                  }}
+                <svg
+                  width="75"
+                  height="32"
+                  viewBox="0 0 110 45"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <div>المملكة العربية السعودية</div>
-                  <div>وزارة التعليم</div>
-                  <div>الإدارة العامة للتعليم بمنطقة مكة المكرمة</div>
-                </div>
-
-                {/* Center Column: Logo + Box "نموذج رقم (٢٠)" */}
-                <div
-                  style={{
-                    width: "34%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "3px",
-                  }}
-                >
-                  <svg
-                    width="75"
-                    height="32"
-                    viewBox="0 0 110 45"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
+                  <g fill="#0f766e">
+                    <circle cx="55" cy="8" r="3" />
+                    <circle cx="48" cy="13" r="2.5" />
+                    <circle cx="62" cy="13" r="2.5" />
+                    <circle cx="42" cy="19" r="2" />
+                    <circle cx="55" cy="17" r="2.5" />
+                    <circle cx="68" cy="19" r="2" />
+                    <circle cx="37" cy="26" r="1.8" />
+                    <circle cx="48" cy="24" r="2.2" />
+                    <circle cx="62" cy="24" r="2.2" />
+                    <circle cx="73" cy="26" r="1.8" />
+                    <circle cx="55" cy="26" r="2.5" />
+                  </g>
+                  <text
+                    x="55"
+                    y="36"
+                    textAnchor="middle"
+                    fill="#0f766e"
+                    fontSize="9"
+                    fontWeight="bold"
+                    fontFamily="var(--font-cairo), sans-serif"
                   >
-                    <g fill="#0f766e">
-                      <circle cx="55" cy="8" r="3" />
-                      <circle cx="48" cy="13" r="2.5" />
-                      <circle cx="62" cy="13" r="2.5" />
-                      <circle cx="42" cy="19" r="2" />
-                      <circle cx="55" cy="17" r="2.5" />
-                      <circle cx="68" cy="19" r="2" />
-                      <circle cx="37" cy="26" r="1.8" />
-                      <circle cx="48" cy="24" r="2.2" />
-                      <circle cx="62" cy="24" r="2.2" />
-                      <circle cx="73" cy="26" r="1.8" />
-                      <circle cx="55" cy="26" r="2.5" />
-                    </g>
-                    <text
-                      x="55"
-                      y="36"
-                      textAnchor="middle"
-                      fill="#0f766e"
-                      fontSize="9"
-                      fontWeight="bold"
-                      fontFamily="var(--font-cairo), sans-serif"
-                    >
-                      وزارة التعليم
-                    </text>
-                    <text
-                      x="55"
-                      y="43"
-                      textAnchor="middle"
-                      fill="#115e59"
-                      fontSize="5"
-                      fontWeight="600"
-                      fontFamily="sans-serif"
-                    >
-                      Ministry of Education
-                    </text>
-                  </svg>
-                  <div
-                    style={{
-                      border: "1.5px solid #0f766e",
-                      padding: "1.5px 10px",
-                      borderRadius: "4px",
-                      fontWeight: "800",
-                      fontSize: "9.5pt",
-                      backgroundColor: "#f0fdfa",
-                      color: "#115e59",
-                      display: "inline-block",
-                    }}
+                    وزارة التعليم
+                  </text>
+                  <text
+                    x="55"
+                    y="43"
+                    textAnchor="middle"
+                    fill="#115e59"
+                    fontSize="5"
+                    fontWeight="600"
+                    fontFamily="sans-serif"
                   >
-                    نموذج رقم ( ٢٠ )
-                  </div>
-                </div>
-
-                {/* Left Column: Form code and school name */}
+                    Ministry of Education
+                  </text>
+                </svg>
                 <div
                   style={{
-                    width: "33%",
-                    textAlign: "left",
+                    border: "1.5px solid #0f766e",
+                    padding: "2px 12px",
+                    borderRadius: "4px",
+                    fontWeight: "800",
                     fontSize: "9.5pt",
-                    fontWeight: "bold",
-                    lineHeight: "1.35",
-                    color: "#334155",
+                    backgroundColor: "#f0fdfa",
+                    color: "#115e59",
+                    display: "inline-block",
                   }}
                 >
-                  <div>
-                    <span style={{ color: "#64748b" }}>رمز النموذج: </span>
-                    <span style={{ fontFamily: "monospace", color: "#0f172a" }}>
-                      ( و.م.ع.ن - ٠٢ - ٠٤ )
-                    </span>
-                  </div>
-                  <div>
-                    <span style={{ color: "#64748b" }}>المدرسة: </span>
-                    <span style={{ color: "#0f766e", fontWeight: "800" }}>
-                      الثانوية الخامسة مسارات
-                    </span>
-                  </div>
+                  نموذج رقم ( ٢٠ )
                 </div>
               </div>
 
-              {/* Row 2: Centered Title Bar */}
+              {/* Left Column: Form Details (Left Aligned) */}
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  backgroundColor: "#f0fdfa",
-                  border: "1px solid #0f766e",
-                  borderRadius: "4px",
-                  padding: "4px 12px",
-                  marginTop: "8px",
+                  textAlign: "left",
+                  fontSize: "9.5pt",
+                  fontWeight: "bold",
+                  lineHeight: "1.4",
+                  color: "#334155",
                 }}
               >
-                <div
-                  style={{
-                    fontWeight: "800",
-                    fontSize: "11pt",
-                    color: "#0f766e",
-                  }}
-                >
-                  اسم النموذج: مساءلة غياب
+                <div>
+                  <span style={{ color: "#64748b" }}>اسم النموذج: </span>
+                  <span style={{ color: "#0f766e", fontWeight: "800" }}>
+                    مساءلة غياب
+                  </span>
                 </div>
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    fontSize: "9.5pt",
-                    color: "#115e59",
-                  }}
-                >
-                  العام الدراسي: ١٤٤٨ هـ
+                <div>
+                  <span style={{ color: "#64748b" }}>رمز النموذج: </span>
+                  <span style={{ fontFamily: "monospace", color: "#0f172a" }}>
+                    ( و.م.ع.ن - ٠٢ - ٠٤ )
+                  </span>
+                </div>
+                <div>
+                  <span style={{ color: "#64748b" }}>العام الدراسي: </span>
+                  <span style={{ color: "#0f172a" }}>١٤٤٨ هـ</span>
                 </div>
               </div>
             </div>
@@ -269,7 +232,7 @@ export const AbsencePdfTemplate = forwardRef<
                 tableLayout: "fixed",
                 borderCollapse: "collapse",
                 border: "1px solid #0f766e",
-                marginBottom: "8px",
+                marginBottom: "10px",
                 fontSize: "9.5pt",
               }}
             >
@@ -277,24 +240,26 @@ export const AbsencePdfTemplate = forwardRef<
                 <tr style={{ borderBottom: "1px solid #0f766e" }}>
                   <td
                     style={{
-                      width: "30%",
+                      width: "28%",
                       backgroundColor: "#f0fdfa",
                       color: "#115e59",
                       fontWeight: "bold",
-                      padding: "5px 8px",
+                      padding: "10px 8px",
                       borderLeft: "1px solid #0f766e",
                       textAlign: "center",
+                      verticalAlign: "middle",
                     }}
                   >
                     المدرسة
                   </td>
                   <td
                     style={{
-                      width: "70%",
+                      width: "72%",
                       fontWeight: "800",
-                      padding: "5px 12px",
+                      padding: "10px 12px",
                       textAlign: "right",
                       color: "#0f172a",
+                      verticalAlign: "middle",
                     }}
                   >
                     الثانوية الخامسة مسارات
@@ -303,25 +268,27 @@ export const AbsencePdfTemplate = forwardRef<
                 <tr>
                   <td
                     style={{
-                      width: "30%",
+                      width: "28%",
                       backgroundColor: "#f0fdfa",
                       color: "#115e59",
                       fontWeight: "bold",
-                      padding: "5px 8px",
+                      padding: "10px 8px",
                       borderLeft: "1px solid #0f766e",
                       textAlign: "center",
+                      verticalAlign: "middle",
                     }}
                   >
                     رقم السجل المدني / اسم المستخدم
                   </td>
                   <td
                     style={{
-                      width: "70%",
+                      width: "72%",
                       fontFamily: "monospace",
                       fontWeight: "bold",
-                      padding: "5px 12px",
+                      padding: "10px 12px",
                       textAlign: "right",
                       color: "#0f172a",
+                      verticalAlign: "middle",
                     }}
                   >
                     {teacherUsername}
@@ -337,7 +304,7 @@ export const AbsencePdfTemplate = forwardRef<
                 tableLayout: "fixed",
                 borderCollapse: "collapse",
                 border: "1px solid #0f766e",
-                marginBottom: "8px",
+                marginBottom: "12px",
                 fontSize: "9pt",
               }}
             >
@@ -354,8 +321,9 @@ export const AbsencePdfTemplate = forwardRef<
                   <th
                     style={{
                       width: "25%",
-                      padding: "8px 6px",
+                      padding: "10px 8px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     اسم الموظفة
@@ -363,8 +331,9 @@ export const AbsencePdfTemplate = forwardRef<
                   <th
                     style={{
                       width: "15%",
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     التخصص
@@ -372,8 +341,9 @@ export const AbsencePdfTemplate = forwardRef<
                   <th
                     style={{
                       width: "15%",
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     المستوى / الرتبة
@@ -381,8 +351,9 @@ export const AbsencePdfTemplate = forwardRef<
                   <th
                     style={{
                       width: "15%",
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     رقم الوظيفة
@@ -390,8 +361,9 @@ export const AbsencePdfTemplate = forwardRef<
                   <th
                     style={{
                       width: "15%",
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     حالة التوظيف
@@ -399,7 +371,8 @@ export const AbsencePdfTemplate = forwardRef<
                   <th
                     style={{
                       width: "15%",
-                      padding: "8px 4px",
+                      padding: "10px 6px",
+                      verticalAlign: "middle",
                     }}
                   >
                     عدد الغياب
@@ -417,56 +390,62 @@ export const AbsencePdfTemplate = forwardRef<
                 >
                   <td
                     style={{
-                      padding: "8px 6px",
+                      padding: "10px 8px",
                       borderLeft: "1px solid #0f766e",
                       textAlign: "right",
                       fontWeight: "800",
-                      wordBreak: "break-word",
+                      wordWrap: "break-word",
+                      verticalAlign: "middle",
                     }}
                   >
                     {teacherFullName}
                   </td>
                   <td
                     style={{
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
-                      textAlign: "right",
-                      wordBreak: "break-word",
+                      textAlign: "center",
+                      wordWrap: "break-word",
+                      verticalAlign: "middle",
                     }}
                   >
                     {teacherSpecialty}
                   </td>
                   <td
                     style={{
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     {teacherJobTitle}
                   </td>
                   <td
                     style={{
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
                       fontFamily: "monospace",
+                      verticalAlign: "middle",
                     }}
                   >
                     {teacherUsername}
                   </td>
                   <td
                     style={{
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       borderLeft: "1px solid #0f766e",
+                      verticalAlign: "middle",
                     }}
                   >
                     {teacherEmploymentStatus}
                   </td>
                   <td
                     style={{
-                      padding: "8px 4px",
+                      padding: "10px 6px",
                       fontFamily: "monospace",
                       fontWeight: "900",
                       color: "#be123c",
+                      verticalAlign: "middle",
                     }}
                   >
                     {absenceCount}
@@ -475,12 +454,13 @@ export const AbsencePdfTemplate = forwardRef<
               </tbody>
             </table>
 
-            {/* 4. BODY TEXT (Form 20 Statement & Formatted Date) */}
+            {/* 4. BODY TEXT: Clean Form 20 Statement & Type without Box */}
             <div
               style={{
-                marginBottom: "8px",
-                fontSize: "9.5pt",
-                lineHeight: "1.5",
+                marginTop: "4px",
+                marginBottom: "14px",
+                fontSize: "10pt",
+                lineHeight: "1.6",
                 color: "#0f172a",
               }}
             >
@@ -501,19 +481,17 @@ export const AbsencePdfTemplate = forwardRef<
                 </strong>
                 ، تغيبت الموظفة عن العمل.
               </div>
-              <div style={{ marginTop: "4px" }}>
-                <span style={{ fontWeight: "bold", color: "#334155" }}>
-                  نوع الغياب المسجل:{" "}
-                </span>
-                <strong
+              <div style={{ marginTop: "4px", fontWeight: "bold" }}>
+                <span style={{ color: "#334155" }}>نوع الغياب المسجل: </span>
+                <span
                   style={{
                     color: "#0f766e",
                     fontWeight: "800",
-                    fontSize: "10pt",
+                    fontSize: "10.5pt",
                   }}
                 >
                   {record.type}
-                </strong>
+                </span>
               </div>
             </div>
 
@@ -521,9 +499,9 @@ export const AbsencePdfTemplate = forwardRef<
             <div
               style={{
                 borderTop: "1px solid #cbd5e1",
-                paddingTop: "5px",
-                marginBottom: "6px",
-                fontSize: "9pt",
+                paddingTop: "6px",
+                marginBottom: "10px",
+                fontSize: "9.5pt",
               }}
             >
               <div
@@ -533,7 +511,7 @@ export const AbsencePdfTemplate = forwardRef<
                   alignItems: "center",
                   fontWeight: "bold",
                   color: "#0f766e",
-                  marginBottom: "2px",
+                  marginBottom: "3px",
                 }}
               >
                 <span style={{ fontSize: "10pt", fontWeight: "800" }}>
@@ -546,6 +524,7 @@ export const AbsencePdfTemplate = forwardRef<
                   fontWeight: "bold",
                   color: "#334155",
                   marginBottom: "2px",
+                  fontSize: "9.5pt",
                 }}
               >
                 السلام عليكم ورحمة الله وبركاته ،، وبعد :
@@ -554,8 +533,8 @@ export const AbsencePdfTemplate = forwardRef<
                 style={{
                   textAlign: "justify",
                   color: "#1e293b",
-                  lineHeight: "1.35",
-                  fontSize: "8.5pt",
+                  lineHeight: "1.4",
+                  fontSize: "9pt",
                 }}
               >
                 من خلال متابعة سجل الدوام والعمل تبين غيابكم خلال اليوم الموضح
@@ -571,8 +550,8 @@ export const AbsencePdfTemplate = forwardRef<
                   justifyContent: "space-between",
                   alignItems: "center",
                   width: "100%",
-                  marginTop: "6px",
-                  fontSize: "8.5pt",
+                  marginTop: "10px",
+                  fontSize: "9pt",
                   fontWeight: "bold",
                   color: "#0f172a",
                 }}
@@ -593,9 +572,9 @@ export const AbsencePdfTemplate = forwardRef<
             <div
               style={{
                 borderTop: "1.5px dashed #0f766e",
-                paddingTop: "5px",
-                marginBottom: "6px",
-                fontSize: "9pt",
+                paddingTop: "6px",
+                marginBottom: "10px",
+                fontSize: "9.5pt",
               }}
             >
               <div
@@ -605,7 +584,7 @@ export const AbsencePdfTemplate = forwardRef<
                   alignItems: "center",
                   fontWeight: "bold",
                   color: "#0f766e",
-                  marginBottom: "2px",
+                  marginBottom: "3px",
                 }}
               >
                 <span style={{ fontSize: "10pt", fontWeight: "800" }}>
@@ -618,34 +597,37 @@ export const AbsencePdfTemplate = forwardRef<
                   fontWeight: "bold",
                   color: "#334155",
                   marginBottom: "2px",
+                  fontSize: "9.5pt",
                 }}
               >
                 السلام عليكم ورحمة الله وبركاته ،، وبعد :
               </div>
               <div
                 style={{
-                  fontSize: "8.5pt",
-                  marginBottom: "3px",
+                  fontSize: "9pt",
+                  marginBottom: "4px",
                   color: "#0f172a",
+                  fontWeight: "bold",
                 }}
               >
-                أفيدكم أن غيابي كان للأسباب التالية :
+                أفيدكم بأن غيابي كان للأسباب التالية:
               </div>
 
-              {/* Reason Box (min-height: 80px, proper borders and padding) */}
+              {/* Reason Box (min-height: 80px, padding: 10px, border: 1px solid #ccc) */}
               <div
                 style={{
                   backgroundColor: "#f8fafc",
                   border: "1px solid #cbd5e1",
                   borderRadius: "4px",
-                  padding: "10px",
+                  padding: "10px 12px",
                   minHeight: "80px",
                   fontWeight: "bold",
                   color: "#0f172a",
-                  fontSize: "9pt",
-                  wordBreak: "break-word",
+                  fontSize: "9.5pt",
+                  wordWrap: "break-word",
                   overflowWrap: "anywhere",
-                  lineHeight: "1.5",
+                  lineHeight: "1.6",
+                  marginBottom: "4px",
                   boxSizing: "border-box",
                 }}
               >
@@ -666,9 +648,9 @@ export const AbsencePdfTemplate = forwardRef<
 
               <div
                 style={{
-                  fontSize: "8pt",
+                  fontSize: "8.5pt",
                   color: "#64748b",
-                  marginTop: "3px",
+                  marginBottom: "4px",
                 }}
               >
                 وسأقوم بتقديم ما يثبت ذلك خلال أسبوع من تاريخه .
@@ -681,8 +663,8 @@ export const AbsencePdfTemplate = forwardRef<
                   justifyContent: "space-between",
                   alignItems: "center",
                   width: "100%",
-                  marginTop: "4px",
-                  fontSize: "8.5pt",
+                  marginTop: "6px",
+                  fontSize: "9pt",
                   fontWeight: "bold",
                   color: "#0f172a",
                 }}
@@ -703,15 +685,15 @@ export const AbsencePdfTemplate = forwardRef<
             <div
               style={{
                 borderTop: "1.5px dashed #0f766e",
-                paddingTop: "5px",
-                fontSize: "9pt",
+                paddingTop: "6px",
+                fontSize: "9.5pt",
               }}
             >
               <div
                 style={{
                   fontWeight: "bold",
                   color: "#0f766e",
-                  marginBottom: "3px",
+                  marginBottom: "4px",
                   fontSize: "9.5pt",
                 }}
               >
@@ -722,27 +704,28 @@ export const AbsencePdfTemplate = forwardRef<
                   paddingRight: "4px",
                   fontSize: "8.5pt",
                   color: "#1e293b",
-                  lineHeight: "1.4",
+                  lineHeight: "1.45",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "4px",
+                  gap: "6px",
                 }}
               >
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    alignItems: "flex-start",
+                    gap: "10px",
                   }}
                 >
                   <span
                     style={{
-                      display: "inline-block",
-                      width: "12px",
-                      height: "12px",
+                      width: "13px",
+                      height: "13px",
                       border: "1.5px solid #475569",
                       borderRadius: "2px",
+                      display: "inline-block",
                       flexShrink: 0,
+                      marginTop: "2px",
                     }}
                   />
                   <span>
@@ -753,18 +736,19 @@ export const AbsencePdfTemplate = forwardRef<
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    alignItems: "flex-start",
+                    gap: "10px",
                   }}
                 >
                   <span
                     style={{
-                      display: "inline-block",
-                      width: "12px",
-                      height: "12px",
+                      width: "13px",
+                      height: "13px",
                       border: "1.5px solid #475569",
                       borderRadius: "2px",
+                      display: "inline-block",
                       flexShrink: 0,
+                      marginTop: "2px",
                     }}
                   />
                   <span>
@@ -775,33 +759,34 @@ export const AbsencePdfTemplate = forwardRef<
                 <div
                   style={{
                     display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
+                    alignItems: "flex-start",
+                    gap: "10px",
                   }}
                 >
                   <span
                     style={{
-                      display: "inline-block",
-                      width: "12px",
-                      height: "12px",
+                      width: "13px",
+                      height: "13px",
                       border: "1.5px solid #475569",
                       borderRadius: "2px",
+                      display: "inline-block",
                       flexShrink: 0,
+                      marginTop: "2px",
                     }}
                   />
                   <span>يعتمد الحسم لعدم قبول عذرها .</span>
                 </div>
               </div>
 
-              {/* Flexbox 3-Column Signature Line */}
+              {/* Flexbox 3-Column Signature Line with Hijri Date */}
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   width: "100%",
-                  marginTop: "6px",
-                  fontSize: "8.5pt",
+                  marginTop: "10px",
+                  fontSize: "9pt",
                   fontWeight: "bold",
                   color: "#0f172a",
                 }}
@@ -813,30 +798,30 @@ export const AbsencePdfTemplate = forwardRef<
                   التوقيع : ........................
                 </div>
                 <div style={{ width: "28%", textAlign: "left" }}>
-                  التاريخ : ..... / ..... / ١٤٤٨ هـ
+                  التاريخ : ..../..../١٤٤.. هـ
                 </div>
               </div>
             </div>
           </div>
 
-          {/* 8. BOTTOM SECTION: Footer Notes (ملاحظات هامة) */}
+          {/* 8. FOOTER NOTES (ملاحظات هامة): Stick to bottom naturally */}
           <div
             style={{
               borderTop: "2px solid #0f766e",
               backgroundColor: "#f8fafc",
-              padding: "4px 8px",
+              padding: "6px 10px",
               borderRadius: "4px",
               fontSize: "8pt",
-              lineHeight: "1.3",
+              lineHeight: "1.35",
               color: "#334155",
-              marginTop: "4px",
+              marginTop: "auto",
             }}
           >
             <div
               style={{
                 fontWeight: "bold",
                 color: "#0f766e",
-                marginBottom: "2px",
+                marginBottom: "3px",
               }}
             >
               ملحوظات هامة :
@@ -845,17 +830,17 @@ export const AbsencePdfTemplate = forwardRef<
               dir="rtl"
               style={{
                 margin: "0",
-                paddingRight: "18px",
+                paddingRight: "20px",
                 listStyleType: "disc",
               }}
             >
-              <li>
+              <li style={{ marginBottom: "3px" }}>
                 تستكمل الاستمارة من المديرة المباشرة وإصدار القرار الإداري بموجبه .
               </li>
-              <li>
+              <li style={{ marginBottom: "3px" }}>
                 إذا سبق إجازة نهاية الأسبوع غياب وألحقها غياب تحتسب مدة الغياب كاملة .
               </li>
-              <li>
+              <li style={{ marginBottom: "3px" }}>
                 يجب أن توضح المتغيبة أسباب غيابها فور تسلمها الاستمارة وتعيدها لمديرتها المباشرة .
               </li>
               <li>
@@ -870,5 +855,6 @@ export const AbsencePdfTemplate = forwardRef<
 });
 
 AbsencePdfTemplate.displayName = "AbsencePdfTemplate";
+
 
 
