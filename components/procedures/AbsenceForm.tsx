@@ -21,8 +21,7 @@ import {
 import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
-import { AbsencePdfTemplate } from "@/components/procedures/AbsencePdfTemplate";
-import { exportHtmlToPdf } from "@/lib/pdfGenerator";
+import { printAbsencePdf } from "@/lib/printPdfService";
 import { cn } from "@/lib/utils";
 
 interface AbsenceFormProps {
@@ -85,10 +84,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const [isExportingDirect, setIsExportingDirect] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Reference for PDF generation
   const [lastSavedRecord, setLastSavedRecord] = useState<AbsenceRecord | null>(null);
   const [lastSavedTeacher, setLastSavedTeacher] = useState<Teacher | null>(null);
-  const pdfTemplateRef = useRef<HTMLDivElement>(null);
 
   const formId = useId();
 
@@ -213,59 +210,59 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       setLastSavedRecord(newRecord);
       setLastSavedTeacher(teacherSnapshot);
 
-      // Wait for template to render with updated record
-      setTimeout(async () => {
-        try {
-          const cleanName = newRecord.teacherName.trim().replace(/\s+/g, "_");
-          const filename = `مساءلة_غياب_${cleanName}_${newRecord.date}.pdf`;
+      // Send directly to print service
+      try {
+        printAbsencePdf({
+          teacherName: newRecord.teacherName,
+          username: newRecord.jobNumber,
+          specialty: newRecord.specialty,
+          jobTitle: teacherSnapshot.jobTitle || "معلم",
+          employmentStatus: teacherSnapshot.employmentStatus || "دائم",
+          absenceCount: teacherSnapshot.totalAbsences || 1,
+          absenceDate: newRecord.date,
+          absenceType: newRecord.type,
+          absenceReason: newRecord.reason,
+        });
 
-          await exportHtmlToPdf({
-            element: pdfTemplateRef.current,
-            filename,
-          });
+        setSuccessMessage(
+          `تم حفظ المساءلة وتجهيز استمارة الـ PDF للطباعة للمعلمة (${newRecord.teacherName}) بنجاح.`
+        );
 
-          setSuccessMessage(
-            `تم حفظ المساءلة وتنزيل استمارة الـ PDF الرسمية للمعلمة (${newRecord.teacherName}) بنجاح.`
-          );
-
-          handleReset();
-          if (onSuccess) onSuccess();
-        } catch (exportErr) {
-          console.error("فشل تنزيل ملف PDF:", exportErr);
-        } finally {
-          setIsExportingDirect(false);
-        }
-      }, 180);
+        handleReset();
+        if (onSuccess) onSuccess();
+      } catch (exportErr) {
+        console.error("فشل طباعة ملف PDF:", exportErr);
+      } finally {
+        setIsExportingDirect(false);
+      }
     } catch (err) {
       console.error("خطأ أثناء الحفظ والتصدير:", err);
       setIsExportingDirect(false);
     }
   };
 
-  const handleDownloadLastPdf = async () => {
+  const handleDownloadLastPdf = () => {
     if (!lastSavedRecord || !lastSavedTeacher) return;
 
     try {
-      const cleanName = lastSavedRecord.teacherName.trim().replace(/\s+/g, "_");
-      const filename = `مساءلة_غياب_${cleanName}_${lastSavedRecord.date}.pdf`;
-
-      await exportHtmlToPdf({
-        element: pdfTemplateRef.current,
-        filename,
+      printAbsencePdf({
+        teacherName: lastSavedRecord.teacherName,
+        username: lastSavedRecord.jobNumber,
+        specialty: lastSavedRecord.specialty,
+        jobTitle: lastSavedTeacher.jobTitle || "معلم",
+        employmentStatus: lastSavedTeacher.employmentStatus || "دائم",
+        absenceCount: lastSavedTeacher.totalAbsences || 1,
+        absenceDate: lastSavedRecord.date,
+        absenceType: lastSavedRecord.type,
+        absenceReason: lastSavedRecord.reason,
       });
     } catch (err) {
-      console.error("فشل تنزيل ملف PDF:", err);
+      console.error("فشل طباعة ملف PDF:", err);
     }
   };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      {/* Hidden A4 Template for PDF Rendering */}
-      <AbsencePdfTemplate
-        ref={pdfTemplateRef}
-        record={lastSavedRecord}
-        teacher={lastSavedTeacher}
-      />
 
       {/* Form Card Header */}
       <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">

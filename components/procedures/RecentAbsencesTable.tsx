@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
-import { AbsencePdfTemplate } from "@/components/procedures/AbsencePdfTemplate";
-import { exportHtmlToPdf } from "@/lib/pdfGenerator";
+import { printAbsencePdf } from "@/lib/printPdfService";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLES: Record<
@@ -61,19 +60,12 @@ const rowVariants = {
 export const RecentAbsencesTable: React.FC = () => {
   const { absenceRecords, teachers, deleteAbsenceRecord } = useTeachers();
 
-  const [activePdfRecord, setActivePdfRecord] = useState<AbsenceRecord | null>(
-    null
-  );
-  const [activePdfTeacher, setActivePdfTeacher] = useState<Teacher | null>(
-    null
-  );
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
-  const pdfTemplateRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Clean timeout on unmount
@@ -104,51 +96,45 @@ export const RecentAbsencesTable: React.FC = () => {
         totalAbsences: 1,
       } as Teacher);
 
-    setActivePdfRecord(record);
-    setActivePdfTeacher(teacher);
     setGeneratingId(record.id);
     setFeedback(null);
 
-    setTimeout(async () => {
-      try {
-        const cleanName = record.teacherName.trim().replace(/\s+/g, "_");
-        const filename = `مساءلة_غياب_${cleanName}_${record.date}.pdf`;
+    try {
+      printAbsencePdf({
+        teacherName: record.teacherName,
+        username: record.jobNumber,
+        specialty: record.specialty,
+        jobTitle: teacher.jobTitle || "معلم",
+        employmentStatus: teacher.employmentStatus || "دائم",
+        absenceCount: teacher.totalAbsences || 1,
+        absenceDate: record.date,
+        absenceType: record.type,
+        absenceReason: record.reason,
+      });
 
-        await exportHtmlToPdf({
-          element: pdfTemplateRef.current,
-          filename,
-        });
+      setFeedback({
+        type: "success",
+        message: `تم تجهيز استمارة مساءلة الغياب الرسمية للمعلمة (${record.teacherName}) للطباعة.`,
+      });
 
-        setFeedback({
-          type: "success",
-          message: `تم تنزيل استمارة مساءلة الغياب الرسمية للمعلمة (${record.teacherName}) بنجاح.`,
-        });
-
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => setFeedback(null), 6000);
-      } catch (err: unknown) {
-        console.error("فشل تصدير مستند المساءلة PDF:", err);
-        setFeedback({
-          type: "error",
-          message:
-            err instanceof Error
-              ? err.message
-              : "حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مجدداً.",
-        });
-      } finally {
-        setGeneratingId(null);
-      }
-    }, 180);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => setFeedback(null), 6000);
+    } catch (err: unknown) {
+      console.error("فشل طباعة مستند المساءلة PDF:", err);
+      setFeedback({
+        type: "error",
+        message:
+          err instanceof Error
+            ? err.message
+            : "حدث خطأ أثناء إعداد ملف PDF للطباعة. يرجى المحاولة مجدداً.",
+      });
+    } finally {
+      setGeneratingId(null);
+    }
   };
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden space-y-0">
-      {/* Hidden A4 Template for PDF Rendering */}
-      <AbsencePdfTemplate
-        ref={pdfTemplateRef}
-        record={activePdfRecord}
-        teacher={activePdfTeacher}
-      />
 
       {/* Header */}
       <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2">

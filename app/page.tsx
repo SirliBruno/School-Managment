@@ -22,9 +22,8 @@ import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { KpiCards } from "@/components/analytics/KpiCards";
 import { AbsenceCharts } from "@/components/analytics/AbsenceCharts";
-import { AbsencePdfTemplate } from "@/components/procedures/AbsencePdfTemplate";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
-import { exportHtmlToPdf } from "@/lib/pdfGenerator";
+import { printAbsencePdf } from "@/lib/printPdfService";
 
 const TYPE_STYLES: Record<
   AbsenceType,
@@ -69,20 +68,12 @@ export default function DashboardPage() {
   const { teachers, absenceRecords } = useTeachers();
   const [searchQuery, setSearchQuery] = useState("");
   const [generatingId, setGeneratingId] = useState<string | null>(null);
-  const [activePdfRecord, setActivePdfRecord] = useState<AbsenceRecord | null>(
-    null
-  );
-  const [activePdfTeacher, setActivePdfTeacher] = useState<Teacher | null>(
-    null
-  );
   const [selectedTeacherForProfile, setSelectedTeacherForProfile] =
     useState<Teacher | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-
-  const pdfTemplateRef = useRef<HTMLDivElement>(null);
 
   // Dynamic Arabic formatted date
   const todayFormatted = useMemo(() => {
@@ -128,35 +119,35 @@ export default function DashboardPage() {
         totalAbsences: 1,
       } as Teacher);
 
-    setActivePdfRecord(record);
-    setActivePdfTeacher(teacher);
     setGeneratingId(record.id);
     setFeedback(null);
 
-    setTimeout(async () => {
-      try {
-        const cleanName = record.teacherName.trim().replace(/\s+/g, "_");
-        const filename = `مساءلة_غياب_${cleanName}_${record.date}.pdf`;
+    try {
+      printAbsencePdf({
+        teacherName: record.teacherName,
+        username: record.jobNumber,
+        specialty: record.specialty,
+        jobTitle: teacher.jobTitle || "معلم",
+        employmentStatus: teacher.employmentStatus || "دائم",
+        absenceCount: teacher.totalAbsences || 1,
+        absenceDate: record.date,
+        absenceType: record.type,
+        absenceReason: record.reason,
+      });
 
-        await exportHtmlToPdf({
-          element: pdfTemplateRef.current,
-          filename,
-        });
-
-        setFeedback({
-          type: "success",
-          message: `تم تحميل استمارة مساءلة (${record.teacherName}) الرسمية بنجاح.`,
-        });
-      } catch (err) {
-        console.error("فشل تصدير مستند المساءلة PDF:", err);
-        setFeedback({
-          type: "error",
-          message: "تعذر تصدير الاستمارة حالياً. يرجى المحاولة لاحقاً.",
-        });
-      } finally {
-        setGeneratingId(null);
-      }
-    }, 180);
+      setFeedback({
+        type: "success",
+        message: `تم تجهيز استمارة مساءلة (${record.teacherName}) للطباعة بنجاح.`,
+      });
+    } catch (err) {
+      console.error("فشل طباعة مستند المساءلة PDF:", err);
+      setFeedback({
+        type: "error",
+        message: "تعذر طباعة الاستمارة حالياً. يرجى المحاولة لاحقاً.",
+      });
+    } finally {
+      setGeneratingId(null);
+    }
   };
 
   const openTeacherProfileByName = (teacherName: string, teacherId?: string) => {
@@ -169,12 +160,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
-      {/* Hidden A4 Template for Direct PDF Export */}
-      <AbsencePdfTemplate
-        ref={pdfTemplateRef}
-        record={activePdfRecord}
-        teacher={activePdfTeacher}
-      />
 
       {/* Top Bar Header */}
       <header className="bg-white border-b border-slate-200/90 sticky top-0 z-20 shadow-2xs">

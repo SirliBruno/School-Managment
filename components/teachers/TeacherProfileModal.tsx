@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { Teacher, AbsenceRecord, AbsenceType } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
-import { AbsencePdfTemplate } from "@/components/procedures/AbsencePdfTemplate";
-import { exportHtmlToPdf } from "@/lib/pdfGenerator";
+import { printAbsencePdf } from "@/lib/printPdfService";
 import { cn } from "@/lib/utils";
 
 interface TeacherProfileModalProps {
@@ -56,14 +55,10 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 }) => {
   const { absenceRecords } = useTeachers();
   const [exportingId, setExportingId] = useState<string | null>(null);
-  const [selectedPdfRecord, setSelectedPdfRecord] =
-    useState<AbsenceRecord | null>(null);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
-
-  const pdfTemplateRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -111,41 +106,29 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     (r) => r.type === "أخرى"
   ).length;
 
-  const handleExportPdf = async (record: AbsenceRecord) => {
+  const handleExportPdf = (record: AbsenceRecord) => {
     if (exportingId) return;
 
-    setSelectedPdfRecord(record);
     setExportingId(record.id);
-    setFeedback(null);
 
-    setTimeout(async () => {
-      try {
-        const teacherDisplayName = teacher.fullName || teacher.name || "معلمة";
-        const cleanName = teacherDisplayName.trim().replace(/\s+/g, "_");
-        const filename = `مساءلة_غياب_${cleanName}_${record.date}.pdf`;
+    try {
+      printAbsencePdf({
+        teacherName: teacher.fullName || teacher.name || "معلمة",
+        username: teacher.username || teacher.jobNumber || "—",
+        specialty: teacher.specialty || teacher.teachingField || "عام",
+        jobTitle: teacher.jobTitle || "معلم",
+        employmentStatus: teacher.employmentStatus || "دائم",
+        absenceCount: teacher.totalAbsences || 1,
+        absenceDate: record.date,
+        absenceType: record.type,
+        absenceReason: record.reason,
+      });
 
-        await exportHtmlToPdf({
-          element: pdfTemplateRef.current,
-          filename,
-        });
-
-        setFeedback({
-          type: "success",
-          message: `تم تنزيل استمارة الغياب للمعلمة (${teacherDisplayName}) بنجاح.`,
-        });
-
-        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = setTimeout(() => setFeedback(null), 5000);
-      } catch (err) {
-        console.error("فشل تصدير الـ PDF من ملف المعلمة:", err);
-        setFeedback({
-          type: "error",
-          message: "حدث خطأ أثناء تصدير استمارة المساءلة. يرجى إعادة المحاولة.",
-        });
-      } finally {
-        setExportingId(null);
-      }
-    }, 180);
+    } catch (err) {
+      console.error("فشل طباعة الـ PDF من ملف المعلمة:", err);
+    } finally {
+      setExportingId(null);
+    }
   };
 
   return (
@@ -167,12 +150,6 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           aria-hidden="true"
         />
 
-        {/* Hidden PDF Template for Single Record Export */}
-        <AbsencePdfTemplate
-          ref={pdfTemplateRef}
-          record={selectedPdfRecord}
-          teacher={teacher}
-        />
 
         {/* Animated Dialog Window with Spring physics */}
         <motion.div
