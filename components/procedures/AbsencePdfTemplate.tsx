@@ -159,10 +159,10 @@ export const AbsencePdfTemplate = forwardRef<
               </div>
               <div className="grid grid-cols-12">
                 <div className="col-span-3 bg-teal-50/70 p-1.5 font-bold text-teal-950 border-l border-teal-800 text-center">
-                  رقم السجل المدني
+                  رقم السجل المدني / اسم المستخدم
                 </div>
                 <div className="col-span-9 p-1.5 font-mono font-bold text-center text-slate-800">
-                  {teacher.jobNumber || "—"}
+                  {teacher.username || teacher.jobNumber || "—"}
                 </div>
               </div>
             </div>
@@ -183,29 +183,29 @@ export const AbsencePdfTemplate = forwardRef<
                   رقم الوظيفة
                 </div>
                 <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  العمل الحالي
+                  حالة التوظيف
                 </div>
                 <div className="col-span-1 p-1.5">عدد الغياب</div>
               </div>
 
               <div className="grid grid-cols-12 font-bold text-slate-900 bg-white">
                 <div className="col-span-3 p-1.5 border-l border-teal-800 truncate font-extrabold">
-                  {teacher.name}
+                  {teacher.fullName || teacher.name}
                 </div>
                 <div className="col-span-2 p-1.5 border-l border-teal-800 truncate">
-                  {teacher.specialty}
+                  {teacher.specialty || teacher.teachingField || "عام"}
                 </div>
                 <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  معلم ممارس
+                  {teacher.jobTitle || "معلم"}
                 </div>
                 <div className="col-span-2 p-1.5 border-l border-teal-800 font-mono">
-                  {teacher.jobNumber}
+                  {teacher.username || teacher.jobNumber}
                 </div>
                 <div className="col-span-2 p-1.5 border-l border-teal-800">
-                  معلمة
+                  {teacher.employmentStatus || "دائم"}
                 </div>
                 <div className="col-span-1 p-1.5 font-mono font-black text-rose-700">
-                  {teacher.totalAbsences}
+                  {teacher.totalAbsences || 0}
                 </div>
               </div>
             </div>
@@ -234,7 +234,7 @@ export const AbsencePdfTemplate = forwardRef<
             {/* Section 1: طلب الإفادة */}
             <div className="mt-3 pt-2 border-t border-slate-300 space-y-1.5 text-[11px]">
               <div className="font-bold text-teal-950 flex items-center justify-between">
-                <span>( ١ ) طلب الإفادة : المكرمة / {teacher.name}</span>
+                <span>( ١ ) طلب الإفادة : المكرمة / {teacher.fullName || teacher.name}</span>
                 <span>وفقكِ الله</span>
               </div>
               <p className="font-bold text-slate-700">
@@ -272,7 +272,7 @@ export const AbsencePdfTemplate = forwardRef<
                 وسأقوم بتقديم ما يثبت ذلك خلال أسبوع من تاريخه .
               </p>
               <div className="flex items-center justify-between pt-1 font-bold text-[10.5px]">
-                <div>اسم الموظفة : {teacher.name}</div>
+                <div>اسم الموظفة : {teacher.fullName || teacher.name}</div>
                 <div>التوقيع : ........................</div>
                 <div>التاريخ : {record.date} م</div>
               </div>

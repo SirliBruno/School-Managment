@@ -144,9 +144,9 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
     const newRecord = recordAbsence({
       teacherId: selectedTeacher.id,
-      teacherName: selectedTeacher.name,
-      jobNumber: selectedTeacher.jobNumber,
-      specialty: selectedTeacher.specialty,
+      teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
+      jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
+      specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
       date: absenceDate,
       type: absenceType,
       reason: reason.trim(),
@@ -201,9 +201,9 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
       const newRecord = recordAbsence({
         teacherId: selectedTeacher.id,
-        teacherName: selectedTeacher.name,
-        jobNumber: selectedTeacher.jobNumber,
-        specialty: selectedTeacher.specialty,
+        teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
+        jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
+        specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
         date: absenceDate,
         type: absenceType,
         reason: reason.trim(),

@@ -1,19 +1,37 @@
 export interface Teacher {
-  id: string;
-  name: string;
-  jobNumber: string;
-  specialty: string;
-  totalAbsences: number;
+  id: string; // Internal UUID
+  username: string; // اسم المستخدم (used as Job Number, must be UNIQUE)
+  fullName: string; // الاسم الرباعي
+  mobile?: string; // الجوال
+  employmentStatus?: string; // حالة التوظيف (دائم / عقد)
+  jobTitle?: string; // المسمى الوظيفي (افتراضي: معلم)
+  teachingField?: string; // مجال التدريس
+  specialty?: string; // التخصص
+  totalAbsences: number; // Initialized to 0
+  createdAt?: string; // Timestamp
+
+  // Backward compatibility alias properties
+  name?: string;
+  jobNumber?: string;
 }
 
 export interface ExcelTeacherRow {
+  "اسم المستخدم"?: string | number;
+  "الاسم الرباعي"?: string;
+  الجوال?: string | number;
+  "رقم الجوال"?: string | number;
+  "حالة التوظيف"?: string;
+  "المسمى الوظيفي"?: string;
+  "مجال التدريس"?: string;
+  التخصص?: string;
+
+  // Legacy headers support
   الاسم?: string;
   "اسم المعلمة"?: string;
   Name?: string;
   "رقم الوظيفة"?: string | number;
   "الرقم الوظيفي"?: string | number;
   "Job Number"?: string | number;
-  التخصص?: string;
   "تخصص المعلمة"?: string;
   Specialty?: string;
   [key: string]: unknown;

@@ -11,15 +11,24 @@ import React, {
 import { Teacher, AbsenceRecord } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
+export interface AddTeachersResult {
+  addedCount: number;
+  updatedCount: number;
+  duplicateCount: number;
+  totalProcessed: number;
+}
+
 interface TeacherContextType {
   teachers: Teacher[];
   absenceRecords: AbsenceRecord[];
   isLoading: boolean;
   isCloudConnected: boolean;
-  addTeachers: (newTeachers: Teacher[]) => {
-    addedCount: number;
-    duplicateCount: number;
-  };
+  addTeachers: (newTeachers: Teacher[]) => AddTeachersResult;
+  addTeacher: (
+    teacherData: Omit<Teacher, "id" | "totalAbsences"> &
+      Partial<Pick<Teacher, "id" | "totalAbsences">>
+  ) => { success: boolean; error?: string; teacher?: Teacher };
+  updateTeacher: (id: string, updatedData: Partial<Teacher>) => void;
   deleteTeacher: (id: string) => void;
   clearTeachers: () => void;
   updateAbsences: (id: string, count: number) => void;
@@ -32,6 +41,58 @@ interface TeacherContextType {
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
 const ABSENCES_STORAGE_KEY = "school_admin_absences_v1";
 
+export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
+  const rawFullName =
+    (t.fullName as string) ||
+    (t.name as string) ||
+    (t.full_name as string) ||
+    "معلمة";
+  const rawUsername = String(
+    t.username ?? t.jobNumber ?? t.job_number ?? ""
+  ).trim();
+
+  const fullName = String(rawFullName).trim();
+  const username = rawUsername;
+  const mobile = String(t.mobile ?? t.phone ?? t.phoneNumber ?? "").trim();
+  const employmentStatus = String(
+    t.employmentStatus ?? t.employment_status ?? "دائم"
+  ).trim();
+  const jobTitle = String(
+    t.jobTitle ?? t.job_title ?? "معلم"
+  ).trim();
+  const specialty = String(t.specialty ?? "").trim();
+  const teachingField = String(
+    t.teachingField ?? t.teaching_field ?? specialty ?? ""
+  ).trim();
+  const totalAbsences = typeof t.totalAbsences === "number"
+    ? t.totalAbsences
+    : typeof t.total_absences === "number"
+    ? t.total_absences
+    : 0;
+
+  const id =
+    (t.id as string) ||
+    (typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `tch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
+
+  return {
+    id,
+    username,
+    fullName,
+    mobile: mobile || undefined,
+    employmentStatus: employmentStatus || "دائم",
+    jobTitle: jobTitle || "معلم",
+    teachingField: teachingField || specialty || undefined,
+    specialty: specialty || undefined,
+    totalAbsences: Math.max(0, totalAbsences),
+    createdAt: (t.createdAt as string) || (t.created_at as string) || new Date().toISOString(),
+    // Backward compatibility aliases
+    name: fullName,
+    jobNumber: username,
+  };
+};
+
 const TeacherContext = createContext<TeacherContextType | undefined>(undefined);
 
 export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -43,10 +104,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isCloudConnected, setIsCloudConnected] = useState(false);
   const isMountedRef = useRef(false);
 
-  // 1. Initial Load: Load fast from localStorage, then hydrate from Supabase if configured
+  // 1. Initial Load: Load fast from localStorage with auto-migration, then hydrate from Supabase if configured
   useEffect(() => {
     const loadInitialData = async () => {
-      // Step A: Instant Local Storage Retrieval
       let localTeachers: Teacher[] = [];
       let localAbsences: AbsenceRecord[] = [];
 
@@ -54,13 +114,30 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
         if (storedTeachers) {
           const parsed = JSON.parse(storedTeachers);
-          if (Array.isArray(parsed)) localTeachers = parsed;
+          if (Array.isArray(parsed)) {
+            localTeachers = parsed.map((item) =>
+              normalizeTeacher(item as Record<string, unknown>)
+            );
+          }
         }
 
         const storedAbsences = localStorage.getItem(ABSENCES_STORAGE_KEY);
         if (storedAbsences) {
           const parsed = JSON.parse(storedAbsences);
-          if (Array.isArray(parsed)) localAbsences = parsed;
+          if (Array.isArray(parsed)) {
+            localAbsences = parsed.map((a: Record<string, unknown>) => ({
+              id: String(a.id || ""),
+              teacherId: String(a.teacherId || a.teacher_id || ""),
+              teacherName: String(a.teacherName || a.teacher_name || a.name || ""),
+              jobNumber: String(a.jobNumber || a.job_number || a.username || ""),
+              specialty: String(a.specialty || ""),
+              date: String(a.date || ""),
+              type: (a.type as AbsenceRecord["type"]) || "اضطراري",
+              reason: String(a.reason || ""),
+              notes: a.notes ? String(a.notes) : undefined,
+              timestamp: String(a.timestamp || new Date().toISOString()),
+            }));
+          }
         }
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
@@ -69,16 +146,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       setTeachers(localTeachers);
       setAbsenceRecords(localAbsences);
 
-      // Step B: Cloud Sync if Supabase is Configured
+      // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
         try {
-          // Fetch teachers from Supabase
           const { data: dbTeachers, error: tErr } = await supabase
             .from("teachers")
             .select("*")
             .order("created_at", { ascending: true });
 
-          // Fetch absences from Supabase
           const { data: dbAbsences, error: aErr } = await supabase
             .from("absence_records")
             .select("*")
@@ -88,13 +163,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             setIsCloudConnected(true);
 
             if (dbTeachers.length > 0) {
-              const mappedTeachers: Teacher[] = dbTeachers.map((t) => ({
-                id: t.id,
-                name: t.name,
-                jobNumber: t.job_number,
-                specialty: t.specialty,
-                totalAbsences: t.total_absences ?? 0,
-              }));
+              const mappedTeachers: Teacher[] = dbTeachers.map((t) =>
+                normalizeTeacher(t as Record<string, unknown>)
+              );
 
               const mappedAbsences: AbsenceRecord[] = (dbAbsences || []).map(
                 (a) => ({
@@ -102,7 +173,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   teacherId: a.teacher_id,
                   teacherName: a.teacher_name,
                   jobNumber: a.job_number,
-                  specialty: a.specialty,
+                  specialty: a.specialty || "",
                   date: a.date,
                   type: a.type,
                   reason: a.reason,
@@ -114,12 +185,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               setTeachers(mappedTeachers);
               setAbsenceRecords(mappedAbsences);
             } else if (localTeachers.length > 0) {
-              // Auto-seed Supabase from local data if database is fresh/empty
+              // Auto-seed Supabase from local data
               const toInsertTeachers = localTeachers.map((t) => ({
                 id: t.id,
-                name: t.name,
-                job_number: t.jobNumber,
-                specialty: t.specialty,
+                name: t.fullName,
+                full_name: t.fullName,
+                job_number: t.username,
+                username: t.username,
+                mobile: t.mobile || null,
+                employment_status: t.employmentStatus || "دائم",
+                job_title: t.jobTitle || "معلم",
+                teaching_field: t.teachingField || t.specialty || null,
+                specialty: t.specialty || null,
                 total_absences: t.totalAbsences || 0,
               }));
               await supabase.from("teachers").upsert(toInsertTeachers);
@@ -142,7 +219,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
         } catch (cloudErr) {
-          console.warn("المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:", cloudErr);
+          console.warn(
+            "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
+            cloudErr
+          );
         }
       }
 
@@ -175,39 +255,78 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [absenceRecords, isLoading]);
 
-  // 3. Add multiple teachers (Excel or Manual)
+  // 3. Add multiple teachers (Excel or Batch Import) with Upsert on username
   const addTeachers = useCallback(
-    (newTeachers: Teacher[]) => {
+    (newTeachers: Teacher[]): AddTeachersResult => {
       let added = 0;
-      let duplicates = 0;
-      const toAppend: Teacher[] = [];
+      let updated = 0;
+      const duplicates = 0;
+
+      let nextTeachers: Teacher[] = [];
 
       setTeachers((prev) => {
-        const existingJobNumbers = new Set(
-          prev.map((t) => t.jobNumber.trim().toLowerCase())
-        );
+        const teacherMap = new Map<string, Teacher>();
+        // Index existing teachers by username (case-insensitive)
+        for (const t of prev) {
+          const key = t.username.trim().toLowerCase();
+          if (key) teacherMap.set(key, t);
+        }
+
+        const updatedList: Teacher[] = [...prev];
 
         for (const item of newTeachers) {
-          const cleanJob = item.jobNumber.trim().toLowerCase();
-          if (cleanJob && existingJobNumbers.has(cleanJob)) {
-            duplicates++;
+          const normalized = normalizeTeacher(item as unknown as Record<string, unknown>);
+          const cleanKey = normalized.username.trim().toLowerCase();
+
+          if (!cleanKey || !normalized.fullName) {
+            continue;
+          }
+
+          if (teacherMap.has(cleanKey)) {
+            // Update existing teacher in-place preserving ID & absence history
+            const existing = teacherMap.get(cleanKey)!;
+            const updatedTeacher: Teacher = {
+              ...existing,
+              fullName: normalized.fullName,
+              name: normalized.fullName,
+              mobile: normalized.mobile || existing.mobile,
+              employmentStatus: normalized.employmentStatus || existing.employmentStatus,
+              jobTitle: normalized.jobTitle || existing.jobTitle,
+              teachingField: normalized.teachingField || existing.teachingField,
+              specialty: normalized.specialty || existing.specialty,
+            };
+
+            const idx = updatedList.findIndex((t) => t.id === existing.id);
+            if (idx !== -1) {
+              updatedList[idx] = updatedTeacher;
+            }
+            teacherMap.set(cleanKey, updatedTeacher);
+            updated++;
           } else {
-            if (cleanJob) existingJobNumbers.add(cleanJob);
-            toAppend.push(item);
+            // Add new teacher
+            updatedList.push(normalized);
+            teacherMap.set(cleanKey, normalized);
             added++;
           }
         }
 
-        return [...prev, ...toAppend];
+        nextTeachers = updatedList;
+        return updatedList;
       });
 
       // Background sync to Supabase
-      if (isSupabaseConfigured() && supabase && toAppend.length > 0) {
-        const dbPayload = toAppend.map((t) => ({
+      if (isSupabaseConfigured() && supabase && nextTeachers.length > 0) {
+        const dbPayload = nextTeachers.map((t) => ({
           id: t.id,
-          name: t.name,
-          job_number: t.jobNumber,
-          specialty: t.specialty,
+          name: t.fullName,
+          full_name: t.fullName,
+          job_number: t.username,
+          username: t.username,
+          mobile: t.mobile || null,
+          employment_status: t.employmentStatus || "دائم",
+          job_title: t.jobTitle || "معلم",
+          teaching_field: t.teachingField || t.specialty || null,
+          specialty: t.specialty || null,
           total_absences: t.totalAbsences || 0,
         }));
         supabase
@@ -218,12 +337,130 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           });
       }
 
-      return { addedCount: added, duplicateCount: duplicates };
+      return {
+        addedCount: added,
+        updatedCount: updated,
+        duplicateCount: duplicates,
+        totalProcessed: added + updated,
+      };
     },
     []
   );
 
-  // 4. Delete Teacher
+  // 4. Add single teacher manually (Manual Add Modal)
+  const addTeacher = useCallback(
+    (
+      teacherData: Omit<Teacher, "id" | "totalAbsences"> &
+        Partial<Pick<Teacher, "id" | "totalAbsences">>
+    ) => {
+      const cleanUsername = String(
+        teacherData.username || teacherData.jobNumber || ""
+      ).trim();
+      const cleanFullName = String(
+        teacherData.fullName || teacherData.name || ""
+      ).trim();
+
+      if (!cleanFullName) {
+        return { success: false, error: "الاسم الرباعي للمعلمة مطلوب." };
+      }
+
+      if (!cleanUsername) {
+        return {
+          success: false,
+          error: "اسم المستخدم / الرقم الوظيفي مطلوب وفريد.",
+        };
+      }
+
+      // Check for uniqueness
+      const isExisting = teachers.some(
+        (t) => t.username.trim().toLowerCase() === cleanUsername.toLowerCase()
+      );
+
+      if (isExisting) {
+        return {
+          success: false,
+          error: `اسم المستخدم / الرقم الوظيفي (${cleanUsername}) مسجل بالفعل لمعلمة أخرى.`,
+        };
+      }
+
+      const newTeacher = normalizeTeacher({
+        ...teacherData,
+        fullName: cleanFullName,
+        username: cleanUsername,
+        totalAbsences: teacherData.totalAbsences ?? 0,
+      });
+
+      setTeachers((prev) => [newTeacher, ...prev]);
+
+      // Supabase sync
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("teachers")
+          .insert({
+            id: newTeacher.id,
+            name: newTeacher.fullName,
+            full_name: newTeacher.fullName,
+            job_number: newTeacher.username,
+            username: newTeacher.username,
+            mobile: newTeacher.mobile || null,
+            employment_status: newTeacher.employmentStatus || "دائم",
+            job_title: newTeacher.jobTitle || "معلم",
+            teaching_field: newTeacher.teachingField || newTeacher.specialty || null,
+            specialty: newTeacher.specialty || null,
+            total_absences: newTeacher.totalAbsences || 0,
+          })
+          .then(({ error }) => {
+            if (error) console.error("فشل إدراج المعلمة في سوبابيز:", error);
+          });
+      }
+
+      return { success: true, teacher: newTeacher };
+    },
+    [teachers]
+  );
+
+  // 5. Update existing teacher details
+  const updateTeacher = useCallback(
+    (id: string, updatedData: Partial<Teacher>) => {
+      setTeachers((prev) =>
+        prev.map((t) => {
+          if (t.id === id) {
+            const updated = normalizeTeacher({
+              ...t,
+              ...updatedData,
+              id: t.id,
+              totalAbsences: t.totalAbsences,
+            });
+            return updated;
+          }
+          return t;
+        })
+      );
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("teachers")
+          .update({
+            name: updatedData.fullName || updatedData.name,
+            full_name: updatedData.fullName || updatedData.name,
+            job_number: updatedData.username || updatedData.jobNumber,
+            username: updatedData.username || updatedData.jobNumber,
+            mobile: updatedData.mobile || null,
+            employment_status: updatedData.employmentStatus,
+            job_title: updatedData.jobTitle,
+            teaching_field: updatedData.teachingField,
+            specialty: updatedData.specialty,
+          })
+          .eq("id", id)
+          .then(({ error }) => {
+            if (error) console.error("فشل تحديث المعلمة في سوبابيز:", error);
+          });
+      }
+    },
+    []
+  );
+
+  // 6. Delete Teacher
   const deleteTeacher = useCallback((id: string) => {
     setTeachers((prev) => prev.filter((t) => t.id !== id));
     setAbsenceRecords((prev) => prev.filter((a) => a.teacherId !== id));
@@ -239,7 +476,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // 5. Clear all teachers
+  // 7. Clear all teachers
   const clearTeachers = useCallback(() => {
     setTeachers([]);
     setAbsenceRecords([]);
@@ -253,7 +490,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // 6. Update absences manually
+  // 8. Update absences manually
   const updateAbsences = useCallback((id: string, count: number) => {
     const validCount = Math.max(0, count);
     setTeachers((prev) =>
@@ -271,7 +508,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // 7. Record Absence
+  // 9. Record Absence
   const recordAbsence = useCallback(
     (data: Omit<AbsenceRecord, "id" | "timestamp">): AbsenceRecord => {
       const newRecord: AbsenceRecord = {
@@ -331,7 +568,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // 8. Delete Absence Record
+  // 10. Delete Absence Record
   const deleteAbsenceRecord = useCallback((id: string) => {
     let affectedTeacherId: string | null = null;
     let newCount = 0;
@@ -380,6 +617,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoading,
         isCloudConnected,
         addTeachers,
+        addTeacher,
+        updateTeacher,
         deleteTeacher,
         clearTeachers,
         updateAbsences,

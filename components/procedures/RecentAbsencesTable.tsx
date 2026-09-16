@@ -94,9 +94,13 @@ export const RecentAbsencesTable: React.FC = () => {
       teachers.find((t) => t.id === record.teacherId) ||
       ({
         id: record.teacherId,
+        fullName: record.teacherName,
         name: record.teacherName,
+        username: record.jobNumber,
         jobNumber: record.jobNumber,
         specialty: record.specialty,
+        employmentStatus: "دائم",
+        jobTitle: "معلم",
         totalAbsences: 1,
       } as Teacher);
 

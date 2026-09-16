@@ -120,7 +120,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 
     setTimeout(async () => {
       try {
-        const cleanName = teacher.name.trim().replace(/\s+/g, "_");
+        const teacherDisplayName = teacher.fullName || teacher.name || "معلمة";
+        const cleanName = teacherDisplayName.trim().replace(/\s+/g, "_");
         const filename = `مساءلة_غياب_${cleanName}_${record.date}.pdf`;
 
         await exportHtmlToPdf({
@@ -130,7 +131,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 
         setFeedback({
           type: "success",
-          message: `تم تنزيل استمارة الغياب للمعلمة (${teacher.name}) بنجاح.`,
+          message: `تم تنزيل استمارة الغياب للمعلمة (${teacherDisplayName}) بنجاح.`,
         });
 
         if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
@@ -183,35 +184,54 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         >
           {/* Modal Header */}
           <div className="p-6 border-b border-slate-100 bg-slate-50/80 flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex items-start gap-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-14 h-14 rounded-2xl bg-[#137a85] text-white flex items-center justify-center font-bold text-xl shadow-md ring-4 ring-teal-50 shrink-0"
+                className="w-14 h-14 rounded-2xl bg-[#137a85] text-white flex items-center justify-center font-bold text-xl shadow-md ring-4 ring-teal-50 shrink-0 mt-0.5"
               >
-                {teacher.name.charAt(0)}
+                {(teacher.fullName || teacher.name || "م").charAt(0)}
               </motion.div>
-              <div className="space-y-1 text-right">
-                <div className="flex items-center gap-2">
+              <div className="space-y-1.5 text-right">
+                <div className="flex flex-wrap items-center gap-2">
                   <h2
                     id="teacher-profile-title"
                     className="text-lg md:text-xl font-bold text-slate-900"
                   >
-                    ملف المعلمة: {teacher.name}
+                    {teacher.fullName || teacher.name}
                   </h2>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-teal-50 text-[#137a85] border border-teal-200">
-                    كادر تعليمي
+                  <span
+                    className={cn(
+                      "px-2.5 py-0.5 rounded-full text-xs font-bold border",
+                      teacher.employmentStatus === "عقد"
+                        ? "bg-amber-50 text-amber-800 border-amber-300"
+                        : "bg-emerald-50 text-emerald-800 border-emerald-300"
+                    )}
+                  >
+                    {teacher.employmentStatus || "دائم"}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 font-medium">
-                  <span className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 font-medium">
+                  <span className="flex items-center gap-1 font-mono">
                     <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                    رقم الوظيفة: <strong className="text-slate-700 font-mono">{teacher.jobNumber}</strong>
+                    <span>اسم المستخدم: <strong className="text-slate-800">{teacher.username || teacher.jobNumber}</strong></span>
                   </span>
                   <span className="text-slate-300">•</span>
                   <span className="flex items-center gap-1">
                     <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
-                    التخصص: <strong className="text-slate-700">{teacher.specialty}</strong>
+                    <span>التخصص: <strong className="text-slate-800">{teacher.specialty || teacher.teachingField || "عام"}</strong></span>
                   </span>
+                  {teacher.teachingField && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span>المجال: <strong className="text-slate-800">{teacher.teachingField}</strong></span>
+                    </>
+                  )}
+                  {teacher.mobile && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span dir="ltr" className="font-mono text-slate-700">📱 {teacher.mobile}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
