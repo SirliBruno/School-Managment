@@ -14,6 +14,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  Label,
+  LabelList,
 } from "recharts";
 import {
   PieChart as PieIcon,
@@ -231,8 +233,8 @@ export const AbsenceCharts: React.FC = () => {
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
+                    innerRadius={58}
+                    outerRadius={88}
                     paddingAngle={4}
                     dataKey="value"
                     animationDuration={600}
@@ -246,6 +248,37 @@ export const AbsenceCharts: React.FC = () => {
                         strokeWidth={2}
                       />
                     ))}
+                    <Label
+                      content={({ viewBox }) => {
+                        if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                          return (
+                            <text
+                              x={viewBox.cx}
+                              y={viewBox.cy}
+                              textAnchor="middle"
+                              dominantBaseline="middle"
+                            >
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) - 4}
+                                className="fill-slate-900 text-3xl font-black font-mono"
+                              >
+                                {absenceRecords.length}
+                              </tspan>
+                              <tspan
+                                x={viewBox.cx}
+                                y={(viewBox.cy || 0) + 16}
+                                className="fill-slate-500 text-xs font-bold"
+                              >
+                                حالة
+                              </tspan>
+                            </text>
+                          );
+                        }
+                        return null;
+                      }}
+                      position="center"
+                    />
                   </Pie>
                   <Tooltip content={<CustomChartTooltip />} />
                   <Legend
@@ -304,7 +337,7 @@ export const AbsenceCharts: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={barData}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
+                  margin={{ top: 22, right: 10, left: 10, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis
@@ -326,10 +359,20 @@ export const AbsenceCharts: React.FC = () => {
                     name="عدد حالات الغياب"
                     fill="#137a85"
                     radius={[6, 6, 0, 0]}
-                    maxBarSize={36}
+                    barSize={32}
+                    maxBarSize={42}
                     animationDuration={600}
                     animationEasing="ease-out"
-                  />
+                  >
+                    <LabelList
+                      dataKey="count"
+                      position="top"
+                      offset={6}
+                      fill="#137a85"
+                      fontSize={11}
+                      fontWeight={800}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>

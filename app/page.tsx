@@ -16,6 +16,8 @@ import {
   AlertCircle,
   X,
   Eye,
+  FileText,
+  Inbox,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeachers } from "@/context/TeacherContext";
@@ -293,7 +295,7 @@ export default function DashboardPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-1">
-                عرض مباشر لآخر المساءلات المسجلة مع إمكانية تصدير استمارة A4 الرسمية (نموذج 20)
+                عرض مباشر لآخر المساءلات المسجلة مع إمكانية تصدير استمارة مساءلة الغياب الرسمية
               </p>
             </div>
 
@@ -324,14 +326,25 @@ export default function DashboardPage() {
           {/* Quick Search Bar */}
           <div className="p-4 bg-slate-50/60 border-b border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="relative w-full sm:w-80">
-              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="بحث باسم المعلمة، الرقم الوظيفي، أو التخصص..."
-                className="w-full pl-3 pr-9 py-2 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
+                className="w-full pl-8 pr-9 py-2 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="مسح البحث"
+                  aria-label="مسح نص البحث"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <span>إجمالي المساءلات:</span>
@@ -343,33 +356,34 @@ export default function DashboardPage() {
 
           {/* Table of Absences */}
           {absenceRecords.length === 0 ? (
-            <div className="p-12 text-center flex flex-col items-center justify-center space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center shadow-inner">
-                <FileCheck2 className="w-7 h-7" />
+            <div className="p-12 text-center flex flex-col items-center justify-center space-y-3.5">
+              <div className="w-14 h-14 rounded-2xl bg-slate-50 border border-slate-200/80 text-slate-400 flex items-center justify-center shadow-2xs">
+                <FileText className="w-7 h-7" aria-hidden="true" />
               </div>
               <div className="max-w-md space-y-1">
                 <h4 className="text-base font-bold text-slate-800">
-                  لا توجد مساءلات غياب مسجلة حالياً
+                  لا توجد مساءلات مسجلة حالياً
                 </h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
-                  ابدئي بتسجيل أول مساءلة غياب أو استيراد الكادر التعليمي من صفحة المعلمات.
+                  ابدئي بإنشاء أول مساءلة إدارية للمعلمات لمتابعة حالات الغياب بدقة وتوثيقها.
                 </p>
               </div>
-              <div className="pt-2 flex items-center gap-3">
+              <div className="pt-1 flex items-center gap-3">
                 <Link href="/procedures/absence">
                   <motion.span
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.96 }}
-                    className="inline-block px-4 py-2 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-sm shadow-teal-700/20 transition-all cursor-pointer"
                   >
-                    إصدار مساءلة غياب
+                    <Plus className="w-4 h-4" />
+                    <span>إصدار مساءلة جديدة</span>
                   </motion.span>
                 </Link>
                 <Link href="/teachers">
                   <motion.span
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.96 }}
-                    className="inline-block px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
+                    className="inline-block px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
                   >
                     استيراد المعلمات
                   </motion.span>

@@ -50,7 +50,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
       variants={cardItemVariants}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="bg-white rounded-2xl p-6 shadow-xs hover:shadow-md border border-slate-150 hover:border-slate-300/80 transition-all duration-200 flex flex-col justify-between group"
+      className="bg-white rounded-2xl p-6 shadow-xs hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-150 hover:border-slate-300/80 flex flex-col justify-between group"
     >
       <div>
         <div className="flex items-start justify-between gap-2">
@@ -62,7 +62,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
               <div className="h-9 w-20 bg-slate-200/70 rounded-lg animate-pulse my-1" />
             ) : (
               <div className="flex items-baseline gap-2">
-                <span className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight tabular-nums font-mono">
+                <span className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight tabular-nums font-mono">
                   {value}
                 </span>
                 {unit && (
@@ -184,7 +184,7 @@ export const KpiCards: React.FC = () => {
       <KpiCard
         title="غياب اليوم"
         value={stats.todayAbsences}
-        unit="حالة"
+        unit="معلمة غائبة"
         subtitle="حالات الغياب المسجلة بتاريخ اليوم"
         icon={UserX}
         iconBgColor="bg-rose-50"
@@ -202,7 +202,7 @@ export const KpiCards: React.FC = () => {
       <KpiCard
         title="إجمالي الغياب (هذا الشهر)"
         value={stats.monthAbsences}
-        unit="يوم غياب"
+        unit="حالة غياب"
         subtitle="مجموع أيام الغياب خلال الشهر الحالي"
         icon={CalendarDays}
         iconBgColor="bg-indigo-50"
@@ -220,7 +220,7 @@ export const KpiCards: React.FC = () => {
       <KpiCard
         title="الإجراءات المعلقة"
         value={stats.pendingProcedures}
-        unit="إجراء"
+        unit="إجراء معلق"
         subtitle="مساءلات وملاحظات بانتظار الإفادة أو الاعتماد"
         icon={AlertCircle}
         iconBgColor="bg-amber-50"
