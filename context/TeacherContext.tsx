@@ -8,7 +8,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Teacher, AbsenceRecord } from "@/types/teacher";
+import { Teacher, AbsenceRecord, AbsenceInquiry } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export interface AddTeachersResult {
@@ -21,6 +21,7 @@ export interface AddTeachersResult {
 interface TeacherContextType {
   teachers: Teacher[];
   absenceRecords: AbsenceRecord[];
+  inquiries: AbsenceInquiry[];
   isLoading: boolean;
   isCloudConnected: boolean;
   addTeachers: (newTeachers: Teacher[]) => AddTeachersResult;
@@ -36,10 +37,23 @@ interface TeacherContextType {
     data: Omit<AbsenceRecord, "id" | "timestamp">
   ) => AbsenceRecord;
   deleteAbsenceRecord: (id: string) => void;
+  createInquiry: (
+    teacherId: string,
+    absenceDate: string
+  ) => Promise<{ success: boolean; inquiry?: AbsenceInquiry; error?: string }>;
+  updateInquiryDecision: (
+    inquiryId: string,
+    status: "approved" | "rejected",
+    adminNotes?: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  deleteInquiry: (inquiryId: string) => Promise<void>;
+  refreshInquiries: () => Promise<void>;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
 const ABSENCES_STORAGE_KEY = "school_admin_absences_v1";
+const INQUIRIES_STORAGE_KEY = "school_admin_inquiries_v1";
+
 
 export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
   const rawFullName =
@@ -100,6 +114,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [absenceRecords, setAbsenceRecords] = useState<AbsenceRecord[]>([]);
+  const [inquiries, setInquiries] = useState<AbsenceInquiry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
   const isMountedRef = useRef(false);
@@ -109,6 +124,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     const loadInitialData = async () => {
       let localTeachers: Teacher[] = [];
       let localAbsences: AbsenceRecord[] = [];
+      let localInquiries: AbsenceInquiry[] = [];
 
       try {
         const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
@@ -139,12 +155,22 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             }));
           }
         }
+
+        const storedInquiries = localStorage.getItem(INQUIRIES_STORAGE_KEY);
+        if (storedInquiries) {
+          const parsed = JSON.parse(storedInquiries);
+          if (Array.isArray(parsed)) {
+            localInquiries = parsed;
+          }
+        }
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
 
       setTeachers(localTeachers);
       setAbsenceRecords(localAbsences);
+      setInquiries(localInquiries);
+
 
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
@@ -218,6 +244,37 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             }
           }
+
+          // Hydrate absence inquiries
+          const { data: dbInquiries, error: inqErr } = await supabase
+            .from("absence_inquiries")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (!inqErr && dbInquiries && dbInquiries.length > 0) {
+            const mappedInquiries: AbsenceInquiry[] = dbInquiries.map(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (inq: any) => ({
+                id: inq.id,
+                teacherId: inq.teacher_id,
+                teacherName: inq.teacher_name,
+                jobNumber: inq.job_number,
+                specialty: inq.specialty || undefined,
+                mobile: inq.mobile || undefined,
+                absenceDate: inq.absence_date,
+                token: inq.token,
+                status: inq.status,
+                expiresAt: inq.expires_at,
+                absenceType: inq.absence_type || undefined,
+                teacherReason: inq.teacher_reason || undefined,
+                attachmentUrl: inq.attachment_url || undefined,
+                adminNotes: inq.admin_notes || undefined,
+                submittedAt: inq.submitted_at || undefined,
+                createdAt: inq.created_at,
+              })
+            );
+            setInquiries(mappedInquiries);
+          }
         } catch (cloudErr) {
           console.warn(
             "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
@@ -254,6 +311,19 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("فشل حفظ سجلات الغياب محلياً:", error);
     }
   }, [absenceRecords, isLoading]);
+
+  useEffect(() => {
+    if (!isMountedRef.current || isLoading) return;
+    try {
+      localStorage.setItem(
+        INQUIRIES_STORAGE_KEY,
+        JSON.stringify(inquiries)
+      );
+    } catch (error) {
+      console.error("فشل حفظ المساءلات محلياً:", error);
+    }
+  }, [inquiries, isLoading]);
+
 
   // 3. Add multiple teachers (Excel or Batch Import) with Upsert on username
   const addTeachers = useCallback(
@@ -609,11 +679,205 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // 11. Create Absence Inquiry
+  const createInquiry = useCallback(
+    async (
+      teacherId: string,
+      absenceDate: string
+    ): Promise<{ success: boolean; inquiry?: AbsenceInquiry; error?: string }> => {
+      const teacher = teachers.find((t) => t.id === teacherId);
+      if (!teacher) {
+        return { success: false, error: "المعلمة المحددة غير موجودة." };
+      }
+
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `inq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+      const token =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID().replace(/-/g, "")
+          : `${Date.now()}${Math.random().toString(36).substring(2, 10)}`;
+
+      // 7 days validity
+      const expiresAt = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
+      const createdAt = new Date().toISOString();
+
+      const newInquiry: AbsenceInquiry = {
+        id,
+        teacherId: teacher.id,
+        teacherName: teacher.fullName || teacher.name || "معلمة",
+        jobNumber: teacher.username || teacher.jobNumber || "—",
+        specialty: teacher.specialty || teacher.teachingField,
+        mobile: teacher.mobile,
+        absenceDate,
+        token,
+        status: "pending",
+        expiresAt,
+        createdAt,
+      };
+
+      setInquiries((prev) => [newInquiry, ...prev]);
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { error } = await supabase.from("absence_inquiries").insert({
+            id: newInquiry.id,
+            teacher_id: newInquiry.teacherId,
+            teacher_name: newInquiry.teacherName,
+            job_number: newInquiry.jobNumber,
+            specialty: newInquiry.specialty || null,
+            mobile: newInquiry.mobile || null,
+            absence_date: newInquiry.absenceDate,
+            token: newInquiry.token,
+            status: newInquiry.status,
+            expires_at: newInquiry.expiresAt,
+            created_at: newInquiry.createdAt,
+          });
+
+          if (error) {
+            console.warn("تنبيه حفظ المساءلة في سوبابيز:", error.message);
+          }
+        } catch (err) {
+          console.warn("خطأ أثناء الاتصال بسوبابيز للمساءلة:", err);
+        }
+      }
+
+      return { success: true, inquiry: newInquiry };
+    },
+    [teachers]
+  );
+
+  // 12. Update Inquiry Decision
+  const updateInquiryDecision = useCallback(
+    async (
+      inquiryId: string,
+      status: "approved" | "rejected",
+      adminNotes?: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      let targetInquiry: AbsenceInquiry | null = null;
+
+      setInquiries((prev) =>
+        prev.map((inq) => {
+          if (inq.id === inquiryId) {
+            targetInquiry = {
+              ...inq,
+              status,
+              adminNotes: adminNotes ?? inq.adminNotes,
+            };
+            return targetInquiry;
+          }
+          return inq;
+        })
+      );
+
+      if (!targetInquiry) {
+        return { success: false, error: "لم يتم العثور على المساءلة." };
+      }
+
+      const resolvedInq = targetInquiry as AbsenceInquiry;
+
+      // If approved, document it in absenceRecords if not recorded already
+      if (status === "approved" && resolvedInq.absenceType) {
+        const alreadyRecorded = absenceRecords.some(
+          (a) =>
+            a.teacherId === resolvedInq.teacherId &&
+            a.date === resolvedInq.absenceDate
+        );
+
+        if (!alreadyRecorded) {
+          recordAbsence({
+            teacherId: resolvedInq.teacherId,
+            teacherName: resolvedInq.teacherName,
+            jobNumber: resolvedInq.jobNumber,
+            specialty: resolvedInq.specialty || "عام",
+            date: resolvedInq.absenceDate,
+            type: resolvedInq.absenceType,
+            reason: resolvedInq.teacherReason || "عذر مقبول ومعتمد من الإدارة",
+            notes: adminNotes || resolvedInq.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+          });
+        }
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          await supabase
+            .from("absence_inquiries")
+            .update({
+              status,
+              admin_notes: adminNotes || null,
+            })
+            .eq("id", inquiryId);
+        } catch (err) {
+          console.warn("فشل تحديث قرار المساءلة في سوبابيز:", err);
+        }
+      }
+
+      return { success: true };
+    },
+    [absenceRecords, recordAbsence]
+  );
+
+  // 13. Delete Inquiry
+  const deleteInquiry = useCallback(async (inquiryId: string) => {
+    setInquiries((prev) => prev.filter((inq) => inq.id !== inquiryId));
+
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        await supabase
+          .from("absence_inquiries")
+          .delete()
+          .eq("id", inquiryId);
+      } catch (err) {
+        console.warn("فشل حذف المساءلة من سوبابيز:", err);
+      }
+    }
+  }, []);
+
+  // 14. Refresh Inquiries
+  const refreshInquiries = useCallback(async () => {
+    if (!isSupabaseConfigured() || !supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from("absence_inquiries")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        const mapped: AbsenceInquiry[] = data.map((inq: any) => ({
+          id: inq.id,
+          teacherId: inq.teacher_id,
+          teacherName: inq.teacher_name,
+          jobNumber: inq.job_number,
+          specialty: inq.specialty || undefined,
+          mobile: inq.mobile || undefined,
+          absenceDate: inq.absence_date,
+          token: inq.token,
+          status: inq.status,
+          expiresAt: inq.expires_at,
+          absenceType: inq.absence_type || undefined,
+          teacherReason: inq.teacher_reason || undefined,
+          attachmentUrl: inq.attachment_url || undefined,
+          adminNotes: inq.admin_notes || undefined,
+          submittedAt: inq.submitted_at || undefined,
+          createdAt: inq.created_at,
+        }));
+        setInquiries(mapped);
+      }
+    } catch (err) {
+      console.warn("فشل تحديث قائمة المساءلات:", err);
+    }
+  }, []);
+
   return (
     <TeacherContext.Provider
       value={{
         teachers,
         absenceRecords,
+        inquiries,
         isLoading,
         isCloudConnected,
         addTeachers,
@@ -624,6 +888,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         updateAbsences,
         recordAbsence,
         deleteAbsenceRecord,
+        createInquiry,
+        updateInquiryDecision,
+        deleteInquiry,
+        refreshInquiries,
       }}
     >
       {children}

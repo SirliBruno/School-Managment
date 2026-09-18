@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
+import { AuthProvider } from "@/context/AuthContext";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { TeacherProvider } from "@/context/TeacherContext";
 
 const cairo = Cairo({
@@ -24,18 +25,13 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
       <body className="font-cairo bg-slate-50 text-slate-800 antialiased min-h-screen">
-        <TeacherProvider>
-          <div className="flex min-h-screen">
-            {/* Sidebar on Right side in RTL */}
-            <Sidebar />
-
-            {/* Main Content Area on Left side in RTL */}
-            <div className="flex-1 flex flex-col min-w-0 bg-slate-50">
-              {children}
-            </div>
-          </div>
-        </TeacherProvider>
+        <AuthProvider>
+          <TeacherProvider>
+            <AuthGuard>{children}</AuthGuard>
+          </TeacherProvider>
+        </AuthProvider>
       </body>
     </html>
   );
 }
+

@@ -13,12 +13,15 @@ import {
   UserPlus,
   Phone,
   Filter,
+  MessageCircle,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { Teacher } from "@/types/teacher";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
 import { AddTeacherModal } from "@/components/teachers/AddTeacherModal";
+import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
 import { cn } from "@/lib/utils";
+
 
 const rowVariants = {
   hidden: { opacity: 0, y: 8 },
@@ -43,7 +46,12 @@ export const TeacherTable: React.FC = () => {
   const [selectedTeacherForProfile, setSelectedTeacherForProfile] =
     useState<Teacher | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isSendInquiryModalOpen, setIsSendInquiryModalOpen] = useState(false);
+  const [inquiryTeacherId, setInquiryTeacherId] = useState<string | undefined>(
+    undefined
+  );
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
 
   // Close delete modal on Escape key
   useEffect(() => {
@@ -438,6 +446,20 @@ export const TeacherTable: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setInquiryTeacherId(teacher.id);
+                              setIsSendInquiryModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer"
+                            title={`إرسال مساءلة غياب بالواتساب للمعلمة ${teacher.fullName || teacher.name}`}
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600 group-hover:text-white" />
+                            <span className="hidden sm:inline">مساءلة</span>
+                          </motion.button>
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setTeacherToDelete(teacher);
                             }}
                             className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-800 hover:bg-rose-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
@@ -557,6 +579,16 @@ export const TeacherTable: React.FC = () => {
           onClose={() => setSelectedTeacherForProfile(null)}
         />
       )}
+
+      {/* Send Inquiry Modal */}
+      <SendInquiryModal
+        isOpen={isSendInquiryModalOpen}
+        onClose={() => {
+          setIsSendInquiryModalOpen(false);
+          setInquiryTeacherId(undefined);
+        }}
+        preselectedTeacherId={inquiryTeacherId}
+      />
     </div>
   );
 };

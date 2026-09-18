@@ -16,9 +16,15 @@ import {
   Menu,
   X,
   LayoutDashboard,
+  LogOut,
+  KeyRound,
+  ShieldCheck,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
+
 
 export interface SubNavItem {
   id: string;
@@ -146,6 +152,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className,
 }) => {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // "الإجراءات الإدارية" is EXPANDED by default
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -153,6 +161,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   });
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+
 
   // Close mobile drawer on Escape key
   useEffect(() => {
@@ -344,6 +353,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </nav>
 
+      {/* Vice Principal Account & Actions Card */}
+      <div className="p-3 mx-2.5 mb-2 rounded-2xl bg-black/20 border border-white/10 backdrop-blur-xs">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-300/30 flex items-center justify-center text-teal-200 shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-white truncate">
+                {user?.fullName || "وكيلة الشؤون التعليمية"}
+              </p>
+              <p className="text-[10px] text-teal-200/80 font-mono truncate" dir="ltr">
+                @{user?.username || "wakila"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-white/10">
+          <button
+            type="button"
+            onClick={() => setIsProfileModalOpen(true)}
+            className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-medium text-white transition-colors cursor-pointer"
+            title="تعديل اسم المستخدم وكلمة المرور"
+          >
+            <KeyRound className="w-3.5 h-3.5 text-teal-200" />
+            <span>إعدادات الحساب</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => logout()}
+            className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-[11px] font-medium text-rose-200 hover:text-white transition-colors cursor-pointer"
+            title="تسجيل الخروج من المنصة"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>تسجيل خروج</span>
+          </button>
+        </div>
+      </div>
+
       {/* Footer Branding */}
       <div className="p-4 border-t border-teal-600/40 bg-black/10 text-center">
         <p className="text-[11px] text-teal-100 font-medium">
@@ -416,6 +465,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
       </AnimatePresence>
+
+      {/* نافذة تعديل بيانات حساب الوكيلة */}
+      <AdminProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </>
   );
 };
+

@@ -17,12 +17,15 @@ import {
   Check,
   FileDown,
   Loader2,
+  MessageCircle,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
+import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { cn } from "@/lib/utils";
+
 
 interface AbsenceFormProps {
   onSuccess?: () => void;
@@ -83,9 +86,11 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExportingDirect, setIsExportingDirect] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isInquiryModalOpen, setIsInquiryModalOpen] = useState(false);
 
   const [lastSavedRecord, setLastSavedRecord] = useState<AbsenceRecord | null>(null);
   const [lastSavedTeacher, setLastSavedTeacher] = useState<Teacher | null>(null);
+
 
   const formId = useId();
 
@@ -276,9 +281,19 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
-          <Clock className="w-3.5 h-3.5 text-[#137a85]" />
-          <span>التوثيق الفوري</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsInquiryModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-colors shadow-2xs cursor-pointer"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>إرسال عبر الواتساب</span>
+          </button>
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+            <Clock className="w-3.5 h-3.5 text-[#137a85]" />
+            <span>التوثيق الفوري</span>
+          </div>
         </div>
       </div>
 
@@ -538,6 +553,14 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
           </motion.button>
         </div>
       </form>
+
+      {/* Send Inquiry Modal */}
+      <SendInquiryModal
+        isOpen={isInquiryModalOpen}
+        onClose={() => setIsInquiryModalOpen(false)}
+        preselectedTeacherId={selectedTeacherId || undefined}
+      />
     </div>
   );
 };
+

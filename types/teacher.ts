@@ -51,3 +51,25 @@ export interface AbsenceRecord {
   notes?: string;
   timestamp: string;
 }
+
+export type InquiryStatus = "pending" | "submitted" | "approved" | "rejected" | "expired";
+
+export interface AbsenceInquiry {
+  id: string;
+  teacherId: string;
+  teacherName: string;
+  jobNumber: string;
+  specialty?: string;
+  mobile?: string;
+  absenceDate: string;
+  token: string;
+  status: InquiryStatus;
+  expiresAt: string;
+  absenceType?: AbsenceType;
+  teacherReason?: string;
+  attachmentUrl?: string;
+  adminNotes?: string;
+  submittedAt?: string;
+  createdAt: string;
+}
+
