@@ -12,10 +12,13 @@ import {
   AlertCircle,
   CheckCircle2,
   X,
+  Paperclip,
+  ExternalLink,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { printAbsencePdf } from "@/lib/printPdfService";
+import { parseAttachments } from "@/lib/attachments";
 import { cn } from "@/lib/utils";
 
 const TYPE_STYLES: Record<
@@ -281,25 +284,63 @@ export const RecentAbsencesTable: React.FC = () => {
                       {record.reason}
                     </td>
 
-                    {/* Export PDF Button */}
+                    {/* Export PDF Button & Attachment Link */}
                     <td className="py-3.5 px-5 text-center">
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        type="button"
-                        onClick={() => handleExportPdf(record)}
-                        disabled={isExporting}
-                        aria-busy={isExporting}
-                        aria-label={`تصدير استمارة مساءلة الغياب الرسمية للمعلمة ${record.teacherName} بصيغة PDF`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all shadow-2xs cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]"
-                        title="تصدير استمارة مساءلة الغياب بصيغة A4 PDF"
-                      >
-                        {isExporting ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
-                        ) : (
-                          <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
-                        )}
-                        <span>{isExporting ? "جاري التصدير..." : "تصدير PDF"}</span>
-                      </motion.button>
+                      <div className="inline-flex items-center gap-1.5 justify-center">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() => handleExportPdf(record)}
+                          disabled={isExporting}
+                          aria-busy={isExporting}
+                          aria-label={`تصدير استمارة مساءلة الغياب الرسمية للمعلمة ${record.teacherName} بصيغة PDF`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all shadow-2xs cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]"
+                          title="تصدير استمارة مساءلة الغياب بصيغة A4 PDF"
+                        >
+                          {isExporting ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden="true" />
+                          ) : (
+                            <FileDown className="w-3.5 h-3.5" aria-hidden="true" />
+                          )}
+                          <span>{isExporting ? "جاري التصدير..." : "تصدير PDF"}</span>
+                        </motion.button>
+
+                        {record.attachmentUrl && (() => {
+                          const atts = parseAttachments(record.attachmentUrl);
+                          if (atts.length === 0) return null;
+                          if (atts.length === 1) {
+                            return (
+                              <a
+                                href={atts[0].url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 rounded-xl bg-slate-100 hover:bg-teal-50 text-slate-600 hover:text-[#137a85] border border-slate-200 transition-colors inline-flex items-center justify-center shadow-2xs"
+                                title={`معاينة ${atts[0].label} للمعلمة ${record.teacherName}`}
+                                aria-label={`معاينة ${atts[0].label}`}
+                              >
+                                <Paperclip className="w-3.5 h-3.5" />
+                              </a>
+                            );
+                          }
+                          return (
+                            <div className="inline-flex items-center gap-1">
+                              {atts.map((att, aIdx) => (
+                                <a
+                                  key={aIdx}
+                                  href={att.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="px-2 py-1 rounded-lg bg-teal-50 hover:bg-teal-100/70 text-teal-800 border border-teal-200 text-[10px] font-bold inline-flex items-center gap-1 transition-colors shadow-2xs"
+                                  title={`معاينة ${att.label}`}
+                                >
+                                  <Paperclip className="w-3 h-3 text-[#137a85]" />
+                                  <span>{att.label}</span>
+                                </a>
+                              ))}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </td>
 
                     {/* Action (Delete Record) */}

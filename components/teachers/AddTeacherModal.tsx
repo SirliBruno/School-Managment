@@ -19,6 +19,8 @@ import {
 import { useTeachers } from "@/context/TeacherContext";
 import { Teacher } from "@/types/teacher";
 import { cn } from "@/lib/utils";
+import { formatSaudiMobile, normalizeSaudiMobileInput } from "@/lib/whatsapp";
+
 
 interface AddTeacherModalProps {
   isOpen: boolean;
@@ -91,7 +93,11 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
     field: keyof FormState,
     value: string
   ) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    let finalVal = value;
+    if (field === "mobile") {
+      finalVal = normalizeSaudiMobileInput(value);
+    }
+    setForm((prev) => ({ ...prev, [field]: finalVal }));
     setErrors((prev) => ({ ...prev, [field]: "", general: "" }));
   };
 
@@ -115,7 +121,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
     if (form.mobile.trim()) {
       const cleanPhone = form.mobile.trim().replace(/\D/g, "");
       if (cleanPhone.length < 9 || cleanPhone.length > 12) {
-        newErrors.mobile = "يرجى كتابة رقم جوال صحيح (مثال: 0501234567).";
+        newErrors.mobile = "يرجى كتابة رقم جوال سعودي صحيح بصيغة 9665XXXXXXXX.";
       }
     }
 
@@ -126,16 +132,21 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
   const handleSave = (addAnother: boolean) => {
     if (!validate()) return;
 
+    const formattedMobile = form.mobile.trim()
+      ? formatSaudiMobile(form.mobile.trim())
+      : undefined;
+
     const result = addTeacher({
       fullName: form.fullName.trim(),
       username: form.username.trim(),
-      mobile: form.mobile.trim() || undefined,
+      mobile: formattedMobile,
       employmentStatus: form.employmentStatus,
       jobTitle: form.jobTitle.trim() || "معلم",
       teachingField: form.teachingField.trim() || undefined,
       specialty: form.specialty.trim() || undefined,
       totalAbsences: 0,
     });
+
 
     if (!result.success) {
       setErrors((prev) => ({
@@ -356,14 +367,29 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   dir="ltr"
                   value={form.mobile}
                   onChange={(e) => handleChange("mobile", e.target.value)}
-                  placeholder="0501234567"
+                  onBlur={() => {
+                    if (form.mobile.trim()) {
+                      const formatted = formatSaudiMobile(form.mobile);
+                      if (formatted) {
+                        setForm((prev) => ({ ...prev, mobile: formatted }));
+                      }
+                    }
+                  }}
+                  placeholder="966501234567"
                   className={cn(
-                    "w-full px-3.5 py-2.5 rounded-xl border bg-white font-mono text-right focus:outline-none focus:ring-2 transition-all shadow-2xs",
+                    "w-full px-3.5 py-2.5 rounded-xl border bg-white font-mono text-left font-semibold tracking-wider focus:outline-none focus:ring-2 transition-all shadow-2xs",
                     errors.mobile
                       ? "border-rose-400 focus:ring-rose-200"
                       : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
                   )}
                 />
+                <div className="flex items-center justify-between text-[10px] text-slate-400 px-1 pt-0.5">
+                  <span>الصيغة المعتمدة:</span>
+                  <span className="font-mono font-medium text-teal-700 dir-ltr">
+                    9665XXXXXXXX (تحويل تلقائي)
+                  </span>
+                </div>
+
                 {errors.mobile && (
                   <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />

@@ -17,10 +17,12 @@ import {
   FileText,
   Clock,
   Eye,
+  FileCheck,
 } from "lucide-react";
 import { AbsenceInquiry, Teacher } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
 import { printAbsencePdf } from "@/lib/printPdfService";
+import { parseAttachments } from "@/lib/attachments";
 import { cn } from "@/lib/utils";
 
 interface InquiryReviewModalProps {
@@ -95,9 +97,7 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
     }
   };
 
-  const isPdfAttachment =
-    inquiry.attachmentUrl?.includes(".pdf") ||
-    inquiry.attachmentUrl?.startsWith("data:application/pdf");
+  const attachmentsList = parseAttachments(inquiry.attachmentUrl);
 
   return (
     <AnimatePresence>
@@ -233,56 +233,59 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
               <h3 className="text-xs font-bold text-slate-700 flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <Eye className="w-4 h-4 text-[#137a85]" />
-                  <span>مرفق العذر / التقرير الطبي</span>
+                  <span>المرفقات المقدمة ({attachmentsList.length})</span>
                 </span>
-                {inquiry.attachmentUrl && (
-                  <a
-                    href={inquiry.attachmentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-bold text-[#137a85] hover:underline flex items-center gap-1"
-                  >
-                    <span>فتح المرفق بالحجم الكامل</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
               </h3>
 
-              {inquiry.attachmentUrl ? (
-                <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 flex flex-col items-center justify-center p-3 text-center">
-                  {!isPdfAttachment ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={inquiry.attachmentUrl}
-                      alt="تقرير الغياب الطبي"
-                      className="max-h-72 w-auto object-contain rounded-xl border border-slate-200 shadow-xs"
-                    />
-                  ) : (
-                    <div className="w-full flex flex-col gap-3 p-1">
-                      <div className="flex items-center justify-between px-2 pt-1 text-xs">
-                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
-                          <FileDown className="w-4 h-4 text-rose-600" />
-                          <span>تقرير طبي بصيغة PDF</span>
-                        </span>
-                        <a
-                          href={inquiry.attachmentUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 transition-colors shadow-2xs"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>فتح في نافذة كاملة</span>
-                        </a>
+              {attachmentsList.length > 0 ? (
+                <div className="space-y-3">
+                  {attachmentsList.map((att, idx) => {
+                    const isPdf =
+                      att.url.includes(".pdf") ||
+                      att.url.startsWith("data:application/pdf");
+
+                    return (
+                      <div
+                        key={idx}
+                        className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 p-3.5 space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between border-b border-slate-200/60 pb-2">
+                          <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <FileCheck className="w-4 h-4 text-[#137a85]" />
+                            <span>{att.label}</span>
+                          </span>
+                          <a
+                            href={att.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[11px] font-bold text-[#137a85] hover:underline flex items-center gap-1"
+                          >
+                            <span>فتح بالحجم الكامل</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+
+                        {!isPdf ? (
+                          <div className="flex justify-center bg-white p-2 rounded-xl border border-slate-200">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={att.url}
+                              alt={att.label}
+                              className="max-h-64 w-auto object-contain rounded-lg shadow-2xs"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-full h-72 rounded-xl overflow-hidden border border-slate-200 bg-white">
+                            <iframe
+                              src={att.url}
+                              title={att.label}
+                              className="w-full h-full border-0"
+                            />
+                          </div>
+                        )}
                       </div>
-                      <div className="w-full h-80 rounded-xl overflow-hidden border border-slate-200 bg-white shadow-2xs">
-                        <iframe
-                          src={inquiry.attachmentUrl}
-                          title="معاينة تقرير PDF"
-                          className="w-full h-full border-0"
-                        />
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="p-5 rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-center text-xs text-slate-400">

@@ -6,12 +6,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
-  FileText,
   Settings,
-  FileSpreadsheet,
-  Megaphone,
-  HeartPulse,
-  HeartHandshake,
   ChevronDown,
   Menu,
   X,
@@ -63,17 +58,6 @@ export const NAV_ITEMS: NavItem[] = [
     hasChildren: false,
   },
   {
-    id: "teacher-notes",
-    label: "ملاحظات المعلمين",
-    icon: FileText,
-    href: "/teacher-notes",
-    hasChildren: true,
-    children: [
-      { id: "notes-all", label: "جميع الملاحظات", href: "/teacher-notes/all" },
-      { id: "notes-add", label: "إضافة ملاحظة جديدة", href: "/teacher-notes/add" },
-    ],
-  },
-  {
     id: "admin-procedures",
     label: "الإجراءات الإدارية",
     icon: Settings,
@@ -101,51 +85,9 @@ export const NAV_ITEMS: NavItem[] = [
       },
     ],
   },
-  {
-    id: "admin-forms",
-    label: "النماذج الإدارية",
-    icon: FileSpreadsheet,
-    href: "/admin-forms",
-    hasChildren: true,
-    children: [
-      { id: "forms-templates", label: "نماذج التكليف والندب", href: "/admin-forms/templates" },
-      { id: "forms-evaluations", label: "نماذج تقويم الأداء", href: "/admin-forms/evaluations" },
-    ],
-  },
-  {
-    id: "circulars-list",
-    label: "قائمة التعاميم",
-    icon: Megaphone,
-    href: "/circulars",
-    hasChildren: true,
-    children: [
-      { id: "circulars-ministerial", label: "تعاميم الوزارة", href: "/circulars/ministerial" },
-      { id: "circulars-internal", label: "التعاميم الداخلية", href: "/circulars/internal" },
-    ],
-  },
-  {
-    id: "health-cases",
-    label: "الحالات الصحية",
-    icon: HeartPulse,
-    href: "/health-cases",
-    hasChildren: true,
-    children: [
-      { id: "health-reports", label: "التقارير الطبية المعتمدة", href: "/health-cases/reports" },
-      { id: "health-leaves", label: "سجل الإجازات المرضية", href: "/health-cases/leaves" },
-    ],
-  },
-  {
-    id: "social-cases",
-    label: "الحالات الاجتماعية",
-    icon: HeartHandshake,
-    href: "/social-cases",
-    hasChildren: true,
-    children: [
-      { id: "social-urgent", label: "الظروف الطارئة والاستثنائية", href: "/social-cases/urgent" },
-      { id: "social-support", label: "سجلات الرعاية والمواساة", href: "/social-cases/support" },
-    ],
-  },
 ];
+
+
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeSubItemHref,

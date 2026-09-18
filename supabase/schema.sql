@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS public.absence_records (
     type TEXT NOT NULL,
     reason TEXT NOT NULL,
     notes TEXT,
+    attachment_url TEXT,
     timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 

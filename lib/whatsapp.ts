@@ -36,6 +36,41 @@ export function formatSaudiMobile(rawMobile: string | undefined | null): string 
 }
 
 /**
+ * معالجة وتنسيق رقم الجوال أثناء الكتابة واللصق
+ * يحول أي رقم محلي أو دولي تلقائياً إلى صيغة 966XXXXXXXX
+ */
+export function normalizeSaudiMobileInput(raw: string): string {
+  if (!raw) return "";
+
+  // تنظيف أي رموز أو مسافات
+  let digits = raw.replace(/[^\d]/g, "");
+  if (!digits) return "";
+
+  // إزالة الصفرين الدوليين 00966
+  if (digits.startsWith("00966")) {
+    digits = digits.slice(2);
+  }
+
+  // عند كتابة أو لصق 05... يتم تحويلها تلقائياً إلى 9665...
+  if (digits.startsWith("05")) {
+    digits = "9665" + digits.slice(2);
+  } else if (digits.startsWith("5") && !digits.startsWith("966")) {
+    // عند كتابة أو لصق 5... يتم تحويلها إلى 9665...
+    digits = "9665" + digits.slice(1);
+  } else if (digits.startsWith("0") && digits.length === 1) {
+    return "0";
+  }
+
+  // حد أقصى 12 رقماً (صيغة 9665XXXXXXXX)
+  if (digits.startsWith("966") && digits.length > 12) {
+    digits = digits.slice(0, 12);
+  }
+
+  return digits;
+}
+
+
+/**
  * توليد نص الرسالة الرسمية الموجهة للمعلمة
  */
 export function generateInquiryMessage(

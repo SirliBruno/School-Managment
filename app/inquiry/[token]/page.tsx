@@ -27,7 +27,11 @@ import { AbsenceInquiry, AbsenceType } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { cn } from "@/lib/utils";
-
+import {
+  getAttachmentSlotsForType,
+  parseAttachments,
+  InquiryAttachmentItem,
+} from "@/lib/attachments";
 
 const ABSENCE_TYPES: {
   type: AbsenceType;
@@ -36,27 +40,27 @@ const ABSENCE_TYPES: {
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
   {
-    type: "اضطراري",
-    label: "اضطراري",
-    description: "ظرف عائلي أو شخصي طارئ",
-    icon: AlertOctagon,
-  },
-  {
     type: "مرضي",
     label: "مرضي",
-    description: "تقرير طبي معتمد أو إجازة مرضية",
+    description: "مرفق فارس + مرفق التقرير الطبي",
     icon: Stethoscope,
+  },
+  {
+    type: "اضطراري",
+    label: "اضطراري",
+    description: "مرفق فارس",
+    icon: AlertOctagon,
   },
   {
     type: "مرافق",
     label: "مرافق",
-    description: "مرافقة مريض بتقرير طبي",
+    description: "مرفق فارس + مرفق التقرير الطبي",
     icon: Users2,
   },
   {
     type: "أخرى",
-    label: "أخرى",
-    description: "مهمة رسمية أو أسباب استثنائية",
+    label: "أخرى (اكتب بين قوسين نوع الغياب)",
+    description: "مرفق فارس + مرفقات أخرى",
     icon: HelpCircle,
   },
 ];
@@ -73,9 +77,19 @@ export default function TeacherInquiryPage() {
 
   // Form inputs
   const [absenceType, setAbsenceType] = useState<AbsenceType>("مرضي");
+  const [customOtherType, setCustomOtherType] = useState("");
   const [reason, setReason] = useState("");
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [slotFiles, setSlotFiles] = useState<
+    Record<
+      string,
+      {
+        file: File;
+        preview: string | null;
+        compressionRatio: number | null;
+        isCompressing?: boolean;
+      }
+    >
+  >({});
   const [confirmedPledge, setConfirmedPledge] = useState(false);
 
   // Submission State
@@ -83,8 +97,6 @@ export default function TeacherInquiryPage() {
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
-  const [isCompressing, setIsCompressing] = useState(false);
-  const [compressionRatio, setCompressionRatio] = useState<number | null>(null);
 
   // 1. Fetch Inquiry details by token
   useEffect(() => {
@@ -161,8 +173,11 @@ export default function TeacherInquiryPage() {
     fetchInquiry();
   }, [token]);
 
-  // Handle file selection with automatic client-side compression
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle file selection for a specific slot with automatic client-side compression
+  const handleSlotFileChange = async (
+    slotId: string,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -170,65 +185,92 @@ export default function TeacherInquiryPage() {
       file.type === "application/pdf" ||
       file.name.toLowerCase().endsWith(".pdf");
 
-    // 1. فحص ملفات الـ PDF (حد أقصى 3 ميغابايت لحماية مساحة السحابة من الملفات الممسوحة عشوائياً)
+    // 1. فحص ملفات الـ PDF (حد أقصى 3 ميغابايت)
     if (isPdf) {
       const MAX_PDF_SIZE = 3 * 1024 * 1024; // 3MB
       if (file.size > MAX_PDF_SIZE) {
         setFormErrors((prev) => ({
           ...prev,
-          attachment: `حجم ملف الـ PDF كبير (${(
+          [`slot_${slotId}`]: `حجم ملف الـ PDF كبير (${(
             file.size /
             (1024 * 1024)
-          ).toFixed(
-            1
-          )} ميغابايت). الحد الأقصى لملفات PDF هو 3 ميغابايت. نأمل تحميل التقرير الطبي الأصلي مباشرة من منصة صحتي (حجمه خفيف جداً) أو رفع صورة للمستند ليتم ضغطها تلقائياً.`,
+          ).toFixed(1)} ميغابايت). الحد الأقصى لملفات PDF هو 3 ميغابايت.`,
         }));
         return;
       }
     }
 
-    // 2. فحص الصور (يُسمح حتى 20 ميغابايت لأن المحرك سيقوم بضغطها فورياً لأقل من 400 كيلوبايت)
+    // 2. فحص الصور (يُسمح حتى 20 ميغابايت)
     if (!isPdf && file.size > 20 * 1024 * 1024) {
       setFormErrors((prev) => ({
         ...prev,
-        attachment: "حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 20 ميغابايت.",
+        [`slot_${slotId}`]: "حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 20 ميغابايت.",
       }));
       return;
     }
 
-    setFormErrors((prev) => ({ ...prev, attachment: "" }));
+    setFormErrors((prev) => ({ ...prev, [`slot_${slotId}`]: "" }));
 
     if (file.type.startsWith("image/")) {
-      setIsCompressing(true);
+      setSlotFiles((prev) => ({
+        ...prev,
+        [slotId]: {
+          file,
+          preview: null,
+          compressionRatio: null,
+          isCompressing: true,
+        },
+      }));
+
       try {
         const compressed = await compressMedicalReportImage(file);
-        setAttachmentFile(compressed.file);
-        setAttachmentPreview(compressed.previewUrl);
-        setCompressionRatio(compressed.compressionRatio);
+        setSlotFiles((prev) => ({
+          ...prev,
+          [slotId]: {
+            file: compressed.file,
+            preview: compressed.previewUrl,
+            compressionRatio: compressed.compressionRatio,
+            isCompressing: false,
+          },
+        }));
       } catch (err) {
         console.warn("تعذر ضغط الصورة، استخدام الملف الأصلي:", err);
-        setAttachmentFile(file);
         const reader = new FileReader();
-        reader.onload = () => setAttachmentPreview(reader.result as string);
+        reader.onload = () => {
+          setSlotFiles((prev) => ({
+            ...prev,
+            [slotId]: {
+              file,
+              preview: reader.result as string,
+              compressionRatio: null,
+              isCompressing: false,
+            },
+          }));
+        };
         reader.readAsDataURL(file);
-      } finally {
-        setIsCompressing(false);
       }
     } else {
       // PDF or non-image
-      setAttachmentFile(file);
-      setAttachmentPreview(null);
-      setCompressionRatio(null);
+      setSlotFiles((prev) => ({
+        ...prev,
+        [slotId]: {
+          file,
+          preview: null,
+          compressionRatio: null,
+          isCompressing: false,
+        },
+      }));
     }
   };
 
-
-  const removeSelectedFile = () => {
-    setAttachmentFile(null);
-    setAttachmentPreview(null);
-    setCompressionRatio(null);
+  const removeSlotFile = (slotId: string) => {
+    setSlotFiles((prev) => {
+      const next = { ...prev };
+      delete next[slotId];
+      return next;
+    });
+    setFormErrors((prev) => ({ ...prev, [`slot_${slotId}`]: "" }));
   };
-
 
   // Validation
   const validate = (): boolean => {
@@ -240,8 +282,15 @@ export default function TeacherInquiryPage() {
       errors.reason = "يرجى كتابة سبب واضح (5 أحرف على الأقل).";
     }
 
-    if (!attachmentFile) {
-      errors.attachment = "إرفاق التقرير الطبي أو ما يثبت العذر إلزامي لإكمال المساءلة.";
+    if (absenceType === "أخرى" && !customOtherType.trim()) {
+      errors.customOtherType = "يرجى كتابة وتحديد نوع الغياب بين قوسين.";
+    }
+
+    const currentSlots = getAttachmentSlotsForType(absenceType);
+    for (const slot of currentSlots) {
+      if (slot.required && !slotFiles[slot.id]?.file) {
+        errors[`slot_${slot.id}`] = `يرجى إرفاق (${slot.label}) لإكمال المساءلة.`;
+      }
     }
 
     if (!confirmedPledge) {
@@ -258,57 +307,81 @@ export default function TeacherInquiryPage() {
     if (!validate() || !inquiry) return;
 
     setIsSubmitting(true);
-    setUploadProgress("جاري رفع المرفق والتحقق...");
+    setUploadProgress("جاري معالجة ورفع المرفقات والتحقق...");
 
     try {
-      let attachmentUrl = "";
+      const currentSlots = getAttachmentSlotsForType(absenceType);
+      const uploadedAttachments: InquiryAttachmentItem[] = [];
 
-      // 1. Upload attachment to Supabase Storage if configured
-      if (isSupabaseConfigured() && supabase && attachmentFile) {
-        try {
-          const fileExt = attachmentFile.name.split(".").pop() || "jpg";
-          const fileName = `${inquiry.id}_${Date.now()}.${fileExt}`;
-          const filePath = `inquiries/${fileName}`;
+      for (let i = 0; i < currentSlots.length; i++) {
+        const slot = currentSlots[i];
+        const slotData = slotFiles[slot.id];
+        if (!slotData?.file) continue;
 
-          const { data: uploadData, error: uploadErr } = await supabase.storage
-            .from("absence-attachments")
-            .upload(filePath, attachmentFile, {
-              cacheControl: "3600",
-              upsert: true,
-            });
+        setUploadProgress(`جاري رفع (${slot.label}) [${i + 1}/${currentSlots.length}]...`);
+        let finalUrl = "";
 
-          if (!uploadErr && uploadData) {
-            const { data: publicUrlData } = supabase.storage
+        // 1. Upload to Supabase Storage if configured
+        if (isSupabaseConfigured() && supabase) {
+          try {
+            const fileExt = slotData.file.name.split(".").pop() || "jpg";
+            const fileName = `${inquiry.id}_${slot.id}_${Date.now()}.${fileExt}`;
+            const filePath = `inquiries/${fileName}`;
+
+            const { data: uploadData, error: uploadErr } = await supabase.storage
               .from("absence-attachments")
-              .getPublicUrl(filePath);
-            attachmentUrl = publicUrlData.publicUrl;
-          } else {
-            console.warn("تعذر الرفع المباشر لـ Storage، استخدام النسخ الاحتياطي المشفر:", uploadErr);
-          }
-        } catch (storageErr) {
-          console.warn("خطأ خدمة التخزين:", storageErr);
-        }
-      }
+              .upload(filePath, slotData.file, {
+                cacheControl: "3600",
+                upsert: true,
+              });
 
-      // If storage upload failed or not configured, convert file to data URL as reliable fallback
-      if (!attachmentUrl && attachmentFile) {
-        attachmentUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => resolve("");
-          reader.readAsDataURL(attachmentFile);
-        });
+            if (!uploadErr && uploadData) {
+              const { data: publicUrlData } = supabase.storage
+                .from("absence-attachments")
+                .getPublicUrl(filePath);
+              finalUrl = publicUrlData.publicUrl;
+            }
+          } catch (storageErr) {
+            console.warn(`خطأ خدمة التخزين لـ ${slot.label}:`, storageErr);
+          }
+        }
+
+        // 2. Fallback to Data URL if storage fails or not configured
+        if (!finalUrl) {
+          finalUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(slotData.file);
+          });
+        }
+
+        if (finalUrl) {
+          uploadedAttachments.push({
+            slotId: slot.id,
+            label: slot.label,
+            url: finalUrl,
+          });
+        }
       }
 
       setUploadProgress("جاري تسجيل الإفادة الإدارية...");
 
       const submittedAt = new Date().toISOString();
+      const finalAbsenceType =
+        absenceType === "أخرى"
+          ? customOtherType.trim()
+            ? `أخرى (${customOtherType.trim()})`
+            : "أخرى"
+          : absenceType;
+
+      const attachmentPayload = JSON.stringify(uploadedAttachments);
 
       const updatedData: Partial<AbsenceInquiry> = {
         status: "submitted",
-        absenceType,
+        absenceType: finalAbsenceType as AbsenceType,
         teacherReason: reason.trim(),
-        attachmentUrl: attachmentUrl || undefined,
+        attachmentUrl: attachmentPayload,
         submittedAt,
       };
 
@@ -319,9 +392,9 @@ export default function TeacherInquiryPage() {
             .from("absence_inquiries")
             .update({
               status: "submitted",
-              absence_type: absenceType,
+              absence_type: finalAbsenceType,
               teacher_reason: reason.trim(),
-              attachment_url: attachmentUrl || null,
+              attachment_url: attachmentPayload,
               submitted_at: submittedAt,
             })
             .eq("id", inquiry.id);
@@ -477,6 +550,36 @@ export default function TeacherInquiryPage() {
                 {inquiry.teacherReason || reason}
               </p>
             </div>
+            {inquiry.attachmentUrl && (() => {
+              const atts = parseAttachments(inquiry.attachmentUrl);
+              if (atts.length === 0) return null;
+              return (
+                <div className="py-2 border-b border-slate-200/60 text-right">
+                  <span className="text-slate-500 block mb-1.5 font-bold">المرفقات المسلمة ({atts.length}):</span>
+                  <div className="space-y-1.5">
+                    {atts.map((att, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs"
+                      >
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5 truncate">
+                          <FileCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="truncate">{att.label}</span>
+                        </span>
+                        <a
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[11px] font-bold text-[#137a85] hover:underline shrink-0"
+                        >
+                          عرض المرفق
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
             <div className="flex justify-between items-center py-1">
               <span className="text-slate-500">حالة المساءلة:</span>
               <span className="font-bold px-2.5 py-0.5 rounded-lg bg-teal-50 text-[#137a85] border border-teal-200 text-[11px]">
@@ -636,6 +739,39 @@ export default function TeacherInquiryPage() {
                 );
               })}
             </div>
+
+            {/* Custom Other Type Field */}
+            {absenceType === "أخرى" && (
+              <div className="p-3.5 rounded-2xl bg-teal-50/60 border border-teal-200 space-y-1.5 animate-in fade-in">
+                <label
+                  htmlFor={`${formId}-custom-other`}
+                  className="block text-xs font-bold text-slate-800"
+                >
+                  اكتبي نوع الغياب بين قوسين بالتحديد <span className="text-rose-500">*</span>
+                </label>
+                <div className="flex items-center gap-1.5 bg-white px-3 py-2 rounded-xl border border-teal-200">
+                  <span className="font-bold text-[#137a85] text-sm">(</span>
+                  <input
+                    id={`${formId}-custom-other`}
+                    type="text"
+                    value={customOtherType}
+                    onChange={(e) => {
+                      setCustomOtherType(e.target.value);
+                      setFormErrors((prev) => ({ ...prev, customOtherType: "" }));
+                    }}
+                    placeholder="مثال: مهمة رسمية، إجازة وضع، دورة تدريبية..."
+                    className="w-full text-xs sm:text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 text-slate-800 font-semibold"
+                  />
+                  <span className="font-bold text-[#137a85] text-sm">)</span>
+                </div>
+                {formErrors.customOtherType && (
+                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{formErrors.customOtherType}</span>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* 2. Reason for Absence */}
@@ -676,112 +812,157 @@ export default function TeacherInquiryPage() {
             )}
           </div>
 
-          {/* 3. Mandatory Attachment Uploader */}
-          <div className="space-y-2">
+          {/* 3. Dynamic Mandatory Attachments */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-slate-800">
-                مرفق العذر أو التقرير الطبي <span className="text-rose-500">* (إلزامي)</span>
+                المرفقات المطلوبة حسب نوع الغياب <span className="text-rose-500">* (إلزامية)</span>
               </label>
-              <span className="text-[11px] text-slate-400">PDF (حد أقصى 3MB) أو صور مضغوطة</span>
+              <span className="text-[11px] text-slate-400">
+                {getAttachmentSlotsForType(absenceType).length} مرفق مطلوب
+              </span>
             </div>
 
-            {isCompressing ? (
-              <div className="border-2 border-dashed border-teal-300 bg-teal-50/50 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-center animate-pulse">
-                <Loader2 className="w-7 h-7 animate-spin text-[#137a85]" />
-                <p className="text-xs font-bold text-slate-800">
-                  جاري ضغط وتحسين جودة الصورة للمستند الطبي...
-                </p>
-                <p className="text-[11px] text-slate-500">
-                  تقليل استهلاك المساحة السحابية بنسبة تتجاوز 80% مع حفظ وضوح الخط والأختام
-                </p>
-              </div>
-            ) : !attachmentFile ? (
-              <label
-                htmlFor={`${formId}-file`}
-                className={cn(
-                  "border-2 border-dashed rounded-2xl p-5 flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer transition-all hover:bg-slate-50/80",
-                  formErrors.attachment
-                    ? "border-rose-300 bg-rose-50/40"
-                    : "border-slate-300 bg-slate-50/40 hover:border-[#137a85]"
-                )}
-              >
-                <input
-                  id={`${formId}-file`}
-                  type="file"
-                  accept="image/*,application/pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <div className="w-11 h-11 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-800">
-                    اضغطي هنا لاختيار المرفق أو التقاط صورة
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    يدعم تقارير منصة صحتي (PDF حتى 3MB) أو تصوير المستند مباشرة (يتم ضغطه تلقائياً)
-                  </p>
-                </div>
-              </label>
-            ) : (
-              <div className="p-3.5 rounded-2xl bg-teal-50/60 border border-teal-200 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 overflow-hidden">
-                  {attachmentPreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={attachmentPreview}
-                      alt="معاينة المرفق"
-                      className="w-12 h-12 rounded-xl object-cover border border-teal-200 shrink-0"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-teal-100 text-[#137a85] flex items-center justify-center shrink-0">
-                      <FileCheck className="w-6 h-6" />
+            <div className="space-y-3">
+              {getAttachmentSlotsForType(absenceType).map((slot) => {
+                const slotData = slotFiles[slot.id];
+                const slotFile = slotData?.file;
+                const slotPreview = slotData?.preview;
+                const slotCompressing = slotData?.isCompressing;
+                const slotRatio = slotData?.compressionRatio;
+                const slotError = formErrors[`slot_${slot.id}`];
+
+                return (
+                  <div
+                    key={slot.id}
+                    className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white space-y-2.5 shadow-2xs"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+                          {slot.id === "faris" ? (
+                            <Building2 className="w-4 h-4" />
+                          ) : slot.id === "medical" ? (
+                            <Stethoscope className="w-4 h-4" />
+                          ) : (
+                            <FileText className="w-4 h-4" />
+                          )}
+                        </div>
+                        <div>
+                          <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                            <span>{slot.label}</span>
+                            <span className="text-rose-500">*</span>
+                          </h3>
+                          <p className="text-[10px] text-slate-400">{slot.hint}</p>
+                        </div>
+                      </div>
+                      {slotFile && (
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                          تم الإرفاق
+                        </span>
+                      )}
                     </div>
-                  )}
-                  <div className="truncate text-right">
-                    <p className="text-xs font-bold text-slate-800 truncate">
-                      {attachmentFile.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[11px] text-slate-500 font-medium">
-                        {attachmentFile.size > 1024 * 1024
-                          ? `${(attachmentFile.size / (1024 * 1024)).toFixed(2)} ميغابايت`
-                          : `${Math.round(attachmentFile.size / 1024)} كيلوبايت`}
+
+                    {slotCompressing ? (
+                      <div className="border-2 border-dashed border-teal-300 bg-teal-50/50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center animate-pulse">
+                        <Loader2 className="w-6 h-6 animate-spin text-[#137a85]" />
+                        <p className="text-xs font-bold text-slate-800">
+                          جاري ضغط وتحسين جودة الصورة...
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          تقليل استهلاك المساحة السحابية بنسبة تتجاوز 80% مع حفظ وضوح الخط والأختام
+                        </p>
+                      </div>
+                    ) : !slotFile ? (
+                      <label
+                        htmlFor={`${formId}-file-${slot.id}`}
+                        className={cn(
+                          "border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:bg-slate-50/80",
+                          slotError
+                            ? "border-rose-300 bg-rose-50/40"
+                            : "border-slate-300 bg-slate-50/40 hover:border-[#137a85]"
+                        )}
+                      >
+                        <input
+                          id={`${formId}-file-${slot.id}`}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => handleSlotFileChange(slot.id, e)}
+                          className="hidden"
+                        />
+                        <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center">
+                          <Upload className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">
+                            اضغطي هنا لاختيار ({slot.label})
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            PDF (حتى 3MB) أو صورة للمستند (يتم ضغطها فورياً)
+                          </p>
+                        </div>
+                      </label>
+                    ) : (
+                      <div className="p-3 rounded-2xl bg-teal-50/60 border border-teal-200 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 overflow-hidden">
+                          {slotPreview ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={slotPreview}
+                              alt="معاينة المرفق"
+                              className="w-11 h-11 rounded-xl object-cover border border-teal-200 shrink-0"
+                            />
+                          ) : (
+                            <div className="w-11 h-11 rounded-xl bg-teal-100 text-[#137a85] flex items-center justify-center shrink-0">
+                              <FileCheck className="w-5 h-5" />
+                            </div>
+                          )}
+                          <div className="truncate text-right">
+                            <p className="text-xs font-bold text-slate-800 truncate">
+                              {slotFile.name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-[10px] text-slate-500 font-medium">
+                                {slotFile.size > 1024 * 1024
+                                  ? `${(slotFile.size / (1024 * 1024)).toFixed(2)} ميغابايت`
+                                  : `${Math.round(slotFile.size / 1024)} كيلوبايت`}
+                              </p>
+                              {slotRatio !== null && slotRatio > 0 && (
+                                <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                                  تم الضغط {slotRatio}%
+                                </span>
+                              )}
+                              {(slotFile.type === "application/pdf" ||
+                                slotFile.name.toLowerCase().endsWith(".pdf")) && (
+                                <span className="text-[9px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200/60">
+                                  مستند PDF
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => removeSlotFile(slot.id)}
+                          className="w-7 h-7 rounded-xl bg-white text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 flex items-center justify-center transition-colors shrink-0"
+                          title="حذف المرفق"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
+                    {slotError && (
+                      <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        <span>{slotError}</span>
                       </p>
-                      {compressionRatio !== null && compressionRatio > 0 && (
-                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                          تم ضغط الحجم بنسبة {compressionRatio}%
-                        </span>
-                      )}
-                      {(attachmentFile.type === "application/pdf" ||
-                        attachmentFile.name.toLowerCase().endsWith(".pdf")) && (
-                        <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-md border border-rose-200/60">
-                          مستند تقرير PDF
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
-                </div>
-
-
-                <button
-                  type="button"
-                  onClick={removeSelectedFile}
-                  className="w-8 h-8 rounded-xl bg-white text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 flex items-center justify-center transition-colors shrink-0"
-                  title="تغيير الملف"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-
-            {formErrors.attachment && (
-              <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                <span>{formErrors.attachment}</span>
-              </p>
-            )}
+                );
+              })}
+            </div>
           </div>
 
           {/* 4. Acknowledgment Checkbox */}

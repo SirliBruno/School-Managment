@@ -1,4 +1,4 @@
-﻿export interface AbsencePdfData {
+export interface AbsencePdfData {
   teacherName: string;
   username: string;
   specialty: string;
@@ -217,21 +217,98 @@ th,td{vertical-align:middle;padding:8px}
 </div>
 </div>
 <script>
-window.onafterprint=function(){window.close()};
-if(document.fonts){document.fonts.ready.then(function(){setTimeout(function(){window.focus();window.print()},400)})}
-else{window.onload=function(){setTimeout(function(){window.focus();window.print()},800)}}
+var printed = false;
+function doPrint() {
+  if (printed) return;
+  printed = true;
+  try {
+    window.focus();
+    window.print();
+  } catch(e) {}
+}
+window.onafterprint = function() {
+  try {
+    if (window.frameElement && window.frameElement.parentNode) {
+      window.frameElement.parentNode.removeChild(window.frameElement);
+    } else {
+      window.close();
+    }
+  } catch(e) {}
+};
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(function() {
+    setTimeout(doPrint, 350);
+  });
+  setTimeout(doPrint, 1500);
+} else {
+  window.onload = function() {
+    setTimeout(doPrint, 500);
+  };
+  setTimeout(doPrint, 1500);
+}
 </script>
 </body>
 </html>`;
 }
 
 export function printAbsencePdf(data: AbsencePdfData): void {
+  if (typeof window === "undefined") return;
+
   const html = buildHtml(data);
-  const w = window.open("", "_blank");
-  if (!w) {
-    alert("\u064a\u0631\u062c\u0649 \u0627\u0644\u0633\u0645\u0627\u062d \u0628\u0627\u0644\u0646\u0648\u0627\u0641\u0630 \u0627\u0644\u0645\u0646\u0628\u062b\u0642\u0629 \u0641\u064a \u0627\u0644\u0645\u062a\u0635\u0641\u062d \u0644\u062a\u0635\u062f\u064a\u0631 \u0645\u0644\u0641 PDF");
-    return;
+
+  // Strategy 1: Hidden iframe (Bypasses popup blocker completely on all desktop & mobile browsers)
+  try {
+    const frameId = "__absence_print_iframe__";
+    const oldFrame = document.getElementById(frameId);
+    if (oldFrame && oldFrame.parentNode) {
+      oldFrame.parentNode.removeChild(oldFrame);
+    }
+
+    const iframe = document.createElement("iframe");
+    iframe.id = frameId;
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "100%";
+    iframe.style.height = "100%";
+    iframe.style.border = "none";
+    iframe.style.opacity = "0.001";
+    iframe.style.pointerEvents = "none";
+    iframe.style.zIndex = "-9999";
+
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document || iframe.contentDocument;
+    if (doc) {
+      doc.open();
+      doc.write(html);
+      doc.close();
+
+      // Parent-side backup cleanup after 2 minutes
+      setTimeout(() => {
+        const frame = document.getElementById(frameId);
+        if (frame && frame.parentNode) {
+          frame.parentNode.removeChild(frame);
+        }
+      }, 120000);
+      return;
+    }
+  } catch (err) {
+    console.warn("فشلت الطباعة عبر الإطار المخفي، جاري المحاولة عبر نافذة جديدة:", err);
   }
-  w.document.write(html);
-  w.document.close();
+
+  // Strategy 2: Fallback to window.open if iframe is blocked by custom security policies
+  try {
+    const w = window.open("", "_blank");
+    if (w) {
+      w.document.write(html);
+      w.document.close();
+      return;
+    }
+  } catch (openErr) {
+    console.error("فشل فتح نافذة جديدة للطباعة:", openErr);
+  }
+
+  alert("تعذر فتح أمر الطباعة تلقائياً. يرجى مراجعة إعدادات الأمان في المتصفح.");
 }

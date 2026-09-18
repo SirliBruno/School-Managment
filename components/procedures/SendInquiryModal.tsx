@@ -22,6 +22,7 @@ import {
   formatSaudiMobile,
   generateInquiryMessage,
   getWhatsAppDirectUrl,
+  normalizeSaudiMobileInput,
 } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
 
@@ -302,10 +303,10 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   id={`${formId}-mobile`}
                   type="tel"
                   dir="ltr"
-                  placeholder="05XXXXXXXX"
+                  placeholder="9665XXXXXXXX"
                   value={manualMobile}
-                  onChange={(e) => setManualMobile(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs font-mono"
+                  onChange={(e) => setManualMobile(normalizeSaudiMobileInput(e.target.value))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs font-mono font-medium"
                 />
               </div>
               {selectedTeacher && (

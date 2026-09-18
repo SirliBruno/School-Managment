@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { Teacher, ExcelTeacherRow } from "@/types/teacher";
+import { formatSaudiMobile } from "@/lib/whatsapp";
+
 
 export const ExcelImporter: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -261,7 +263,7 @@ export const ExcelImporter: React.FC = () => {
               : `tch-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
           username: usernameVal,
           fullName: fullNameVal,
-          mobile: mobileVal || undefined,
+          mobile: mobileVal ? formatSaudiMobile(mobileVal) : undefined,
           employmentStatus: employmentStatusVal || "دائم",
           jobTitle: jobTitleVal || "معلم",
           teachingField: teachingFieldVal || specialtyVal || undefined,

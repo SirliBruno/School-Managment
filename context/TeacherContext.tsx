@@ -151,6 +151,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               type: (a.type as AbsenceRecord["type"]) || "اضطراري",
               reason: String(a.reason || ""),
               notes: a.notes ? String(a.notes) : undefined,
+              attachmentUrl: (a.attachmentUrl || a.attachment_url)
+                ? String(a.attachmentUrl || a.attachment_url)
+                : undefined,
               timestamp: String(a.timestamp || new Date().toISOString()),
             }));
           }
@@ -204,6 +207,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   type: a.type,
                   reason: a.reason,
                   notes: a.notes || undefined,
+                  attachmentUrl: a.attachment_url || undefined,
                   timestamp: a.timestamp,
                 })
               );
@@ -238,6 +242,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   type: a.type,
                   reason: a.reason,
                   notes: a.notes || null,
+                  attachment_url: a.attachmentUrl || null,
                   timestamp: a.timestamp,
                 }));
                 await supabase.from("absence_records").upsert(toInsertAbsences);
@@ -620,6 +625,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             type: newRecord.type,
             reason: newRecord.reason,
             notes: newRecord.notes || null,
+            attachment_url: newRecord.attachmentUrl || null,
             timestamp: newRecord.timestamp,
           })
           .then(({ error }) => {
@@ -798,6 +804,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             type: resolvedInq.absenceType,
             reason: resolvedInq.teacherReason || "عذر مقبول ومعتمد من الإدارة",
             notes: adminNotes || resolvedInq.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+            attachmentUrl: resolvedInq.attachmentUrl || undefined,
           });
         }
       }

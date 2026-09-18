@@ -18,13 +18,21 @@ import {
   FileDown,
   Loader2,
   MessageCircle,
+  Upload,
+  Paperclip,
+  X,
+  Sparkles,
+  Eye,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
 import { printAbsencePdf } from "@/lib/printPdfService";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { cn } from "@/lib/utils";
+
 
 
 interface AbsenceFormProps {
@@ -81,6 +89,13 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Attachment states
+  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
+  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
+  const [compressionRatio, setCompressionRatio] = useState<number | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Validation & UI states
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,7 +105,6 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
   const [lastSavedRecord, setLastSavedRecord] = useState<AbsenceRecord | null>(null);
   const [lastSavedTeacher, setLastSavedTeacher] = useState<Teacher | null>(null);
-
 
   const formId = useId();
 
@@ -105,6 +119,15 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
     }
   };
 
+  const removeSelectedFile = () => {
+    setAttachmentFile(null);
+    setAttachmentPreview(null);
+    setCompressionRatio(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleReset = () => {
     setSelectedTeacherId("");
     setSelectedTeacher(null);
@@ -112,7 +135,100 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
     setAbsenceType("اضطراري");
     setReason("");
     setNotes("");
+    removeSelectedFile();
     setErrors({});
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name.toLowerCase().endsWith(".pdf");
+
+    if (isPdf) {
+      const MAX_PDF_SIZE = 3 * 1024 * 1024; // 3MB
+      if (file.size > MAX_PDF_SIZE) {
+        setErrors((prev) => ({
+          ...prev,
+          attachment: `حجم ملف الـ PDF كبير (${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت). الحد الأقصى هو 3 ميغابايت.`,
+        }));
+        return;
+      }
+    }
+
+    if (!isPdf && file.size > 20 * 1024 * 1024) {
+      setErrors((prev) => ({
+        ...prev,
+        attachment: "حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 20 ميغابايت.",
+      }));
+      return;
+    }
+
+    setErrors((prev) => ({ ...prev, attachment: "" }));
+
+    if (file.type.startsWith("image/")) {
+      setIsCompressing(true);
+      try {
+        const compressed = await compressMedicalReportImage(file);
+        setAttachmentFile(compressed.file);
+        setAttachmentPreview(compressed.previewUrl);
+        setCompressionRatio(compressed.compressionRatio);
+      } catch (err) {
+        console.warn("تعذر ضغط الصورة، استخدام الملف الأصلي:", err);
+        setAttachmentFile(file);
+        const reader = new FileReader();
+        reader.onload = () => setAttachmentPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } finally {
+        setIsCompressing(false);
+      }
+    } else {
+      setAttachmentFile(file);
+      setAttachmentPreview(null);
+      setCompressionRatio(null);
+    }
+  };
+
+  const uploadAttachment = async (): Promise<string | undefined> => {
+    if (!attachmentFile) return undefined;
+
+    let publicUrl = "";
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const fileExt = attachmentFile.name.split(".").pop() || "jpg";
+        const fileName = `manual_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${fileExt}`;
+        const filePath = `manual-records/${fileName}`;
+
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from("absence-attachments")
+          .upload(filePath, attachmentFile, {
+            cacheControl: "3600",
+            upsert: true,
+          });
+
+        if (!uploadErr && uploadData) {
+          const { data: urlData } = supabase.storage
+            .from("absence-attachments")
+            .getPublicUrl(filePath);
+          publicUrl = urlData.publicUrl;
+        }
+      } catch (e) {
+        console.warn("خطأ خدمة التخزين:", e);
+      }
+    }
+
+    if (!publicUrl && attachmentFile) {
+      publicUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => resolve("");
+        reader.readAsDataURL(attachmentFile);
+      });
+    }
+
+    return publicUrl || undefined;
   };
 
   const validate = (): boolean => {
@@ -136,13 +252,15 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const saveRecord = (): AbsenceRecord | null => {
+  const saveRecord = async (): Promise<AbsenceRecord | null> => {
     if (!validate() || !selectedTeacher) return null;
 
     const teacherSnapshot = {
       ...selectedTeacher,
       totalAbsences: (selectedTeacher.totalAbsences || 0) + 1,
     };
+
+    const attachmentUrl = await uploadAttachment();
 
     const newRecord = recordAbsence({
       teacherId: selectedTeacher.id,
@@ -153,6 +271,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       type: absenceType,
       reason: reason.trim(),
       notes: notes.trim() || undefined,
+      attachmentUrl,
     });
 
     setLastSavedRecord(newRecord);
@@ -161,12 +280,12 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
     return newRecord;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setIsSubmitting(true);
     try {
-      const newRecord = saveRecord();
+      const newRecord = await saveRecord();
       if (!newRecord) {
         setIsSubmitting(false);
         return;
@@ -196,24 +315,11 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
     setIsExportingDirect(true);
     try {
-      const teacherSnapshot = {
-        ...selectedTeacher,
-        totalAbsences: (selectedTeacher.totalAbsences || 0) + 1,
-      };
-
-      const newRecord = recordAbsence({
-        teacherId: selectedTeacher.id,
-        teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
-        jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
-        specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
-        date: absenceDate,
-        type: absenceType,
-        reason: reason.trim(),
-        notes: notes.trim() || undefined,
-      });
-
-      setLastSavedRecord(newRecord);
-      setLastSavedTeacher(teacherSnapshot);
+      const newRecord = await saveRecord();
+      if (!newRecord) {
+        setIsExportingDirect(false);
+        return;
+      }
 
       // Send directly to print service
       try {
@@ -221,9 +327,9 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
           teacherName: newRecord.teacherName,
           username: newRecord.jobNumber,
           specialty: newRecord.specialty,
-          jobTitle: teacherSnapshot.jobTitle || "معلم",
-          employmentStatus: teacherSnapshot.employmentStatus || "دائم",
-          absenceCount: teacherSnapshot.totalAbsences || 1,
+          jobTitle: selectedTeacher.jobTitle || "معلم",
+          employmentStatus: selectedTeacher.employmentStatus || "دائم",
+          absenceCount: (selectedTeacher.totalAbsences || 0) + 1,
           absenceDate: newRecord.date,
           absenceType: newRecord.type,
           absenceReason: newRecord.reason,
@@ -512,6 +618,125 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             placeholder="أي ملاحظات تخص الحصص المعوضة، إشعار ولي الأمر، أو المرفقات الإدارية..."
             className="w-full p-3.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#137a85] focus:ring-[#137a85]/20 transition-all shadow-2xs resize-none"
           />
+        </div>
+
+        {/* Row 5: Attachments (Optional) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label
+              htmlFor={`${formId}-attachment`}
+              className="block text-xs font-bold text-slate-700 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Paperclip className="w-3.5 h-3.5 text-[#137a85]" />
+              <span>المرفقات والتقارير الطبية (اختياري)</span>
+            </label>
+            <span className="text-[11px] text-slate-400">
+              يدعم صور الجوال والتقارير بصيغة PDF
+            </span>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf,application/pdf"
+            onChange={handleFileChange}
+            className="hidden"
+            id={`${formId}-attachment`}
+          />
+
+          {!attachmentFile ? (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className={cn(
+                "border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 group",
+                errors.attachment
+                  ? "border-rose-300 bg-rose-50/40"
+                  : "border-slate-200 hover:border-[#137a85] bg-slate-50/50 hover:bg-teal-50/20"
+              )}
+            >
+              <div className="w-10 h-10 rounded-xl bg-white text-slate-500 group-hover:text-[#137a85] group-hover:scale-105 flex items-center justify-center shadow-xs border border-slate-100 transition-all">
+                <Upload className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-700 group-hover:text-[#137a85] transition-colors">
+                  انقري هنا لإرفاق تقرير طبي، إجازة صحتي، أو مستند عذر
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  الصور تُضغط تلقائياً لتوفير المساحة • الحد الأقصى للـ PDF هو 3 ميغابايت
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3.5 rounded-2xl border border-teal-200 bg-teal-50/40 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {attachmentPreview ? (
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-teal-300 shrink-0 bg-white shadow-2xs">
+                    <img
+                      src={attachmentPreview}
+                      alt="معاينة المرفق"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 font-bold text-xs border border-rose-200">
+                    PDF
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-slate-800 truncate" title={attachmentFile.name}>
+                    {attachmentFile.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] font-mono text-slate-500">
+                      {(attachmentFile.size / 1024).toFixed(0)} كيلوبايت
+                    </span>
+                    {compressionRatio !== null && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                        <Sparkles className="w-3 h-3" />
+                        <span>وفرت {compressionRatio}%</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                {attachmentPreview && (
+                  <a
+                    href={attachmentPreview}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
+                    title="معاينة المرفق بالحجم الكامل"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={removeSelectedFile}
+                  className="p-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 transition-colors cursor-pointer"
+                  title="حذف هذا المرفق"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isCompressing && (
+            <div className="flex items-center gap-2 text-xs text-teal-700 font-semibold px-1">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              <span>جاري تحسين وضغط المستند المرفق تلقائياً...</span>
+            </div>
+          )}
+
+          {errors.attachment && (
+            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{errors.attachment}</span>
+            </p>
+          )}
         </div>
 
         {/* Form Action Buttons */}

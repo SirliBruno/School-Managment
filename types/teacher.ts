@@ -37,7 +37,7 @@ export interface ExcelTeacherRow {
   [key: string]: unknown;
 }
 
-export type AbsenceType = "اضطراري" | "مرضي" | "مرافق" | "أخرى";
+export type AbsenceType = "اضطراري" | "مرضي" | "مرافق" | "أخرى" | (string & {});
 
 export interface AbsenceRecord {
   id: string;
@@ -49,6 +49,7 @@ export interface AbsenceRecord {
   type: AbsenceType;
   reason: string;
   notes?: string;
+  attachmentUrl?: string;
   timestamp: string;
 }
 
