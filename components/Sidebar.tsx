@@ -14,6 +14,7 @@ import {
   LogOut,
   KeyRound,
   ShieldCheck,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -335,14 +336,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Footer Branding */}
-      <div className="p-4 border-t border-teal-600/40 bg-black/10 text-center">
+      {/* Footer Branding & Developer Credit */}
+      <div className="p-3.5 border-t border-teal-600/40 bg-black/15 text-center">
         <p className="text-[11px] text-teal-100 font-medium">
           نظام الإدارة المدرسية • الإصدار 1.0
         </p>
-        <p className="text-[10px] text-teal-200/70 mt-0.5">
-          المملكة العربية السعودية
-        </p>
+        <div className="mt-2 pt-2 border-t border-teal-600/30 flex flex-col items-center gap-1">
+          <span className="text-[10px] text-teal-200/80 font-medium flex items-center justify-center gap-1">
+            <span>تطوير:</span>
+            <span className="font-bold text-white">محمد هارون</span>
+          </span>
+          <a
+            href="https://wa.me/966557013720"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-teal-800/60 hover:bg-teal-700/80 text-teal-100 hover:text-white text-[10px] font-semibold transition-colors border border-teal-500/30 group mt-0.5"
+            title="تواصل مع المطور عبر الواتساب"
+          >
+            <MessageCircle className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
+            <span dir="ltr" className="font-mono">0557013720</span>
+          </a>
+        </div>
       </div>
     </div>
   );
