@@ -482,7 +482,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   setErrors((prev) => ({ ...prev, date: "" }));
                 }}
                 className={cn(
-                  "w-full px-3.5 py-2.5 rounded-xl border text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-2xs",
+                  "w-full px-3.5 py-2.5 min-h-[48px] rounded-xl border text-base md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-2xs",
                   errors.date
                     ? "border-rose-400 focus:ring-rose-200"
                     : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
@@ -588,7 +588,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             }}
             placeholder="اكتبي سبب الغياب الموضح من المعلمة أو سبب رصد المساءلة بالتفصيل..."
             className={cn(
-              "w-full p-3.5 rounded-xl border text-xs md:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
+              "w-full p-3.5 min-h-[96px] rounded-xl border text-base md:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
               errors.reason
                 ? "border-rose-400 focus:ring-rose-200"
                 : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
@@ -616,7 +616,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="أي ملاحظات تخص الحصص المعوضة، إشعار ولي الأمر، أو المرفقات الإدارية..."
-            className="w-full p-3.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#137a85] focus:ring-[#137a85]/20 transition-all shadow-2xs resize-none"
+            className="w-full p-3.5 min-h-[80px] rounded-xl border border-slate-200 text-base md:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#137a85] focus:ring-[#137a85]/20 transition-all shadow-2xs resize-none"
           />
         </div>
 
@@ -746,7 +746,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             type="button"
             onClick={handleReset}
             disabled={isSubmitting || isExportingDirect}
-            className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            className="w-full sm:w-auto min-h-[48px] px-5 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
           >
             <RotateCcw className="w-4 h-4 text-slate-400" />
             <span>تفريغ الحقول</span>
@@ -757,7 +757,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             type="button"
             onClick={handleSaveAndExportPdf}
             disabled={isSubmitting || isExportingDirect}
-            className="px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] disabled:opacity-60"
+            className="w-full sm:w-auto min-h-[48px] px-5 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] disabled:opacity-60"
           >
             {isExportingDirect ? (
               <Loader2 className="w-4 h-4 animate-spin text-[#137a85]" />
@@ -771,7 +771,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             whileTap={{ scale: 0.96 }}
             type="submit"
             disabled={isSubmitting || isExportingDirect}
-            className="px-7 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2 disabled:opacity-60"
+            className="w-full sm:w-auto min-h-[48px] px-7 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2 disabled:opacity-60"
           >
             <Save className="w-4 h-4 text-teal-100" />
             <span>{isSubmitting ? "جاري الحفظ..." : "حفظ الإجراء"}</span>

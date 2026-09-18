@@ -49,7 +49,7 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
 
   // التخطيط الكامل للمنصة الإدارية المحمية
   return (
-    <div className="flex min-h-screen">
+    <div className="flex flex-col lg:flex-row min-h-screen">
       {/* القائمة الجانبية على اليمين */}
       <Sidebar />
 

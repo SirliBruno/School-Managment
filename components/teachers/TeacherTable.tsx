@@ -201,7 +201,7 @@ export const TeacherTable: React.FC = () => {
             whileTap={{ scale: 0.96 }}
             type="button"
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs md:text-sm font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-sm hover:shadow transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-sm hover:shadow transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2"
           >
             <UserPlus className="w-4 h-4 text-teal-100" />
             <span>إضافة معلمة يدوياً</span>
@@ -277,9 +277,10 @@ export const TeacherTable: React.FC = () => {
             </button>
           </div>
         ) : (
-          /* Populated 7-Column Table */
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs md:text-sm">
+          <>
+            {/* Desktop / Tablet Table View (md+) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-right text-xs md:text-sm">
               <thead className="bg-slate-50/90 text-slate-700 font-bold border-b border-slate-200 select-none">
                 <tr>
                   <th scope="col" className="py-3.5 px-4 text-center w-12">
@@ -477,6 +478,153 @@ export const TeacherTable: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+            {/* Mobile Card List View (< md) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {filteredTeachers.map((teacher, index) => {
+                const isContract = teacher.employmentStatus === "عقد";
+
+                return (
+                  <motion.div
+                    key={teacher.id}
+                    custom={index}
+                    variants={rowVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition-colors"
+                  >
+                    {/* Top Header: Avatar + Name + Status */}
+                    <div className="flex items-start justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTeacherForProfile(teacher)}
+                        className="flex items-center gap-3 text-right group cursor-pointer focus:outline-none"
+                      >
+                        <div className="w-10 h-10 rounded-full bg-teal-50 text-[#137a85] flex items-center justify-center font-bold text-sm shrink-0 border border-teal-100 group-hover:bg-[#137a85] group-hover:text-white transition-colors">
+                          {(teacher.fullName || teacher.name || "م").charAt(0)}
+                        </div>
+                        <div>
+                          <span className="font-bold text-sm text-slate-900 block leading-tight group-hover:text-[#137a85]">
+                            {teacher.fullName || teacher.name}
+                          </span>
+                          <span className="text-[11px] text-slate-400 font-mono">
+                            {teacher.username || teacher.jobNumber}
+                          </span>
+                        </div>
+                      </button>
+
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0",
+                          isContract
+                            ? "bg-amber-50 text-amber-800 border-amber-300"
+                            : "bg-emerald-50 text-emerald-800 border-emerald-300"
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "w-1.5 h-1.5 rounded-full",
+                            isContract ? "bg-amber-500" : "bg-emerald-500"
+                          )}
+                        />
+                        <span>{teacher.employmentStatus || "دائم"}</span>
+                      </span>
+                    </div>
+
+                    {/* Details Box */}
+                    <div className="bg-slate-50 rounded-xl p-3 space-y-2 text-xs">
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="text-slate-400">المسمى والتخصص:</span>
+                        <span className="font-semibold text-slate-800">
+                          {teacher.specialty || teacher.teachingField || "عام"} ({teacher.jobTitle || "معلم"})
+                        </span>
+                      </div>
+
+                      {teacher.teachingField && (
+                        <div className="flex items-center justify-between text-slate-600">
+                          <span className="text-slate-400">مجال التدريس:</span>
+                          <span className="font-medium text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                            {teacher.teachingField}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between text-slate-600">
+                        <span className="text-slate-400">رقم الجوال:</span>
+                        {teacher.mobile ? (
+                          <a
+                            href={`tel:${teacher.mobile}`}
+                            className="font-mono text-slate-800 font-medium flex items-center gap-1 hover:text-[#137a85]"
+                            dir="ltr"
+                          >
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            <span>{teacher.mobile}</span>
+                          </a>
+                        ) : (
+                          <span className="text-slate-300">—</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                        <span className="text-slate-400">حالات الغياب المسجلة:</span>
+                        <span
+                          className={cn(
+                            "inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold tabular-nums border",
+                            (teacher.totalAbsences || 0) === 0
+                              ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                              : (teacher.totalAbsences || 0) <= 2
+                              ? "bg-amber-50 text-amber-800 border-amber-300"
+                              : "bg-rose-50 text-rose-800 border-rose-300"
+                          )}
+                        >
+                          {teacher.totalAbsences || 0} حالة
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-3 gap-2 pt-1">
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => setSelectedTeacherForProfile(teacher)}
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#137a85] bg-teal-50 hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                        title="عرض الملف"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>الملف</span>
+                      </motion.button>
+
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => {
+                          setInquiryTeacherId(teacher.id);
+                          setIsSendInquiryModalOpen(true);
+                        }}
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer"
+                        title="مساءلة واتساب"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" />
+                        <span>مساءلة</span>
+                      </motion.button>
+
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
+                        onClick={() => setTeacherToDelete(teacher)}
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50/60 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                        title="حذف المعلمة"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>حذف</span>
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         {/* Table Footer */}

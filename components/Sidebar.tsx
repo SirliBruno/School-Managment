@@ -15,6 +15,7 @@ import {
   KeyRound,
   ShieldCheck,
   MessageCircle,
+  Building2,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -105,6 +106,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+
+  // Auto-close mobile drawer on route changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (isMobileOpen) {
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [isMobileOpen]);
 
   // Close mobile drawer on Escape key
   useEffect(() => {
@@ -363,19 +380,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Toggle Floating Button */}
-      <div className="lg:hidden fixed top-3 right-3 z-50">
+      {/* Mobile Sticky Top Header Bar */}
+      <header className="lg:hidden sticky top-0 z-40 bg-[#137a85] text-white px-4 py-3 shadow-md flex items-center justify-between">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-lg p-0.5"
+          aria-label="الانتقال إلى لوحة التحكم الرئيسية"
+        >
+          <div className="p-2 rounded-xl bg-white/10 text-white flex items-center justify-center">
+            <Users className="w-5 h-5" aria-hidden="true" />
+          </div>
+          <div>
+            <span className="font-bold text-sm tracking-wide block leading-tight">
+              نظام الإدارة المدرسية
+            </span>
+            <span className="text-[10px] text-teal-100 font-medium">
+              بوابة وكيلة الشؤون التعليمية
+            </span>
+          </div>
+        </Link>
+
         <motion.button
           whileTap={{ scale: 0.92 }}
           type="button"
           onClick={() => setIsMobileOpen(true)}
-          className="p-2.5 rounded-xl bg-[#137a85] text-white shadow-lg hover:bg-teal-700 transition-all focus:outline-none focus:ring-2 focus:ring-teal-400"
+          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
           aria-label="فتح القائمة الجانبية"
           aria-expanded={isMobileOpen}
         >
           <Menu className="w-5 h-5" aria-hidden="true" />
         </motion.button>
-      </div>
+      </header>
 
       {/* Desktop Persistent Sidebar (Right side in RTL) */}
       <aside

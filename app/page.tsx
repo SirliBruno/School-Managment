@@ -247,7 +247,7 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* Main Content Body */}
-      <main className="flex-1 p-6 lg:p-8 space-y-8 max-w-7xl w-full mx-auto">
+      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl w-full mx-auto">
         {/* Section 1: KPI Cards */}
         <section aria-labelledby="kpi-heading">
           <div className="mb-4">
@@ -402,95 +402,41 @@ export default function DashboardPage() {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 select-none">
-                  <tr>
-                    <th scope="col" className="py-3 px-4">#</th>
-                    <th scope="col" className="py-3 px-4">اسم المعلمة</th>
-                    <th scope="col" className="py-3 px-4">التخصص</th>
-                    <th scope="col" className="py-3 px-4">طبيعة الغياب</th>
-                    <th scope="col" className="py-3 px-4">تاريخ الغياب</th>
-                    <th scope="col" className="py-3 px-4">السبب المسجل</th>
-                    <th scope="col" className="py-3 px-4 text-center">الإجراءات والملف</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredRecentAbsences.map((item, idx) => {
-                    const style =
-                      TYPE_STYLES[item.type] || TYPE_STYLES["أخرى"];
-                    const isExporting = generatingId === item.id;
+            <>
+              {/* Desktop / Tablet Table View (md+) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 select-none">
+                    <tr>
+                      <th scope="col" className="py-3 px-4">#</th>
+                      <th scope="col" className="py-3 px-4">اسم المعلمة</th>
+                      <th scope="col" className="py-3 px-4">التخصص</th>
+                      <th scope="col" className="py-3 px-4">طبيعة الغياب</th>
+                      <th scope="col" className="py-3 px-4">تاريخ الغياب</th>
+                      <th scope="col" className="py-3 px-4">السبب المسجل</th>
+                      <th scope="col" className="py-3 px-4 text-center">الإجراءات والملف</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredRecentAbsences.map((item, idx) => {
+                      const style =
+                        TYPE_STYLES[item.type] || TYPE_STYLES["أخرى"];
+                      const isExporting = generatingId === item.id;
 
-                    return (
-                      <motion.tr
-                        key={item.id}
-                        custom={idx}
-                        variants={tableRowVariants}
-                        initial="hidden"
-                        animate="visible"
-                        className="hover:bg-slate-50/80 transition-colors duration-150"
-                      >
-                        <td className="py-3 px-4 font-mono text-slate-400">
-                          {idx + 1}
-                        </td>
-                        <td className="py-3 px-4 font-bold text-slate-900">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              openTeacherProfileByName(
-                                item.teacherName,
-                                item.teacherId
-                              )
-                            }
-                            className="text-right hover:text-[#137a85] hover:underline cursor-pointer flex items-center gap-2 group"
-                            title="عرض ملف المعلمة وسجلها التراكمي"
-                          >
-                            <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[11px] group-hover:bg-[#137a85] group-hover:text-white transition-colors">
-                              {item.teacherName.charAt(0)}
-                            </div>
-                            <span>{item.teacherName}</span>
-                          </button>
-                        </td>
-                        <td className="py-3 px-4 text-slate-600">
-                          {item.specialty}
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={cn(
-                              "inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border",
-                              style.bg,
-                              style.text,
-                              style.border
-                            )}
-                          >
-                            {item.type}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-600 font-mono">
-                          {item.date}
-                        </td>
-                        <td className="py-3 px-4 text-slate-700 max-w-xs truncate font-medium">
-                          {item.reason}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              type="button"
-                              onClick={() => handleExportPdf(item)}
-                              disabled={isExporting}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
-                              title="تصدير استمارة مساءلة الغياب الرسمية PDF"
-                            >
-                              {isExporting ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <FileDown className="w-3.5 h-3.5" />
-                              )}
-                              <span>PDF</span>
-                            </motion.button>
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
+                      return (
+                        <motion.tr
+                          key={item.id}
+                          custom={idx}
+                          variants={tableRowVariants}
+                          initial="hidden"
+                          animate="visible"
+                          className="hover:bg-slate-50/80 transition-colors duration-150"
+                        >
+                          <td className="py-3 px-4 font-mono text-slate-400">
+                            {idx + 1}
+                          </td>
+                          <td className="py-3 px-4 font-bold text-slate-900">
+                            <button
                               type="button"
                               onClick={() =>
                                 openTeacherProfileByName(
@@ -498,20 +444,187 @@ export default function DashboardPage() {
                                   item.teacherId
                                 )
                               }
-                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                              title="عرض ملف المعلمة"
+                              className="text-right hover:text-[#137a85] hover:underline cursor-pointer flex items-center gap-2 group"
+                              title="عرض ملف المعلمة وسجلها التراكمي"
                             >
-                              <Eye className="w-3.5 h-3.5 text-slate-500" />
-                              <span>الملف</span>
-                            </motion.button>
+                              <div className="w-6 h-6 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-[11px] group-hover:bg-[#137a85] group-hover:text-white transition-colors">
+                                {item.teacherName.charAt(0)}
+                              </div>
+                              <span>{item.teacherName}</span>
+                            </button>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600">
+                            {item.specialty}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={cn(
+                                "inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border",
+                                style.bg,
+                                style.text,
+                                style.border
+                              )}
+                            >
+                              {item.type}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-600 font-mono">
+                            {item.date}
+                          </td>
+                          <td className="py-3 px-4 text-slate-700 max-w-xs truncate font-medium">
+                            {item.reason}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            <div className="flex items-center justify-center gap-1.5">
+                              <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                type="button"
+                                onClick={() => handleExportPdf(item)}
+                                disabled={isExporting}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
+                                title="تصدير استمارة مساءلة الغياب الرسمية PDF"
+                              >
+                                {isExporting ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <FileDown className="w-3.5 h-3.5" />
+                                )}
+                                <span>PDF</span>
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                type="button"
+                                onClick={() =>
+                                  openTeacherProfileByName(
+                                    item.teacherName,
+                                    item.teacherId
+                                  )
+                                }
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                                title="عرض ملف المعلمة"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-slate-500" />
+                                <span>الملف</span>
+                              </motion.button>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile Card List View (< md) */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {filteredRecentAbsences.map((item, idx) => {
+                  const style =
+                    TYPE_STYLES[item.type] || TYPE_STYLES["أخرى"];
+                  const isExporting = generatingId === item.id;
+
+                  return (
+                    <motion.div
+                      key={item.id}
+                      custom={idx}
+                      variants={tableRowVariants}
+                      initial="hidden"
+                      animate="visible"
+                      className="p-4 space-y-3 bg-white hover:bg-slate-50/50 transition-colors"
+                    >
+                      {/* Top Row: Teacher Avatar + Name + Type Badge */}
+                      <div className="flex items-start justify-between gap-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openTeacherProfileByName(
+                              item.teacherName,
+                              item.teacherId
+                            )
+                          }
+                          className="flex items-center gap-2.5 text-right hover:text-[#137a85] cursor-pointer"
+                        >
+                          <div className="w-9 h-9 rounded-full bg-teal-50 text-[#137a85] flex items-center justify-center font-bold text-sm shrink-0 border border-teal-100">
+                            {item.teacherName.charAt(0)}
                           </div>
-                        </td>
-                      </motion.tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          <div>
+                            <span className="font-bold text-sm text-slate-900 block leading-tight">
+                              {item.teacherName}
+                            </span>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              {item.specialty} • {item.jobNumber}
+                            </span>
+                          </div>
+                        </button>
+
+                        <span
+                          className={cn(
+                            "inline-block px-2.5 py-1 rounded-full text-xs font-bold border shrink-0",
+                            style.bg,
+                            style.text,
+                            style.border
+                          )}
+                        >
+                          {item.type}
+                        </span>
+                      </div>
+
+                      {/* Middle Details: Date & Reason */}
+                      <div className="bg-slate-50 rounded-xl p-2.5 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between text-slate-500">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            <span>تاريخ الغياب:</span>
+                          </span>
+                          <span className="font-mono font-semibold text-slate-700 tabular-nums">
+                            {item.date}
+                          </span>
+                        </div>
+
+                        <div className="text-slate-700 pt-1 border-t border-slate-200/60">
+                          <span className="text-slate-400 font-medium ml-1">السبب:</span>
+                          <span className="font-medium">{item.reason}</span>
+                        </div>
+                      </div>
+
+                      {/* Bottom Actions: Full-Width PDF & Profile View */}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() => handleExportPdf(item)}
+                          disabled={isExporting}
+                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
+                          title="تصدير استمارة مساءلة الغياب الرسمية PDF"
+                        >
+                          {isExporting ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <FileDown className="w-4 h-4" />
+                          )}
+                          <span>{isExporting ? "جاري التصدير..." : "استمارة PDF"}</span>
+                        </motion.button>
+
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() =>
+                            openTeacherProfileByName(
+                              item.teacherName,
+                              item.teacherId
+                            )
+                          }
+                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                          title="عرض ملف المعلمة"
+                        >
+                          <Eye className="w-4 h-4 text-slate-500" />
+                          <span>عرض الملف</span>
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {/* Table Footer */}
