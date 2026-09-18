@@ -18,6 +18,7 @@ import {
   BarChart3,
   FileDown,
   Sparkles,
+  MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -293,10 +294,27 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* شارة الأمان السفلية للجوال */}
-          <div className="md:hidden mt-6 text-center text-slate-400 text-xs flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-            <span>نظام إدارة مدرسية آمن • المملكة العربية السعودية</span>
+          {/* شارة الأمان وتوقيع المطور */}
+          <div className="mt-6 text-center text-xs flex flex-col items-center gap-2">
+            <div className="flex items-center justify-center gap-1.5 text-slate-500 text-[11px]">
+              <span>تطوير:</span>
+              <strong className="font-bold text-slate-800">محمد هارون</strong>
+              <span className="text-slate-300">•</span>
+              <a
+                href="https://wa.me/966557013720"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 font-bold font-mono transition-colors"
+                title="تواصل مع المطور عبر الواتساب"
+              >
+                <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                <span dir="ltr">0557013720</span>
+              </a>
+            </div>
+            <div className="text-slate-400 text-[10px] flex items-center justify-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-teal-600/80" />
+              <span>نظام إدارة مدرسية آمن • المملكة العربية السعودية</span>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -369,13 +387,28 @@ export default function LoginPage() {
           </motion.div>
         </div>
 
-        {/* التذييل الأمني الرسمي */}
-        <div className="relative z-10 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-teal-200/60 font-medium">
+        {/* التذييل الأمني الرسمي وتوقيع المطور */}
+        <div className="relative z-10 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-teal-200/70 font-medium">
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-teal-400 shrink-0" />
             <span>نظام إدارة مدرسية آمن • المملكة العربية السعودية</span>
           </div>
-          <span className="text-[11px] font-mono text-teal-300/60">الإصدار 1.0</span>
+
+          <div className="flex items-center gap-2">
+            <span className="text-teal-200/80 text-[11px]">
+              تطوير: <strong className="text-white font-bold">محمد هارون</strong>
+            </span>
+            <a
+              href="https://wa.me/966557013720"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[11px] font-mono font-bold transition-all border border-white/15 group"
+              title="تواصل مع المطور عبر الواتساب"
+            >
+              <MessageCircle className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
+              <span dir="ltr">0557013720</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
