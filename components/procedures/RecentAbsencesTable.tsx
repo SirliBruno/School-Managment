@@ -150,7 +150,7 @@ export const RecentAbsencesTable: React.FC = () => {
               آخر 5 مساءلات غياب مسجلة
             </h3>
             <p className="text-[11px] text-slate-500">
-              تصدير الاستمارة الرسمية لوزارة التعليم (نموذج رقم ٢٠) بصيغة PDF فورياً
+              تصدير استمارة مساءلة الغياب الرسمية بصيغة PDF فورياً
             </p>
           </div>
         </div>
