@@ -100,6 +100,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 
   // Close modal on Escape key
   useEffect(() => {
+    const timer = feedbackTimeoutRef.current;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         onClose();
@@ -108,7 +109,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      if (timer) clearTimeout(timer);
     };
   }, [onClose]);
 

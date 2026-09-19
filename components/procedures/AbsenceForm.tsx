@@ -671,6 +671,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <div className="flex items-center gap-3 min-w-0">
                 {attachmentPreview ? (
                   <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-teal-300 shrink-0 bg-white shadow-2xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={attachmentPreview}
                       alt="معاينة المرفق"
