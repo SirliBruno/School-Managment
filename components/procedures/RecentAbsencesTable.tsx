@@ -15,9 +15,13 @@ import {
   Paperclip,
   ExternalLink,
   Info,
+  Pencil,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
+import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { parseAttachments } from "@/lib/attachments";
 import { cn } from "@/lib/utils";
@@ -62,15 +66,46 @@ const rowVariants = {
 };
 
 export const RecentAbsencesTable: React.FC = () => {
-  const { absenceRecords, teachers, deleteAbsenceRecord } = useTeachers();
+  const { absenceRecords, teachers, deleteAbsenceRecord, restoreAbsenceRecord } =
+    useTeachers();
+  const { showToast } = useToast();
 
   const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(
+    null
+  );
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const confirmDeleteRecord = () => {
+    if (recordToDelete) {
+      const rec = recordToDelete;
+      const { deletedRecord } = deleteAbsenceRecord(rec.id);
+      setRecordToDelete(null);
+
+      showToast({
+        message: `تم حذف سجل غياب المعلمة (${rec.teacherName}) بتاريخ (${rec.date}).`,
+        type: "success",
+        action: deletedRecord
+          ? {
+              label: "تراجع",
+              onClick: () => {
+                restoreAbsenceRecord(deletedRecord);
+                showToast({
+                  message: `تم استرجاع سجل غياب المعلمة (${rec.teacherName}) بنجاح.`,
+                  type: "info",
+                });
+              },
+            }
+          : undefined,
+      });
+    }
+  };
 
   // Clean timeout on unmount
   useEffect(() => {
@@ -314,6 +349,17 @@ export const RecentAbsencesTable: React.FC = () => {
                           <span>{isExporting ? "جاري التصدير..." : "تصدير PDF"}</span>
                         </motion.button>
 
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() => setRecordToEdit(record)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                          title="تعديل سجل الغياب"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>تعديل</span>
+                        </motion.button>
+
                         {record.attachmentUrl && (() => {
                           const atts = parseAttachments(record.attachmentUrl);
                           if (atts.length === 0) return null;
@@ -357,7 +403,7 @@ export const RecentAbsencesTable: React.FC = () => {
                       <motion.button
                         whileTap={{ scale: 0.9 }}
                         type="button"
-                        onClick={() => deleteAbsenceRecord(record.id)}
+                        onClick={() => setRecordToDelete(record)}
                         className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                         title="حذف هذا الإجراء وتصحيح رصيد المعلمة"
                         aria-label={`حذف سجل مساءلة ${record.teacherName}`}
@@ -460,7 +506,7 @@ export const RecentAbsencesTable: React.FC = () => {
                   })()}
                 </div>
 
-                {/* Actions: Export PDF + Delete */}
+                {/* Actions: Export PDF + Edit + Delete */}
                 <div className="flex items-center gap-2 pt-1">
                   <motion.button
                     whileTap={{ scale: 0.96 }}
@@ -479,9 +525,20 @@ export const RecentAbsencesTable: React.FC = () => {
                   </motion.button>
 
                   <motion.button
+                    whileTap={{ scale: 0.95 }}
+                    type="button"
+                    onClick={() => setRecordToEdit(record)}
+                    className="min-h-[44px] px-3.5 rounded-xl text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 transition-colors flex items-center justify-center cursor-pointer"
+                    title="تعديل هذا الإجراء"
+                    aria-label={`تعديل سجل مساءلة ${record.teacherName}`}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </motion.button>
+
+                  <motion.button
                     whileTap={{ scale: 0.9 }}
                     type="button"
-                    onClick={() => deleteAbsenceRecord(record.id)}
+                    onClick={() => setRecordToDelete(record)}
                     className="min-h-[44px] px-3.5 rounded-xl text-slate-400 hover:text-rose-600 bg-slate-50 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 transition-colors flex items-center justify-center cursor-pointer"
                     title="حذف هذا الإجراء"
                     aria-label={`حذف سجل مساءلة ${record.teacherName}`}
@@ -495,6 +552,29 @@ export const RecentAbsencesTable: React.FC = () => {
         </div>
       </>
     )}
+
+    {/* Edit Absence Modal */}
+    <EditAbsenceModal
+      isOpen={Boolean(recordToEdit)}
+      record={recordToEdit}
+      onClose={() => setRecordToEdit(null)}
+    />
+
+    {/* Confirm Delete Absence Dialog */}
+    <ConfirmDialog
+      isOpen={Boolean(recordToDelete)}
+      title="تأكيد حذف سجل الغياب"
+      message={
+        recordToDelete
+          ? `هل أنتِ متأكدة من حذف سجل غياب المعلمة "${recordToDelete.teacherName}" بتاريخ ${recordToDelete.date} (${recordToDelete.type})؟ سيتم تحديث رصيد غياب المعلمة تلقائياً مع توفر خيار التراجع الفوري.`
+          : ""
+      }
+      confirmLabel="نعم، حذف السجل"
+      cancelLabel="إلغاء"
+      variant="danger"
+      onConfirm={confirmDeleteRecord}
+      onCancel={() => setRecordToDelete(null)}
+    />
     </div>
   );
 };

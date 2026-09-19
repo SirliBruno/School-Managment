@@ -18,13 +18,18 @@ import {
   Eye,
   FileText,
   Inbox,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { KpiCards } from "@/components/analytics/KpiCards";
 import { AbsenceCharts } from "@/components/analytics/AbsenceCharts";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
+import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
 
 const TYPE_STYLES: Record<
@@ -67,15 +72,46 @@ const tableRowVariants = {
 };
 
 export default function DashboardPage() {
-  const { teachers, absenceRecords } = useTeachers();
+  const { teachers, absenceRecords, deleteAbsenceRecord, restoreAbsenceRecord } =
+    useTeachers();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [selectedTeacherForProfile, setSelectedTeacherForProfile] =
     useState<Teacher | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(
+    null
+  );
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
+
+  const confirmDeleteRecord = () => {
+    if (recordToDelete) {
+      const rec = recordToDelete;
+      const { deletedRecord } = deleteAbsenceRecord(rec.id);
+      setRecordToDelete(null);
+
+      showToast({
+        message: `تم حذف سجل غياب المعلمة (${rec.teacherName}) بتاريخ (${rec.date}).`,
+        type: "success",
+        action: deletedRecord
+          ? {
+              label: "تراجع",
+              onClick: () => {
+                restoreAbsenceRecord(deletedRecord);
+                showToast({
+                  message: `تم استرجاع سجل غياب المعلمة (${rec.teacherName}) بنجاح.`,
+                  type: "info",
+                });
+              },
+            }
+          : undefined,
+      });
+    }
+  };
 
   // Dynamic Arabic formatted date
   const todayFormatted = useMemo(() => {
@@ -481,7 +517,7 @@ export default function DashboardPage() {
                                 type="button"
                                 onClick={() => handleExportPdf(item)}
                                 disabled={isExporting}
-                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
                                 title="تصدير استمارة مساءلة الغياب الرسمية PDF"
                               >
                                 {isExporting ? (
@@ -500,11 +536,31 @@ export default function DashboardPage() {
                                     item.teacherId
                                   )
                                 }
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                                 title="عرض ملف المعلمة"
                               >
                                 <Eye className="w-3.5 h-3.5 text-slate-500" />
                                 <span>الملف</span>
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                type="button"
+                                onClick={() => setRecordToEdit(item)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
+                                title="تعديل سجل الغياب"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                <span>تعديل</span>
+                              </motion.button>
+                              <motion.button
+                                whileTap={{ scale: 0.95 }}
+                                type="button"
+                                onClick={() => setRecordToDelete(item)}
+                                className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                title="حذف سجل الغياب"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                <span className="sr-only sm:not-sr-only">حذف</span>
                               </motion.button>
                             </div>
                           </td>
@@ -586,22 +642,22 @@ export default function DashboardPage() {
                         </div>
                       </div>
 
-                      {/* Bottom Actions: Full-Width PDF & Profile View */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
+                      {/* Bottom Actions: PDF, Profile, Edit, Delete */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                         <motion.button
                           whileTap={{ scale: 0.95 }}
                           type="button"
                           onClick={() => handleExportPdf(item)}
                           disabled={isExporting}
-                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
+                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
                           title="تصدير استمارة مساءلة الغياب الرسمية PDF"
                         >
                           {isExporting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
                           ) : (
-                            <FileDown className="w-4 h-4" />
+                            <FileDown className="w-3.5 h-3.5" />
                           )}
-                          <span>{isExporting ? "جاري التصدير..." : "استمارة PDF"}</span>
+                          <span>{isExporting ? "تصدير..." : "استمارة PDF"}</span>
                         </motion.button>
 
                         <motion.button
@@ -613,11 +669,33 @@ export default function DashboardPage() {
                               item.teacherId
                             )
                           }
-                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                           title="عرض ملف المعلمة"
                         >
-                          <Eye className="w-4 h-4 text-slate-500" />
-                          <span>عرض الملف</span>
+                          <Eye className="w-3.5 h-3.5 text-slate-500" />
+                          <span>الملف</span>
+                        </motion.button>
+
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() => setRecordToEdit(item)}
+                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
+                          title="تعديل سجل الغياب"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                          <span>تعديل</span>
+                        </motion.button>
+
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          type="button"
+                          onClick={() => setRecordToDelete(item)}
+                          className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50/60 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                          title="حذف سجل الغياب"
+                        >
+                          <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                          <span>حذف</span>
                         </motion.button>
                       </div>
                     </motion.div>
@@ -650,6 +728,29 @@ export default function DashboardPage() {
           onClose={() => setSelectedTeacherForProfile(null)}
         />
       )}
+
+      {/* Edit Absence Modal */}
+      <EditAbsenceModal
+        isOpen={Boolean(recordToEdit)}
+        record={recordToEdit}
+        onClose={() => setRecordToEdit(null)}
+      />
+
+      {/* Confirm Delete Absence Record Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(recordToDelete)}
+        title="تأكيد حذف سجل الغياب"
+        message={
+          recordToDelete
+            ? `هل أنتِ متأكدة من حذف سجل غياب المعلمة "${recordToDelete.teacherName}" بتاريخ ${recordToDelete.date} (${recordToDelete.type})؟ سيتم تحديث رصيد غياب المعلمة تلقائياً مع توفر خيار التراجع الفوري.`
+            : ""
+        }
+        confirmLabel="نعم، حذف السجل"
+        cancelLabel="إلغاء"
+        variant="danger"
+        onConfirm={confirmDeleteRecord}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </div>
   );
 }

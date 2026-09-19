@@ -29,14 +29,24 @@ interface TeacherContextType {
     teacherData: Omit<Teacher, "id" | "totalAbsences"> &
       Partial<Pick<Teacher, "id" | "totalAbsences">>
   ) => { success: boolean; error?: string; teacher?: Teacher };
-  updateTeacher: (id: string, updatedData: Partial<Teacher>) => void;
-  deleteTeacher: (id: string) => void;
+  updateTeacher: (
+    id: string,
+    updatedData: Partial<Teacher>
+  ) => { success: boolean; error?: string; teacher?: Teacher };
+  deleteTeacher: (id: string) => { deletedTeacher?: Teacher; deletedRecords: AbsenceRecord[] };
+  restoreTeacher: (teacher: Teacher, associatedRecords?: AbsenceRecord[]) => void;
   clearTeachers: () => void;
   updateAbsences: (id: string, count: number) => void;
+  recalculateAbsences: () => void;
   recordAbsence: (
     data: Omit<AbsenceRecord, "id" | "timestamp">
   ) => AbsenceRecord;
-  deleteAbsenceRecord: (id: string) => void;
+  updateAbsenceRecord: (
+    id: string,
+    updatedData: Partial<AbsenceRecord>
+  ) => { success: boolean; error?: string; record?: AbsenceRecord };
+  deleteAbsenceRecord: (id: string) => { deletedRecord?: AbsenceRecord };
+  restoreAbsenceRecord: (record: AbsenceRecord) => void;
   createInquiry: (
     teacherId: string,
     absenceDate: string
@@ -496,19 +506,69 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // 5. Update existing teacher details
   const updateTeacher = useCallback(
-    (id: string, updatedData: Partial<Teacher>) => {
+    (
+      id: string,
+      updatedData: Partial<Teacher>
+    ): { success: boolean; error?: string; teacher?: Teacher } => {
+      let updatedTeacher: Teacher | null = null;
+
+      const cleanUsername = updatedData.username
+        ? String(updatedData.username).trim()
+        : updatedData.jobNumber
+        ? String(updatedData.jobNumber).trim()
+        : undefined;
+
+      // Validate unique username if changed
+      if (cleanUsername) {
+        const isDuplicate = teachers.some(
+          (t) =>
+            t.id !== id &&
+            t.username.trim().toLowerCase() === cleanUsername.toLowerCase()
+        );
+        if (isDuplicate) {
+          return {
+            success: false,
+            error: `اسم المستخدم / الرقم الوظيفي (${cleanUsername}) مسجل بالفعل لمعلمة أخرى.`,
+          };
+        }
+      }
+
       setTeachers((prev) =>
         prev.map((t) => {
           if (t.id === id) {
-            const updated = normalizeTeacher({
+            updatedTeacher = normalizeTeacher({
               ...t,
               ...updatedData,
               id: t.id,
               totalAbsences: t.totalAbsences,
             });
-            return updated;
+            return updatedTeacher;
           }
           return t;
+        })
+      );
+
+      if (!updatedTeacher) {
+        return { success: false, error: "المعلمة المحددة غير موجودة." };
+      }
+
+      const finalTeacher = updatedTeacher as Teacher;
+
+      // Cascade update teacher info on their absence records
+      setAbsenceRecords((prev) =>
+        prev.map((rec) => {
+          if (rec.teacherId === id) {
+            return {
+              ...rec,
+              teacherName: finalTeacher.fullName,
+              jobNumber: finalTeacher.username,
+              specialty:
+                finalTeacher.specialty ||
+                finalTeacher.teachingField ||
+                rec.specialty,
+            };
+          }
+          return rec;
         })
       );
 
@@ -516,31 +576,58 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         supabase
           .from("teachers")
           .update({
-            name: updatedData.fullName || updatedData.name,
-            full_name: updatedData.fullName || updatedData.name,
-            job_number: updatedData.username || updatedData.jobNumber,
-            username: updatedData.username || updatedData.jobNumber,
-            mobile: updatedData.mobile || null,
-            employment_status: updatedData.employmentStatus,
-            job_title: updatedData.jobTitle,
-            teaching_field: updatedData.teachingField,
-            specialty: updatedData.specialty,
+            name: finalTeacher.fullName,
+            full_name: finalTeacher.fullName,
+            job_number: finalTeacher.username,
+            username: finalTeacher.username,
+            mobile: finalTeacher.mobile || null,
+            employment_status: finalTeacher.employmentStatus,
+            job_title: finalTeacher.jobTitle,
+            teaching_field: finalTeacher.teachingField,
+            specialty: finalTeacher.specialty,
           })
           .eq("id", id)
           .then(({ error }) => {
             if (error) console.error("فشل تحديث المعلمة في سوبابيز:", error);
           });
       }
+
+      return { success: true, teacher: finalTeacher };
     },
-    []
+    [teachers]
   );
 
-  // 6. Delete Teacher
+  // 6. Delete Teacher with Cascade Deletion
   const deleteTeacher = useCallback((id: string) => {
-    setTeachers((prev) => prev.filter((t) => t.id !== id));
-    setAbsenceRecords((prev) => prev.filter((a) => a.teacherId !== id));
+    let deletedTeacher: Teacher | undefined;
+    let deletedRecords: AbsenceRecord[] = [];
+
+    setTeachers((prev) => {
+      deletedTeacher = prev.find((t) => t.id === id);
+      return prev.filter((t) => t.id !== id);
+    });
+
+    setAbsenceRecords((prev) => {
+      deletedRecords = prev.filter((a) => a.teacherId === id);
+      return prev.filter((a) => a.teacherId !== id);
+    });
+
+    // Remove associated inquiries
+    setInquiries((prev) => prev.filter((inq) => inq.teacherId !== id));
 
     if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from("absence_records")
+        .delete()
+        .eq("teacher_id", id)
+        .then(() => {});
+
+      supabase
+        .from("absence_inquiries")
+        .delete()
+        .eq("teacher_id", id)
+        .then(() => {});
+
       supabase
         .from("teachers")
         .delete()
@@ -549,7 +636,47 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           if (error) console.error("فشل حذف المعلمة من سوبابيز:", error);
         });
     }
+
+    return { deletedTeacher, deletedRecords };
   }, []);
+
+  // 6.b Restore Teacher (Undo Support)
+  const restoreTeacher = useCallback(
+    (teacher: Teacher, associatedRecords: AbsenceRecord[] = []) => {
+      setTeachers((prev) => {
+        if (prev.some((t) => t.id === teacher.id)) return prev;
+        return [teacher, ...prev];
+      });
+
+      if (associatedRecords.length > 0) {
+        setAbsenceRecords((prev) => {
+          const existingIds = new Set(prev.map((r) => r.id));
+          const toAdd = associatedRecords.filter((r) => !existingIds.has(r.id));
+          return [...toAdd, ...prev];
+        });
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("teachers")
+          .insert({
+            id: teacher.id,
+            name: teacher.fullName,
+            full_name: teacher.fullName,
+            job_number: teacher.username,
+            username: teacher.username,
+            mobile: teacher.mobile || null,
+            employment_status: teacher.employmentStatus || "دائم",
+            job_title: teacher.jobTitle || "معلم",
+            teaching_field: teacher.teachingField || teacher.specialty || null,
+            specialty: teacher.specialty || null,
+            total_absences: teacher.totalAbsences || 0,
+          })
+          .then(() => {});
+      }
+    },
+    []
+  );
 
   // 7. Clear all teachers
   const clearTeachers = useCallback(() => {
@@ -583,6 +710,25 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // 8.b Recalculate all absences to ensure 100% data consistency
+  const recalculateAbsences = useCallback(() => {
+    setTeachers((currentTeachers) => {
+      const countMap: Record<string, number> = {};
+      for (const record of absenceRecords) {
+        if (record.teacherId) {
+          countMap[record.teacherId] = (countMap[record.teacherId] || 0) + 1;
+        }
+      }
+
+      return currentTeachers.map((teacher) => {
+        const correctCount = countMap[teacher.id] || 0;
+        return teacher.totalAbsences === correctCount
+          ? teacher
+          : { ...teacher, totalAbsences: correctCount };
+      });
+    });
+  }, [absenceRecords]);
+
   // 9. Record Absence
   const recordAbsence = useCallback(
     (data: Omit<AbsenceRecord, "id" | "timestamp">): AbsenceRecord => {
@@ -595,21 +741,28 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         timestamp: new Date().toISOString(),
       };
 
-      setAbsenceRecords((prev) => [newRecord, ...prev]);
-
       let newCount = 1;
-      setTeachers((prev) =>
-        prev.map((teacher) => {
-          if (teacher.id === data.teacherId) {
-            newCount = (teacher.totalAbsences || 0) + 1;
-            return {
-              ...teacher,
-              totalAbsences: newCount,
-            };
-          }
-          return teacher;
-        })
-      );
+
+      setAbsenceRecords((prev) => {
+        const nextRecords = [newRecord, ...prev];
+        // Recalculate teacher total absences
+        const countMap: Record<string, number> = {};
+        for (const r of nextRecords) {
+          countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+        }
+
+        setTeachers((currentTeachers) =>
+          currentTeachers.map((t) => {
+            if (t.id === data.teacherId) {
+              newCount = countMap[t.id] || 1;
+              return { ...t, totalAbsences: newCount };
+            }
+            return t;
+          })
+        );
+
+        return nextRecords;
+      });
 
       // Background sync to Supabase
       if (isSupabaseConfigured() && supabase) {
@@ -644,26 +797,100 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // 10. Delete Absence Record
+  // 10. Update Absence Record
+  const updateAbsenceRecord = useCallback(
+    (
+      id: string,
+      updatedData: Partial<AbsenceRecord>
+    ): { success: boolean; error?: string; record?: AbsenceRecord } => {
+      let updatedRecord: AbsenceRecord | null = null;
+      let targetTeacherId: string | null = null;
+
+      setAbsenceRecords((prev) => {
+        const nextRecords = prev.map((rec) => {
+          if (rec.id === id) {
+            targetTeacherId = rec.teacherId;
+            updatedRecord = {
+              ...rec,
+              ...updatedData,
+              id: rec.id, // Immutable ID
+              teacherId: rec.teacherId, // Cannot change teacher
+            };
+            return updatedRecord;
+          }
+          return rec;
+        });
+
+        // Recalculate counts
+        const countMap: Record<string, number> = {};
+        for (const r of nextRecords) {
+          countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+        }
+        setTeachers((currentTeachers) =>
+          currentTeachers.map((t) => ({
+            ...t,
+            totalAbsences: countMap[t.id] || 0,
+          }))
+        );
+
+        return nextRecords;
+      });
+
+      if (!updatedRecord) {
+        return { success: false, error: "سجل الغياب المطلوب غير موجود." };
+      }
+
+      const finalRecord = updatedRecord as AbsenceRecord;
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("absence_records")
+          .update({
+            date: finalRecord.date,
+            type: finalRecord.type,
+            reason: finalRecord.reason,
+            notes: finalRecord.notes || null,
+          })
+          .eq("id", id)
+          .then(({ error }) => {
+            if (error) console.error("فشل تحديث سجل الغياب في سوبابيز:", error);
+          });
+      }
+
+      return { success: true, record: finalRecord };
+    },
+    []
+  );
+
+  // 10.b Delete Absence Record
   const deleteAbsenceRecord = useCallback((id: string) => {
+    let deletedRecord: AbsenceRecord | undefined;
     let affectedTeacherId: string | null = null;
     let newCount = 0;
 
     setAbsenceRecords((prev) => {
-      const recordToDelete = prev.find((r) => r.id === id);
-      if (recordToDelete) {
-        affectedTeacherId = recordToDelete.teacherId;
+      deletedRecord = prev.find((r) => r.id === id);
+      const nextRecords = prev.filter((r) => r.id !== id);
+
+      if (deletedRecord) {
+        affectedTeacherId = deletedRecord.teacherId;
+        const countMap: Record<string, number> = {};
+        for (const r of nextRecords) {
+          countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+        }
+
         setTeachers((currentTeachers) =>
           currentTeachers.map((t) => {
-            if (t.id === recordToDelete.teacherId) {
-              newCount = Math.max(0, (t.totalAbsences || 0) - 1);
+            if (t.id === affectedTeacherId) {
+              newCount = countMap[t.id] || 0;
               return { ...t, totalAbsences: newCount };
             }
             return t;
           })
         );
       }
-      return prev.filter((r) => r.id !== id);
+
+      return nextRecords;
     });
 
     if (isSupabaseConfigured() && supabase) {
@@ -682,6 +909,49 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           .eq("id", affectedTeacherId)
           .then(() => {});
       }
+    }
+
+    return { deletedRecord };
+  }, []);
+
+  // 10.c Restore Absence Record (Undo Support)
+  const restoreAbsenceRecord = useCallback((record: AbsenceRecord) => {
+    setAbsenceRecords((prev) => {
+      if (prev.some((r) => r.id === record.id)) return prev;
+      const nextRecords = [record, ...prev];
+
+      const countMap: Record<string, number> = {};
+      for (const r of nextRecords) {
+        countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+      }
+
+      setTeachers((currentTeachers) =>
+        currentTeachers.map((t) => ({
+          ...t,
+          totalAbsences: countMap[t.id] || 0,
+        }))
+      );
+
+      return nextRecords;
+    });
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from("absence_records")
+        .insert({
+          id: record.id,
+          teacher_id: record.teacherId,
+          teacher_name: record.teacherName,
+          job_number: record.jobNumber,
+          specialty: record.specialty,
+          date: record.date,
+          type: record.type,
+          reason: record.reason,
+          notes: record.notes || null,
+          attachment_url: record.attachmentUrl || null,
+          timestamp: record.timestamp,
+        })
+        .then(() => {});
     }
   }, []);
 
@@ -891,10 +1161,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         addTeacher,
         updateTeacher,
         deleteTeacher,
+        restoreTeacher,
         clearTeachers,
         updateAbsences,
+        recalculateAbsences,
         recordAbsence,
+        updateAbsenceRecord,
         deleteAbsenceRecord,
+        restoreAbsenceRecord,
         createInquiry,
         updateInquiryDecision,
         deleteInquiry,

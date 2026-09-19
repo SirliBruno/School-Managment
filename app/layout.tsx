@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { TeacherProvider } from "@/context/TeacherContext";
+import { ToastProvider } from "@/context/ToastContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -32,11 +33,13 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
       <body className="font-cairo bg-slate-50 text-slate-800 antialiased min-h-screen">
-        <AuthProvider>
-          <TeacherProvider>
-            <AuthGuard>{children}</AuthGuard>
-          </TeacherProvider>
-        </AuthProvider>
+        <ToastProvider>
+          <AuthProvider>
+            <TeacherProvider>
+              <AuthGuard>{children}</AuthGuard>
+            </TeacherProvider>
+          </AuthProvider>
+        </ToastProvider>
       </body>
     </html>
   );

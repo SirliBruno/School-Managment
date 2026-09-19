@@ -12,9 +12,14 @@ import {
   AlertCircle,
   CheckCircle2,
   FileCheck,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Teacher, AbsenceRecord, AbsenceType } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
+import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { cn } from "@/lib/utils";
 
@@ -53,14 +58,45 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   teacher,
   onClose,
 }) => {
-  const { absenceRecords } = useTeachers();
+  const { absenceRecords, deleteAbsenceRecord, restoreAbsenceRecord } =
+    useTeachers();
+  const { showToast } = useToast();
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
+  const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(
+    null
+  );
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
   } | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const confirmDeleteRecord = () => {
+    if (recordToDelete) {
+      const rec = recordToDelete;
+      const { deletedRecord } = deleteAbsenceRecord(rec.id);
+      setRecordToDelete(null);
+
+      showToast({
+        message: `تم حذف سجل غياب المعلمة (${rec.teacherName}) بتاريخ (${rec.date}).`,
+        type: "success",
+        action: deletedRecord
+          ? {
+              label: "تراجع",
+              onClick: () => {
+                restoreAbsenceRecord(deletedRecord);
+                showToast({
+                  message: `تم استرجاع سجل غياب المعلمة (${rec.teacherName}) بنجاح.`,
+                  type: "info",
+                });
+              },
+            }
+          : undefined,
+      });
+    }
+  };
 
   // Close modal on Escape key
   useEffect(() => {
@@ -366,7 +402,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                           <th scope="col" className="py-3 px-4">النوع</th>
                           <th scope="col" className="py-3 px-4">السبب المسجل</th>
                           <th scope="col" className="py-3 px-4">الملاحظات</th>
-                          <th scope="col" className="py-3 px-4 text-center">الاستمارة الرسمية</th>
+                          <th scope="col" className="py-3 px-4 text-center">الإجراءات والاستمارة</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -405,21 +441,43 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                 {rec.notes || "—"}
                               </td>
                               <td className="py-3 px-4 text-center whitespace-nowrap">
-                                <motion.button
-                                  whileTap={{ scale: 0.95 }}
-                                  type="button"
-                                  onClick={() => handleExportPdf(rec)}
-                                  disabled={isExporting}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]"
-                                  title="تصدير استمارة مساءلة الغياب (نموذج 20)"
-                                >
-                                  {isExporting ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                  ) : (
-                                    <FileDown className="w-3.5 h-3.5" />
-                                  )}
-                                  <span>{isExporting ? "تصدير..." : "تصدير PDF"}</span>
-                                </motion.button>
+                                <div className="flex items-center justify-center gap-1.5">
+                                  <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    type="button"
+                                    onClick={() => handleExportPdf(rec)}
+                                    disabled={isExporting}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]"
+                                    title="تصدير استمارة مساءلة الغياب (نموذج 20)"
+                                  >
+                                    {isExporting ? (
+                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                      <FileDown className="w-3.5 h-3.5" />
+                                    )}
+                                    <span>{isExporting ? "تصدير..." : "PDF"}</span>
+                                  </motion.button>
+                                  <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    type="button"
+                                    onClick={() => setRecordToEdit(rec)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
+                                    title="تعديل سجل الغياب"
+                                  >
+                                    <Pencil className="w-3.5 h-3.5" />
+                                    <span>تعديل</span>
+                                  </motion.button>
+                                  <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    type="button"
+                                    onClick={() => setRecordToDelete(rec)}
+                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                    title="حذف سجل الغياب"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                    <span>حذف</span>
+                                  </motion.button>
+                                </div>
                               </td>
                             </tr>
                           );
@@ -448,6 +506,29 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           </div>
         </motion.div>
       </div>
+
+      {/* Edit Absence Modal */}
+      <EditAbsenceModal
+        isOpen={Boolean(recordToEdit)}
+        record={recordToEdit}
+        onClose={() => setRecordToEdit(null)}
+      />
+
+      {/* Confirm Delete Absence Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(recordToDelete)}
+        title="تأكيد حذف سجل الغياب"
+        message={
+          recordToDelete
+            ? `هل أنتِ متأكدة من حذف سجل غياب المعلمة "${recordToDelete.teacherName}" بتاريخ ${recordToDelete.date} (${recordToDelete.type})؟ سيتم تحديث رصيد غياب المعلمة تلقائياً مع توفر خيار التراجع الفوري.`
+            : ""
+        }
+        confirmLabel="نعم، حذف السجل"
+        cancelLabel="إلغاء"
+        variant="danger"
+        onConfirm={confirmDeleteRecord}
+        onCancel={() => setRecordToDelete(null)}
+      />
     </AnimatePresence>
   );
 };

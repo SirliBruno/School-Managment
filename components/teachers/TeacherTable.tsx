@@ -14,12 +14,15 @@ import {
   Phone,
   Filter,
   MessageCircle,
+  Pencil,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
 import { Teacher } from "@/types/teacher";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
 import { AddTeacherModal } from "@/components/teachers/AddTeacherModal";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { cn } from "@/lib/utils";
 
 
@@ -39,10 +42,12 @@ const rowVariants = {
 type FilterStatus = "all" | "دائم" | "عقد" | "with_absence";
 
 export const TeacherTable: React.FC = () => {
-  const { teachers, deleteTeacher, isLoading } = useTeachers();
+  const { teachers, deleteTeacher, restoreTeacher, isLoading } = useTeachers();
+  const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>("all");
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
+  const [teacherToEdit, setTeacherToEdit] = useState<Teacher | null>(null);
   const [selectedTeacherForProfile, setSelectedTeacherForProfile] =
     useState<Teacher | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -50,28 +55,6 @@ export const TeacherTable: React.FC = () => {
   const [inquiryTeacherId, setInquiryTeacherId] = useState<string | undefined>(
     undefined
   );
-  const cancelButtonRef = useRef<HTMLButtonElement>(null);
-
-
-  // Close delete modal on Escape key
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && teacherToDelete) {
-        setTeacherToDelete(null);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [teacherToDelete]);
-
-  // Focus cancel button when delete modal opens
-  useEffect(() => {
-    if (teacherToDelete) {
-      setTimeout(() => {
-        cancelButtonRef.current?.focus();
-      }, 50);
-    }
-  }, [teacherToDelete]);
 
   // Client-side multi-field search and status filtering
   const filteredTeachers = useMemo(() => {
@@ -110,11 +93,31 @@ export const TeacherTable: React.FC = () => {
     });
   }, [teachers, searchQuery, selectedStatus]);
 
-  // Delete execution
+  // Delete execution with Undo support
   const confirmDelete = () => {
     if (teacherToDelete) {
-      deleteTeacher(teacherToDelete.id);
+      const { deletedTeacher, deletedRecords } = deleteTeacher(
+        teacherToDelete.id
+      );
+      const name = teacherToDelete.fullName || teacherToDelete.name;
       setTeacherToDelete(null);
+
+      showToast({
+        message: `تم حذف المعلمة (${name}) وجميع سجلاتها بنجاح.`,
+        type: "success",
+        action: deletedTeacher
+          ? {
+              label: "تراجع",
+              onClick: () => {
+                restoreTeacher(deletedTeacher, deletedRecords);
+                showToast({
+                  message: `تم استرجاع المعلمة (${name}) وسجلاتها بنجاح.`,
+                  type: "info",
+                });
+              },
+            }
+          : undefined,
+      });
     }
   };
 
@@ -447,6 +450,20 @@ export const TeacherTable: React.FC = () => {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setTeacherToEdit(teacher);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500"
+                            title={`تعديل بيانات المعلمة ${teacher.fullName || teacher.name}`}
+                            aria-label={`تعديل بيانات المعلمة ${teacher.fullName || teacher.name}`}
+                          >
+                            <Pencil className="w-3.5 h-3.5" aria-hidden="true" />
+                            <span>تعديل</span>
+                          </motion.button>
+                          <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setInquiryTeacherId(teacher.id);
                               setIsSendInquiryModalOpen(true);
                             }}
@@ -583,12 +600,12 @@ export const TeacherTable: React.FC = () => {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="grid grid-cols-3 gap-2 pt-1">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => setSelectedTeacherForProfile(teacher)}
-                        className="min-h-[44px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#137a85] bg-teal-50 hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#137a85] bg-teal-50 hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
                         title="عرض الملف"
                       >
                         <Eye className="w-3.5 h-3.5" />
@@ -598,11 +615,22 @@ export const TeacherTable: React.FC = () => {
                       <motion.button
                         whileTap={{ scale: 0.95 }}
                         type="button"
+                        onClick={() => setTeacherToEdit(teacher)}
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
+                        title="تعديل بيانات المعلمة"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        <span>تعديل</span>
+                      </motion.button>
+
+                      <motion.button
+                        whileTap={{ scale: 0.95 }}
+                        type="button"
                         onClick={() => {
                           setInquiryTeacherId(teacher.id);
                           setIsSendInquiryModalOpen(true);
                         }}
-                        className="min-h-[44px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer"
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer"
                         title="مساءلة واتساب"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
@@ -613,7 +641,7 @@ export const TeacherTable: React.FC = () => {
                         whileTap={{ scale: 0.95 }}
                         type="button"
                         onClick={() => setTeacherToDelete(teacher)}
-                        className="min-h-[44px] inline-flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50/60 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                        className="min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50/60 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
                         title="حذف المعلمة"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -640,84 +668,30 @@ export const TeacherTable: React.FC = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
-      <AnimatePresence>
-        {teacherToDelete && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-dialog-title"
-            aria-describedby="delete-dialog-desc"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-          >
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
-              onClick={() => setTeacherToDelete(null)}
-              aria-hidden="true"
-            />
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={Boolean(teacherToDelete)}
+        title="تأكيد حذف المعلمة"
+        message={
+          teacherToDelete
+            ? `هل أنتِ متأكدة من حذف المعلمة "${teacherToDelete.fullName || teacherToDelete.name}" (اسم المستخدم: ${teacherToDelete.username || teacherToDelete.jobNumber})؟ سيتم حذف جميع سجلات الغياب والمساءلات المرتبطة بها نهائياً، مع توفر خيار التراجع الفوري.`
+            : ""
+        }
+        confirmLabel="نعم، حذف المعلمة"
+        cancelLabel="إلغاء"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setTeacherToDelete(null)}
+      />
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ type: "spring", damping: 25, stiffness: 320 }}
-              className="relative bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 space-y-4 z-10"
-            >
-              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-6 h-6" aria-hidden="true" />
-              </div>
-
-              <div className="text-center space-y-1.5">
-                <h4
-                  id="delete-dialog-title"
-                  className="text-base font-bold text-slate-900"
-                >
-                  تأكيد حذف المعلمة
-                </h4>
-                <p
-                  id="delete-dialog-desc"
-                  className="text-xs text-slate-600 leading-relaxed"
-                >
-                  هل أنتِ متأكدة من حذف المعلمة{" "}
-                  <strong className="text-slate-900 font-bold">
-                    &ldquo;{teacherToDelete.fullName || teacherToDelete.name}&rdquo;
-                  </strong>{" "}
-                  (اسم المستخدم: {teacherToDelete.username || teacherToDelete.jobNumber})؟
-                </p>
-              </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  type="button"
-                  onClick={confirmDelete}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500"
-                >
-                  نعم، تأكيد الحذف
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  type="button"
-                  ref={cancelButtonRef}
-                  onClick={() => setTeacherToDelete(null)}
-                  className="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 active:scale-[0.98] transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-                >
-                  إلغاء
-                </motion.button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Manual Add Teacher Modal */}
+      {/* Manual Add / Edit Teacher Modal */}
       <AddTeacherModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        isOpen={isAddModalOpen || Boolean(teacherToEdit)}
+        teacherToEdit={teacherToEdit}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setTeacherToEdit(null);
+        }}
       />
 
       {/* Teacher Profile & Detailed History Modal */}

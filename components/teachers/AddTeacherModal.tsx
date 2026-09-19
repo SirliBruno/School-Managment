@@ -15,8 +15,10 @@ import {
   UserCheck,
   RotateCcw,
   Sparkles,
+  Pencil,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
 import { Teacher } from "@/types/teacher";
 import { cn } from "@/lib/utils";
 import { formatSaudiMobile, normalizeSaudiMobileInput } from "@/lib/whatsapp";
@@ -25,7 +27,9 @@ import { formatSaudiMobile, normalizeSaudiMobileInput } from "@/lib/whatsapp";
 interface AddTeacherModalProps {
   isOpen: boolean;
   onClose: () => void;
+  teacherToEdit?: Teacher | null;
   onTeacherAdded?: (teacher: Teacher) => void;
+  onTeacherUpdated?: (teacher: Teacher) => void;
 }
 
 interface FormState {
@@ -51,9 +55,14 @@ const INITIAL_STATE: FormState = {
 export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
   isOpen,
   onClose,
+  teacherToEdit,
   onTeacherAdded,
+  onTeacherUpdated,
 }) => {
-  const { addTeacher } = useTeachers();
+  const { addTeacher, updateTeacher } = useTeachers();
+  const { showToast } = useToast();
+  const isEditMode = Boolean(teacherToEdit);
+
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successFeedback, setSuccessFeedback] = useState<string | null>(null);
@@ -63,10 +72,23 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const formId = useId();
 
-  // Reset form when modal opens
+  // Reset or pre-populate form when modal opens
   useEffect(() => {
     if (isOpen) {
-      setForm(INITIAL_STATE);
+      if (teacherToEdit) {
+        setForm({
+          fullName: teacherToEdit.fullName || teacherToEdit.name || "",
+          username: teacherToEdit.username || teacherToEdit.jobNumber || "",
+          mobile: teacherToEdit.mobile || "",
+          employmentStatus:
+            teacherToEdit.employmentStatus === "عقد" ? "عقد" : "دائم",
+          jobTitle: teacherToEdit.jobTitle || "معلم",
+          teachingField: teacherToEdit.teachingField || "",
+          specialty: teacherToEdit.specialty || "",
+        });
+      } else {
+        setForm(INITIAL_STATE);
+      }
       setErrors({});
       setSuccessFeedback(null);
       setTimeout(() => {
@@ -76,7 +98,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
     return () => {
       if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
     };
-  }, [isOpen]);
+  }, [isOpen, teacherToEdit]);
 
   // Handle escape key
   useEffect(() => {
@@ -136,47 +158,82 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
       ? formatSaudiMobile(form.mobile.trim())
       : undefined;
 
-    const result = addTeacher({
-      fullName: form.fullName.trim(),
-      username: form.username.trim(),
-      mobile: formattedMobile,
-      employmentStatus: form.employmentStatus,
-      jobTitle: form.jobTitle.trim() || "معلم",
-      teachingField: form.teachingField.trim() || undefined,
-      specialty: form.specialty.trim() || undefined,
-      totalAbsences: 0,
-    });
+    if (isEditMode && teacherToEdit) {
+      const result = updateTeacher(teacherToEdit.id, {
+        fullName: form.fullName.trim(),
+        username: form.username.trim(),
+        mobile: formattedMobile,
+        employmentStatus: form.employmentStatus,
+        jobTitle: form.jobTitle.trim() || "معلم",
+        teachingField: form.teachingField.trim() || undefined,
+        specialty: form.specialty.trim() || undefined,
+      });
 
+      if (!result.success) {
+        setErrors((prev) => ({
+          ...prev,
+          username: result.error || "تعذر حفظ تعديلات المعلمة.",
+        }));
+        return;
+      }
 
-    if (!result.success) {
-      setErrors((prev) => ({
-        ...prev,
-        username: result.error || "تعذر حفظ بيانات المعلمة.",
-      }));
-      return;
-    }
+      showToast({
+        message: `تم تحديث بيانات المعلمة (${result.teacher?.fullName || form.fullName}) بنجاح.`,
+        type: "success",
+      });
 
-    const savedTeacher = result.teacher!;
-    if (onTeacherAdded) {
-      onTeacherAdded(savedTeacher);
-    }
+      if (onTeacherUpdated && result.teacher) {
+        onTeacherUpdated(result.teacher);
+      }
 
-    if (addAnother) {
-      setSuccessFeedback(
-        `تمت إضافة المعلمة (${savedTeacher.fullName}) بنجاح! يمكنك إدخال معلمة أخرى الآن.`
-      );
-      setForm(INITIAL_STATE);
-      setErrors({});
-      setTimeout(() => {
-        fullNameInputRef.current?.focus();
-      }, 50);
-
-      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = setTimeout(() => {
-        setSuccessFeedback(null);
-      }, 5000);
-    } else {
       onClose();
+    } else {
+      const result = addTeacher({
+        fullName: form.fullName.trim(),
+        username: form.username.trim(),
+        mobile: formattedMobile,
+        employmentStatus: form.employmentStatus,
+        jobTitle: form.jobTitle.trim() || "معلم",
+        teachingField: form.teachingField.trim() || undefined,
+        specialty: form.specialty.trim() || undefined,
+        totalAbsences: 0,
+      });
+
+      if (!result.success) {
+        setErrors((prev) => ({
+          ...prev,
+          username: result.error || "تعذر حفظ بيانات المعلمة.",
+        }));
+        return;
+      }
+
+      const savedTeacher = result.teacher!;
+      showToast({
+        message: `تمت إضافة المعلمة (${savedTeacher.fullName}) بنجاح.`,
+        type: "success",
+      });
+
+      if (onTeacherAdded) {
+        onTeacherAdded(savedTeacher);
+      }
+
+      if (addAnother) {
+        setSuccessFeedback(
+          `تمت إضافة المعلمة (${savedTeacher.fullName}) بنجاح! يمكنك إدخال معلمة أخرى الآن.`
+        );
+        setForm(INITIAL_STATE);
+        setErrors({});
+        setTimeout(() => {
+          fullNameInputRef.current?.focus();
+        }, 50);
+
+        if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = setTimeout(() => {
+          setSuccessFeedback(null);
+        }, 5000);
+      } else {
+        onClose();
+      }
     }
   };
 
@@ -220,20 +277,30 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
           <div className="p-5 md:p-6 border-b border-slate-100 bg-slate-50/70 flex items-start justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className="w-11 h-11 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center font-bold shadow-2xs">
-                <UserPlus className="w-5 h-5" aria-hidden="true" />
+                {isEditMode ? (
+                  <Pencil className="w-5 h-5" aria-hidden="true" />
+                ) : (
+                  <UserPlus className="w-5 h-5" aria-hidden="true" />
+                )}
               </div>
               <div className="text-right">
                 <h2
                   id="add-teacher-modal-title"
                   className="text-base md:text-lg font-bold text-slate-900 flex items-center gap-2"
                 >
-                  <span>إضافة معلمة جديدة يدوياً</span>
+                  <span>
+                    {isEditMode
+                      ? `تعديل بيانات المعلمة: ${teacherToEdit?.fullName || teacherToEdit?.name}`
+                      : "إضافة معلمة جديدة يدوياً"}
+                  </span>
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-teal-100/70 text-[#137a85]">
-                    كادر المدرسة
+                    {isEditMode ? "تعديل السجل" : "كادر المدرسة"}
                   </span>
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  إدراج بيانات المعلمة المنقولة حديثاً أو المتعاقدة في نظام ث5 فورياً
+                  {isEditMode
+                    ? "تحديث السجل الإداري والبيانات الوظيفية للمعلمة في النظام"
+                    : "إدراج بيانات المعلمة المنقولة حديثاً أو المتعاقدة في نظام ث5 فورياً"}
                 </p>
               </div>
             </div>
@@ -518,16 +585,18 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
               </button>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5">
-                {/* Save & Add Another Button */}
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  type="button"
-                  onClick={() => handleSave(true)}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
-                >
-                  <Sparkles className="w-4 h-4 text-[#137a85]" />
-                  <span>حفظ وإضافة أخرى</span>
-                </motion.button>
+                {/* Save & Add Another Button (Only in Add Mode) */}
+                {!isEditMode && (
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    type="button"
+                    onClick={() => handleSave(true)}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#137a85]" />
+                    <span>حفظ وإضافة أخرى</span>
+                  </motion.button>
+                )}
 
                 {/* Save and Close Button */}
                 <motion.button
@@ -537,7 +606,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   className="w-full sm:w-auto px-6 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-[#137a85] text-white hover:bg-teal-700 shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2"
                 >
                   <Save className="w-4 h-4 text-teal-100" />
-                  <span>حفظ وإغلاق</span>
+                  <span>{isEditMode ? "حفظ التعديلات" : "حفظ وإغلاق"}</span>
                 </motion.button>
               </div>
             </div>
