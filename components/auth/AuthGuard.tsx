@@ -15,7 +15,8 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   // تحديد المسارات العامة التي لا تتطلب تسجيل دخول ولا تعرض القائمة الجانبية
   const isLoginPage = pathname === "/login";
   const isInquiryPublicPage = pathname?.startsWith("/inquiry/");
-  const isPublicRoute = isLoginPage || isInquiryPublicPage;
+  const isTeacherResponsePublicPage = pathname?.startsWith("/teacher-response/");
+  const isPublicRoute = isLoginPage || isInquiryPublicPage || isTeacherResponsePublicPage;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !isPublicRoute) {

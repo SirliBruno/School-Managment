@@ -90,6 +90,24 @@ export function generateInquiryMessage(
 }
 
 /**
+ * توليد نص رسالة تنبيه التأخر / الانصراف الرسمية عبر الواتساب
+ */
+export function generateDelayNoticeWhatsAppMessage(
+  teacherName: string,
+  noticeDate: string,
+  responseUrl: string
+): string {
+  return (
+    `السلام عليكم ورحمة الله وبركاته\n` +
+    `الأستاذة / ${teacherName.trim()}\n` +
+    `تم إصدار تنبيه تأخر/انصراف بحقكم بتاريخ ${noticeDate}.\n` +
+    `يرجى الدخول على الرابط التالي وإدخال الأسباب المطلوبة:\n` +
+    `${responseUrl}\n\n` +
+    `مع تحيات إدارة المدرسة`
+  );
+}
+
+/**
  * توليد رابط فتح محادثة الواتساب المباشرة
  */
 export function getWhatsAppDirectUrl(mobile: string, message: string): string {
@@ -103,3 +121,5 @@ export function getWhatsAppDirectUrl(mobile: string, message: string): string {
 
   return `https://wa.me/${formattedPhone}?text=${encodedText}`;
 }
+
+

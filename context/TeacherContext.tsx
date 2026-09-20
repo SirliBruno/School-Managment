@@ -68,8 +68,13 @@ interface TeacherContextType {
   refreshInquiries: () => Promise<void>;
   // === Delay Notices (تنبيه عن تأخر / انصراف) ===
   createDelayNotice: (
-    data: Omit<DelayNotice, "id" | "createdAt" | "status" | "hijriYear"> & {
+    data: Omit<
+      DelayNotice,
+      "id" | "createdAt" | "status" | "hijriYear" | "shareToken" | "tokenExpiresAt"
+    > & {
       hijriYear?: string;
+      shareToken?: string;
+      tokenExpiresAt?: string;
     }
   ) => { success: boolean; notice?: DelayNotice; error?: string };
   updateDelayNotice: (
@@ -89,6 +94,13 @@ interface TeacherContextType {
   ) => { success: boolean; notice?: DelayNotice; error?: string };
   deleteDelayNotice: (id: string) => { deletedNotice?: DelayNotice };
   restoreDelayNotice: (notice: DelayNotice) => void;
+  markDelayNoticeLinkShared: (id: string) => void;
+  submitTeacherResponseByToken: (
+    token: string,
+    teacherReason: string,
+    teacherSignatureDate?: string,
+    teacherIpAddress?: string
+  ) => Promise<{ success: boolean; notice?: DelayNotice; error?: string }>;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
@@ -221,7 +233,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         if (storedDelayNotices) {
           const parsed = JSON.parse(storedDelayNotices);
           if (Array.isArray(parsed)) {
-            localDelayNotices = parsed;
+            localDelayNotices = parsed.map((dn: Record<string, unknown>) => ({
+              ...dn,
+              shareToken:
+                (dn.shareToken as string) ||
+                (typeof crypto !== "undefined" && crypto.randomUUID
+                  ? crypto.randomUUID().replace(/-/g, "")
+                  : `dltok-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+              tokenExpiresAt:
+                (dn.tokenExpiresAt as string) ||
+                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            })) as DelayNotice[];
           }
         }
       } catch (err) {
@@ -1231,8 +1253,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // 15. Create Delay Notice (Stage 1)
   const createDelayNotice = useCallback(
     (
-      data: Omit<DelayNotice, "id" | "createdAt" | "status" | "hijriYear"> & {
+      data: Omit<
+        DelayNotice,
+        "id" | "createdAt" | "status" | "hijriYear" | "shareToken" | "tokenExpiresAt"
+      > & {
         hijriYear?: string;
+        shareToken?: string;
+        tokenExpiresAt?: string;
       }
     ): { success: boolean; notice?: DelayNotice; error?: string } => {
       const teacher = teachers.find((t) => t.id === data.teacherId);
@@ -1244,6 +1271,15 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID()
           : `dln-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+      const shareToken =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID().replace(/-/g, "")
+          : `${Date.now()}${Math.random().toString(36).substring(2, 12)}`;
+
+      const tokenExpiresAt = new Date(
+        Date.now() + 7 * 24 * 60 * 60 * 1000
+      ).toISOString();
 
       const hijriYear = data.hijriYear || "١٤٤٨";
       let createdNotice: DelayNotice | null = null;
@@ -1272,6 +1308,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             new Date().toISOString().split("T")[0],
           notes: data.additionalNotes || data.notes,
           additionalNotes: data.additionalNotes || data.notes,
+          shareToken,
+          tokenExpiresAt,
         };
         createdNotice = newNotice;
         return [newNotice, ...prev];
@@ -1310,6 +1348,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             status: n.status,
             hijri_year: n.hijriYear,
             created_at: n.createdAt,
+            share_token: n.shareToken,
+            token_expires_at: n.tokenExpiresAt,
+            notice_number: n.noticeNumber || null,
           })
           .then(() => {});
       }
@@ -1542,10 +1583,88 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           director_signature_date: notice.directorSignatureDate || null,
           hijri_year: notice.hijriYear,
           created_at: notice.createdAt,
+          share_token: notice.shareToken,
+          token_expires_at: notice.tokenExpiresAt,
+          teacher_response_submitted_at: notice.teacherResponseSubmittedAt || null,
+          link_shared_at: notice.linkSharedAt || null,
         })
         .then(() => {});
     }
   }, []);
+
+  // 21. Mark Delay Notice Link Shared
+  const markDelayNoticeLinkShared = useCallback((id: string) => {
+    const timestamp = new Date().toISOString();
+    setDelayNotices((prev) =>
+      prev.map((dn) => (dn.id === id ? { ...dn, linkSharedAt: timestamp } : dn))
+    );
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from("delay_notices")
+        .update({ link_shared_at: timestamp })
+        .eq("id", id)
+        .then(() => {});
+    }
+  }, []);
+
+  // 22. Submit Teacher Response by Public Token
+  const submitTeacherResponseByToken = useCallback(
+    async (
+      token: string,
+      teacherReason: string,
+      teacherSignatureDate?: string,
+      teacherIpAddress?: string
+    ): Promise<{ success: boolean; notice?: DelayNotice; error?: string }> => {
+      const sigDate =
+        teacherSignatureDate || new Date().toISOString().split("T")[0];
+      const submittedAt = new Date().toISOString();
+
+      let targetNotice: DelayNotice | undefined;
+
+      setDelayNotices((prev) =>
+        prev.map((dn) => {
+          if (dn.shareToken === token) {
+            targetNotice = {
+              ...dn,
+              teacherReason,
+              teacherSignatureDate: sigDate,
+              teacherSignedAt: sigDate,
+              teacherResponseSubmittedAt: submittedAt,
+              teacherIpAddress: teacherIpAddress || dn.teacherIpAddress,
+              status: "pending_director",
+            };
+            return targetNotice;
+          }
+          return dn;
+        })
+      );
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { error } = await supabase
+            .from("delay_notices")
+            .update({
+              teacher_reason: teacherReason,
+              teacher_signature_date: sigDate,
+              teacher_response_submitted_at: submittedAt,
+              teacher_ip_address: teacherIpAddress || null,
+              status: "pending_director",
+            })
+            .eq("share_token", token);
+
+          if (error) {
+            console.warn("تنبيه تحديث الرد في سوبابيز:", error.message);
+          }
+        } catch (err) {
+          console.warn("فشل الاتصال بسوبابيز لتسجيل الرد:", err);
+        }
+      }
+
+      return { success: true, notice: targetNotice };
+    },
+    []
+  );
 
   return (
     <TeacherContext.Provider
@@ -1578,6 +1697,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         submitDirectorDecision,
         deleteDelayNotice,
         restoreDelayNotice,
+        markDelayNoticeLinkShared,
+        submitTeacherResponseByToken,
       }}
     >
       {children}

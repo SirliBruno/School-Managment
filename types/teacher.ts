@@ -119,5 +119,12 @@ export interface DelayNotice {
   directorNotes?: string;             // ملاحظات وتوجيهات المديرة
   directorSignatureDate?: string;     // تاريخ قرار المديرة
   directorSignedAt?: string;          // الاسم البديل لتاريخ توقيع المديرة
+
+  // === Public Sharing Link & Security (مشاركة الرابط العام) ===
+  shareToken: string;                 // رمز آمن فريد للرابط العام
+  tokenExpiresAt: string;             // تاريخ ووقت انتهاء صلاحية الرابط (ISO)
+  teacherResponseSubmittedAt?: string;// وقت إرسال المعلمة للرد إلكترونياً
+  teacherIpAddress?: string;          // عنوان IP للمعلمة عند الإرسال للتدقيق
+  linkSharedAt?: string;              // وقت مشاركة الرابط أو إرساله للمعلمة
 }
 

@@ -273,6 +273,13 @@ th,td{vertical-align:middle;padding:5px 7px}
     <div style="width:32%;text-align:center">التوقيع : ........................</div>
     <div style="width:28%;text-align:left">التاريخ : ${teacherSigDate} م</div>
   </div>
+  ${
+    notice.teacherResponseSubmittedAt
+      ? `<div style="margin-top:4px;font-size:7.5pt;color:#0f766e;font-weight:bold">✓ تم استلام هذا الرد إلكترونياً بتاريخ (${formatDMY(
+          notice.teacherResponseSubmittedAt.split("T")[0]
+        )} م)</div>`
+      : ""
+  }
 </div>
 
 <!-- Stage 3 Body: Director Decision -->

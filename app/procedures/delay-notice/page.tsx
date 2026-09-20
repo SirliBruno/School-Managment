@@ -24,6 +24,7 @@ import {
   DoorOpen,
   ArrowRight,
   RotateCcw,
+  Share2,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -32,6 +33,7 @@ import { CreateDelayNoticeModal } from "@/components/procedures/CreateDelayNotic
 import { TeacherResponseModal } from "@/components/procedures/TeacherResponseModal";
 import { DirectorDecisionModal } from "@/components/procedures/DirectorDecisionModal";
 import { DelayNoticeDetailsModal } from "@/components/procedures/DelayNoticeDetailsModal";
+import { ShareDelayNoticeModal } from "@/components/procedures/ShareDelayNoticeModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { cn } from "@/lib/utils";
@@ -52,6 +54,8 @@ export default function DelayNoticePage() {
   const [noticeToEdit, setNoticeToEdit] = useState<DelayNotice | null>(null);
 
   const [selectedNoticeForDetails, setSelectedNoticeForDetails] =
+    useState<DelayNotice | null>(null);
+  const [selectedNoticeForShare, setSelectedNoticeForShare] =
     useState<DelayNotice | null>(null);
   const [selectedNoticeForResponse, setSelectedNoticeForResponse] =
     useState<DelayNotice | null>(null);
@@ -479,10 +483,21 @@ export default function DelayNoticePage() {
                           {/* Status Badge */}
                           <td className="py-3 px-4 whitespace-nowrap">
                             {notice.status === "pending_teacher" && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
-                                <span>بانتظار إفادة المعلمة</span>
-                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+                                  <span>بانتظار إفادة المعلمة</span>
+                                </span>
+                                {notice.linkSharedAt && (
+                                  <span
+                                    title="تمت مشاركة رابط الإفادة مع المعلمة"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs"
+                                  >
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                    <span>تم إرسال الرابط</span>
+                                  </span>
+                                )}
+                              </div>
                             )}
                             {notice.status === "pending_director" && (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
@@ -515,13 +530,26 @@ export default function DelayNoticePage() {
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
 
+                              {/* Share with Teacher Button */}
+                              {notice.status === "pending_teacher" && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedNoticeForShare(notice)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer shadow-2xs"
+                                  title="مشاركة الرابط وإرساله عبر الواتساب"
+                                >
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>مشاركة</span>
+                                </button>
+                              )}
+
                               {/* Smart Stage CTA Button */}
                               {notice.status === "pending_teacher" && (
                                 <button
                                   type="button"
                                   onClick={() => setSelectedNoticeForResponse(notice)}
                                   className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-600 hover:text-white border border-sky-200 transition-all cursor-pointer"
-                                  title="تسجيل إفادة المعلمة"
+                                  title="تسجيل إفادة المعلمة يدوياً"
                                 >
                                   <FileEdit className="w-3.5 h-3.5" />
                                   <span>الإفادة</span>
@@ -612,9 +640,17 @@ export default function DelayNoticePage() {
                         </span>
                         <div className="mt-1">
                           {notice.status === "pending_teacher" && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
-                              <span>إفادة المعلمة</span>
-                            </span>
+                            <div className="flex items-center gap-1 flex-wrap justify-end">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                                <span>إفادة المعلمة</span>
+                              </span>
+                              {notice.linkSharedAt && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                                  <span>أُرسل الرابط</span>
+                                </span>
+                              )}
+                            </div>
                           )}
                           {notice.status === "pending_director" && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
@@ -655,11 +691,11 @@ export default function DelayNoticePage() {
                     </div>
 
                     {/* Action buttons */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap">
                       <button
                         type="button"
                         onClick={() => setSelectedNoticeForDetails(notice)}
-                        className="flex-1 py-1.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                        className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>التفاصيل</span>
@@ -668,8 +704,19 @@ export default function DelayNoticePage() {
                       {notice.status === "pending_teacher" && (
                         <button
                           type="button"
+                          onClick={() => setSelectedNoticeForShare(notice)}
+                          className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                          <span>مشاركة</span>
+                        </button>
+                      )}
+
+                      {notice.status === "pending_teacher" && (
+                        <button
+                          type="button"
                           onClick={() => setSelectedNoticeForResponse(notice)}
-                          className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-sky-600 text-white hover:bg-sky-700 transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                          className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <FileEdit className="w-3.5 h-3.5" />
                           <span>الإفادة</span>
@@ -680,7 +727,7 @@ export default function DelayNoticePage() {
                         <button
                           type="button"
                           onClick={() => setSelectedNoticeForDecision(notice)}
-                          className="flex-1 py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                          className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
                         >
                           <ShieldCheck className="w-3.5 h-3.5" />
                           <span>القرار</span>
@@ -690,7 +737,7 @@ export default function DelayNoticePage() {
                       <button
                         type="button"
                         onClick={() => handleQuickPrint(notice)}
-                        className="py-1.5 px-3 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] border border-teal-200 hover:bg-[#137a85] hover:text-white transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        className="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] border border-teal-200 hover:bg-[#137a85] hover:text-white transition-all flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <FileDown className="w-3.5 h-3.5" />
                         <span>PDF</span>
@@ -722,21 +769,28 @@ export default function DelayNoticePage() {
         noticeToEdit={noticeToEdit}
       />
 
-      {/* 2. Modal: Teacher Response (Stage 2) */}
+      {/* 2. Modal: Share Delay Notice with Teacher (Public Link & WhatsApp) */}
+      <ShareDelayNoticeModal
+        isOpen={Boolean(selectedNoticeForShare)}
+        onClose={() => setSelectedNoticeForShare(null)}
+        notice={selectedNoticeForShare}
+      />
+
+      {/* 3. Modal: Teacher Response (Stage 2) */}
       <TeacherResponseModal
         isOpen={Boolean(selectedNoticeForResponse)}
         onClose={() => setSelectedNoticeForResponse(null)}
         notice={selectedNoticeForResponse}
       />
 
-      {/* 3. Modal: Director Decision (Stage 3) */}
+      {/* 4. Modal: Director Decision (Stage 3) */}
       <DirectorDecisionModal
         isOpen={Boolean(selectedNoticeForDecision)}
         onClose={() => setSelectedNoticeForDecision(null)}
         notice={selectedNoticeForDecision}
       />
 
-      {/* 4. Modal: Full 3-Stage Details */}
+      {/* 5. Modal: Full 3-Stage Details */}
       <DelayNoticeDetailsModal
         isOpen={Boolean(selectedNoticeForDetails)}
         onClose={() => setSelectedNoticeForDetails(null)}
@@ -747,6 +801,7 @@ export default function DelayNoticePage() {
         }}
         onOpenTeacherResponse={(n) => setSelectedNoticeForResponse(n)}
         onOpenDirectorDecision={(n) => setSelectedNoticeForDecision(n)}
+        onOpenShare={(n) => setSelectedNoticeForShare(n)}
         onOpenDelete={(n) => setNoticeToDelete(n)}
       />
 

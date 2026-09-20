@@ -20,6 +20,7 @@ import {
   DoorOpen,
   Check,
   Ban,
+  Share2,
 } from "lucide-react";
 import { DelayNotice } from "@/types/teacher";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
@@ -33,6 +34,7 @@ interface DelayNoticeDetailsModalProps {
   onOpenTeacherResponse: (notice: DelayNotice) => void;
   onOpenDirectorDecision: (notice: DelayNotice) => void;
   onOpenDelete: (notice: DelayNotice) => void;
+  onOpenShare?: (notice: DelayNotice) => void;
 }
 
 export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = ({
@@ -43,6 +45,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
   onOpenTeacherResponse,
   onOpenDirectorDecision,
   onOpenDelete,
+  onOpenShare,
 }) => {
   if (!isOpen || !notice) return null;
 
@@ -321,25 +324,53 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
               </div>
 
               {notice.teacherReason ? (
-                <div className="p-3.5 rounded-xl bg-sky-50/50 border border-sky-100 text-xs sm:text-sm text-slate-800 leading-relaxed">
-                  {notice.teacherReason}
+                <div className="space-y-2">
+                  <div className="p-3.5 rounded-xl bg-sky-50/50 border border-sky-100 text-xs sm:text-sm text-slate-800 leading-relaxed">
+                    {notice.teacherReason}
+                  </div>
+                  {notice.teacherResponseSubmittedAt && (
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>
+                        تم استلام هذا الرد إلكترونياً عبر الرابط العام بتاريخ:{" "}
+                        <strong className="font-mono">
+                          {new Date(notice.teacherResponseSubmittedAt).toLocaleString("ar-SA")}
+                        </strong>
+                      </span>
+                    </div>
+                  )}
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
+                <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2.5">
                   <p className="text-xs text-slate-500">
-                    لم يتم تسجيل إفادة المعلمة حتى الآن.
+                    لم يتم تسجيل إفادة المعلمة حتى الآن. يمكنك مشاركة الرابط معها عبر الواتساب لتعبئته من جوالها، أو تسجيلها يدوياً.
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      onClose();
-                      onOpenTeacherResponse(notice);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white transition-all cursor-pointer shadow-2xs"
-                  >
-                    <FileEdit className="w-3.5 h-3.5" />
-                    <span>تسجيل إفادة المعلمة الآن</span>
-                  </button>
+                  <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                    {onOpenShare && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onClose();
+                          onOpenShare(notice);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all cursor-pointer shadow-2xs"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>مشاركة الرابط عبر الواتساب</span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onOpenTeacherResponse(notice);
+                      }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-all cursor-pointer"
+                    >
+                      <FileEdit className="w-3.5 h-3.5" />
+                      <span>تسجيل الإفادة يدوياً</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -427,7 +458,21 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
               <span>تصدير إشعار التنبيه الرسمي (PDF)</span>
             </button>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+              {notice.status === "pending_teacher" && onOpenShare && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenShare(notice);
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>مشاركة الرابط</span>
+                </button>
+              )}
+
               {notice.status === "pending_teacher" && (
                 <button
                   type="button"
@@ -438,7 +483,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   className="px-4 py-2.5 rounded-xl text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                 >
                   <FileEdit className="w-3.5 h-3.5" />
-                  <span>تسجيل إفادة المعلمة</span>
+                  <span>تسجيل الإفادة</span>
                 </button>
               )}
 
