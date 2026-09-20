@@ -215,29 +215,11 @@ export default function DashboardPage() {
             </h1>
           </div>
 
-          {/* User Profile & Date Header Controls */}
+          {/* Header Controls */}
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium shadow-2xs">
               <Calendar className="w-4 h-4 text-[#137a85]" />
               <span>{todayFormatted}</span>
-            </div>
-
-            {/* User Avatar */}
-            <div className="flex items-center gap-3 pr-2 border-r border-slate-200">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="w-10 h-10 rounded-full bg-[#137a85] text-white flex items-center justify-center font-bold text-sm shadow-sm ring-2 ring-teal-100"
-              >
-                نش
-              </motion.div>
-              <div className="hidden md:block text-right">
-                <span className="block text-sm font-bold text-slate-800 leading-tight">
-                  أ. نورة الشهري
-                </span>
-                <span className="block text-xs text-slate-500">
-                  وكيلة الشؤون التعليمية والمدرسية
-                </span>
-              </div>
             </div>
           </div>
         </div>
