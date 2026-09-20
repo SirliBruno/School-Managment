@@ -1,4 +1,5 @@
 import { DelayNotice, Teacher } from "@/types/teacher";
+import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 
 export interface DelayNoticePdfData {
   notice: DelayNotice;
@@ -164,8 +165,7 @@ th,td{vertical-align:middle;padding:5px 7px}
     <div>مكتب التعليم شمال مكة (بنات)</div>
   </div>
   <div class="hdr-c">
-    <div style="font-size:10.5pt;font-weight:900;color:#0f766e">وزارة التعليم</div>
-    <div style="font-size:8pt;font-weight:700;color:#64748b">Ministry of Education</div>
+    <img src="${MOE_LOGO_BASE64}" alt="وزارة التعليم" style="height: 52px; width: auto; object-fit: contain; margin-bottom: 2px;" />
   </div>
   <div class="hdr-l">
     <div>التاريخ : ${dateFormatted} م</div>
