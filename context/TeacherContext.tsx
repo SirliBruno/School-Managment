@@ -702,6 +702,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         .then(() => {});
 
       supabase
+        .from("delay_notices")
+        .delete()
+        .eq("teacher_id", id)
+        .then(() => {});
+
+      supabase
         .from("teachers")
         .delete()
         .eq("id", id)
@@ -1240,32 +1246,36 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           : `dln-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
       const hijriYear = data.hijriYear || "١٤٤٨";
-      const noticeNum =
-        data.noticeNumber ||
-        `ت-${new Date().getFullYear()}-${String(
-          delayNotices.length + 1
-        ).padStart(3, "0")}`;
+      let createdNotice: DelayNotice | null = null;
 
-      const newNotice: DelayNotice = {
-        ...data,
-        id,
-        noticeNumber: noticeNum,
-        teacherName: teacher.fullName || teacher.name,
-        jobNumber: teacher.username || teacher.jobNumber,
-        specialty: teacher.specialty || teacher.teachingField,
-        hijriYear,
-        status: "pending_teacher",
-        createdAt: new Date().toISOString(),
-        date: data.noticeDate || data.date,
-        noticeDate:
-          data.noticeDate ||
-          data.date ||
-          new Date().toISOString().split("T")[0],
-        notes: data.additionalNotes || data.notes,
-        additionalNotes: data.additionalNotes || data.notes,
-      };
+      setDelayNotices((prev) => {
+        const noticeNum =
+          data.noticeNumber ||
+          `ت-${new Date().getFullYear()}-${String(
+            prev.length + 1
+          ).padStart(3, "0")}`;
 
-      setDelayNotices((prev) => [newNotice, ...prev]);
+        const newNotice: DelayNotice = {
+          ...data,
+          id,
+          noticeNumber: noticeNum,
+          teacherName: teacher.fullName || teacher.name,
+          jobNumber: teacher.username || teacher.jobNumber,
+          specialty: teacher.specialty || teacher.teachingField,
+          hijriYear,
+          status: "pending_teacher",
+          createdAt: new Date().toISOString(),
+          date: data.noticeDate || data.date,
+          noticeDate:
+            data.noticeDate ||
+            data.date ||
+            new Date().toISOString().split("T")[0],
+          notes: data.additionalNotes || data.notes,
+          additionalNotes: data.additionalNotes || data.notes,
+        };
+        createdNotice = newNotice;
+        return [newNotice, ...prev];
+      });
 
       // Automatically increment totalDelayNotices on teacher
       setTeachers((prev) =>
@@ -1276,34 +1286,35 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         )
       );
 
-      if (isSupabaseConfigured() && supabase) {
+      if (isSupabaseConfigured() && supabase && createdNotice) {
+        const n: DelayNotice = createdNotice;
         supabase
           .from("delay_notices")
           .insert({
-            id: newNotice.id,
-            teacher_id: newNotice.teacherId,
-            teacher_name: newNotice.teacherName,
-            job_number: newNotice.jobNumber,
-            specialty: newNotice.specialty,
-            notice_date: newNotice.noticeDate,
-            violation_delay_start: newNotice.violationDelayStart,
-            delay_start_time: newNotice.delayStartTime || null,
-            violation_absent_during: newNotice.violationAbsentDuring,
-            absent_from_time: newNotice.absentFromTime || null,
-            absent_to_time: newNotice.absentToTime || null,
-            violation_early_departure: newNotice.violationEarlyDeparture,
-            early_departure_time: newNotice.earlyDepartureTime || null,
-            violation_left_school: newNotice.violationLeftSchool,
-            left_school_details: newNotice.leftSchoolDetails || null,
-            additional_notes: newNotice.additionalNotes || null,
-            status: newNotice.status,
-            hijri_year: newNotice.hijriYear,
-            created_at: newNotice.createdAt,
+            id: n.id,
+            teacher_id: n.teacherId,
+            teacher_name: n.teacherName,
+            job_number: n.jobNumber,
+            specialty: n.specialty,
+            notice_date: n.noticeDate,
+            violation_delay_start: n.violationDelayStart,
+            delay_start_time: n.delayStartTime || null,
+            violation_absent_during: n.violationAbsentDuring,
+            absent_from_time: n.absentFromTime || null,
+            absent_to_time: n.absentToTime || null,
+            violation_early_departure: n.violationEarlyDeparture,
+            early_departure_time: n.earlyDepartureTime || null,
+            violation_left_school: n.violationLeftSchool,
+            left_school_details: n.leftSchoolDetails || null,
+            additional_notes: n.additionalNotes || null,
+            status: n.status,
+            hijri_year: n.hijriYear,
+            created_at: n.createdAt,
           })
           .then(() => {});
       }
 
-      return { success: true, notice: newNotice };
+      return { success: true, notice: createdNotice || undefined };
     },
     [teachers]
   );
