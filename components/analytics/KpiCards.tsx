@@ -123,7 +123,7 @@ const containerVariants = {
 };
 
 export const KpiCards: React.FC = () => {
-  const { teachers, absenceRecords, isLoading } = useTeachers();
+  const { teachers, absenceRecords, delayNotices, isLoading } = useTeachers();
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -143,17 +143,24 @@ export const KpiCards: React.FC = () => {
       record.date.startsWith(currentMonthPrefix)
     ).length;
 
-    const pendingProcedures = absenceRecords.filter(
+    const pendingAbsenceInquiries = absenceRecords.filter(
       (r) => !r.notes || r.notes.trim() === "" || r.type === "أخرى"
     ).length;
+
+    const pendingDelayNotices = delayNotices.filter(
+      (d) => d.status !== "completed"
+    ).length;
+
+    const pendingProcedures = pendingAbsenceInquiries + pendingDelayNotices;
 
     return {
       totalTeachers,
       todayAbsences,
       monthAbsences,
       pendingProcedures,
+      pendingDelayNotices,
     };
-  }, [teachers, absenceRecords]);
+  }, [teachers, absenceRecords, delayNotices]);
 
   return (
     <motion.div
@@ -221,7 +228,11 @@ export const KpiCards: React.FC = () => {
         title="الإجراءات المعلقة"
         value={stats.pendingProcedures}
         unit="إجراء معلق"
-        subtitle="مساءلات وملاحظات بانتظار الإفادة أو الاعتماد"
+        subtitle={
+          stats.pendingDelayNotices > 0
+            ? `مساءلات وتنبيهات (${stats.pendingDelayNotices} تأخر بانتظار المتابعة)`
+            : "مساءلات وملاحظات بانتظار الإفادة أو الاعتماد"
+        }
         icon={AlertCircle}
         iconBgColor="bg-amber-50"
         iconColor="text-amber-600"

@@ -8,6 +8,7 @@ export interface Teacher {
   teachingField?: string; // مجال التدريس
   specialty?: string; // التخصص
   totalAbsences: number; // Initialized to 0
+  totalDelayNotices?: number; // Total delay/departure notices, default 0
   createdAt?: string; // Timestamp
 
   // Backward compatibility alias properties
@@ -72,5 +73,51 @@ export interface AbsenceInquiry {
   adminNotes?: string;
   submittedAt?: string;
   createdAt: string;
+}
+
+// === Stage Statuses & Opinions for Delay Notice (تنبيه عن تأخر / انصراف) ===
+export type DelayNoticeStatus = "pending_teacher" | "pending_director" | "completed";
+export type DirectorOpinion = "accepted" | "rejected_with_deduction" | null;
+
+export interface DelayNotice {
+  id: string;
+  noticeNumber?: string;
+  teacherId: string;
+  teacherName?: string;
+  jobNumber?: string;
+  specialty?: string;
+  createdAt: string;
+  hijriYear: string;
+
+  // === Stage 1: Vice-Principal Input (الوكيلة) ===
+  noticeDate: string;
+  date?: string;                      // توافق وتسهيل مع شاشات العرض
+  violationDelayStart: boolean;       // تأخرك من بداية الدوام وحضورك الساعة
+  delayStartTime?: string;            // الساعة عند التأخر
+
+  violationAbsentDuring: boolean;     // عدم تواجدك أثناء الدوام من الساعة إلى الساعة
+  absentFromTime?: string;            // من الساعة
+  absentToTime?: string;              // إلى الساعة
+
+  violationEarlyDeparture: boolean;   // انصرافك مبكراً قبل نهاية الدوام
+  earlyDepartureTime?: string;        // الساعة عند الانصراف المبكر
+
+  violationLeftSchool: boolean;       // انصرافك من غير المدرسة
+  leftSchoolDetails?: string;         // تفاصيل الانصراف
+
+  additionalNotes?: string;           // ملاحظات إضافية من الوكيلة
+  notes?: string;                     // الاسم البديل للملاحظات
+  status: DelayNoticeStatus;
+
+  // === Stage 2: Teacher Response (المعلمة) ===
+  teacherReason?: string;             // أسباب المعلمة / تبريرها
+  teacherSignatureDate?: string;      // تاريخ توقيع/رد المعلمة
+  teacherSignedAt?: string;           // الاسم البديل لتاريخ توقيع المعلمة
+
+  // === Stage 3: Director Decision (المديرة) ===
+  directorOpinion?: DirectorOpinion;  // رأي قائدة المدرسة (عذره مقبول / عذره غير مقبول ويحسم عليه)
+  directorNotes?: string;             // ملاحظات وتوجيهات المديرة
+  directorSignatureDate?: string;     // تاريخ قرار المديرة
+  directorSignedAt?: string;          // الاسم البديل لتاريخ توقيع المديرة
 }
 

@@ -8,7 +8,14 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { Teacher, AbsenceRecord, AbsenceInquiry } from "@/types/teacher";
+import {
+  Teacher,
+  AbsenceRecord,
+  AbsenceInquiry,
+  DelayNotice,
+  DelayNoticeStatus,
+  DirectorOpinion,
+} from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export interface AddTeachersResult {
@@ -22,6 +29,7 @@ interface TeacherContextType {
   teachers: Teacher[];
   absenceRecords: AbsenceRecord[];
   inquiries: AbsenceInquiry[];
+  delayNotices: DelayNotice[];
   isLoading: boolean;
   isCloudConnected: boolean;
   addTeachers: (newTeachers: Teacher[]) => AddTeachersResult;
@@ -58,11 +66,35 @@ interface TeacherContextType {
   ) => Promise<{ success: boolean; error?: string }>;
   deleteInquiry: (inquiryId: string) => Promise<void>;
   refreshInquiries: () => Promise<void>;
+  // === Delay Notices (تنبيه عن تأخر / انصراف) ===
+  createDelayNotice: (
+    data: Omit<DelayNotice, "id" | "createdAt" | "status" | "hijriYear"> & {
+      hijriYear?: string;
+    }
+  ) => { success: boolean; notice?: DelayNotice; error?: string };
+  updateDelayNotice: (
+    id: string,
+    updates: Partial<DelayNotice>
+  ) => { success: boolean; notice?: DelayNotice; error?: string };
+  submitTeacherResponse: (
+    id: string,
+    teacherReason: string,
+    teacherSignatureDate?: string
+  ) => { success: boolean; notice?: DelayNotice; error?: string };
+  submitDirectorDecision: (
+    id: string,
+    directorOpinion: "accepted" | "rejected_with_deduction",
+    directorNotes?: string,
+    directorSignatureDate?: string
+  ) => { success: boolean; notice?: DelayNotice; error?: string };
+  deleteDelayNotice: (id: string) => { deletedNotice?: DelayNotice };
+  restoreDelayNotice: (notice: DelayNotice) => void;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
 const ABSENCES_STORAGE_KEY = "school_admin_absences_v1";
 const INQUIRIES_STORAGE_KEY = "school_admin_inquiries_v1";
+const DELAY_NOTICES_STORAGE_KEY = "school_admin_delay_notices_v1";
 
 
 export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
@@ -93,6 +125,11 @@ export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
     : typeof t.total_absences === "number"
     ? t.total_absences
     : 0;
+  const totalDelayNotices = typeof t.totalDelayNotices === "number"
+    ? t.totalDelayNotices
+    : typeof t.total_delay_notices === "number"
+    ? t.total_delay_notices
+    : 0;
 
   const id =
     (t.id as string) ||
@@ -110,6 +147,7 @@ export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
     teachingField: teachingField || specialty || undefined,
     specialty: specialty || undefined,
     totalAbsences: Math.max(0, totalAbsences),
+    totalDelayNotices: Math.max(0, totalDelayNotices),
     createdAt: (t.createdAt as string) || (t.created_at as string) || new Date().toISOString(),
     // Backward compatibility aliases
     name: fullName,
@@ -125,6 +163,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [absenceRecords, setAbsenceRecords] = useState<AbsenceRecord[]>([]);
   const [inquiries, setInquiries] = useState<AbsenceInquiry[]>([]);
+  const [delayNotices, setDelayNotices] = useState<DelayNotice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
   const isMountedRef = useRef(false);
@@ -135,6 +174,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       let localTeachers: Teacher[] = [];
       let localAbsences: AbsenceRecord[] = [];
       let localInquiries: AbsenceInquiry[] = [];
+      let localDelayNotices: DelayNotice[] = [];
 
       try {
         const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
@@ -176,14 +216,34 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             localInquiries = parsed;
           }
         }
+
+        const storedDelayNotices = localStorage.getItem(DELAY_NOTICES_STORAGE_KEY);
+        if (storedDelayNotices) {
+          const parsed = JSON.parse(storedDelayNotices);
+          if (Array.isArray(parsed)) {
+            localDelayNotices = parsed;
+          }
+        }
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
 
+      // Reconcile totalDelayNotices counts on teachers
+      const delayCountMap: Record<string, number> = {};
+      for (const dn of localDelayNotices) {
+        if (dn.teacherId) {
+          delayCountMap[dn.teacherId] = (delayCountMap[dn.teacherId] || 0) + 1;
+        }
+      }
+      localTeachers = localTeachers.map((t) => ({
+        ...t,
+        totalDelayNotices: delayCountMap[t.id] ?? t.totalDelayNotices ?? 0,
+      }));
+
       setTeachers(localTeachers);
       setAbsenceRecords(localAbsences);
       setInquiries(localInquiries);
-
+      setDelayNotices(localDelayNotices);
 
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
@@ -338,6 +398,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("فشل حفظ المساءلات محلياً:", error);
     }
   }, [inquiries, isLoading]);
+
+  useEffect(() => {
+    if (!isMountedRef.current || isLoading) return;
+    try {
+      localStorage.setItem(
+        DELAY_NOTICES_STORAGE_KEY,
+        JSON.stringify(delayNotices)
+      );
+    } catch (error) {
+      console.error("فشل حفظ تنبيهات التأخر محلياً:", error);
+    }
+  }, [delayNotices, isLoading]);
 
 
   // 3. Add multiple teachers (Excel or Batch Import) with Upsert on username
@@ -612,8 +684,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       return prev.filter((a) => a.teacherId !== id);
     });
 
-    // Remove associated inquiries
+    // Remove associated inquiries and delay notices
     setInquiries((prev) => prev.filter((inq) => inq.teacherId !== id));
+    setDelayNotices((prev) => prev.filter((dn) => dn.teacherId !== id));
 
     if (isSupabaseConfigured() && supabase) {
       supabase
@@ -1149,12 +1222,327 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // 15. Create Delay Notice (Stage 1)
+  const createDelayNotice = useCallback(
+    (
+      data: Omit<DelayNotice, "id" | "createdAt" | "status" | "hijriYear"> & {
+        hijriYear?: string;
+      }
+    ): { success: boolean; notice?: DelayNotice; error?: string } => {
+      const teacher = teachers.find((t) => t.id === data.teacherId);
+      if (!teacher) {
+        return { success: false, error: "المعلمة المحددة غير موجودة." };
+      }
+
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `dln-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+      const hijriYear = data.hijriYear || "١٤٤٨";
+      const noticeNum =
+        data.noticeNumber ||
+        `ت-${new Date().getFullYear()}-${String(
+          delayNotices.length + 1
+        ).padStart(3, "0")}`;
+
+      const newNotice: DelayNotice = {
+        ...data,
+        id,
+        noticeNumber: noticeNum,
+        teacherName: teacher.fullName || teacher.name,
+        jobNumber: teacher.username || teacher.jobNumber,
+        specialty: teacher.specialty || teacher.teachingField,
+        hijriYear,
+        status: "pending_teacher",
+        createdAt: new Date().toISOString(),
+        date: data.noticeDate || data.date,
+        noticeDate:
+          data.noticeDate ||
+          data.date ||
+          new Date().toISOString().split("T")[0],
+        notes: data.additionalNotes || data.notes,
+        additionalNotes: data.additionalNotes || data.notes,
+      };
+
+      setDelayNotices((prev) => [newNotice, ...prev]);
+
+      // Automatically increment totalDelayNotices on teacher
+      setTeachers((prev) =>
+        prev.map((t) =>
+          t.id === teacher.id
+            ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
+            : t
+        )
+      );
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("delay_notices")
+          .insert({
+            id: newNotice.id,
+            teacher_id: newNotice.teacherId,
+            teacher_name: newNotice.teacherName,
+            job_number: newNotice.jobNumber,
+            specialty: newNotice.specialty,
+            notice_date: newNotice.noticeDate,
+            violation_delay_start: newNotice.violationDelayStart,
+            delay_start_time: newNotice.delayStartTime || null,
+            violation_absent_during: newNotice.violationAbsentDuring,
+            absent_from_time: newNotice.absentFromTime || null,
+            absent_to_time: newNotice.absentToTime || null,
+            violation_early_departure: newNotice.violationEarlyDeparture,
+            early_departure_time: newNotice.earlyDepartureTime || null,
+            violation_left_school: newNotice.violationLeftSchool,
+            left_school_details: newNotice.leftSchoolDetails || null,
+            additional_notes: newNotice.additionalNotes || null,
+            status: newNotice.status,
+            hijri_year: newNotice.hijriYear,
+            created_at: newNotice.createdAt,
+          })
+          .then(() => {});
+      }
+
+      return { success: true, notice: newNotice };
+    },
+    [teachers]
+  );
+
+  // 16. Update Delay Notice (Stage 1 Edit while pending_teacher)
+  const updateDelayNotice = useCallback(
+    (
+      id: string,
+      updates: Partial<DelayNotice>
+    ): { success: boolean; notice?: DelayNotice; error?: string } => {
+      let updatedNotice: DelayNotice | undefined;
+
+      setDelayNotices((prev) =>
+        prev.map((dn) => {
+          if (dn.id === id) {
+            if (dn.status !== "pending_teacher") {
+              updatedNotice = dn;
+              return dn;
+            }
+            updatedNotice = { ...dn, ...updates };
+            return updatedNotice;
+          }
+          return dn;
+        })
+      );
+
+      if (!updatedNotice) {
+        return { success: false, error: "التنبيه غير موجود." };
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("delay_notices")
+          .update({
+            notice_date: updatedNotice.noticeDate,
+            violation_delay_start: updatedNotice.violationDelayStart,
+            delay_start_time: updatedNotice.delayStartTime || null,
+            violation_absent_during: updatedNotice.violationAbsentDuring,
+            absent_from_time: updatedNotice.absentFromTime || null,
+            absent_to_time: updatedNotice.absentToTime || null,
+            violation_early_departure: updatedNotice.violationEarlyDeparture,
+            early_departure_time: updatedNotice.earlyDepartureTime || null,
+            violation_left_school: updatedNotice.violationLeftSchool,
+            left_school_details: updatedNotice.leftSchoolDetails || null,
+            additional_notes: updatedNotice.additionalNotes || null,
+          })
+          .eq("id", id)
+          .then(() => {});
+      }
+
+      return { success: true, notice: updatedNotice };
+    },
+    []
+  );
+
+  // 17. Submit Teacher Response (Stage 2)
+  const submitTeacherResponse = useCallback(
+    (
+      id: string,
+      teacherReason: string,
+      teacherSignatureDate?: string
+    ): { success: boolean; notice?: DelayNotice; error?: string } => {
+      let updatedNotice: DelayNotice | undefined;
+      const sigDate =
+        teacherSignatureDate || new Date().toISOString().split("T")[0];
+
+      setDelayNotices((prev) =>
+        prev.map((dn) => {
+          if (dn.id === id) {
+            updatedNotice = {
+              ...dn,
+              teacherReason,
+              teacherSignatureDate: sigDate,
+              teacherSignedAt: sigDate,
+              status: "pending_director",
+            };
+            return updatedNotice;
+          }
+          return dn;
+        })
+      );
+
+      if (!updatedNotice) {
+        return { success: false, error: "التنبيه غير موجود." };
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("delay_notices")
+          .update({
+            teacher_reason: teacherReason,
+            teacher_signature_date: sigDate,
+            status: "pending_director",
+          })
+          .eq("id", id)
+          .then(() => {});
+      }
+
+      return { success: true, notice: updatedNotice };
+    },
+    []
+  );
+
+  // 18. Submit Director Decision (Stage 3)
+  const submitDirectorDecision = useCallback(
+    (
+      id: string,
+      directorOpinion: "accepted" | "rejected_with_deduction",
+      directorNotes?: string,
+      directorSignatureDate?: string
+    ): { success: boolean; notice?: DelayNotice; error?: string } => {
+      let updatedNotice: DelayNotice | undefined;
+      const sigDate =
+        directorSignatureDate || new Date().toISOString().split("T")[0];
+
+      setDelayNotices((prev) =>
+        prev.map((dn) => {
+          if (dn.id === id) {
+            updatedNotice = {
+              ...dn,
+              directorOpinion,
+              directorNotes: directorNotes || dn.directorNotes,
+              directorSignatureDate: sigDate,
+              directorSignedAt: sigDate,
+              status: "completed",
+            };
+            return updatedNotice;
+          }
+          return dn;
+        })
+      );
+
+      if (!updatedNotice) {
+        return { success: false, error: "التنبيه غير موجود." };
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("delay_notices")
+          .update({
+            director_opinion: directorOpinion,
+            director_notes: directorNotes || null,
+            director_signature_date: sigDate,
+            status: "completed",
+          })
+          .eq("id", id)
+          .then(() => {});
+      }
+
+      return { success: true, notice: updatedNotice };
+    },
+    []
+  );
+
+  // 19. Delete Delay Notice
+  const deleteDelayNotice = useCallback((id: string): { deletedNotice?: DelayNotice } => {
+    let deletedNotice: DelayNotice | undefined;
+
+    setDelayNotices((prev) => {
+      deletedNotice = prev.find((dn) => dn.id === id);
+      return prev.filter((dn) => dn.id !== id);
+    });
+
+    if (deletedNotice) {
+      const teacherId = (deletedNotice as DelayNotice).teacherId;
+      setTeachers((prev) =>
+        prev.map((t) =>
+          t.id === teacherId
+            ? { ...t, totalDelayNotices: Math.max(0, (t.totalDelayNotices || 0) - 1) }
+            : t
+        )
+      );
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("delay_notices")
+          .delete()
+          .eq("id", id)
+          .then(() => {});
+      }
+    }
+
+    return { deletedNotice };
+  }, []);
+
+  // 20. Restore Delay Notice (Undo)
+  const restoreDelayNotice = useCallback((notice: DelayNotice) => {
+    setDelayNotices((prev) => {
+      if (prev.some((dn) => dn.id === notice.id)) return prev;
+      return [notice, ...prev];
+    });
+
+    setTeachers((prev) =>
+      prev.map((t) =>
+        t.id === notice.teacherId
+          ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
+          : t
+      )
+    );
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from("delay_notices")
+        .insert({
+          id: notice.id,
+          teacher_id: notice.teacherId,
+          teacher_name: notice.teacherName,
+          job_number: notice.jobNumber,
+          specialty: notice.specialty,
+          notice_date: notice.noticeDate,
+          violation_delay_start: notice.violationDelayStart,
+          delay_start_time: notice.delayStartTime || null,
+          violation_absent_during: notice.violationAbsentDuring,
+          absent_from_time: notice.absentFromTime || null,
+          absent_to_time: notice.absentToTime || null,
+          violation_early_departure: notice.violationEarlyDeparture,
+          early_departure_time: notice.earlyDepartureTime || null,
+          violation_left_school: notice.violationLeftSchool,
+          left_school_details: notice.leftSchoolDetails || null,
+          additional_notes: notice.additionalNotes || null,
+          status: notice.status,
+          teacher_reason: notice.teacherReason || null,
+          teacher_signature_date: notice.teacherSignatureDate || null,
+          director_opinion: notice.directorOpinion || null,
+          director_signature_date: notice.directorSignatureDate || null,
+          hijri_year: notice.hijriYear,
+          created_at: notice.createdAt,
+        })
+        .then(() => {});
+    }
+  }, []);
+
   return (
     <TeacherContext.Provider
       value={{
         teachers,
         absenceRecords,
         inquiries,
+        delayNotices,
         isLoading,
         isCloudConnected,
         addTeachers,
@@ -1173,6 +1561,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         updateInquiryDecision,
         deleteInquiry,
         refreshInquiries,
+        createDelayNotice,
+        updateDelayNotice,
+        submitTeacherResponse,
+        submitDirectorDecision,
+        deleteDelayNotice,
+        restoreDelayNotice,
       }}
     >
       {children}

@@ -14,13 +14,17 @@ import {
   FileCheck,
   Pencil,
   Trash2,
+  Clock,
+  ShieldCheck,
+  FileEdit,
 } from "lucide-react";
-import { Teacher, AbsenceRecord, AbsenceType } from "@/types/teacher";
+import { Teacher, AbsenceRecord, AbsenceType, DelayNotice } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
+import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { cn } from "@/lib/utils";
 
 interface TeacherProfileModalProps {
@@ -58,9 +62,16 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   teacher,
   onClose,
 }) => {
-  const { absenceRecords, deleteAbsenceRecord, restoreAbsenceRecord } =
-    useTeachers();
+  const {
+    absenceRecords,
+    delayNotices,
+    deleteAbsenceRecord,
+    restoreAbsenceRecord,
+  } = useTeachers();
   const { showToast } = useToast();
+  const [activeHistoryTab, setActiveHistoryTab] = useState<
+    "absences" | "delays"
+  >("absences");
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(
@@ -129,6 +140,13 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
       record.jobNumber === teacher.jobNumber
   );
 
+  // Filter delay notices specifically for this teacher
+  const teacherDelayNotices = delayNotices.filter(
+    (notice) =>
+      notice.teacherId === teacher.id ||
+      notice.jobNumber === teacher.jobNumber
+  );
+
   // Calculate breakdown counters
   const sickLeavesCount = teacherAbsences.filter(
     (r) => r.type === "مرضي"
@@ -142,6 +160,14 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   const otherLeavesCount = teacherAbsences.filter(
     (r) => r.type === "أخرى"
   ).length;
+
+  const handleExportDelayPdf = (notice: DelayNotice) => {
+    try {
+      printDelayNoticePdf(notice, teacher);
+    } catch (err) {
+      console.error("فشل طباعة تنبيه التأخر:", err);
+    }
+  };
 
   const handleExportPdf = (record: AbsenceRecord) => {
     if (exportingId) return;
@@ -300,13 +326,13 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
                 ملخص إحصائيات الغياب المعتمدة
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 {/* Total */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 shadow-2xs"
                 >
-                  <span className="block text-xs font-medium text-slate-500 mb-1">
+                  <span className="block text-[11px] font-medium text-slate-500 mb-1">
                     إجمالي الغياب
                   </span>
                   <div className="flex items-baseline gap-1">
@@ -320,9 +346,9 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Sick */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-4 rounded-xl bg-blue-50/50 border border-blue-200/60 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/60 shadow-2xs"
                 >
-                  <span className="block text-xs font-medium text-blue-700 mb-1">
+                  <span className="block text-[11px] font-medium text-blue-700 mb-1">
                     إجازات مرضية
                   </span>
                   <div className="flex items-baseline gap-1">
@@ -336,9 +362,9 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Emergency */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-4 rounded-xl bg-rose-50/50 border border-rose-200/60 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-rose-50/50 border border-rose-200/60 shadow-2xs"
                 >
-                  <span className="block text-xs font-medium text-rose-700 mb-1">
+                  <span className="block text-[11px] font-medium text-rose-700 mb-1">
                     غياب اضطراري
                   </span>
                   <div className="flex items-baseline gap-1">
@@ -352,9 +378,9 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Companion / Other */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-4 rounded-xl bg-purple-50/50 border border-purple-200/60 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-200/60 shadow-2xs"
                 >
-                  <span className="block text-xs font-medium text-purple-700 mb-1">
+                  <span className="block text-[11px] font-medium text-purple-700 mb-1">
                     مرافق وأخرى
                   </span>
                   <div className="flex items-baseline gap-1">
@@ -364,128 +390,296 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     <span className="text-[11px] text-purple-600/70 font-medium">يوم</span>
                   </div>
                 </motion.div>
+
+                {/* Delay Notices */}
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  onClick={() => setActiveHistoryTab("delays")}
+                  className={cn(
+                    "p-3.5 rounded-xl border shadow-2xs cursor-pointer transition-all",
+                    activeHistoryTab === "delays"
+                      ? "bg-amber-50 border-amber-300 ring-2 ring-amber-400/20"
+                      : "bg-amber-50/50 border-amber-200/60 hover:bg-amber-50"
+                  )}
+                >
+                  <span className="block text-[11px] font-medium text-amber-800 mb-1">
+                    تنبيهات التأخر
+                  </span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black text-amber-900 font-mono">
+                      {teacherDelayNotices.length}
+                    </span>
+                    <span className="text-[11px] text-amber-700/70 font-medium">إشعار</span>
+                  </div>
+                </motion.div>
               </div>
             </div>
 
-            {/* Absence History Log Table */}
+            {/* History Section Tabs */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                  سجل المساءلات وحالات الغياب المفصلة ({teacherAbsences.length})
-                </h3>
-                {teacherAbsences.length > 0 && (
-                  <span className="text-[11px] text-slate-400">
-                    مرتبة من الأحدث إلى الأقدم
-                  </span>
-                )}
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("absences")}
+                    className={cn(
+                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
+                      activeHistoryTab === "absences"
+                        ? "bg-[#137a85] text-white shadow-2xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    مساءلات الغياب ({teacherAbsences.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("delays")}
+                    className={cn(
+                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      activeHistoryTab === "delays"
+                        ? "bg-amber-600 text-white shadow-2xs"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>تنبيهات التأخر والانصراف ({teacherDelayNotices.length})</span>
+                  </button>
+                </div>
+
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  مرتبة من الأحدث إلى الأقدم
+                </span>
               </div>
 
-              {teacherAbsences.length === 0 ? (
-                <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
-                    <FileCheck className="w-5 h-5" aria-hidden="true" />
-                  </div>
-                  <p className="text-xs md:text-sm font-bold text-slate-700">
-                    سجل المعلمة منضبط بالكامل
-                  </p>
-                  <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
-                    لم يتم تسجيل أي استمارات مساءلة أو أيام غياب لهذه المعلمة حتى
-                    الآن.
-                  </p>
-                </div>
-              ) : (
-                <div className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-                        <tr>
-                          <th scope="col" className="py-3 px-4">تاريخ الغياب</th>
-                          <th scope="col" className="py-3 px-4">النوع</th>
-                          <th scope="col" className="py-3 px-4">السبب المسجل</th>
-                          <th scope="col" className="py-3 px-4">الملاحظات</th>
-                          <th scope="col" className="py-3 px-4 text-center">الإجراءات والاستمارة</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {teacherAbsences.map((rec) => {
-                          const style =
-                            TYPE_BADGE_STYLES[rec.type] || TYPE_BADGE_STYLES["أخرى"];
-                          const isExporting = exportingId === rec.id;
-
-                          return (
-                            <tr
-                              key={rec.id}
-                              className="hover:bg-slate-50/80 transition-colors duration-150"
-                            >
-                              <td className="py-3 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
-                                <div className="flex items-center gap-1.5">
-                                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>{rec.date}</span>
-                                </div>
-                              </td>
-                              <td className="py-3 px-4 whitespace-nowrap">
-                                <span
-                                  className={cn(
-                                    "inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border",
-                                    style.bg,
-                                    style.text,
-                                    style.border
-                                  )}
-                                >
-                                  {rec.type}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 text-slate-700 max-w-xs truncate font-medium">
-                                {rec.reason || "—"}
-                              </td>
-                              <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
-                                {rec.notes || "—"}
-                              </td>
-                              <td className="py-3 px-4 text-center whitespace-nowrap">
-                                <div className="flex items-center justify-center gap-1.5">
-                                  <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    type="button"
-                                    onClick={() => handleExportPdf(rec)}
-                                    disabled={isExporting}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]"
-                                    title="تصدير استمارة مساءلة الغياب (نموذج 20)"
-                                  >
-                                    {isExporting ? (
-                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                    ) : (
-                                      <FileDown className="w-3.5 h-3.5" />
-                                    )}
-                                    <span>{isExporting ? "تصدير..." : "PDF"}</span>
-                                  </motion.button>
-                                  <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    type="button"
-                                    onClick={() => setRecordToEdit(rec)}
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
-                                    title="تعديل سجل الغياب"
-                                  >
-                                    <Pencil className="w-3.5 h-3.5" />
-                                    <span>تعديل</span>
-                                  </motion.button>
-                                  <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    type="button"
-                                    onClick={() => setRecordToDelete(rec)}
-                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                                    title="حذف سجل الغياب"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                                    <span>حذف</span>
-                                  </motion.button>
-                                </div>
-                              </td>
+              {/* Tab 1: Absences */}
+              {activeHistoryTab === "absences" && (
+                <div>
+                  {teacherAbsences.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                        <FileCheck className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                        سجل المعلمة منضبط بالكامل
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        لم يتم تسجيل أي استمارات مساءلة أو أيام غياب لهذه المعلمة حتى الآن.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-right text-xs">
+                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                              <th scope="col" className="py-3 px-4">تاريخ الغياب</th>
+                              <th scope="col" className="py-3 px-4">النوع</th>
+                              <th scope="col" className="py-3 px-4">السبب المسجل</th>
+                              <th scope="col" className="py-3 px-4">الملاحظات</th>
+                              <th scope="col" className="py-3 px-4 text-center">الإجراءات والاستمارة</th>
                             </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {teacherAbsences.map((rec) => {
+                              const style =
+                                TYPE_BADGE_STYLES[rec.type] || TYPE_BADGE_STYLES["أخرى"];
+                              const isExporting = exportingId === rec.id;
+
+                              return (
+                                <tr
+                                  key={rec.id}
+                                  className="hover:bg-slate-50/80 transition-colors duration-150"
+                                >
+                                  <td className="py-3 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5">
+                                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                      <span>{rec.date}</span>
+                                    </div>
+                                  </td>
+                                  <td className="py-3 px-4 whitespace-nowrap">
+                                    <span
+                                      className={cn(
+                                        "inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border",
+                                        style.bg,
+                                        style.text,
+                                        style.border
+                                      )}
+                                    >
+                                      {rec.type}
+                                    </span>
+                                  </td>
+                                  <td className="py-3 px-4 text-slate-700 max-w-xs truncate font-medium">
+                                    {rec.reason || "—"}
+                                  </td>
+                                  <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
+                                    {rec.notes || "—"}
+                                  </td>
+                                  <td className="py-3 px-4 text-center whitespace-nowrap">
+                                    <div className="flex items-center justify-center gap-1.5">
+                                      <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        type="button"
+                                        onClick={() => handleExportPdf(rec)}
+                                        disabled={isExporting}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="تصدير استمارة مساءلة الغياب (نموذج 20)"
+                                      >
+                                        {isExporting ? (
+                                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                        ) : (
+                                          <FileDown className="w-3.5 h-3.5" />
+                                        )}
+                                        <span>PDF</span>
+                                      </motion.button>
+                                      <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        type="button"
+                                        onClick={() => setRecordToEdit(rec)}
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
+                                        title="تعديل سجل الغياب"
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                        <span>تعديل</span>
+                                      </motion.button>
+                                      <motion.button
+                                        whileTap={{ scale: 0.95 }}
+                                        type="button"
+                                        onClick={() => setRecordToDelete(rec)}
+                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                        title="حذف سجل الغياب"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                        <span>حذف</span>
+                                      </motion.button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Delay Notices */}
+              {activeHistoryTab === "delays" && (
+                <div>
+                  {teacherDelayNotices.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                        <Clock className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                        لا توجد تنبيهات تأخر أو انصراف
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        المعلمة ملتزمة بمواعيد الدوام الرسمي ولم يصدر بحقها أي تنبيه.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-right text-xs">
+                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                              <th scope="col" className="py-3 px-4">رقم وتاريخ التنبيه</th>
+                              <th scope="col" className="py-3 px-4">المخالفات المسجلة</th>
+                              <th scope="col" className="py-3 px-4">إفادة ومبرر المعلمة</th>
+                              <th scope="col" className="py-3 px-4">حالة الإجراء وقرار المديرة</th>
+                              <th scope="col" className="py-3 px-4 text-center">الاستمارة</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {teacherDelayNotices.map((notice) => {
+                              return (
+                                <tr
+                                  key={notice.id}
+                                  className="hover:bg-slate-50/80 transition-colors duration-150"
+                                >
+                                  <td className="py-3 px-4 whitespace-nowrap">
+                                    <div className="font-mono font-bold text-[#137a85]">
+                                      {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                      {notice.noticeDate || notice.date}
+                                    </div>
+                                  </td>
+
+                                  <td className="py-3 px-4">
+                                    <div className="flex flex-wrap gap-1">
+                                      {notice.violationDelayStart && (
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                          تأخر صباحي ({notice.delayStartTime})
+                                        </span>
+                                      )}
+                                      {notice.violationAbsentDuring && (
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                          عدم تواجد ({notice.absentFromTime} - {notice.absentToTime})
+                                        </span>
+                                      )}
+                                      {notice.violationEarlyDeparture && (
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                          انصراف مبكر ({notice.earlyDepartureTime})
+                                        </span>
+                                      )}
+                                      {notice.violationLeftSchool && (
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                          خروج وعودة
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+
+                                  <td className="py-3 px-4 max-w-xs truncate text-slate-700">
+                                    {notice.teacherReason || (
+                                      <span className="text-slate-400 italic">بانتظار الإفادة</span>
+                                    )}
+                                  </td>
+
+                                  <td className="py-3 px-4 whitespace-nowrap">
+                                    {notice.status === "pending_teacher" && (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                                        بانتظار المعلمة
+                                      </span>
+                                    )}
+                                    {notice.status === "pending_director" && (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                        بانتظار قرار المديرة
+                                      </span>
+                                    )}
+                                    {notice.status === "completed" && (
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                        {notice.directorOpinion === "accepted"
+                                          ? "مكتمل (قبول العذر)"
+                                          : "مكتمل (تقرر الحسم)"}
+                                      </span>
+                                    )}
+                                  </td>
+
+                                  <td className="py-3 px-4 text-center whitespace-nowrap">
+                                    <motion.button
+                                      whileTap={{ scale: 0.95 }}
+                                      type="button"
+                                      onClick={() => handleExportDelayPdf(notice)}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                                      title="طباعة إشعار التنبيه الرسمي (PDF)"
+                                    >
+                                      <FileDown className="w-3.5 h-3.5" />
+                                      <span>PDF</span>
+                                    </motion.button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

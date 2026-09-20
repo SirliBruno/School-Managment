@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   PieChart,
   Pie,
@@ -23,6 +24,12 @@ import {
   Calendar,
   AlertCircle,
   HelpCircle,
+  Clock,
+  ArrowLeft,
+  LogIn,
+  LogOut,
+  DoorOpen,
+  CheckCircle2,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { AbsenceType } from "@/types/teacher";
@@ -81,12 +88,22 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
 };
 
 export const AbsenceCharts: React.FC = () => {
-  const { absenceRecords, isLoading } = useTeachers();
+  const { absenceRecords, delayNotices, isLoading } = useTeachers();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const delayNoticeStats = useMemo(() => {
+    const total = delayNotices.length;
+    const morning = delayNotices.filter((d) => d.violationDelayStart).length;
+    const during = delayNotices.filter((d) => d.violationAbsentDuring).length;
+    const early = delayNotices.filter((d) => d.violationEarlyDeparture).length;
+    const left = delayNotices.filter((d) => d.violationLeftSchool).length;
+    const completed = delayNotices.filter((d) => d.status === "completed").length;
+    return { total, morning, during, early, left, completed };
+  }, [delayNotices]);
 
   // 1. Data for Donut Chart (Absence Types Distribution)
   const pieData = useMemo(() => {
@@ -379,6 +396,77 @@ export const AbsenceCharts: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* 3. تنبيهات التأخر والانصراف */}
+      {delayNoticeStats.total > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-2xs">
+                <Clock className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h3 className="text-sm md:text-base font-bold text-slate-900">
+                  توزيع مخالفات تنبيهات التأخر والانصراف
+                </h3>
+                <p className="text-xs text-slate-500">
+                  تصنيف حالات التأخر الصباحي، عدم التواجد، والانصراف المبكر (نموذج و.م.ع.ن - ٠٢ - ٠٢)
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="/procedures/delay-notice"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors self-start sm:self-center cursor-pointer"
+            >
+              <span>إدارة تنبيهات التأخر ({delayNoticeStats.total})</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
+                <LogIn className="w-3.5 h-3.5 text-amber-600" />
+                <span>تأخر صباحي</span>
+              </div>
+              <span className="text-xl font-bold font-mono text-slate-900">
+                {delayNoticeStats.morning}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>عدم تواجد أثناء الدوام</span>
+              </div>
+              <span className="text-xl font-bold font-mono text-slate-900">
+                {delayNoticeStats.during}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
+                <LogOut className="w-3.5 h-3.5 text-amber-600" />
+                <span>انصراف مبكر</span>
+              </div>
+              <span className="text-xl font-bold font-mono text-slate-900">
+                {delayNoticeStats.early}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
+                <DoorOpen className="w-3.5 h-3.5 text-amber-600" />
+                <span>خروج وعودة</span>
+              </div>
+              <span className="text-xl font-bold font-mono text-slate-900">
+                {delayNoticeStats.left}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 };

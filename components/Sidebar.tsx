@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { useTeachers } from "@/context/TeacherContext";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 
 
@@ -68,7 +69,7 @@ export const NAV_ITEMS: NavItem[] = [
       {
         id: "delay-warning",
         label: "تنبيه على تأخر",
-        href: "/procedures/delay-warning",
+        href: "/procedures/delay-notice",
       },
       {
         id: "deduction-hours",
@@ -97,7 +98,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { delayNotices } = useTeachers();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
+  const pendingDirectorDelayCount = delayNotices.filter(
+    (d) => d.status === "pending_director"
+  ).length;
 
   // "الإجراءات الإدارية" is EXPANDED by default
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -215,7 +221,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       className="w-5 h-5 text-teal-100 group-hover:text-white transition-colors shrink-0"
                       aria-hidden="true"
                     />
-                    <span>{item.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span>{item.label}</span>
+                      {item.id === "admin-procedures" && pendingDirectorDelayCount > 0 && (
+                        <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-[#137a85] animate-pulse shrink-0" />
+                      )}
+                    </div>
                   </div>
 
                   {/* Animated Rotating Chevron */}
@@ -263,7 +274,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             )}
                           >
                             <div className="flex items-center justify-between">
-                              <span>{subItem.label}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span>{subItem.label}</span>
+                                {subItem.id === "delay-warning" && pendingDirectorDelayCount > 0 && (
+                                  <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold ring-1 ring-white/30 animate-pulse">
+                                    {pendingDirectorDelayCount}
+                                  </span>
+                                )}
+                              </div>
                               {isSubActive && (
                                 <motion.span
                                   layoutId="active-sub-dot"
