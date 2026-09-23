@@ -25,6 +25,7 @@ import {
   Eye,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
@@ -80,6 +81,7 @@ const ABSENCE_TYPES: {
 
 export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const { teachers, recordAbsence, absenceRecords } = useTeachers();
+  const { showToast } = useToast();
 
   // Form states
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
@@ -87,7 +89,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const [absenceDate, setAbsenceDate] = useState(() => {
     return getSaudiToday();
   });
-  const [absenceType, setAbsenceType] = useState<AbsenceType>("اضطراري");
+  const [absenceType, setAbsenceType] = useState<AbsenceType | "">("");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -262,6 +264,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       }
     }
 
+    if (!absenceType) {
+      newErrors.type = "يرجى اختيار نوع الغياب.";
+    }
+
     if (!reason.trim()) {
       newErrors.reason = "سبب الغياب مطلوب لإصدار نموذج المساءلة.";
     } else if (reason.trim().length < 3) {
@@ -273,7 +279,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   };
 
   const saveRecord = async (): Promise<AbsenceRecord | null> => {
-    if (!validate() || !selectedTeacher) return null;
+    if (!validate() || !selectedTeacher || !absenceType) return null;
 
     const teacherSnapshot = {
       ...selectedTeacher,
@@ -325,6 +331,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       }, 7000);
     } catch (err) {
       console.error("خطأ أثناء تسجيل الغياب:", err);
+      showToast({
+        message: "تعذر حفظ سجل الغياب، يرجى التحقق من الاتصال والمحاولة مجدداً.",
+        type: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -368,6 +378,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       }
     } catch (err) {
       console.error("خطأ أثناء الحفظ والتصدير:", err);
+      showToast({
+        message: "تعذر حفظ وتصدير استمارة الغياب، يرجى المحاولة مجدداً.",
+        type: "error",
+      });
       setIsExportingDirect(false);
     }
   };
@@ -539,11 +553,14 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 <button
                   key={item.type}
                   type="button"
-                  onClick={() => setAbsenceType(item.type)}
+                  onClick={() => {
+                    setAbsenceType(item.type);
+                    setErrors((prev) => ({ ...prev, type: "" }));
+                  }}
                   className={cn(
                     "p-3.5 rounded-xl border text-right transition-all flex flex-col justify-between gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]",
                     isSelected
-                      ? "bg-teal-50/70 border-[#137a85] ring-2 ring-[#137a85]/20 shadow-xs"
+                      ? "bg-teal-50/70 border-[#137a85] ring-2 ring-[#137a85]/20 shadow-sm"
                       : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60"
                   )}
                 >
@@ -588,6 +605,13 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               );
             })}
           </div>
+
+          {errors.type && (
+            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1 animate-in fade-in">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{errors.type}</span>
+            </p>
+          )}
         </div>
 
         {/* Row 3: Reason for Absence */}
@@ -677,15 +701,24 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
           {!attachmentFile ? (
             <div
+              tabIndex={0}
+              role="button"
+              aria-label="انقري أو اضغطي Enter لإرفاق تقرير طبي أو مستند عذر"
               onClick={() => fileInputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  fileInputRef.current?.click();
+                }
+              }}
               className={cn(
-                "border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 group",
+                "border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]",
                 errors.attachment
                   ? "border-rose-300 bg-rose-50/40"
                   : "border-slate-200 hover:border-[#137a85] bg-slate-50/50 hover:bg-teal-50/20"
               )}
             >
-              <div className="w-10 h-10 rounded-xl bg-white text-slate-500 group-hover:text-[#137a85] group-hover:scale-105 flex items-center justify-center shadow-xs border border-slate-100 transition-all">
+              <div className="w-10 h-10 rounded-xl bg-white text-slate-500 group-hover:text-[#137a85] group-hover:scale-105 flex items-center justify-center shadow-sm border border-slate-100 transition-all">
                 <Upload className="w-5 h-5" />
               </div>
               <div>
@@ -701,7 +734,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             <div className="p-3.5 rounded-2xl border border-teal-200 bg-teal-50/40 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 {attachmentPreview ? (
-                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-teal-300 shrink-0 bg-white shadow-2xs">
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-teal-300 shrink-0 bg-white shadow-sm">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={attachmentPreview}

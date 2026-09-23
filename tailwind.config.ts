@@ -27,7 +27,6 @@ const config: Config = {
       },
       fontFamily: {
         cairo: ["var(--font-cairo)", "sans-serif"],
-        tajawal: ["var(--font-tajawal)", "sans-serif"],
       },
     },
   },

@@ -235,9 +235,9 @@ export default function DashboardPage() {
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Vice Principal Name Badge */}
-            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#0D9488]/8 border border-[#0D9488]/25 text-xs font-bold text-[#0D9488] shadow-2xs">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0D9488]/8 border border-[#0D9488]/25 text-xs font-bold text-[#0D9488] shadow-sm">
               <span className="w-6 h-6 rounded-lg bg-[#0D9488] text-white flex items-center justify-center text-[10px] font-extrabold shrink-0">
                 أ
               </span>
@@ -247,7 +247,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium shadow-2xs">
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium shadow-sm">
               <Calendar className="w-4 h-4 text-[#137a85]" />
               <span>{todayFormatted}</span>
             </div>
@@ -733,10 +733,10 @@ export default function DashboardPage() {
             </span>
             <Link
               href="/procedures/absence"
-              className="flex items-center gap-1 text-[#137a85] font-semibold hover:underline"
+              className="flex items-center gap-1.5 text-[#137a85] font-bold hover:underline"
             >
               <span>الانتقال لصفحة مساءلة الغياب الكاملة</span>
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
             </Link>
           </div>
         </section>
