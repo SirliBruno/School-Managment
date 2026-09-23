@@ -456,25 +456,51 @@ export default function DelayNoticePage() {
                               {notice.violationDelayStart && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
                                   <LogIn className="w-3 h-3 text-amber-600" />
-                                  <span>تأخر صباحي ({notice.delayStartTime || "—"})</span>
+                                  <span>
+                                    تأخر صباحي ({notice.delayStartFromTime ? `${notice.delayStartFromTime} - ` : ""}{notice.delayStartTime || "—"})
+                                  </span>
+                                  {notice.calculatedDuration && (
+                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
+                                      {notice.calculatedDuration}
+                                    </span>
+                                  )}
                                 </span>
                               )}
                               {notice.violationAbsentDuring && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
                                   <Clock className="w-3 h-3 text-amber-600" />
                                   <span>عدم تواجد ({notice.absentFromTime} - {notice.absentToTime})</span>
+                                  {notice.calculatedDuration && (
+                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
+                                      {notice.calculatedDuration}
+                                    </span>
+                                  )}
                                 </span>
                               )}
                               {notice.violationEarlyDeparture && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
                                   <LogOut className="w-3 h-3 text-amber-600" />
-                                  <span>انصراف مبكر ({notice.earlyDepartureTime || "—"})</span>
+                                  <span>
+                                    انصراف مبكر ({notice.earlyDepartureFromTime ? `${notice.earlyDepartureFromTime} - ` : ""}{notice.earlyDepartureTime || "—"})
+                                  </span>
+                                  {notice.calculatedDuration && (
+                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
+                                      {notice.calculatedDuration}
+                                    </span>
+                                  )}
                                 </span>
                               )}
                               {notice.violationLeftSchool && (
                                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
                                   <DoorOpen className="w-3 h-3 text-amber-600" />
-                                  <span>خروج وعودة</span>
+                                  <span>
+                                    خروج وعودة {notice.leftSchoolFromTime && notice.leftSchoolToTime ? `(${notice.leftSchoolFromTime} - ${notice.leftSchoolToTime})` : ""}
+                                  </span>
+                                  {notice.calculatedDuration && (
+                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
+                                      {notice.calculatedDuration}
+                                    </span>
+                                  )}
                                 </span>
                               )}
                             </div>
@@ -669,23 +695,27 @@ export default function DelayNoticePage() {
                     {/* Violations */}
                     <div className="flex flex-wrap gap-1">
                       {notice.violationDelayStart && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
-                          تأخر صباحي ({notice.delayStartTime})
+                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span>تأخر صباحي ({notice.delayStartFromTime ? `${notice.delayStartFromTime} - ` : ""}{notice.delayStartTime})</span>
+                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
                         </span>
                       )}
                       {notice.violationAbsentDuring && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
-                          عدم تواجد ({notice.absentFromTime} - {notice.absentToTime})
+                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span>عدم تواجد ({notice.absentFromTime} - {notice.absentToTime})</span>
+                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
                         </span>
                       )}
                       {notice.violationEarlyDeparture && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
-                          انصراف مبكر ({notice.earlyDepartureTime})
+                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span>انصراف مبكر ({notice.earlyDepartureFromTime ? `${notice.earlyDepartureFromTime} - ` : ""}{notice.earlyDepartureTime})</span>
+                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
                         </span>
                       )}
                       {notice.violationLeftSchool && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded">
-                          خروج وعودة
+                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                          <span>خروج وعودة {notice.leftSchoolFromTime && notice.leftSchoolToTime ? `(${notice.leftSchoolFromTime} - ${notice.leftSchoolToTime})` : ""}</span>
+                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
                         </span>
                       )}
                     </div>

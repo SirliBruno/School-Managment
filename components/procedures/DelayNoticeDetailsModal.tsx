@@ -253,50 +253,82 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
 
               <div className="space-y-2 text-xs">
                 {notice.violationDelayStart && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <LogIn className="w-4 h-4 text-amber-600" />
                       <span>التأخر عن بداية الدوام الرسمي صباحاً</span>
                     </span>
-                    <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      حضور: {notice.delayStartTime || "—"}
-                    </span>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {notice.delayStartFromTime ? `من ${notice.delayStartFromTime} إلى ` : "حضور: "}
+                        {notice.delayStartTime || "—"}
+                      </span>
+                      {notice.calculatedDuration && (
+                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                          المدة: {notice.calculatedDuration}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {notice.violationAbsentDuring && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <Clock className="w-4 h-4 text-amber-600" />
                       <span>عدم التواجد أثناء الدوام الرسمي</span>
                     </span>
-                    <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      من: {notice.absentFromTime || "—"} إلى: {notice.absentToTime || "—"}
-                    </span>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        من: {notice.absentFromTime || "—"} إلى: {notice.absentToTime || "—"}
+                      </span>
+                      {notice.calculatedDuration && (
+                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                          المدة: {notice.calculatedDuration}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {notice.violationEarlyDeparture && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <LogOut className="w-4 h-4 text-amber-600" />
                       <span>الانصراف المبكر قبل نهاية الدوام</span>
                     </span>
-                    <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      انصراف: {notice.earlyDepartureTime || "—"}
-                    </span>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {notice.earlyDepartureFromTime ? `من ${notice.earlyDepartureFromTime} إلى ` : "انصراف: "}
+                        {notice.earlyDepartureTime || "—"}
+                      </span>
+                      {notice.calculatedDuration && (
+                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                          المدة: {notice.calculatedDuration}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 
                 {notice.violationLeftSchool && (
-                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <DoorOpen className="w-4 h-4 text-amber-600" />
                       <span>الخروج من المدرسة والعودة إليها أثناء الدوام</span>
                     </span>
-                    <span className="text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                      {notice.leftSchoolDetails || "—"}
-                    </span>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <span className="text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                        {notice.leftSchoolFromTime && notice.leftSchoolToTime
+                          ? `من ${notice.leftSchoolFromTime} إلى ${notice.leftSchoolToTime}`
+                          : notice.leftSchoolDetails || "—"}
+                      </span>
+                      {notice.calculatedDuration && (
+                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                          المدة: {notice.calculatedDuration}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
 

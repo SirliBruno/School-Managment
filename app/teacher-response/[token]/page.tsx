@@ -240,11 +240,19 @@ export default function PublicTeacherResponsePage() {
   };
 
   // Helper summary of violations
-  const violationsList: { title: string; time?: string; icon: React.ComponentType<{ className?: string }> }[] = [];
+  const violationsList: {
+    title: string;
+    time?: string;
+    duration?: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [];
   if (notice?.violationDelayStart) {
     violationsList.push({
       title: "التأخر الصباحي عن بداية الدوام الرسمي",
-      time: `وقت الحضور الفعلي: ${notice.delayStartTime || "—"}`,
+      time: notice.delayStartFromTime
+        ? `من ${notice.delayStartFromTime} إلى ${notice.delayStartTime || "—"}`
+        : `وقت الحضور الفعلي: ${notice.delayStartTime || "—"}`,
+      duration: notice.calculatedDuration,
       icon: LogIn,
     });
   }
@@ -252,20 +260,28 @@ export default function PublicTeacherResponsePage() {
     violationsList.push({
       title: "عدم التواجد أثناء الدوام الرسمي",
       time: `من الساعة ${notice.absentFromTime || "—"} إلى الساعة ${notice.absentToTime || "—"}`,
+      duration: notice.calculatedDuration,
       icon: Clock,
     });
   }
   if (notice?.violationEarlyDeparture) {
     violationsList.push({
       title: "الانصراف المبكر قبل نهاية الدوام الرسمي",
-      time: `وقت الانصراف الفعلي: ${notice.earlyDepartureTime || "—"}`,
+      time: notice.earlyDepartureFromTime
+        ? `من ${notice.earlyDepartureFromTime} إلى ${notice.earlyDepartureTime || "—"}`
+        : `وقت الانصراف الفعلي: ${notice.earlyDepartureTime || "—"}`,
+      duration: notice.calculatedDuration,
       icon: LogOut,
     });
   }
   if (notice?.violationLeftSchool) {
     violationsList.push({
       title: "الخروج من المدرسة والعودة إليها أثناء الدوام",
-      time: notice.leftSchoolDetails || "تفاصيل مسجلة بإشعار الإدارة",
+      time:
+        notice.leftSchoolFromTime && notice.leftSchoolToTime
+          ? `من ${notice.leftSchoolFromTime} إلى ${notice.leftSchoolToTime}`
+          : notice.leftSchoolDetails || "تفاصيل مسجلة بإشعار الإدارة",
+      duration: notice.calculatedDuration,
       icon: DoorOpen,
     });
   }
@@ -384,13 +400,20 @@ export default function PublicTeacherResponsePage() {
                   {violationsList.map((v, i) => (
                     <div
                       key={i}
-                      className="text-[11px] font-bold text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200/70 flex items-center gap-2"
+                      className="text-[11px] font-bold text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200/70 flex items-center justify-between gap-2"
                     >
-                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                      <span>{v.title}</span>
-                      <span className="text-slate-500 font-normal mr-auto font-mono text-[10px]">
-                        ({v.time})
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                        <span>{v.title}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] font-normal text-slate-500 font-mono">
+                        <span>({v.time})</span>
+                        {v.duration && (
+                          <span className="text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                            {v.duration}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -542,11 +565,18 @@ export default function PublicTeacherResponsePage() {
                   <div className="w-8 h-8 rounded-xl bg-amber-100/90 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
                     <IconComponent className="w-4 h-4" />
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-800">
-                    <strong className="block font-bold text-amber-950">
-                      • {v.title}
-                    </strong>
-                    <span className="text-slate-600 font-medium text-xs mt-0.5 block">
+                  <div className="text-xs sm:text-sm text-slate-800 flex-1">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <strong className="font-bold text-amber-950">
+                        • {v.title}
+                      </strong>
+                      {v.duration && (
+                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                          المدة: {v.duration}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-slate-600 font-medium text-xs mt-1 block">
                       {v.time}
                     </span>
                   </div>

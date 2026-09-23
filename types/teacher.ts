@@ -93,17 +93,24 @@ export interface DelayNotice {
   noticeDate: string;
   date?: string;                      // توافق وتسهيل مع شاشات العرض
   violationDelayStart: boolean;       // تأخرك من بداية الدوام وحضورك الساعة
-  delayStartTime?: string;            // الساعة عند التأخر
+  delayStartFromTime?: string;        // وقت بداية الدوام الرسمي
+  delayStartTime?: string;            // الساعة عند التأخر / الحضور الفعلي
 
   violationAbsentDuring: boolean;     // عدم تواجدك أثناء الدوام من الساعة إلى الساعة
   absentFromTime?: string;            // من الساعة
   absentToTime?: string;              // إلى الساعة
 
   violationEarlyDeparture: boolean;   // انصرافك مبكراً قبل نهاية الدوام
-  earlyDepartureTime?: string;        // الساعة عند الانصراف المبكر
+  earlyDepartureFromTime?: string;    // وقت الانصراف الفعلي
+  earlyDepartureTime?: string;        // الساعة عند الانصراف المبكر / نهاية الدوام
 
   violationLeftSchool: boolean;       // انصرافك من غير المدرسة
+  leftSchoolFromTime?: string;        // وقت الخروج
+  leftSchoolToTime?: string;          // وقت العودة
   leftSchoolDetails?: string;         // تفاصيل الانصراف
+
+  calculatedDuration?: string;        // المدة المحتسبة نصياً (مثال: ساعتان)
+  calculatedMinutes?: number;         // إجمالي المدة بالدقائق
 
   additionalNotes?: string;           // ملاحظات إضافية من الوكيلة
   notes?: string;                     // الاسم البديل للملاحظات

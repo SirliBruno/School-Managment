@@ -162,29 +162,38 @@ export const TeacherResponseModal: React.FC<TeacherResponseModalProps> = ({
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                 <span>المخالفات المسجلة بحق المعلمة:</span>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-amber-800 pr-2">
+              <ul className="list-disc list-inside space-y-1.5 text-amber-900 pr-2">
                 {notice.violationDelayStart && (
                   <li>
-                    التأخر الصباحي عن بداية الدوام (وقت الحضور:{" "}
-                    <strong>{notice.delayStartTime || "—"}</strong>)
+                    التأخر الصباحي عن بداية الدوام (
+                    {notice.delayStartFromTime ? `من ${notice.delayStartFromTime} إلى ` : "حضور: "}
+                    <strong>{notice.delayStartTime || "—"}</strong>
+                    {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
                   </li>
                 )}
                 {notice.violationAbsentDuring && (
                   <li>
                     عدم التواجد أثناء الدوام (من الساعة:{" "}
                     <strong>{notice.absentFromTime || "—"}</strong> إلى الساعة:{" "}
-                    <strong>{notice.absentToTime || "—"}</strong>)
+                    <strong>{notice.absentToTime || "—"}</strong>
+                    {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
                   </li>
                 )}
                 {notice.violationEarlyDeparture && (
                   <li>
-                    الانصراف المبكر قبل نهاية الدوام (وقت الانصراف:{" "}
-                    <strong>{notice.earlyDepartureTime || "—"}</strong>)
+                    الانصراف المبكر قبل نهاية الدوام (
+                    {notice.earlyDepartureFromTime ? `من ${notice.earlyDepartureFromTime} إلى ` : "انصراف: "}
+                    <strong>{notice.earlyDepartureTime || "—"}</strong>
+                    {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
                   </li>
                 )}
                 {notice.violationLeftSchool && (
                   <li>
-                    الخروج من المدرسة والعودة إليها ({notice.leftSchoolDetails || "—"})
+                    الخروج من المدرسة والعودة إليها (
+                    {notice.leftSchoolFromTime && notice.leftSchoolToTime
+                      ? `من ${notice.leftSchoolFromTime} إلى ${notice.leftSchoolToTime}`
+                      : notice.leftSchoolDetails || "—"}
+                    {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
                   </li>
                 )}
               </ul>

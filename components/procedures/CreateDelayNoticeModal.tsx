@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect, useId, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -15,11 +15,15 @@ import {
   LogOut,
   LogIn,
   DoorOpen,
+  ChevronDown,
+  Timer,
+  Sparkles,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { Teacher, DelayNotice } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
+import { calculateTimeDifference } from "@/lib/timeUtils";
 import { cn } from "@/lib/utils";
 
 interface CreateDelayNoticeModalProps {
@@ -28,6 +32,71 @@ interface CreateDelayNoticeModalProps {
   noticeToEdit?: DelayNotice | null;
   preselectedTeacherId?: string;
 }
+
+export type ViolationTypeKey =
+  | "delay_start"
+  | "absent_during"
+  | "early_departure"
+  | "left_school";
+
+interface ViolationTypeOption {
+  id: ViolationTypeKey;
+  title: string;
+  subtitle: string;
+  icon: React.ComponentType<{ className?: string }>;
+  fromLabel: string;
+  toLabel: string;
+  defaultFrom: string;
+  defaultTo: string;
+  badgeLabel: string;
+}
+
+const VIOLATION_TYPE_OPTIONS: ViolationTypeOption[] = [
+  {
+    id: "delay_start",
+    title: "التأخر عن بداية الدوام الرسمي صباحاً",
+    subtitle: "حضور المعلمة للمدرسة بعد جرس الاصطفاف أو بداية الحصة الأولى",
+    icon: LogIn,
+    fromLabel: "بداية الدوام الرسمي (من الساعة):",
+    toLabel: "حضور المعلمة الفعلي (إلى الساعة):",
+    defaultFrom: "07:00",
+    defaultTo: "08:30",
+    badgeLabel: "تأخر صباحي",
+  },
+  {
+    id: "absent_during",
+    title: "عدم التواجد أثناء الدوام الرسمي",
+    subtitle: "غياب عن حصة دراسية، مناوبة، أو فترة محددة في منتصف اليوم الدراسي",
+    icon: Clock,
+    fromLabel: "بداية فترة عدم التواجد (من الساعة):",
+    toLabel: "نهاية فترة عدم التواجد (إلى الساعة):",
+    defaultFrom: "08:00",
+    defaultTo: "10:00",
+    badgeLabel: "عدم تواجد أثناء الدوام",
+  },
+  {
+    id: "early_departure",
+    title: "الانصراف المبكر قبل نهاية الدوام الرسمي",
+    subtitle: "مغادرة المدرسة قبل انتهاء اليوم الدراسي بدون إذن رسمي معتمد",
+    icon: LogOut,
+    fromLabel: "وقت الانصراف الفعلي (من الساعة):",
+    toLabel: "نهاية الدوام الرسمي (إلى الساعة):",
+    defaultFrom: "11:30",
+    defaultTo: "13:30",
+    badgeLabel: "انصراف مبكر",
+  },
+  {
+    id: "left_school",
+    title: "الخروج من المدرسة والعودة إليها أثناء الدوام الرسمي",
+    subtitle: "مغادرة مبنى المدرسة لفترة زمنية مؤقتة دون تصريح خروج رسمي",
+    icon: DoorOpen,
+    fromLabel: "وقت الخروج من المدرسة (من الساعة):",
+    toLabel: "وقت العودة للمدرسة (إلى الساعة):",
+    defaultFrom: "09:00",
+    defaultTo: "11:00",
+    badgeLabel: "خروج وعودة أثناء الدوام",
+  },
+];
 
 export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
   isOpen,
@@ -45,18 +114,11 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
     return new Date().toISOString().split("T")[0];
   });
 
-  // 4 Violation Checkboxes & their corresponding fields
-  const [violationDelayStart, setViolationDelayStart] = useState(false);
-  const [delayStartTime, setDelayStartTime] = useState("07:30");
-
-  const [violationAbsentDuring, setViolationAbsentDuring] = useState(false);
-  const [absentFromTime, setAbsentFromTime] = useState("09:00");
-  const [absentToTime, setAbsentToTime] = useState("10:30");
-
-  const [violationEarlyDeparture, setViolationEarlyDeparture] = useState(false);
-  const [earlyDepartureTime, setEarlyDepartureTime] = useState("12:00");
-
-  const [violationLeftSchool, setViolationLeftSchool] = useState(false);
+  // Violation Type dropdown selection & Time range
+  const [selectedViolationType, setSelectedViolationType] =
+    useState<ViolationTypeKey>("delay_start");
+  const [fromTime, setFromTime] = useState("07:00");
+  const [toTime, setToTime] = useState("08:30");
   const [leftSchoolDetails, setLeftSchoolDetails] = useState("");
 
   const [notes, setNotes] = useState("");
@@ -64,6 +126,30 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const isEditing = Boolean(noticeToEdit);
+
+  // Active configuration for selected violation type
+  const activeOption = useMemo(() => {
+    return (
+      VIOLATION_TYPE_OPTIONS.find((opt) => opt.id === selectedViolationType) ||
+      VIOLATION_TYPE_OPTIONS[0]
+    );
+  }, [selectedViolationType]);
+
+  // Live calculation of duration
+  const timeResult = useMemo(() => {
+    return calculateTimeDifference(fromTime, toTime);
+  }, [fromTime, toTime]);
+
+  // Handle violation type change
+  const handleViolationTypeChange = (newType: ViolationTypeKey) => {
+    setSelectedViolationType(newType);
+    const matched = VIOLATION_TYPE_OPTIONS.find((opt) => opt.id === newType);
+    if (matched && !isEditing) {
+      setFromTime(matched.defaultFrom);
+      setToTime(matched.defaultTo);
+    }
+    setErrorMsg(null);
+  };
 
   // Initialize or populate when opening / editing
   useEffect(() => {
@@ -77,15 +163,27 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
       const found = teachers.find((t) => t.id === noticeToEdit.teacherId);
       setSelectedTeacher(found || null);
       setNoticeDate(noticeToEdit.noticeDate || noticeToEdit.date || "");
-      setViolationDelayStart(noticeToEdit.violationDelayStart);
-      setDelayStartTime(noticeToEdit.delayStartTime || "07:30");
-      setViolationAbsentDuring(noticeToEdit.violationAbsentDuring);
-      setAbsentFromTime(noticeToEdit.absentFromTime || "09:00");
-      setAbsentToTime(noticeToEdit.absentToTime || "10:30");
-      setViolationEarlyDeparture(noticeToEdit.violationEarlyDeparture);
-      setEarlyDepartureTime(noticeToEdit.earlyDepartureTime || "12:00");
-      setViolationLeftSchool(noticeToEdit.violationLeftSchool);
-      setLeftSchoolDetails(noticeToEdit.leftSchoolDetails || "");
+
+      if (noticeToEdit.violationAbsentDuring) {
+        setSelectedViolationType("absent_during");
+        setFromTime(noticeToEdit.absentFromTime || "08:00");
+        setToTime(noticeToEdit.absentToTime || "10:00");
+      } else if (noticeToEdit.violationEarlyDeparture) {
+        setSelectedViolationType("early_departure");
+        setFromTime(noticeToEdit.earlyDepartureFromTime || "11:30");
+        setToTime(noticeToEdit.earlyDepartureTime || "13:30");
+      } else if (noticeToEdit.violationLeftSchool) {
+        setSelectedViolationType("left_school");
+        setFromTime(noticeToEdit.leftSchoolFromTime || "09:00");
+        setToTime(noticeToEdit.leftSchoolToTime || "11:00");
+        setLeftSchoolDetails(noticeToEdit.leftSchoolDetails || "");
+      } else {
+        // Default delay_start
+        setSelectedViolationType("delay_start");
+        setFromTime(noticeToEdit.delayStartFromTime || "07:00");
+        setToTime(noticeToEdit.delayStartTime || "08:30");
+      }
+
       setNotes(noticeToEdit.additionalNotes || noticeToEdit.notes || "");
     } else {
       // Create mode
@@ -100,14 +198,9 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
         setSelectedTeacher(null);
       }
       setNoticeDate(new Date().toISOString().split("T")[0]);
-      setViolationDelayStart(true);
-      setDelayStartTime("07:30");
-      setViolationAbsentDuring(false);
-      setAbsentFromTime("09:00");
-      setAbsentToTime("10:30");
-      setViolationEarlyDeparture(false);
-      setEarlyDepartureTime("12:00");
-      setViolationLeftSchool(false);
+      setSelectedViolationType("delay_start");
+      setFromTime("07:00");
+      setToTime("08:30");
       setLeftSchoolDetails("");
       setNotes("");
     }
@@ -131,33 +224,20 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
       return false;
     }
 
-    const hasAnyViolation =
-      violationDelayStart ||
-      violationAbsentDuring ||
-      violationEarlyDeparture ||
-      violationLeftSchool;
-
-    if (!hasAnyViolation) {
-      setErrorMsg("يرجى تحديد نوع مخالفة واحد على الأقل (المرحلة الأولى: إدخال الوكيلة).");
+    if (!fromTime || !toTime) {
+      setErrorMsg("يرجى إدخال وقت البداية ووقت النهاية.");
       return false;
     }
 
-    if (violationDelayStart && !delayStartTime.trim()) {
-      setErrorMsg("يرجى إدخال وقت الحضور الفعلي للتأخر الصباحي.");
+    if (!timeResult.isValid) {
+      setErrorMsg(
+        timeResult.error ||
+          "يرجى التأكد من أن وقت النهاية يأتي بعد وقت البداية لاحتساب المدة."
+      );
       return false;
     }
 
-    if (violationAbsentDuring && (!absentFromTime.trim() || !absentToTime.trim())) {
-      setErrorMsg("يرجى إدخال وقت الغياب (من الساعة - إلى الساعة).");
-      return false;
-    }
-
-    if (violationEarlyDeparture && !earlyDepartureTime.trim()) {
-      setErrorMsg("يرجى إدخال وقت الانصراف المبكر الفعلي.");
-      return false;
-    }
-
-    if (violationLeftSchool && !leftSchoolDetails.trim()) {
+    if (selectedViolationType === "left_school" && !leftSchoolDetails.trim()) {
       setErrorMsg("يرجى كتابة تفاصيل الخروج والعودة أثناء الدوام.");
       return false;
     }
@@ -172,30 +252,59 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
 
     setIsProcessing(true);
     try {
+      const isDelayStart = selectedViolationType === "delay_start";
+      const isAbsentDuring = selectedViolationType === "absent_during";
+      const isEarlyDeparture = selectedViolationType === "early_departure";
+      const isLeftSchool = selectedViolationType === "left_school";
+
+      const payload = {
+        teacherId: selectedTeacher.id,
+        teacherName:
+          selectedTeacher.fullName || selectedTeacher.name || "معلمة",
+        jobNumber:
+          selectedTeacher.username || selectedTeacher.jobNumber || "—",
+        specialty:
+          selectedTeacher.specialty ||
+          selectedTeacher.teachingField ||
+          "عام",
+        noticeDate,
+        date: noticeDate,
+
+        violationDelayStart: isDelayStart,
+        delayStartFromTime: isDelayStart ? fromTime : undefined,
+        delayStartTime: isDelayStart ? toTime : undefined,
+
+        violationAbsentDuring: isAbsentDuring,
+        absentFromTime: isAbsentDuring ? fromTime : undefined,
+        absentToTime: isAbsentDuring ? toTime : undefined,
+
+        violationEarlyDeparture: isEarlyDeparture,
+        earlyDepartureFromTime: isEarlyDeparture ? fromTime : undefined,
+        earlyDepartureTime: isEarlyDeparture ? toTime : undefined,
+
+        violationLeftSchool: isLeftSchool,
+        leftSchoolFromTime: isLeftSchool ? fromTime : undefined,
+        leftSchoolToTime: isLeftSchool ? toTime : undefined,
+        leftSchoolDetails: isLeftSchool
+          ? leftSchoolDetails.trim() ||
+            `الخروج من الساعة ${fromTime} والعودة الساعة ${toTime}`
+          : undefined,
+
+        calculatedDuration: timeResult.formattedDuration,
+        calculatedMinutes: timeResult.totalMinutes,
+
+        additionalNotes: notes.trim() || undefined,
+        notes: notes.trim() || undefined,
+      };
+
       if (isEditing && noticeToEdit) {
-        const res = updateDelayNotice(noticeToEdit.id, {
-          teacherId: selectedTeacher.id,
-          teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
-          jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
-          specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
-          noticeDate,
-          date: noticeDate,
-          violationDelayStart,
-          delayStartTime: violationDelayStart ? delayStartTime : undefined,
-          violationAbsentDuring,
-          absentFromTime: violationAbsentDuring ? absentFromTime : undefined,
-          absentToTime: violationAbsentDuring ? absentToTime : undefined,
-          violationEarlyDeparture,
-          earlyDepartureTime: violationEarlyDeparture ? earlyDepartureTime : undefined,
-          violationLeftSchool,
-          leftSchoolDetails: violationLeftSchool ? leftSchoolDetails : undefined,
-          additionalNotes: notes.trim() || undefined,
-          notes: notes.trim() || undefined,
-        });
+        const res = updateDelayNotice(noticeToEdit.id, payload);
 
         if (res.success) {
           showToast({
-            message: `تم تحديث تنبيه التأخر للمعلمة (${selectedTeacher.fullName || selectedTeacher.name}) بنجاح.`,
+            message: `تم تحديث تنبيه التأخر للمعلمة (${
+              selectedTeacher.fullName || selectedTeacher.name
+            }) بنجاح.`,
             type: "success",
           });
           onClose();
@@ -203,30 +312,12 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
           setErrorMsg(res.error || "فشل تحديث التنبيه.");
         }
       } else {
-        const res = createDelayNotice({
-          teacherId: selectedTeacher.id,
-          teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
-          jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
-          specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
-          noticeDate,
-          date: noticeDate,
-          violationDelayStart,
-          delayStartTime: violationDelayStart ? delayStartTime : undefined,
-          violationAbsentDuring,
-          absentFromTime: violationAbsentDuring ? absentFromTime : undefined,
-          absentToTime: violationAbsentDuring ? absentToTime : undefined,
-          violationEarlyDeparture,
-          earlyDepartureTime: violationEarlyDeparture ? earlyDepartureTime : undefined,
-          violationLeftSchool,
-          leftSchoolDetails: violationLeftSchool ? leftSchoolDetails : undefined,
-          additionalNotes: notes.trim() || undefined,
-          notes: notes.trim() || undefined,
-        });
+        const res = createDelayNotice(payload);
 
         if (res.success && res.notice) {
           const num = res.notice.noticeNumber || res.notice.id;
           showToast({
-            message: `تم إصدار تنبيه التأخر برقم (${num}) بنجاح. الخطوة التالية: إفادة المعلمة.`,
+            message: `تم إصدار تنبيه التأخر برقم (${num}) بنجاح. المدة المحتسبة: ${timeResult.formattedDuration}.`,
             type: "success",
           });
           onClose();
@@ -256,12 +347,16 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
           {/* Header */}
           <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-xs">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
                 <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                  <span>{isEditing ? "تعديل تنبيه تأخر / انصراف" : "إنشاء تنبيه عن تأخر / انصراف"}</span>
+                  <span>
+                    {isEditing
+                      ? "تعديل تنبيه تأخر / انصراف"
+                      : "إنشاء تنبيه عن تأخر / انصراف"}
+                  </span>
                   <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
                     نموذج و.م.ع.ن - ٠٢ - ٠٢
                   </span>
@@ -281,9 +376,12 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
+          <form
+            onSubmit={handleSubmit}
+            className="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar"
+          >
             {errorMsg && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
@@ -291,11 +389,12 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
 
             {/* Stage 1 Helper Notice */}
             <div className="p-3.5 rounded-2xl bg-teal-50/60 border border-teal-200/80 text-teal-900 text-xs flex items-start gap-2.5">
-              <div className="w-5 h-5 rounded-lg bg-[#137a85] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+              <div className="w-5 h-5 rounded-lg bg-[#137a85] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 shadow-xs">
                 1
               </div>
               <p className="leading-relaxed">
-                تقوم الوكيلة بتحديد المعلمة وتاريخ الواقعة واختيار نوع أو أكثر من المخالفات مع تحديد الأوقات بدقة. بعد الحفظ، ينتقل التنبيه لحالة <strong>(بانتظار إفادة المعلمة)</strong>.
+                حددي المعلمة وتاريخ الواقعة، ثم اختاري نوع المخالفة ووقت التأخر
+                (من الساعة إلى الساعة) ليتم احتساب المدة بالساعات والدقائق تلقائياً.
               </p>
             </div>
 
@@ -333,220 +432,188 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
               </div>
             </div>
 
-            {/* Violations Section */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <span>تحديد نوع المخالفة المسجلة بحق المعلمة</span>
-                  <span className="text-rose-500">*</span>
-                </label>
-                <span className="text-[11px] text-slate-400">يمكن تحديد أكثر من مخالفة</span>
+            {/* Dropdown List for Violation Types */}
+            <div className="space-y-2 pt-1">
+              <label
+                htmlFor={`${formId}-violation-type`}
+                className="block text-xs font-bold text-slate-800 flex items-center gap-1.5"
+              >
+                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <span>نوع التأخر أو المخالفة المسجلة</span>
+                <span className="text-rose-500">*</span>
+              </label>
+
+              <div className="relative">
+                <select
+                  id={`${formId}-violation-type`}
+                  value={selectedViolationType}
+                  onChange={(e) =>
+                    handleViolationTypeChange(
+                      e.target.value as ViolationTypeKey
+                    )
+                  }
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all appearance-none cursor-pointer shadow-2xs hover:border-slate-300"
+                >
+                  {VIOLATION_TYPE_OPTIONS.map((opt) => (
+                    <option
+                      key={opt.id}
+                      value={opt.id}
+                      className="py-2 text-slate-800 font-medium"
+                    >
+                      {opt.title}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
-              {/* 1. التأخر الصباحي */}
-              <div
-                className={cn(
-                  "p-4 rounded-2xl border transition-all space-y-3",
-                  violationDelayStart
-                    ? "bg-amber-50/40 border-amber-300 ring-1 ring-amber-300/30"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                )}
-              >
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={violationDelayStart}
-                      onChange={(e) => setViolationDelayStart(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85]"
-                    />
-                    <div>
-                      <span className="text-xs md:text-sm font-bold text-slate-800 block">
-                        التأخر عن بداية الدوام الرسمي صباحاً
-                      </span>
-                      <span className="text-[11px] text-slate-500 block">
-                        حضور المعلمة للمدرسة بعد جرس الاصطفاف أو بداية الحصة الأولى
-                      </span>
-                    </div>
-                  </div>
-                  <LogIn className="w-4 h-4 text-slate-400" />
-                </label>
+              {/* Selected Type Description Badge */}
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600">
+                <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                  <activeOption.icon className="w-3.5 h-3.5" />
+                </div>
+                <span className="leading-normal">{activeOption.subtitle}</span>
+              </div>
+            </div>
 
-                {violationDelayStart && (
-                  <div className="pt-2 border-t border-amber-200/60 flex items-center gap-3 animate-in fade-in">
-                    <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">
-                      وقت الحضور الفعلي للمدرسة:
-                    </label>
-                    <div className="relative flex-1 max-w-xs">
-                      <Clock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                      <input
-                        type="time"
-                        value={delayStartTime}
-                        onChange={(e) => setDelayStartTime(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-amber-300 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
-                      />
-                    </div>
-                  </div>
-                )}
+            {/* Time Selection & Automatic Duration Calculation Box */}
+            <div className="p-4 rounded-2xl bg-amber-50/40 border border-amber-300/80 space-y-4 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-amber-200/60 pb-2.5">
+                <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+                  <Timer className="w-4 h-4 text-amber-600" />
+                  <span>تحديد أوقات التأخر واحتساب المدة</span>
+                </span>
+                <span className="text-[11px] text-amber-700 font-medium bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                  {activeOption.badgeLabel}
+                </span>
               </div>
 
-              {/* 2. عدم التواجد أثناء الدوام */}
-              <div
-                className={cn(
-                  "p-4 rounded-2xl border transition-all space-y-3",
-                  violationAbsentDuring
-                    ? "bg-amber-50/40 border-amber-300 ring-1 ring-amber-300/30"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                )}
-              >
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
+              {/* From & To Time Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                {/* From Time */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`${formId}-from-time`}
+                    className="block text-xs font-semibold text-slate-700"
+                  >
+                    {activeOption.fromLabel} <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                     <input
-                      type="checkbox"
-                      checked={violationAbsentDuring}
-                      onChange={(e) => setViolationAbsentDuring(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85]"
+                      id={`${formId}-from-time`}
+                      type="time"
+                      value={fromTime}
+                      onChange={(e) => {
+                        setFromTime(e.target.value);
+                        setErrorMsg(null);
+                      }}
+                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-amber-300 text-xs sm:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30 font-mono shadow-2xs"
                     />
-                    <div>
-                      <span className="text-xs md:text-sm font-bold text-slate-800 block">
-                        عدم التواجد أثناء الدوام الرسمي
-                      </span>
-                      <span className="text-[11px] text-slate-500 block">
-                        غياب عن حصة دراسية، مناوبة، أو فترة محددة في منتصف اليوم الدراسي
-                      </span>
-                    </div>
                   </div>
-                  <Clock className="w-4 h-4 text-slate-400" />
-                </label>
+                </div>
 
-                {violationAbsentDuring && (
-                  <div className="pt-2 border-t border-amber-200/60 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-slate-700 block">
-                        من الساعة:
-                      </label>
-                      <input
-                        type="time"
-                        value={absentFromTime}
-                        onChange={(e) => setAbsentFromTime(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-amber-300 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-slate-700 block">
-                        إلى الساعة:
-                      </label>
-                      <input
-                        type="time"
-                        value={absentToTime}
-                        onChange={(e) => setAbsentToTime(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-amber-300 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
-                      />
-                    </div>
+                {/* To Time */}
+                <div className="space-y-1.5">
+                  <label
+                    htmlFor={`${formId}-to-time`}
+                    className="block text-xs font-semibold text-slate-700"
+                  >
+                    {activeOption.toLabel} <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      id={`${formId}-to-time`}
+                      type="time"
+                      value={toTime}
+                      onChange={(e) => {
+                        setToTime(e.target.value);
+                        setErrorMsg(null);
+                      }}
+                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-amber-300 text-xs sm:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30 font-mono shadow-2xs"
+                    />
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* 3. الانصراف المبكر */}
+              {/* Extra input for Left School */}
+              {selectedViolationType === "left_school" && (
+                <div className="space-y-1.5 pt-1 border-t border-amber-200/60 animate-in fade-in">
+                  <label
+                    htmlFor={`${formId}-left-school-details`}
+                    className="block text-xs font-semibold text-slate-700"
+                  >
+                    تفاصيل وأسباب الخروج والعودة:{" "}
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    id={`${formId}-left-school-details`}
+                    type="text"
+                    value={leftSchoolDetails}
+                    onChange={(e) => setLeftSchoolDetails(e.target.value)}
+                    placeholder="مثال: الخروج لظرف طارئ والعودة قبل بداية الحصة الخامسة"
+                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 text-xs bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 shadow-2xs"
+                  />
+                </div>
+              )}
+
+              {/* Dynamic Live Calculated Duration Display */}
               <div
                 className={cn(
-                  "p-4 rounded-2xl border transition-all space-y-3",
-                  violationEarlyDeparture
-                    ? "bg-amber-50/40 border-amber-300 ring-1 ring-amber-300/30"
-                    : "bg-white border-slate-200 hover:border-slate-300"
+                  "p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all",
+                  timeResult.isValid
+                    ? "bg-white border-teal-300 ring-1 ring-teal-300/30"
+                    : "bg-rose-50 border-rose-200"
                 )}
               >
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={violationEarlyDeparture}
-                      onChange={(e) => setViolationEarlyDeparture(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85]"
-                    />
-                    <div>
-                      <span className="text-xs md:text-sm font-bold text-slate-800 block">
-                        الانصراف المبكر قبل نهاية الدوام الرسمي
-                      </span>
-                      <span className="text-[11px] text-slate-500 block">
-                        مغادرة المدرسة قبل انتهاء اليوم الدراسي بدون إذن رسمي معتمد
-                      </span>
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-xs",
+                      timeResult.isValid
+                        ? "bg-[#137a85] text-white"
+                        : "bg-rose-500 text-white"
+                    )}
+                  >
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5">
+                      <span>إجمالي مدة التأخر المحتسبة بالساعات والدقائق:</span>
+                    </div>
+                    <div
+                      className={cn(
+                        "text-sm sm:text-base font-extrabold mt-0.5",
+                        timeResult.isValid ? "text-teal-900" : "text-rose-700"
+                      )}
+                    >
+                      {timeResult.isValid
+                        ? timeResult.detailedText
+                        : timeResult.error || "وقت غير صالح"}
                     </div>
                   </div>
-                  <LogOut className="w-4 h-4 text-slate-400" />
-                </label>
+                </div>
 
-                {violationEarlyDeparture && (
-                  <div className="pt-2 border-t border-amber-200/60 flex items-center gap-3 animate-in fade-in">
-                    <label className="text-xs font-semibold text-slate-700 whitespace-nowrap">
-                      وقت الانصراف الفعلي:
-                    </label>
-                    <div className="relative flex-1 max-w-xs">
-                      <Clock className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                      <input
-                        type="time"
-                        value={earlyDepartureTime}
-                        onChange={(e) => setEarlyDepartureTime(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg border border-amber-300 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 4. الخروج والعودة */}
-              <div
-                className={cn(
-                  "p-4 rounded-2xl border transition-all space-y-3",
-                  violationLeftSchool
-                    ? "bg-amber-50/40 border-amber-300 ring-1 ring-amber-300/30"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                )}
-              >
-                <label className="flex items-center justify-between cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="checkbox"
-                      checked={violationLeftSchool}
-                      onChange={(e) => setViolationLeftSchool(e.target.checked)}
-                      className="w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85]"
-                    />
-                    <div>
-                      <span className="text-xs md:text-sm font-bold text-slate-800 block">
-                        الخروج من المدرسة والعودة إليها أثناء الدوام الرسمي
-                      </span>
-                      <span className="text-[11px] text-slate-500 block">
-                        مغادرة مبنى المدرسة لفترة زمنية مؤقتة دون تصريح خروج رسمي
-                      </span>
-                    </div>
-                  </div>
-                  <DoorOpen className="w-4 h-4 text-slate-400" />
-                </label>
-
-                {violationLeftSchool && (
-                  <div className="pt-2 border-t border-amber-200/60 space-y-1.5 animate-in fade-in">
-                    <label className="text-xs font-semibold text-slate-700 block">
-                      تفاصيل أوقات الخروج والعودة:
-                    </label>
-                    <input
-                      type="text"
-                      value={leftSchoolDetails}
-                      onChange={(e) => setLeftSchoolDetails(e.target.value)}
-                      placeholder="مثال: الخروج الساعة 09:30 صباحاً والعودة الساعة 11:00 صباحاً"
-                      className="w-full px-3 py-2 rounded-lg border border-amber-300 text-xs bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
-                    />
+                {timeResult.isValid && (
+                  <div className="self-end sm:self-center px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 font-mono font-bold text-xs text-[#137a85] flex items-center gap-1.5 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                    <span>{timeResult.totalMinutes} دقيقة إجمالاً</span>
                   </div>
                 )}
               </div>
             </div>
 
             {/* Optional Notes */}
-            <div className="space-y-1.5 pt-2">
-              <label className="block text-xs font-bold text-slate-700">
+            <div className="space-y-1.5 pt-1">
+              <label
+                htmlFor={`${formId}-notes`}
+                className="block text-xs font-bold text-slate-700"
+              >
                 ملاحظات وتوجيه الوكيلة (اختياري)
               </label>
               <textarea
+                id={`${formId}-notes`}
                 rows={2}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
@@ -570,7 +637,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isProcessing}
+              disabled={isProcessing || !timeResult.isValid}
               className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-[#137a85] hover:bg-teal-700 text-white transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow disabled:opacity-60"
             >
               {isProcessing ? (
@@ -578,7 +645,9 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
               ) : (
                 <CheckCircle2 className="w-4 h-4 text-teal-200" />
               )}
-              <span>{isEditing ? "حفظ التعديلات" : "إصدار التنبيه ومتابعة الإجراء"}</span>
+              <span>
+                {isEditing ? "حفظ التعديلات" : "إصدار التنبيه ومتابعة الإجراء"}
+              </span>
             </button>
           </div>
         </motion.div>
