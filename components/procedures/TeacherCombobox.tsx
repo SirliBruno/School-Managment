@@ -28,8 +28,10 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   const selectedTeacher = useMemo(
     () => teachers.find((t) => t.id === selectedTeacherId) || null,
@@ -50,6 +52,11 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
     );
   }, [teachers, searchQuery]);
 
+  // Reset highlighted index when filter results change
+  useEffect(() => {
+    setHighlightedIndex(0);
+  }, [filteredTeachers]);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -62,6 +69,40 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Keyboard navigation for dropdown
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setIsOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setIsOpen(false);
+      return;
+    }
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) =>
+        prev < filteredTeachers.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredTeachers[highlightedIndex]) {
+        handleSelect(filteredTeachers[highlightedIndex]);
+      }
+    }
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -87,22 +128,25 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
 
   return (
     <div ref={containerRef} className="relative w-full space-y-1.5">
-      <label className="block text-xs font-bold text-slate-700">
+      <label id="teacher-combobox-label" className="block text-xs font-bold text-slate-700">
         اسم المعلمة <span className="text-rose-500">*</span>
       </label>
 
       {/* Trigger Box */}
       <div
         role="combobox"
+        tabIndex={disabled ? -1 : 0}
         aria-expanded={isOpen}
         aria-controls="teacher-combobox-listbox"
+        aria-labelledby="teacher-combobox-label"
         aria-haspopup="listbox"
         aria-disabled={disabled}
+        onKeyDown={handleKeyDown}
         onClick={() => {
           if (!disabled) setIsOpen((prev) => !prev);
         }}
         className={cn(
-          "w-full min-h-[46px] px-3.5 py-2 rounded-xl border bg-white flex items-center justify-between gap-3 cursor-pointer transition-all duration-150 shadow-2xs select-none",
+          "w-full min-h-[46px] px-3.5 py-2 rounded-xl border bg-white flex items-center justify-between gap-3 cursor-pointer transition-all duration-150 shadow-sm select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/30 focus-visible:border-[#137a85]",
           disabled && "opacity-60 cursor-not-allowed bg-slate-50",
           error
             ? "border-rose-400 focus-within:ring-2 focus-within:ring-rose-200"
@@ -177,21 +221,23 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="اكتبي اسم المعلمة أو اسم المستخدم..."
+                onKeyDown={handleKeyDown}
+                placeholder="اكتبي اسم المعلمة أو اسم المستخدم... (الأسهم للتنقل و Enter للاختيار)"
                 className="w-full pl-3 pr-9 py-2 text-xs bg-white rounded-lg border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85]"
               />
             </div>
           </div>
 
           {/* List of Teachers */}
-          <div className="max-h-60 overflow-y-auto divide-y divide-slate-50 custom-scrollbar">
+          <div ref={listRef} className="max-h-60 overflow-y-auto divide-y divide-slate-50 custom-scrollbar">
             {filteredTeachers.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400">
                 لم يتم العثور على معلمات مطابقة للبحث
               </div>
             ) : (
-              filteredTeachers.map((teacher) => {
+              filteredTeachers.map((teacher, index) => {
                 const isSelected = teacher.id === selectedTeacherId;
+                const isHighlighted = index === highlightedIndex;
 
                 return (
                   <div
@@ -203,6 +249,8 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                       "px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors text-xs md:text-sm",
                       isSelected
                         ? "bg-teal-50/80 text-[#137a85] font-bold"
+                        : isHighlighted
+                        ? "bg-slate-100/90 text-slate-900 ring-1 ring-[#137a85]/20"
                         : "hover:bg-slate-50 text-slate-700"
                     )}
                   >

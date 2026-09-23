@@ -63,7 +63,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -90,7 +90,9 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
             </div>
 
             <button
+              type="button"
               onClick={onClose}
+              aria-label="إغلاق النافذة"
               className="w-8 h-8 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
