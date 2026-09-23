@@ -166,7 +166,7 @@ export const TeacherResponseModal: React.FC<TeacherResponseModalProps> = ({
               <ul className="list-disc list-inside space-y-1.5 text-amber-900 pr-2">
                 {notice.violationDelayStart && (
                   <li>
-                    التأخر الصباحي عن بداية الدوام (
+                    تأخركم من بداية الدوام وحضوركم الساعة (
                     {notice.delayStartFromTime ? `من ${notice.delayStartFromTime} إلى ` : "حضور: "}
                     <strong>{notice.delayStartTime || "—"}</strong>
                     {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
@@ -174,15 +174,15 @@ export const TeacherResponseModal: React.FC<TeacherResponseModalProps> = ({
                 )}
                 {notice.violationAbsentDuring && (
                   <li>
-                    عدم التواجد أثناء الدوام (من الساعة:{" "}
-                    <strong>{notice.absentFromTime || "—"}</strong> إلى الساعة:{" "}
+                    عدم تواجدكم أثناء الدوام من الساعة (
+                    <strong>{notice.absentFromTime || "—"}</strong>) إلى الساعة (
                     <strong>{notice.absentToTime || "—"}</strong>
                     {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
                   </li>
                 )}
                 {notice.violationEarlyDeparture && (
                   <li>
-                    الانصراف المبكر قبل نهاية الدوام (
+                    انصرافكم مبكراً قبل نهاية الدوام من الساعة (
                     {notice.earlyDepartureFromTime ? `من ${notice.earlyDepartureFromTime} إلى ` : "انصراف: "}
                     <strong>{notice.earlyDepartureTime || "—"}</strong>
                     {notice.calculatedDuration && ` — المدة: ${notice.calculatedDuration}`})
@@ -190,7 +190,7 @@ export const TeacherResponseModal: React.FC<TeacherResponseModalProps> = ({
                 )}
                 {notice.violationLeftSchool && (
                   <li>
-                    الخروج من المدرسة والعودة إليها (
+                    انصرافكم من غير المدرسة (
                     {notice.leftSchoolFromTime && notice.leftSchoolToTime
                       ? `من ${notice.leftSchoolFromTime} إلى ${notice.leftSchoolToTime}`
                       : notice.leftSchoolDetails || "—"}

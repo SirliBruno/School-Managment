@@ -256,7 +256,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <LogIn className="w-4 h-4 text-amber-600" />
-                      <span>التأخر عن بداية الدوام الرسمي صباحاً</span>
+                      <span>تأخركم من بداية الدوام وحضوركم الساعة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                       <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
@@ -276,7 +276,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <Clock className="w-4 h-4 text-amber-600" />
-                      <span>عدم التواجد أثناء الدوام الرسمي</span>
+                      <span>عدم تواجدكم أثناء الدوام من الساعة إلى الساعة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                       <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
@@ -295,7 +295,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <LogOut className="w-4 h-4 text-amber-600" />
-                      <span>الانصراف المبكر قبل نهاية الدوام</span>
+                      <span>انصرافكم مبكراً قبل نهاية الدوام من الساعة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                       <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
@@ -315,7 +315,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
                     <span className="font-bold text-slate-800 flex items-center gap-2">
                       <DoorOpen className="w-4 h-4 text-amber-600" />
-                      <span>الخروج من المدرسة والعودة إليها أثناء الدوام</span>
+                      <span>انصرافكم من غير المدرسة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
                       <span className="text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">

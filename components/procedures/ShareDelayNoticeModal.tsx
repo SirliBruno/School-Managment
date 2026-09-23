@@ -123,21 +123,21 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
   // Helper summary of violations
   const violationsList: string[] = [];
   if (notice.violationDelayStart) {
-    violationsList.push(`تأخر صباحي (حضور ${notice.delayStartTime || "—"})`);
+    violationsList.push(`تأخركم من بداية الدوام وحضوركم الساعة (${notice.delayStartTime || "—"})`);
   }
   if (notice.violationAbsentDuring) {
     violationsList.push(
-      `عدم تواجد أثناء الدوام (من ${notice.absentFromTime || "—"} إلى ${
+      `عدم تواجدكم أثناء الدوام من الساعة (${notice.absentFromTime || "—"}) إلى الساعة (${
         notice.absentToTime || "—"
       })`
     );
   }
   if (notice.violationEarlyDeparture) {
-    violationsList.push(`انصراف مبكر (${notice.earlyDepartureTime || "—"})`);
+    violationsList.push(`انصرافكم مبكراً قبل نهاية الدوام من الساعة (${notice.earlyDepartureTime || "—"})`);
   }
   if (notice.violationLeftSchool) {
     violationsList.push(
-      `خروج وعودة أثناء الدوام (${notice.leftSchoolDetails || "تفاصيل مسجلة"})`
+      `انصرافكم من غير المدرسة (${notice.leftSchoolDetails || "تفاصيل مسجلة"})`
     );
   }
 

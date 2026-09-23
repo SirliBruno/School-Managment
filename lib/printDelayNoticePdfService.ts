@@ -60,18 +60,11 @@ function buildHtml(data: DelayNoticePdfData): string {
   const violationBullets: string[] = [];
 
   if (notice.violationDelayStart) {
-    const from = notice.delayStartFromTime ? esc(notice.delayStartFromTime) : "";
     const to = notice.delayStartTime ? esc(notice.delayStartTime) : "................";
     const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
-    if (from) {
-      violationBullets.push(
-        `تأخركِ عن بداية الدوام من الساعة (${from}) وحضوركِ الساعة (${to})${duration}.`
-      );
-    } else {
-      violationBullets.push(
-        `تأخركِ من بداية الدوام وحضوركِ الساعة (${to})${duration}.`
-      );
-    }
+    violationBullets.push(
+      `تأخركم من بداية الدوام وحضوركم الساعة (${to})${duration}.`
+    );
   }
 
   if (notice.violationAbsentDuring) {
@@ -79,30 +72,23 @@ function buildHtml(data: DelayNoticePdfData): string {
     const to = notice.absentToTime ? esc(notice.absentToTime) : "........";
     const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
     violationBullets.push(
-      `عدم تواجدكِ أثناء الدوام من الساعة (${from}) إلى الساعة (${to})${duration}.`
+      `عدم تواجدكم أثناء الدوام من الساعة (${from}) إلى الساعة (${to})${duration}.`
     );
   }
 
   if (notice.violationEarlyDeparture) {
-    const from = notice.earlyDepartureFromTime ? esc(notice.earlyDepartureFromTime) : "";
     const to = notice.earlyDepartureTime ? esc(notice.earlyDepartureTime) : "................";
     const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
-    if (from) {
-      violationBullets.push(
-        `انصرافكِ مبكراً قبل نهاية الدوام من الساعة (${from}) حتى (${to})${duration}.`
-      );
-    } else {
-      violationBullets.push(
-        `انصرافكِ مبكراً قبل نهاية الدوام من الساعة (${to})${duration}.`
-      );
-    }
+    violationBullets.push(
+      `انصرافكم مبكراً قبل نهاية الدوام من الساعة (${to})${duration}.`
+    );
   }
 
   if (notice.violationLeftSchool) {
     const details = notice.leftSchoolDetails ? esc(notice.leftSchoolDetails) : "................";
     const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
     violationBullets.push(
-      `انصرافكِ من غير المدرسة (${details})${duration}.`
+      `انصرافكم من غير المدرسة (${details})${duration}.`
     );
   }
 

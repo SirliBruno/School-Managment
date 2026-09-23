@@ -251,7 +251,7 @@ export default function PublicTeacherResponsePage() {
   }[] = [];
   if (notice?.violationDelayStart) {
     violationsList.push({
-      title: "التأخر الصباحي عن بداية الدوام الرسمي",
+      title: "تأخركم من بداية الدوام وحضوركم الساعة",
       time: notice.delayStartFromTime
         ? `من ${notice.delayStartFromTime} إلى ${notice.delayStartTime || "—"}`
         : `وقت الحضور الفعلي: ${notice.delayStartTime || "—"}`,
@@ -261,7 +261,7 @@ export default function PublicTeacherResponsePage() {
   }
   if (notice?.violationAbsentDuring) {
     violationsList.push({
-      title: "عدم التواجد أثناء الدوام الرسمي",
+      title: "عدم تواجدكم أثناء الدوام من الساعة إلى الساعة",
       time: `من الساعة ${notice.absentFromTime || "—"} إلى الساعة ${notice.absentToTime || "—"}`,
       duration: notice.calculatedDuration,
       icon: Clock,
@@ -269,7 +269,7 @@ export default function PublicTeacherResponsePage() {
   }
   if (notice?.violationEarlyDeparture) {
     violationsList.push({
-      title: "الانصراف المبكر قبل نهاية الدوام الرسمي",
+      title: "انصرافكم مبكراً قبل نهاية الدوام من الساعة",
       time: notice.earlyDepartureFromTime
         ? `من ${notice.earlyDepartureFromTime} إلى ${notice.earlyDepartureTime || "—"}`
         : `وقت الانصراف الفعلي: ${notice.earlyDepartureTime || "—"}`,
@@ -279,7 +279,7 @@ export default function PublicTeacherResponsePage() {
   }
   if (notice?.violationLeftSchool) {
     violationsList.push({
-      title: "الخروج من المدرسة والعودة إليها أثناء الدوام",
+      title: "انصرافكم من غير المدرسة",
       time:
         notice.leftSchoolFromTime && notice.leftSchoolToTime
           ? `من ${notice.leftSchoolFromTime} إلى ${notice.leftSchoolToTime}`

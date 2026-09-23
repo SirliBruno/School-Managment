@@ -54,47 +54,47 @@ interface ViolationTypeOption {
 const VIOLATION_TYPE_OPTIONS: ViolationTypeOption[] = [
   {
     id: "delay_start",
-    title: "التأخر عن بداية الدوام الرسمي صباحاً",
-    subtitle: "حضور المعلمة للمدرسة بعد جرس الاصطفاف أو بداية الحصة الأولى",
+    title: "تأخركم من بداية الدوام وحضوركم الساعة ( ... )",
+    subtitle: "حضور المعلمة للمدرسة بعد بداية الدوام الرسمي واحتساب مدة التأخر",
     icon: LogIn,
     fromLabel: "بداية الدوام الرسمي (من الساعة):",
-    toLabel: "حضور المعلمة الفعلي (إلى الساعة):",
+    toLabel: "حضوركم الفعلي (الساعة):",
     defaultFrom: "07:00",
     defaultTo: "08:30",
-    badgeLabel: "تأخر صباحي",
+    badgeLabel: "تأخر من بداية الدوام",
   },
   {
     id: "absent_during",
-    title: "عدم التواجد أثناء الدوام الرسمي",
-    subtitle: "غياب عن حصة دراسية، مناوبة، أو فترة محددة في منتصف اليوم الدراسي",
+    title: "عدم تواجدكم أثناء الدوام من الساعة ( ... ) إلى الساعة ( ... )",
+    subtitle: "عدم تواجد المعلمة أثناء الدوام من وقت محدد إلى وقت آخر",
     icon: Clock,
-    fromLabel: "بداية فترة عدم التواجد (من الساعة):",
-    toLabel: "نهاية فترة عدم التواجد (إلى الساعة):",
+    fromLabel: "عدم التواجد (من الساعة):",
+    toLabel: "إلى الساعة:",
     defaultFrom: "08:00",
     defaultTo: "10:00",
     badgeLabel: "عدم تواجد أثناء الدوام",
   },
   {
     id: "early_departure",
-    title: "الانصراف المبكر قبل نهاية الدوام الرسمي",
-    subtitle: "مغادرة المدرسة قبل انتهاء اليوم الدراسي بدون إذن رسمي معتمد",
+    title: "انصرافكم مبكراً قبل نهاية الدوام من الساعة ( ... )",
+    subtitle: "مغادرة المدرسة قبل انتهاء الدوام الرسمي بدون إذن معتمد",
     icon: LogOut,
-    fromLabel: "وقت الانصراف الفعلي (من الساعة):",
+    fromLabel: "انصرافكم الفعلي (من الساعة):",
     toLabel: "نهاية الدوام الرسمي (إلى الساعة):",
     defaultFrom: "11:30",
     defaultTo: "13:30",
-    badgeLabel: "انصراف مبكر",
+    badgeLabel: "انصراف مبكر قبل نهاية الدوام",
   },
   {
     id: "left_school",
-    title: "الخروج من المدرسة والعودة إليها أثناء الدوام الرسمي",
-    subtitle: "مغادرة مبنى المدرسة لفترة زمنية مؤقتة دون تصريح خروج رسمي",
+    title: "انصرافكم من غير المدرسة ( ... )",
+    subtitle: "انصراف أو خروج من مبنى المدرسة أثناء الدوام الرسمي",
     icon: DoorOpen,
-    fromLabel: "وقت الخروج من المدرسة (من الساعة):",
-    toLabel: "وقت العودة للمدرسة (إلى الساعة):",
+    fromLabel: "وقت الخروج (من الساعة):",
+    toLabel: "وقت العودة (إلى الساعة):",
     defaultFrom: "09:00",
     defaultTo: "11:00",
-    badgeLabel: "خروج وعودة أثناء الدوام",
+    badgeLabel: "انصراف من غير المدرسة",
   },
 ];
 
@@ -238,7 +238,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
     }
 
     if (selectedViolationType === "left_school" && !leftSchoolDetails.trim()) {
-      setErrorMsg("يرجى كتابة تفاصيل الخروج والعودة أثناء الدوام.");
+      setErrorMsg("يرجى كتابة تفاصيل انصرافكم من غير المدرسة.");
       return false;
     }
 
@@ -287,7 +287,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
         leftSchoolToTime: isLeftSchool ? toTime : undefined,
         leftSchoolDetails: isLeftSchool
           ? leftSchoolDetails.trim() ||
-            `الخروج من الساعة ${fromTime} والعودة الساعة ${toTime}`
+            `انصراف من غير المدرسة من الساعة ${fromTime} إلى الساعة ${toTime}`
           : undefined,
 
         calculatedDuration: timeResult.formattedDuration,
@@ -544,7 +544,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                     htmlFor={`${formId}-left-school-details`}
                     className="block text-xs font-semibold text-slate-700"
                   >
-                    تفاصيل وأسباب الخروج والعودة:{" "}
+                    تفاصيل انصرافكم من غير المدرسة:{" "}
                     <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -552,7 +552,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                     type="text"
                     value={leftSchoolDetails}
                     onChange={(e) => setLeftSchoolDetails(e.target.value)}
-                    placeholder="مثال: الخروج لظرف طارئ والعودة قبل بداية الحصة الخامسة"
+                    placeholder="مثال: الخروج لظرف طارئ أو مراجعة جهة رسمية والعودة الساعة..."
                     className="w-full px-3.5 py-2 rounded-xl border border-amber-300 text-xs bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 shadow-2xs"
                   />
                 </div>
