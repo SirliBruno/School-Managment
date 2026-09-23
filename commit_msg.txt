@@ -1,1 +1,1 @@
-fix: eliminate invalid shadow and backdrop classes across all remaining modals by Annie
+fix: cleanup shadow-2xs in deduction-hours, list and under-development pages by Annie

@@ -16,7 +16,7 @@ export default function ProceduresListPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
         <UnderDevelopment
           title="قائمة الإجراءات"
           subtitle="قيد التطوير والتجهيز"

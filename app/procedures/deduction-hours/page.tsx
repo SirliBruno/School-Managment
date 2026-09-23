@@ -18,7 +18,7 @@ export default function DeductionHoursPage() {
         </p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
         <UnderDevelopment
           title="قرار حسم مجموع ساعات"
           subtitle="قيد التطوير والتجهيز"

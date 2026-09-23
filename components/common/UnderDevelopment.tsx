@@ -51,7 +51,7 @@ export const UnderDevelopment: React.FC<UnderDevelopmentProps> = ({
 
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs active:scale-95"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-sm active:scale-95"
         >
           <Home className="w-4 h-4 text-slate-500" />
           <span>لوحة التحكم الرئيسية</span>
