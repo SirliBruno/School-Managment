@@ -235,7 +235,18 @@ export default function DashboardPage() {
           </div>
 
           {/* Header Controls */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            {/* Vice Principal Name Badge */}
+            <div className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#0D9488]/8 border border-[#0D9488]/25 text-xs font-bold text-[#0D9488] shadow-2xs">
+              <span className="w-6 h-6 rounded-lg bg-[#0D9488] text-white flex items-center justify-center text-[10px] font-extrabold shrink-0">
+                أ
+              </span>
+              <div className="flex flex-col leading-none">
+                <span className="text-[10px] text-slate-400 font-medium mb-0.5">وكيلة الشؤون التعليمية</span>
+                <span className="text-xs font-bold text-slate-800">احلام صالح الضبيبي</span>
+              </div>
+            </div>
+
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 font-medium shadow-2xs">
               <Calendar className="w-4 h-4 text-[#137a85]" />
               <span>{todayFormatted}</span>
