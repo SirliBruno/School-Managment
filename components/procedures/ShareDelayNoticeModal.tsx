@@ -65,6 +65,17 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
     setCopiedFullMessage(false);
   }, [notice]);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !notice) return null;
 
   const fullWhatsAppMessage = generateDelayNoticeWhatsAppMessage(
@@ -176,8 +187,10 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
               </div>
             </div>
             <button
+              type="button"
               onClick={onClose}
-              className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition"
+              aria-label="إغلاق النافذة"
+              className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>

@@ -1,1 +1,1 @@
-fix: keyboard navigation in TeacherCombobox, stepper status badges in delay notices by Annie
+fix: UI/UX polish - teachers page cards, modal accessibility, and screen-reader chart tables by Annie

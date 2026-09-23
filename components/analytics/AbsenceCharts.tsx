@@ -274,6 +274,27 @@ export const AbsenceCharts: React.FC = () => {
               </ResponsiveContainer>
             </div>
           )}
+
+          {/* Accessible Data Summary for Screen Readers (WCAG 1.1.1) */}
+          <div className="sr-only">
+            <table>
+              <caption>إحصائيات توزيع حالات الغياب حسب النوع</caption>
+              <thead>
+                <tr>
+                  <th scope="col">نوع الغياب</th>
+                  <th scope="col">عدد الحالات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pieData.map((d) => (
+                  <tr key={d.name}>
+                    <td>{d.name}</td>
+                    <td>{d.value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* 2. Bar Chart: معدل الغياب خلال آخر 7 أيام */}
@@ -357,6 +378,29 @@ export const AbsenceCharts: React.FC = () => {
               </ResponsiveContainer>
             </div>
           )}
+
+          {/* Accessible Data Summary for Screen Readers (WCAG 1.1.1) */}
+          <div className="sr-only">
+            <table>
+              <caption>إحصائيات معدل الغياب اليومي خلال آخر 7 أيام</caption>
+              <thead>
+                <tr>
+                  <th scope="col">اليوم</th>
+                  <th scope="col">التاريخ</th>
+                  <th scope="col">عدد حالات الغياب</th>
+                </tr>
+              </thead>
+              <tbody>
+                {barData.map((d) => (
+                  <tr key={d.date}>
+                    <td>{d.dayName}</td>
+                    <td>{d.date}</td>
+                    <td>{d.count}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
