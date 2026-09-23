@@ -8,8 +8,10 @@ import {
   X,
   AlertCircle,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Teacher } from "@/types/teacher";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 interface TeacherComboboxProps {
   teachers: Teacher[];
@@ -26,6 +28,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
   error,
   disabled = false,
 }) => {
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -204,8 +207,8 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
         )}
       </div>
 
-      {/* Dropdown Menu */}
-      {isOpen && !disabled && (
+      {/* Desktop Dropdown Menu */}
+      {isOpen && !isMobile && !disabled && (
         <div
           id="teacher-combobox-listbox"
           role="listbox"
@@ -300,6 +303,144 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
             )}
           </div>
         </div>
+      )}
+
+      {/* Mobile BottomSheet Selection Modal */}
+      {isMobile && (
+        <AnimatePresence>
+          {isOpen && !disabled && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-label="اختيار المعلمة"
+              className="fixed inset-0 z-50 flex flex-col justify-end"
+            >
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setIsOpen(false)}
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              />
+
+              {/* Bottom Sheet Modal Container */}
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 28, stiffness: 320 }}
+                className="relative bg-white rounded-t-3xl max-h-[85vh] flex flex-col z-10 shadow-2xl pb-safe overflow-hidden"
+              >
+                {/* Drag Handle */}
+                <div className="flex items-center justify-center pt-3 pb-1">
+                  <div className="w-10 h-1.5 rounded-full bg-slate-300" />
+                </div>
+
+                {/* Mobile Header with Search */}
+                <div className="p-4 border-b border-slate-100 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-bold text-slate-900">
+                      اختيار المعلمة ({filteredTeachers.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsOpen(false)}
+                      className="p-2 -me-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                      aria-label="إغلاق قائمة المعلمات"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-5 h-5 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="ابحثي بالاسم أو التخصص أو الرقم..."
+                      className="w-full pl-3 pr-10 py-3 text-base bg-slate-50 rounded-xl border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/30 focus:border-[#137a85] focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Mobile List Items (≥ 56px touch target) */}
+                <div
+                  id="teacher-combobox-listbox"
+                  role="listbox"
+                  aria-label="قائمة المعلمات المتاحة"
+                  className="overflow-y-auto flex-1 divide-y divide-slate-100 p-2"
+                >
+                  {filteredTeachers.length === 0 ? (
+                    <div className="p-8 text-center text-sm text-slate-400">
+                      لم يتم العثور على معلمات مطابقة للبحث
+                    </div>
+                  ) : (
+                    filteredTeachers.map((teacher) => {
+                      const isSelected = teacher.id === selectedTeacherId;
+                      return (
+                        <div
+                          key={teacher.id}
+                          role="option"
+                          aria-selected={isSelected}
+                          onClick={() => handleSelect(teacher)}
+                          className={cn(
+                            "px-4 py-3.5 rounded-xl flex items-center justify-between transition-colors min-h-[56px] active:scale-[0.99]",
+                            isSelected
+                              ? "bg-teal-50 text-[#137a85] font-bold"
+                              : "hover:bg-slate-50 text-slate-800"
+                          )}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0",
+                                isSelected
+                                  ? "bg-[#137a85] text-white"
+                                  : "bg-slate-100 text-slate-600"
+                              )}
+                            >
+                              {(teacher.fullName || teacher.name || "م").charAt(0)}
+                            </div>
+                            <div>
+                              <div className="text-sm font-bold text-slate-900 leading-tight">
+                                {teacher.fullName || teacher.name}
+                              </div>
+                              <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                                <span className="font-mono">{teacher.username || teacher.jobNumber}</span>
+                                <span>•</span>
+                                <span>{teacher.specialty || teacher.teachingField || "عام"}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className={cn(
+                                "text-[11px] px-2 py-0.5 rounded-full font-bold border",
+                                (teacher.totalAbsences || 0) === 0
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                  : "bg-amber-50 text-amber-800 border-amber-300"
+                              )}
+                            >
+                              {teacher.totalAbsences || 0} غياب
+                            </span>
+                            {isSelected && (
+                              <Check className="w-5 h-5 text-[#137a85] shrink-0" />
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       )}
 
       {/* Validation Error Message */}

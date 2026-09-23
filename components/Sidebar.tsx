@@ -24,6 +24,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useTeachers } from "@/context/TeacherContext";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useSwipe } from "@/hooks/useSwipe";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 
 
@@ -133,6 +134,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  // Swipe-to-close for RTL (swiping to the right edge closes drawer)
+  const swipeHandlers = useSwipe(
+    () => setIsMobileOpen(false),
+    undefined,
+    45
+  );
 
   // Auto-close mobile drawer on route changes
   useEffect(() => {
@@ -458,38 +465,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Sticky Top Header Bar */}
-      <header className="lg:hidden sticky top-0 z-40 bg-[#137a85] text-white px-4 py-3 shadow-md flex items-center justify-between">
+      {/* Mobile Sticky Top Header Bar (56px height + safe area support) */}
+      <header className="lg:hidden sticky top-0 z-40 bg-[#137a85] text-white px-3 sm:px-4 h-14 shadow-md flex items-center justify-between pt-safe backdrop-blur-md bg-[#137a85]/95">
         <Link
           href="/"
-          className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-lg p-0.5"
+          className="flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white rounded-xl p-1 min-h-[44px]"
           aria-label="الانتقال إلى لوحة التحكم الرئيسية"
         >
-          <div className="p-2 rounded-xl bg-white/10 text-white flex items-center justify-center">
+          <div className="w-9 h-9 rounded-xl bg-white/10 text-white flex items-center justify-center shrink-0">
             <Users className="w-5 h-5" aria-hidden="true" />
           </div>
-          <div>
-            <span className="font-bold text-sm tracking-wide flex items-center gap-1.5 leading-tight">
+          <div className="min-w-0">
+            <span className="font-bold text-sm tracking-wide flex items-center gap-1.5 leading-tight truncate">
               <span>نظام الإدارة المدرسية</span>
               <span
                 className={cn(
-                  "w-2 h-2 rounded-full",
+                  "w-2 h-2 rounded-full shrink-0",
                   isCloudConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
                 )}
                 title={isCloudConnected ? "متصل سحابياً" : "حفظ محلي"}
               />
             </span>
-            <span className="text-[10px] text-teal-100 font-medium">
+            <span className="text-[10px] text-teal-100 font-medium block truncate">
               بوابة وكيلة الشؤون التعليمية
             </span>
           </div>
         </Link>
 
+        {/* 48x48px Touch Target Hamburger Button */}
         <motion.button
           whileTap={{ scale: 0.92 }}
           type="button"
           onClick={() => setIsMobileOpen(true)}
-          className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
+          className="w-12 h-12 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 text-white transition-colors flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer shrink-0"
           aria-label="فتح القائمة الجانبية"
           aria-expanded={isMobileOpen}
         >
@@ -508,7 +516,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {sidebarContent}
       </aside>
 
-      {/* Mobile Drawer (RTL Slide-in from right with Framer Motion) */}
+      {/* Mobile Drawer (RTL Slide-in from right with Framer Motion and Swipe-to-close) */}
       <AnimatePresence>
         {isMobileOpen && (
           <div
@@ -528,13 +536,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               aria-hidden="true"
             />
 
-            {/* Animated Drawer Window */}
+            {/* Animated Drawer Window (min(85vw, 320px) width) */}
             <motion.div
+              {...swipeHandlers}
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 26, stiffness: 280 }}
-              className="relative w-72 max-w-full h-full shadow-2xl z-10"
+              className="relative w-[min(85vw,320px)] max-w-full h-full shadow-2xl z-10 overflow-hidden flex flex-col"
             >
               {sidebarContent}
             </motion.div>

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useIsMobile } from "@/hooks/useIsMobile";
 import { AbsenceType } from "@/types/teacher";
 
 const TYPE_COLORS: Record<AbsenceType, string> = {
@@ -91,6 +92,7 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
 export const AbsenceCharts: React.FC = () => {
   const { isLoading } = useTeachers();
   const stats = useDashboardStats();
+  const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -119,8 +121,14 @@ export const AbsenceCharts: React.FC = () => {
     return activeEntries.length > 0 ? activeEntries : entries;
   }, [stats.absenceTypeBreakdown]);
 
-  // 2. Data for Bar Chart (Last 7 Days)
-  const barData = stats.absencesLast7Days;
+  // 2. Data for Bar Chart (Last 5 Days on Mobile, Last 7 Days on Desktop)
+  const barData = useMemo(() => {
+    if (isMobile) {
+      return stats.absencesLast7Days.slice(-5);
+    }
+    return stats.absencesLast7Days;
+  }, [stats.absencesLast7Days, isMobile]);
+
   const hasBarAbsences = useMemo(() => {
     return barData.some((item) => item.count > 0);
   }, [barData]);
@@ -213,8 +221,8 @@ export const AbsenceCharts: React.FC = () => {
                     data={pieData}
                     cx="50%"
                     cy="50%"
-                    innerRadius={58}
-                    outerRadius={88}
+                    innerRadius={isMobile ? 46 : 58}
+                    outerRadius={isMobile ? 74 : 88}
                     paddingAngle={4}
                     dataKey="value"
                     animationDuration={600}
@@ -316,7 +324,7 @@ export const AbsenceCharts: React.FC = () => {
 
             <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80">
               <Calendar className="w-3.5 h-3.5 text-[#137a85]" />
-              <span>آخر 7 أيام</span>
+              <span>{isMobile ? "آخر 5 أيام" : "آخر 7 أيام"}</span>
             </div>
           </div>
 
@@ -338,12 +346,16 @@ export const AbsenceCharts: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={barData}
-                  margin={{ top: 22, right: 10, left: 10, bottom: 5 }}
+                  margin={
+                    isMobile
+                      ? { top: 20, right: 4, left: 4, bottom: 5 }
+                      : { top: 22, right: 10, left: 10, bottom: 5 }
+                  }
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis
                     dataKey="dayName"
-                    tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }}
+                    tick={{ fill: "#64748b", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}
                     axisLine={{ stroke: "#e2e8f0" }}
                     tickLine={false}
                   />
@@ -360,8 +372,8 @@ export const AbsenceCharts: React.FC = () => {
                     name="عدد حالات الغياب"
                     fill="#137a85"
                     radius={[6, 6, 0, 0]}
-                    barSize={32}
-                    maxBarSize={42}
+                    barSize={isMobile ? 24 : 32}
+                    maxBarSize={isMobile ? 30 : 42}
                     animationDuration={600}
                     animationEasing="ease-out"
                   >
