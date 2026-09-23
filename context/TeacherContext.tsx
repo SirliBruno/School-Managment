@@ -360,6 +360,31 @@ export const auditAndMigrateData = (
     }
   }
 
+  // Reconcile approved inquiries into cleanAbsences if missing
+  for (const inq of cleanInquiries) {
+    if (inq.status === "approved" && inq.absenceDate) {
+      const alreadyHasRecord = cleanAbsences.some(
+        (a) => a.teacherId === inq.teacherId && a.date === inq.absenceDate
+      );
+      if (!alreadyHasRecord) {
+        cleanAbsences.push({
+          id: `abs-inq-${inq.id}`,
+          teacherId: inq.teacherId,
+          teacherName: inq.teacherName,
+          jobNumber: inq.jobNumber,
+          specialty: inq.specialty || "عام",
+          date: inq.absenceDate,
+          type: inq.absenceType || "مرضي",
+          reason: inq.teacherReason || "عذر مقبول ومعتمد من الإدارة",
+          notes: inq.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+          attachmentUrl: inq.attachmentUrl || undefined,
+          timestamp: inq.submittedAt || inq.createdAt || new Date().toISOString(),
+        });
+        migratedAbsencesCount++;
+      }
+    }
+  }
+
   // Recalculate teacher KPI counters strictly based on clean linked records
   const absenceCountMap: Record<string, number> = {};
   for (const a of cleanAbsences) {
@@ -764,6 +789,46 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               })
             );
             setInquiries(mappedInquiries);
+
+            // Reconcile approved inquiries with absenceRecords
+            setAbsenceRecords((prevAbsences) => {
+              const toAdd: AbsenceRecord[] = [];
+              for (const inq of mappedInquiries) {
+                if (inq.status === "approved" && inq.absenceDate) {
+                  const exists = prevAbsences.some(
+                    (a) => a.teacherId === inq.teacherId && a.date === inq.absenceDate
+                  );
+                  if (!exists) {
+                    toAdd.push({
+                      id: `abs-inq-${inq.id}`,
+                      teacherId: inq.teacherId,
+                      teacherName: inq.teacherName,
+                      jobNumber: inq.jobNumber,
+                      specialty: inq.specialty || "عام",
+                      date: inq.absenceDate,
+                      type: inq.absenceType || "مرضي",
+                      reason: inq.teacherReason || "عذر مقبول ومعتمد من الإدارة",
+                      notes: inq.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+                      attachmentUrl: inq.attachmentUrl || undefined,
+                      timestamp: inq.submittedAt || inq.createdAt || new Date().toISOString(),
+                    });
+                  }
+                }
+              }
+
+              if (toAdd.length === 0) return prevAbsences;
+              const nextAbsences = [...toAdd, ...prevAbsences];
+
+              // Update teachers count
+              setTeachers((prevTeachers) =>
+                prevTeachers.map((t) => {
+                  const count = nextAbsences.filter((a) => a.teacherId === t.id).length;
+                  return t.totalAbsences !== count ? { ...t, totalAbsences: count } : t;
+                })
+              );
+
+              return nextAbsences;
+            });
           }
 
           // Hydrate delay notices from Supabase
@@ -1558,12 +1623,25 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       if (isSupabaseConfigured() && supabase) {
-        supabase
+        const sb = supabase;
+        sb
           .from("absence_records")
           .insert(absencePayload)
           .then(
             ({ error }) => {
               if (error) {
+                if (error.code === "PGRST204" && "attachment_url" in absencePayload) {
+                  const retryPayload = { ...absencePayload };
+                  delete (retryPayload as Record<string, unknown>).attachment_url;
+                  return sb
+                    .from("absence_records")
+                    .insert(retryPayload)
+                    .then(({ error: retryErr }) => {
+                      if (retryErr) {
+                        queueSyncOperation({ table: "absence_records", action: "insert", data: retryPayload });
+                      }
+                    });
+                }
                 console.warn("فشل إدراج المساءلة في سوبابيز، تحويل للطابور:", error.message);
                 queueSyncOperation({ table: "absence_records", action: "insert", data: absencePayload });
               }
@@ -1574,7 +1652,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           );
 
-        supabase
+        sb
           .from("teachers")
           .update({ total_absences: newCount })
           .eq("id", data.teacherId)
@@ -1834,47 +1912,40 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       status: "approved" | "rejected",
       adminNotes?: string
     ): Promise<{ success: boolean; error?: string }> => {
-      let targetInquiry: AbsenceInquiry | null = null;
-
-      setInquiries((prev) =>
-        prev.map((inq) => {
-          if (inq.id === inquiryId) {
-            targetInquiry = {
-              ...inq,
-              status,
-              adminNotes: adminNotes ?? inq.adminNotes,
-            };
-            return targetInquiry;
-          }
-          return inq;
-        })
-      );
-
-      if (!targetInquiry) {
+      const existingInquiry = inquiries.find((i) => i.id === inquiryId);
+      if (!existingInquiry) {
         return { success: false, error: "لم يتم العثور على المساءلة." };
       }
 
-      const resolvedInq = targetInquiry as AbsenceInquiry;
+      const updatedInquiry: AbsenceInquiry = {
+        ...existingInquiry,
+        status,
+        adminNotes: adminNotes !== undefined ? adminNotes : existingInquiry.adminNotes,
+      };
+
+      setInquiries((prev) =>
+        prev.map((inq) => (inq.id === inquiryId ? updatedInquiry : inq))
+      );
 
       // If approved, document it in absenceRecords if not recorded already
-      if (status === "approved" && resolvedInq.absenceType) {
+      if (status === "approved") {
         const alreadyRecorded = absenceRecords.some(
           (a) =>
-            a.teacherId === resolvedInq.teacherId &&
-            a.date === resolvedInq.absenceDate
+            a.teacherId === updatedInquiry.teacherId &&
+            a.date === updatedInquiry.absenceDate
         );
 
         if (!alreadyRecorded) {
           recordAbsence({
-            teacherId: resolvedInq.teacherId,
-            teacherName: resolvedInq.teacherName,
-            jobNumber: resolvedInq.jobNumber,
-            specialty: resolvedInq.specialty || "عام",
-            date: resolvedInq.absenceDate,
-            type: resolvedInq.absenceType,
-            reason: resolvedInq.teacherReason || "عذر مقبول ومعتمد من الإدارة",
-            notes: adminNotes || resolvedInq.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
-            attachmentUrl: resolvedInq.attachmentUrl || undefined,
+            teacherId: updatedInquiry.teacherId,
+            teacherName: updatedInquiry.teacherName,
+            jobNumber: updatedInquiry.jobNumber,
+            specialty: updatedInquiry.specialty || "عام",
+            date: updatedInquiry.absenceDate,
+            type: updatedInquiry.absenceType || "مرضي",
+            reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد من الإدارة",
+            notes: adminNotes || updatedInquiry.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+            attachmentUrl: updatedInquiry.attachmentUrl || undefined,
           });
         }
       }
@@ -1895,7 +1966,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { success: true };
     },
-    [absenceRecords, recordAbsence]
+    [inquiries, absenceRecords, recordAbsence]
   );
 
   // 13. Delete Inquiry

@@ -27,7 +27,12 @@ export default function AbsenceProcedurePage() {
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
 
   const totalAbsences = absenceRecords.length;
-  const teachersWithAbsences = teachers.filter((t) => t.totalAbsences > 0).length;
+
+  const teacherIdsWithActivity = new Set<string>();
+  absenceRecords.forEach((a) => { if (a.teacherId) teacherIdsWithActivity.add(a.teacherId); });
+  inquiries.forEach((i) => { if (i.teacherId) teacherIdsWithActivity.add(i.teacherId); });
+  teachers.forEach((t) => { if (t.totalAbsences > 0) teacherIdsWithActivity.add(t.id); });
+  const teachersWithAbsences = teacherIdsWithActivity.size;
 
   const pendingInquiriesCount = inquiries.filter((i) => i.status === "pending").length;
   const submittedInquiriesCount = inquiries.filter((i) => i.status === "submitted").length;
