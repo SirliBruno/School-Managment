@@ -152,9 +152,9 @@ export default function DelayNoticePage() {
           <div>
             <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
               <span>نظام الإدارة المدرسية</span>
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
               <span>الإجراءات الإدارية</span>
-              <ChevronLeft className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
               <span className="text-[#137a85] font-semibold">
                 تنبيه عن تأخر / انصراف
               </span>

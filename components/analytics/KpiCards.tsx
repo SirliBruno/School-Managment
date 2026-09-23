@@ -51,7 +51,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
       variants={cardItemVariants}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="bg-white rounded-2xl p-6 shadow-xs hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-150 hover:border-slate-300/80 flex flex-col justify-between group"
+      className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-200 hover:border-slate-300/80 flex flex-col justify-between group"
     >
       <div>
         <div className="flex items-start justify-between gap-2">
@@ -78,7 +78,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
 
           <div
             className={cn(
-              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200",
+              "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform duration-200",
               iconBgColor
             )}
           >
@@ -134,25 +134,7 @@ export const KpiCards: React.FC = () => {
       animate="show"
       className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
     >
-      {/* 1. إجمالي المعلمات */}
-      <KpiCard
-        title="إجمالي المعلمات"
-        value={stats.totalTeachers}
-        unit="معلمة"
-        subtitle="المعلمات المسجلات بنظام المدرسة"
-        icon={Users}
-        iconBgColor="bg-teal-50"
-        iconColor="text-[#137a85]"
-        badgeText={
-          stats.totalTeachers > 0
-            ? `${stats.totalTeachers} معلمة نشطة`
-            : "لا توجد معلمات مسجلات"
-        }
-        badgeType="info"
-        loading={isLoading}
-      />
-
-      {/* 2. غياب اليوم */}
+      {/* 1. غياب اليوم — الأكثر إلحاحاً صباحاً */}
       <KpiCard
         title="غياب اليوم"
         value={stats.todayAbsences}
@@ -167,6 +149,28 @@ export const KpiCards: React.FC = () => {
             : `${stats.todayAbsences} تستلزم مساءلة فورية`
         }
         badgeType={stats.todayAbsences === 0 ? "success" : "danger"}
+        loading={isLoading}
+      />
+
+      {/* 2. الإجراءات المعلقة — تستوجب متابعة */}
+      <KpiCard
+        title="الإجراءات المعلقة"
+        value={stats.pendingProcedures}
+        unit="إجراء معلق"
+        subtitle={
+          stats.pendingDelayNotices > 0
+            ? `مساءلات وتنبيهات (${stats.pendingDelayNotices} تأخر بانتظار المتابعة)`
+            : "مساءلات وملاحظات بانتظار الإفادة أو الاعتماد"
+        }
+        icon={AlertCircle}
+        iconBgColor="bg-amber-50"
+        iconColor="text-amber-600"
+        badgeText={
+          stats.pendingProcedures === 0
+            ? "جميع الإجراءات مكتملة"
+            : "تتطلب متابعة الوكيلة"
+        }
+        badgeType={stats.pendingProcedures === 0 ? "success" : "warning"}
         loading={isLoading}
       />
 
@@ -188,25 +192,21 @@ export const KpiCards: React.FC = () => {
         loading={isLoading}
       />
 
-      {/* 4. الإجراءات المعلقة */}
+      {/* 4. إجمالي المعلمات */}
       <KpiCard
-        title="الإجراءات المعلقة"
-        value={stats.pendingProcedures}
-        unit="إجراء معلق"
-        subtitle={
-          stats.pendingDelayNotices > 0
-            ? `مساءلات وتنبيهات (${stats.pendingDelayNotices} تأخر بانتظار المتابعة)`
-            : "مساءلات وملاحظات بانتظار الإفادة أو الاعتماد"
-        }
-        icon={AlertCircle}
-        iconBgColor="bg-amber-50"
-        iconColor="text-amber-600"
+        title="إجمالي المعلمات"
+        value={stats.totalTeachers}
+        unit="معلمة"
+        subtitle="المعلمات المسجلات بنظام المدرسة"
+        icon={Users}
+        iconBgColor="bg-teal-50"
+        iconColor="text-[#137a85]"
         badgeText={
-          stats.pendingProcedures === 0
-            ? "جميع الإجراءات مكتملة"
-            : "تتطلب متابعة الوكيلة"
+          stats.totalTeachers > 0
+            ? `${stats.totalTeachers} معلمة نشطة`
+            : "لا توجد معلمات مسجلات"
         }
-        badgeType={stats.pendingProcedures === 0 ? "success" : "warning"}
+        badgeType="info"
         loading={isLoading}
       />
     </motion.div>

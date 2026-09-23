@@ -9,8 +9,6 @@ import { ToastProvider } from "@/context/ToastContext";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
 };
 
 const cairo = Cairo({
@@ -33,6 +31,13 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
       <body className="font-cairo bg-slate-50 text-slate-800 antialiased min-h-screen">
+        {/* Skip Navigation — للوصولية (WCAG 2.4.1) */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:right-2 focus:z-[9999] focus:px-4 focus:py-2 focus:bg-[#137a85] focus:text-white focus:rounded-lg focus:font-bold focus:text-sm focus:shadow-lg"
+        >
+          تخطى إلى المحتوى الرئيسي
+        </a>
         <ToastProvider>
           <AuthProvider>
             <TeacherProvider>
@@ -44,4 +49,3 @@ export default function RootLayout({
     </html>
   );
 }
-

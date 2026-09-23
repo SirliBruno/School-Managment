@@ -63,7 +63,7 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.15 }}
-        className="bg-white/95 backdrop-blur-xs p-3 rounded-xl shadow-lg border border-slate-200 text-right min-w-[140px] text-xs space-y-1"
+        className="bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-slate-200 text-right min-w-[140px] text-xs space-y-1"
       >
         <div className="flex items-center gap-2 font-bold text-slate-800">
           <span
@@ -128,7 +128,7 @@ export const AbsenceCharts: React.FC = () => {
   if (!mounted || isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-slate-150 shadow-xs h-80 flex flex-col justify-between animate-pulse">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-80 flex flex-col justify-between animate-pulse">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-slate-200" />
             <div className="space-y-2">
@@ -139,7 +139,7 @@ export const AbsenceCharts: React.FC = () => {
           <div className="h-44 w-44 rounded-full border-8 border-slate-100 mx-auto" />
           <div className="w-full h-4 bg-slate-100 rounded" />
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-slate-150 shadow-xs h-80 flex flex-col justify-between animate-pulse">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-80 flex flex-col justify-between animate-pulse">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-slate-200" />
             <div className="space-y-2">
@@ -171,10 +171,10 @@ export const AbsenceCharts: React.FC = () => {
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 1. Donut Chart: أنواع الغياب */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-sm">
                 <PieIcon className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
@@ -277,10 +277,10 @@ export const AbsenceCharts: React.FC = () => {
         </div>
 
         {/* 2. Bar Chart: معدل الغياب خلال آخر 7 أيام */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-xs hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center shadow-sm">
                 <BarChart3 className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
@@ -362,10 +362,10 @@ export const AbsenceCharts: React.FC = () => {
 
       {/* 3. تنبيهات التأخر والانصراف */}
       {stats.totalDelayNotices > 0 && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
+        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
                 <Clock className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
@@ -383,7 +383,7 @@ export const AbsenceCharts: React.FC = () => {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors self-start sm:self-center cursor-pointer"
             >
               <span>إدارة تنبيهات التأخر ({stats.totalDelayNotices})</span>
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
             </Link>
           </div>
 

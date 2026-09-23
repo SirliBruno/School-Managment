@@ -58,7 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     id: "teachers",
-    label: "المعلمين",
+    label: "المعلمات",
     icon: Users,
     href: "/teachers",
     hasChildren: false,
@@ -233,7 +233,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className={cn(
                     "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
                     isOpen
-                      ? "bg-black/15 text-white shadow-xs"
+                      ? "bg-black/15 text-white shadow-sm"
                       : "text-teal-50 hover:bg-white/10 hover:text-white"
                   )}
                 >
@@ -291,7 +291,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             className={cn(
                               "relative block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
                               isSubActive
-                                ? "bg-[#0b535b] text-white font-bold shadow-xs ring-1 ring-white/20"
+                                ? "bg-[#0b535b] text-white font-bold shadow-sm ring-1 ring-white/20"
                                 : "text-teal-100 hover:text-white hover:bg-white/10"
                             )}
                           >
@@ -344,7 +344,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {isCurrentRoute && (
                 <motion.div
                   layoutId="active-nav-indicator"
-                  className="absolute right-0 top-1.5 bottom-1.5 w-1 bg-teal-300 rounded-l-full"
+                  className="absolute end-0 top-1.5 bottom-1.5 w-1 bg-teal-300 rounded-l-full"
                   transition={{ type: "spring", stiffness: 380, damping: 30 }}
                 />
               )}
@@ -364,7 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </nav>
 
       {/* Vice Principal Account & Actions Card */}
-      <div className="p-3 mx-2.5 mb-2 rounded-2xl bg-black/20 border border-white/10 backdrop-blur-xs">
+      <div className="p-3 mx-2.5 mb-2 rounded-2xl bg-black/20 border border-white/10 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-300/30 flex items-center justify-center text-teal-200 shrink-0">
@@ -386,18 +386,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             type="button"
             onClick={() => setIsProfileModalOpen(true)}
             className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-medium text-white transition-colors cursor-pointer"
-            title="تعديل اسم المستخدم وكلمة المرور"
+            aria-label="إعدادات الحساب — تعديل اسم المستخدم وكلمة المرور"
           >
-            <KeyRound className="w-3.5 h-3.5 text-teal-200" />
+            <KeyRound className="w-3.5 h-3.5 text-teal-200" aria-hidden="true" />
             <span>إعدادات الحساب</span>
           </button>
           <button
             type="button"
             onClick={() => logout()}
             className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-[11px] font-medium text-rose-200 hover:text-white transition-colors cursor-pointer"
-            title="تسجيل الخروج من المنصة"
+            aria-label="تسجيل الخروج من المنصة"
           >
-            <LogOut className="w-3.5 h-3.5" />
+            <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
             <span>تسجيل خروج</span>
           </button>
         </div>
@@ -523,7 +523,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
               onClick={() => setIsMobileOpen(false)}
               aria-hidden="true"
             />
