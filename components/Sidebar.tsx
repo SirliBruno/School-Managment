@@ -508,7 +508,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Persistent Sidebar (Right side in RTL) */}
       <aside
         className={cn(
-          "hidden lg:block w-64 h-screen sticky top-0 shrink-0 shadow-lg border-l border-teal-800/40 z-30",
+          "hidden lg:block w-64 h-screen sticky top-0 shrink-0 shadow-lg border-l border-teal-800/40 z-30 bg-[#137a85] self-start",
           className
         )}
         aria-label="شريط القائمة الجانبية"

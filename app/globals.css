@@ -8,7 +8,6 @@
 }
 
 html {
-  overflow-x: hidden;
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
 }
@@ -19,8 +18,15 @@ body {
   font-family: var(--font-cairo), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
   touch-action: manipulation;
+}
+
+/* Prevent accidental horizontal swipe on mobile while preserving desktop position:sticky */
+@media (max-width: 1023px) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
 }
 
 /* iOS Safe Area Insets Helpers */
