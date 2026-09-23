@@ -9,6 +9,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { cn } from "@/lib/utils";
 
 interface KpiCardProps {
@@ -123,44 +124,8 @@ const containerVariants = {
 };
 
 export const KpiCards: React.FC = () => {
-  const { teachers, absenceRecords, delayNotices, isLoading } = useTeachers();
-
-  const stats = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const todayStr = `${year}-${month}-${day}`;
-    const currentMonthPrefix = `${year}-${month}`;
-
-    const totalTeachers = teachers.length;
-
-    const todayAbsences = absenceRecords.filter(
-      (record) => record.date === todayStr
-    ).length;
-
-    const monthAbsences = absenceRecords.filter((record) =>
-      record.date.startsWith(currentMonthPrefix)
-    ).length;
-
-    const pendingAbsenceInquiries = absenceRecords.filter(
-      (r) => !r.notes || r.notes.trim() === "" || r.type === "أخرى"
-    ).length;
-
-    const pendingDelayNotices = delayNotices.filter(
-      (d) => d.status !== "completed"
-    ).length;
-
-    const pendingProcedures = pendingAbsenceInquiries + pendingDelayNotices;
-
-    return {
-      totalTeachers,
-      todayAbsences,
-      monthAbsences,
-      pendingProcedures,
-      pendingDelayNotices,
-    };
-  }, [teachers, absenceRecords, delayNotices]);
+  const { isLoading } = useTeachers();
+  const stats = useDashboardStats();
 
   return (
     <motion.div

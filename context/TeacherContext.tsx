@@ -7,6 +7,7 @@ import React, {
   useEffect,
   useCallback,
   useRef,
+  useMemo,
 } from "react";
 import {
   Teacher,
@@ -46,6 +47,7 @@ interface TeacherContextType {
   clearTeachers: () => void;
   updateAbsences: (id: string, count: number) => void;
   recalculateAbsences: () => void;
+  recalculateTeacherAbsences: () => void;
   recordAbsence: (
     data: Omit<AbsenceRecord, "id" | "timestamp">
   ) => AbsenceRecord;
@@ -167,6 +169,222 @@ export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
   };
 };
 
+export const auditAndMigrateData = (
+  rawTeachers: Teacher[],
+  rawAbsences: AbsenceRecord[],
+  rawDelayNotices: DelayNotice[],
+  rawInquiries: AbsenceInquiry[]
+): {
+  cleanTeachers: Teacher[];
+  cleanAbsences: AbsenceRecord[];
+  cleanDelayNotices: DelayNotice[];
+  cleanInquiries: AbsenceInquiry[];
+  migratedAbsencesCount: number;
+  orphanAbsencesCount: number;
+  migratedDelayNoticesCount: number;
+  orphanDelayNoticesCount: number;
+} => {
+  const teacherIdMap = new Map<string, Teacher>();
+  const teacherUsernameMap = new Map<string, Teacher>();
+  const teacherNameMap = new Map<string, Teacher>();
+
+  for (const t of rawTeachers) {
+    if (t.id) teacherIdMap.set(t.id, t);
+    const u = (t.username || t.jobNumber || "").trim().toLowerCase();
+    if (u) teacherUsernameMap.set(u, t);
+    const n = (t.fullName || t.name || "").trim().toLowerCase();
+    if (n) teacherNameMap.set(n, t);
+  }
+
+  let migratedAbsencesCount = 0;
+  let orphanAbsencesCount = 0;
+  const cleanAbsences: AbsenceRecord[] = [];
+
+  for (const record of rawAbsences) {
+    let matchedTeacher: Teacher | undefined = undefined;
+
+    // 1. Direct ID match
+    if (record.teacherId && teacherIdMap.has(record.teacherId)) {
+      matchedTeacher = teacherIdMap.get(record.teacherId);
+    }
+
+    // 2. Match by username / jobNumber
+    if (!matchedTeacher) {
+      const u1 = (record.jobNumber || "").trim().toLowerCase();
+      const u2 = (record.teacherId || "").trim().toLowerCase();
+      if (u1 && teacherUsernameMap.has(u1)) {
+        matchedTeacher = teacherUsernameMap.get(u1);
+      } else if (u2 && teacherUsernameMap.has(u2)) {
+        matchedTeacher = teacherUsernameMap.get(u2);
+      }
+    }
+
+    // 3. Match by teacher name
+    if (!matchedTeacher) {
+      const n1 = (record.teacherName || "").trim().toLowerCase();
+      if (n1 && teacherNameMap.has(n1)) {
+        matchedTeacher = teacherNameMap.get(n1);
+      }
+    }
+
+    if (matchedTeacher) {
+      const wasMismatch = record.teacherId !== matchedTeacher.id;
+      if (wasMismatch) {
+        migratedAbsencesCount++;
+      }
+      cleanAbsences.push({
+        ...record,
+        teacherId: matchedTeacher.id,
+        teacherName: matchedTeacher.fullName || matchedTeacher.name || record.teacherName,
+        jobNumber: matchedTeacher.username || matchedTeacher.jobNumber || record.jobNumber,
+        specialty: matchedTeacher.specialty || matchedTeacher.teachingField || record.specialty,
+      });
+    } else {
+      orphanAbsencesCount++;
+    }
+  }
+
+  // Delay Notices migration
+  let migratedDelayNoticesCount = 0;
+  let orphanDelayNoticesCount = 0;
+  const cleanDelayNotices: DelayNotice[] = [];
+
+  for (const notice of rawDelayNotices) {
+    let matchedTeacher: Teacher | undefined = undefined;
+
+    if (notice.teacherId && teacherIdMap.has(notice.teacherId)) {
+      matchedTeacher = teacherIdMap.get(notice.teacherId);
+    }
+    if (!matchedTeacher) {
+      const u1 = (notice.jobNumber || "").trim().toLowerCase();
+      const u2 = (notice.teacherId || "").trim().toLowerCase();
+      if (u1 && teacherUsernameMap.has(u1)) {
+        matchedTeacher = teacherUsernameMap.get(u1);
+      } else if (u2 && teacherUsernameMap.has(u2)) {
+        matchedTeacher = teacherUsernameMap.get(u2);
+      }
+    }
+    if (!matchedTeacher) {
+      const n1 = (notice.teacherName || "").trim().toLowerCase();
+      if (n1 && teacherNameMap.has(n1)) {
+        matchedTeacher = teacherNameMap.get(n1);
+      }
+    }
+
+    if (matchedTeacher) {
+      const wasMismatch = notice.teacherId !== matchedTeacher.id;
+      if (wasMismatch) migratedDelayNoticesCount++;
+      cleanDelayNotices.push({
+        ...notice,
+        teacherId: matchedTeacher.id,
+        teacherName: matchedTeacher.fullName || matchedTeacher.name || notice.teacherName,
+        jobNumber: matchedTeacher.username || matchedTeacher.jobNumber || notice.jobNumber,
+        specialty: matchedTeacher.specialty || matchedTeacher.teachingField || notice.specialty,
+      });
+    } else {
+      orphanDelayNoticesCount++;
+    }
+  }
+
+  // Inquiries migration
+  const cleanInquiries: AbsenceInquiry[] = [];
+  for (const inq of rawInquiries) {
+    let matchedTeacher: Teacher | undefined = undefined;
+    if (inq.teacherId && teacherIdMap.has(inq.teacherId)) {
+      matchedTeacher = teacherIdMap.get(inq.teacherId);
+    }
+    if (!matchedTeacher) {
+      const u1 = (inq.jobNumber || "").trim().toLowerCase();
+      const u2 = (inq.teacherId || "").trim().toLowerCase();
+      if (u1 && teacherUsernameMap.has(u1)) {
+        matchedTeacher = teacherUsernameMap.get(u1);
+      } else if (u2 && teacherUsernameMap.has(u2)) {
+        matchedTeacher = teacherUsernameMap.get(u2);
+      }
+    }
+    if (!matchedTeacher) {
+      const n1 = (inq.teacherName || "").trim().toLowerCase();
+      if (n1 && teacherNameMap.has(n1)) {
+        matchedTeacher = teacherNameMap.get(n1);
+      }
+    }
+
+    if (matchedTeacher) {
+      cleanInquiries.push({
+        ...inq,
+        teacherId: matchedTeacher.id,
+        teacherName: matchedTeacher.fullName || inq.teacherName,
+        jobNumber: matchedTeacher.username || inq.jobNumber,
+      });
+    }
+  }
+
+  // Recalculate teacher KPI counters strictly based on clean linked records
+  const absenceCountMap: Record<string, number> = {};
+  for (const a of cleanAbsences) {
+    absenceCountMap[a.teacherId] = (absenceCountMap[a.teacherId] || 0) + 1;
+  }
+  const delayCountMap: Record<string, number> = {};
+  for (const d of cleanDelayNotices) {
+    delayCountMap[d.teacherId] = (delayCountMap[d.teacherId] || 0) + 1;
+  }
+
+  const cleanTeachers = rawTeachers.map((t) => ({
+    ...t,
+    totalAbsences: absenceCountMap[t.id] || 0,
+    totalDelayNotices: delayCountMap[t.id] || 0,
+  }));
+
+  // Browser Console Reporting
+  if (typeof window !== "undefined") {
+    console.group("=== [Audit & Data Migration] فحص وتدقيق ربط سجلات الغياب والتنبيهات ===");
+    console.log(`إجمالي المعلمات في المنظومة: ${cleanTeachers.length}`);
+    console.log(`إجمالي سجلات الغياب المرتبطة: ${cleanAbsences.length}`);
+    console.log(`إجمالي تنبيهات التأخر المرتبطة: ${cleanDelayNotices.length}`);
+    if (migratedAbsencesCount > 0) {
+      console.log(`Migrated ${migratedAbsencesCount} absence records to correct teacherId.`);
+    }
+    if (orphanAbsencesCount > 0) {
+      console.warn(`Cleaned up ${orphanAbsencesCount} orphan absence records.`);
+    }
+    if (migratedDelayNoticesCount > 0) {
+      console.log(`Migrated ${migratedDelayNoticesCount} delay notices to correct teacherId.`);
+    }
+    if (orphanDelayNoticesCount > 0) {
+      console.warn(`Cleaned up ${orphanDelayNoticesCount} orphan delay notices.`);
+    }
+
+    if (cleanAbsences.length > 0) {
+      console.table(
+        cleanAbsences.map((r) => {
+          const teacher = teacherIdMap.get(r.teacherId);
+          return {
+            recordId: r.id,
+            date: r.date,
+            type: r.type,
+            recordTeacherId: r.teacherId,
+            matchedTeacherId: teacher?.id || "غير معروف",
+            teacherFullName: teacher?.fullName || r.teacherName,
+            status: "Linked ✓",
+          };
+        })
+      );
+    }
+    console.groupEnd();
+  }
+
+  return {
+    cleanTeachers,
+    cleanAbsences,
+    cleanDelayNotices,
+    cleanInquiries,
+    migratedAbsencesCount,
+    orphanAbsencesCount,
+    migratedDelayNoticesCount,
+    orphanDelayNoticesCount,
+  };
+};
+
 const TeacherContext = createContext<TeacherContextType | undefined>(undefined);
 
 export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -250,17 +468,35 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
 
-      // Reconcile totalDelayNotices counts on teachers
-      const delayCountMap: Record<string, number> = {};
-      for (const dn of localDelayNotices) {
-        if (dn.teacherId) {
-          delayCountMap[dn.teacherId] = (delayCountMap[dn.teacherId] || 0) + 1;
+      // Reconcile and audit local data
+      const reconciled = auditAndMigrateData(
+        localTeachers,
+        localAbsences,
+        localDelayNotices,
+        localInquiries
+      );
+
+      localTeachers = reconciled.cleanTeachers;
+      localAbsences = reconciled.cleanAbsences;
+      localDelayNotices = reconciled.cleanDelayNotices;
+      localInquiries = reconciled.cleanInquiries;
+
+      // Save back clean data to localStorage if migration/cleanup occurred
+      if (
+        reconciled.migratedAbsencesCount > 0 ||
+        reconciled.orphanAbsencesCount > 0 ||
+        reconciled.migratedDelayNoticesCount > 0 ||
+        reconciled.orphanDelayNoticesCount > 0
+      ) {
+        try {
+          localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(localTeachers));
+          localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(localAbsences));
+          localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(localDelayNotices));
+          localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(localInquiries));
+        } catch (e) {
+          console.warn("فشل تحديث التخزين المحلي بعد الترحيل:", e);
         }
       }
-      localTeachers = localTeachers.map((t) => ({
-        ...t,
-        totalDelayNotices: delayCountMap[t.id] ?? t.totalDelayNotices ?? 0,
-      }));
 
       setTeachers(localTeachers);
       setAbsenceRecords(localAbsences);
@@ -304,8 +540,25 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 })
               );
 
-              setTeachers(mappedTeachers);
-              setAbsenceRecords(mappedAbsences);
+              // Merge local and cloud absences, then audit and migrate
+              const absenceMap = new Map<string, AbsenceRecord>();
+              for (const loc of localAbsences) {
+                if (loc.id) absenceMap.set(loc.id, loc);
+              }
+              for (const cl of mappedAbsences) {
+                if (cl.id) absenceMap.set(cl.id, cl);
+              }
+              const mergedAbsences = Array.from(absenceMap.values());
+
+              const cloudReconciled = auditAndMigrateData(
+                mappedTeachers,
+                mergedAbsences,
+                localDelayNotices,
+                localInquiries
+              );
+
+              setTeachers(cloudReconciled.cleanTeachers);
+              setAbsenceRecords(cloudReconciled.cleanAbsences);
             } else if (localTeachers.length > 0) {
               // Auto-seed Supabase from local data
               const toInsertTeachers = localTeachers.map((t) => ({
@@ -811,8 +1064,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  // 8.b Recalculate all absences to ensure 100% data consistency
-  const recalculateAbsences = useCallback(() => {
+  // 8.b Recalculate all absences and delay notices strictly from current records
+  const recalculateTeacherAbsences = useCallback(() => {
     setTeachers((currentTeachers) => {
       const countMap: Record<string, number> = {};
       for (const record of absenceRecords) {
@@ -820,15 +1073,32 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           countMap[record.teacherId] = (countMap[record.teacherId] || 0) + 1;
         }
       }
+      const delayCountMap: Record<string, number> = {};
+      for (const dn of delayNotices) {
+        if (dn.teacherId) {
+          delayCountMap[dn.teacherId] = (delayCountMap[dn.teacherId] || 0) + 1;
+        }
+      }
 
       return currentTeachers.map((teacher) => {
-        const correctCount = countMap[teacher.id] || 0;
-        return teacher.totalAbsences === correctCount
-          ? teacher
-          : { ...teacher, totalAbsences: correctCount };
+        const correctAbsences = countMap[teacher.id] || 0;
+        const correctDelays = delayCountMap[teacher.id] || 0;
+        if (
+          teacher.totalAbsences === correctAbsences &&
+          teacher.totalDelayNotices === correctDelays
+        ) {
+          return teacher;
+        }
+        return {
+          ...teacher,
+          totalAbsences: correctAbsences,
+          totalDelayNotices: correctDelays,
+        };
       });
     });
-  }, [absenceRecords]);
+  }, [absenceRecords, delayNotices]);
+
+  const recalculateAbsences = recalculateTeacherAbsences;
 
   // 9. Record Absence
   const recordAbsence = useCallback(
@@ -1666,41 +1936,77 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
+  const contextValue = useMemo<TeacherContextType>(
+    () => ({
+      teachers,
+      absenceRecords,
+      inquiries,
+      delayNotices,
+      isLoading,
+      isCloudConnected,
+      addTeachers,
+      addTeacher,
+      updateTeacher,
+      deleteTeacher,
+      restoreTeacher,
+      clearTeachers,
+      updateAbsences,
+      recalculateAbsences,
+      recalculateTeacherAbsences,
+      recordAbsence,
+      updateAbsenceRecord,
+      deleteAbsenceRecord,
+      restoreAbsenceRecord,
+      createInquiry,
+      updateInquiryDecision,
+      deleteInquiry,
+      refreshInquiries,
+      createDelayNotice,
+      updateDelayNotice,
+      submitTeacherResponse,
+      submitDirectorDecision,
+      deleteDelayNotice,
+      restoreDelayNotice,
+      markDelayNoticeLinkShared,
+      submitTeacherResponseByToken,
+    }),
+    [
+      teachers,
+      absenceRecords,
+      inquiries,
+      delayNotices,
+      isLoading,
+      isCloudConnected,
+      addTeachers,
+      addTeacher,
+      updateTeacher,
+      deleteTeacher,
+      restoreTeacher,
+      clearTeachers,
+      updateAbsences,
+      recalculateAbsences,
+      recalculateTeacherAbsences,
+      recordAbsence,
+      updateAbsenceRecord,
+      deleteAbsenceRecord,
+      restoreAbsenceRecord,
+      createInquiry,
+      updateInquiryDecision,
+      deleteInquiry,
+      refreshInquiries,
+      createDelayNotice,
+      updateDelayNotice,
+      submitTeacherResponse,
+      submitDirectorDecision,
+      deleteDelayNotice,
+      restoreDelayNotice,
+      markDelayNoticeLinkShared,
+      submitTeacherResponseByToken,
+    ]
+  );
+
   return (
-    <TeacherContext.Provider
-      value={{
-        teachers,
-        absenceRecords,
-        inquiries,
-        delayNotices,
-        isLoading,
-        isCloudConnected,
-        addTeachers,
-        addTeacher,
-        updateTeacher,
-        deleteTeacher,
-        restoreTeacher,
-        clearTeachers,
-        updateAbsences,
-        recalculateAbsences,
-        recordAbsence,
-        updateAbsenceRecord,
-        deleteAbsenceRecord,
-        restoreAbsenceRecord,
-        createInquiry,
-        updateInquiryDecision,
-        deleteInquiry,
-        refreshInquiries,
-        createDelayNotice,
-        updateDelayNotice,
-        submitTeacherResponse,
-        submitDirectorDecision,
-        deleteDelayNotice,
-        restoreDelayNotice,
-        markDelayNoticeLinkShared,
-        submitTeacherResponseByToken,
-      }}
-    >
+    <TeacherContext.Provider value={contextValue}>
       {children}
     </TeacherContext.Provider>
   );

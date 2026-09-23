@@ -21,6 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
 import { useTeachers } from "@/context/TeacherContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 
 
@@ -98,12 +99,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { delayNotices } = useTeachers();
+  const stats = useDashboardStats();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-  const pendingDirectorDelayCount = delayNotices.filter(
-    (d) => d.status === "pending_director"
-  ).length;
+  const pendingDirectorDelayCount = stats.pendingDelayNotices;
+  const pendingAbsencesCount = Math.max(0, stats.pendingProcedures - stats.pendingDelayNotices);
 
   // "الإجراءات الإدارية" is EXPANDED by default
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -223,9 +223,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                     <div className="flex items-center gap-2">
                       <span>{item.label}</span>
-                      {item.id === "admin-procedures" && pendingDirectorDelayCount > 0 && (
-                        <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-[#137a85] animate-pulse shrink-0" />
-                      )}
+                      {item.id === "admin-procedures" &&
+                        (pendingDirectorDelayCount > 0 || pendingAbsencesCount > 0) && (
+                          <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-[#137a85] animate-pulse shrink-0" />
+                        )}
                     </div>
                   </div>
 
@@ -279,6 +280,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 {subItem.id === "delay-warning" && pendingDirectorDelayCount > 0 && (
                                   <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold ring-1 ring-white/30 animate-pulse">
                                     {pendingDirectorDelayCount}
+                                  </span>
+                                )}
+                                {subItem.id === "absence-inquiry" && pendingAbsencesCount > 0 && (
+                                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold ring-1 ring-white/30">
+                                    {pendingAbsencesCount}
                                   </span>
                                 )}
                               </div>

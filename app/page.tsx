@@ -118,6 +118,7 @@ export default function DashboardPage() {
     try {
       const now = new Date();
       return new Intl.DateTimeFormat("ar-SA", {
+        timeZone: "Asia/Riyadh",
         weekday: "long",
         day: "numeric",
         month: "long",

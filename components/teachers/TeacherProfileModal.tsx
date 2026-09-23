@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -63,12 +63,20 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   onClose,
 }) => {
   const {
+    teachers,
     absenceRecords,
     delayNotices,
     deleteAbsenceRecord,
     restoreAbsenceRecord,
   } = useTeachers();
   const { showToast } = useToast();
+
+  // Dynamically resolve the live teacher from context state
+  const currentTeacher = useMemo(() => {
+    if (!teacher) return null;
+    return teachers.find((t) => t.id === teacher.id) || teacher;
+  }, [teachers, teacher]);
+
   const [activeHistoryTab, setActiveHistoryTab] = useState<
     "absences" | "delays"
   >("absences");
@@ -126,62 +134,67 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 
   // Focus close button on mount
   useEffect(() => {
-    if (teacher) {
+    if (currentTeacher) {
       setTimeout(() => closeButtonRef.current?.focus(), 50);
     }
-  }, [teacher]);
+  }, [currentTeacher]);
 
-  if (!teacher) return null;
+  // Filter absences strictly by immutable teacherId
+  const teacherAbsences = useMemo(() => {
+    if (!currentTeacher) return [];
+    return absenceRecords.filter(
+      (record) => record.teacherId === currentTeacher.id
+    );
+  }, [absenceRecords, currentTeacher]);
 
-  // Filter absences specifically for this teacher
-  const teacherAbsences = absenceRecords.filter(
-    (record) =>
-      record.teacherId === teacher.id ||
-      record.jobNumber === teacher.jobNumber
-  );
-
-  // Filter delay notices specifically for this teacher
-  const teacherDelayNotices = delayNotices.filter(
-    (notice) =>
-      notice.teacherId === teacher.id ||
-      notice.jobNumber === teacher.jobNumber
-  );
+  // Filter delay notices strictly by immutable teacherId
+  const teacherDelayNotices = useMemo(() => {
+    if (!currentTeacher) return [];
+    return delayNotices.filter(
+      (notice) => notice.teacherId === currentTeacher.id
+    );
+  }, [delayNotices, currentTeacher]);
 
   // Calculate breakdown counters
-  const sickLeavesCount = teacherAbsences.filter(
-    (r) => r.type === "مرضي"
-  ).length;
-  const emergencyLeavesCount = teacherAbsences.filter(
-    (r) => r.type === "اضطراري"
-  ).length;
-  const companionLeavesCount = teacherAbsences.filter(
-    (r) => r.type === "مرافق"
-  ).length;
-  const otherLeavesCount = teacherAbsences.filter(
-    (r) => r.type === "أخرى"
-  ).length;
+  const sickLeavesCount = useMemo(
+    () => teacherAbsences.filter((r) => r.type === "مرضي").length,
+    [teacherAbsences]
+  );
+  const emergencyLeavesCount = useMemo(
+    () => teacherAbsences.filter((r) => r.type === "اضطراري").length,
+    [teacherAbsences]
+  );
+  const companionLeavesCount = useMemo(
+    () => teacherAbsences.filter((r) => r.type === "مرافق").length,
+    [teacherAbsences]
+  );
+  const otherLeavesCount = useMemo(
+    () => teacherAbsences.filter((r) => r.type === "أخرى").length,
+    [teacherAbsences]
+  );
 
   const handleExportDelayPdf = (notice: DelayNotice) => {
+    if (!currentTeacher) return;
     try {
-      printDelayNoticePdf(notice, teacher);
+      printDelayNoticePdf(notice, currentTeacher);
     } catch (err) {
       console.error("فشل طباعة تنبيه التأخر:", err);
     }
   };
 
   const handleExportPdf = (record: AbsenceRecord) => {
-    if (exportingId) return;
+    if (!currentTeacher || exportingId) return;
 
     setExportingId(record.id);
 
     try {
       printAbsencePdf({
-        teacherName: teacher.fullName || teacher.name || "معلمة",
-        username: teacher.username || teacher.jobNumber || "—",
-        specialty: teacher.specialty || teacher.teachingField || "عام",
-        jobTitle: teacher.jobTitle || "معلم",
-        employmentStatus: teacher.employmentStatus || "دائم",
-        absenceCount: teacher.totalAbsences || 1,
+        teacherName: currentTeacher.fullName || currentTeacher.name || "معلمة",
+        username: currentTeacher.username || currentTeacher.jobNumber || "—",
+        specialty: currentTeacher.specialty || currentTeacher.teachingField || "عام",
+        jobTitle: currentTeacher.jobTitle || "معلم",
+        employmentStatus: currentTeacher.employmentStatus || "دائم",
+        absenceCount: teacherAbsences.length || 1,
         absenceDate: record.date,
         absenceType: record.type,
         absenceReason: record.reason,
@@ -193,6 +206,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
       setExportingId(null);
     }
   };
+
+  if (!currentTeacher) return null;
 
   return (
     <AnimatePresence>
@@ -229,7 +244,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 whileHover={{ scale: 1.05 }}
                 className="w-14 h-14 rounded-2xl bg-[#137a85] text-white flex items-center justify-center font-bold text-xl shadow-md ring-4 ring-teal-50 shrink-0 mt-0.5"
               >
-                {(teacher.fullName || teacher.name || "م").charAt(0)}
+                {(currentTeacher.fullName || currentTeacher.name || "م").charAt(0)}
               </motion.div>
               <div className="space-y-1.5 text-right">
                 <div className="flex flex-wrap items-center gap-2">
@@ -237,39 +252,39 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     id="teacher-profile-title"
                     className="text-lg md:text-xl font-bold text-slate-900"
                   >
-                    {teacher.fullName || teacher.name}
+                    {currentTeacher.fullName || currentTeacher.name}
                   </h2>
                   <span
                     className={cn(
                       "px-2.5 py-0.5 rounded-full text-xs font-bold border",
-                      teacher.employmentStatus === "عقد"
+                      currentTeacher.employmentStatus === "عقد"
                         ? "bg-amber-50 text-amber-800 border-amber-300"
                         : "bg-emerald-50 text-emerald-800 border-emerald-300"
                     )}
                   >
-                    {teacher.employmentStatus || "دائم"}
+                    {currentTeacher.employmentStatus || "دائم"}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 font-medium">
                   <span className="flex items-center gap-1 font-mono">
                     <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                    <span>اسم المستخدم: <strong className="text-slate-800">{teacher.username || teacher.jobNumber}</strong></span>
+                    <span>اسم المستخدم: <strong className="text-slate-800">{currentTeacher.username || currentTeacher.jobNumber}</strong></span>
                   </span>
                   <span className="text-slate-300">•</span>
                   <span className="flex items-center gap-1">
                     <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
-                    <span>التخصص: <strong className="text-slate-800">{teacher.specialty || teacher.teachingField || "عام"}</strong></span>
+                    <span>التخصص: <strong className="text-slate-800">{currentTeacher.specialty || currentTeacher.teachingField || "عام"}</strong></span>
                   </span>
-                  {teacher.teachingField && (
+                  {currentTeacher.teachingField && (
                     <>
                       <span className="text-slate-300">•</span>
-                      <span>المجال: <strong className="text-slate-800">{teacher.teachingField}</strong></span>
+                      <span>المجال: <strong className="text-slate-800">{currentTeacher.teachingField}</strong></span>
                     </>
                   )}
-                  {teacher.mobile && (
+                  {currentTeacher.mobile && (
                     <>
                       <span className="text-slate-300">•</span>
-                      <span dir="ltr" className="font-mono text-slate-700">📱 {teacher.mobile}</span>
+                      <span dir="ltr" className="font-mono text-slate-700">📱 {currentTeacher.mobile}</span>
                     </>
                   )}
                 </div>
@@ -337,7 +352,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   </span>
                   <div className="flex items-baseline gap-1">
                     <span className="text-2xl font-black text-slate-900 font-mono">
-                      {teacher.totalAbsences}
+                      {teacherAbsences.length}
                     </span>
                     <span className="text-[11px] text-slate-400 font-medium">يوم</span>
                   </div>

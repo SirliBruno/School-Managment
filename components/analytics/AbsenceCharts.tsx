@@ -32,6 +32,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { AbsenceType } from "@/types/teacher";
 
 const TYPE_COLORS: Record<AbsenceType, string> = {
@@ -88,79 +89,41 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
 };
 
 export const AbsenceCharts: React.FC = () => {
-  const { absenceRecords, delayNotices, isLoading } = useTeachers();
+  const { isLoading } = useTeachers();
+  const stats = useDashboardStats();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const delayNoticeStats = useMemo(() => {
-    const total = delayNotices.length;
-    const morning = delayNotices.filter((d) => d.violationDelayStart).length;
-    const during = delayNotices.filter((d) => d.violationAbsentDuring).length;
-    const early = delayNotices.filter((d) => d.violationEarlyDeparture).length;
-    const left = delayNotices.filter((d) => d.violationLeftSchool).length;
-    const completed = delayNotices.filter((d) => d.status === "completed").length;
-    return { total, morning, during, early, left, completed };
-  }, [delayNotices]);
+  const totalAbsencesCount = useMemo(() => {
+    return Object.values(stats.absenceTypeBreakdown).reduce(
+      (acc, curr) => acc + curr,
+      0
+    );
+  }, [stats.absenceTypeBreakdown]);
+
+  const hasAbsences = totalAbsencesCount > 0;
 
   // 1. Data for Donut Chart (Absence Types Distribution)
   const pieData = useMemo(() => {
-    const counts: Record<AbsenceType, number> = {
-      اضطراري: 0,
-      مرضي: 0,
-      مرافق: 0,
-      أخرى: 0,
-    };
-
-    absenceRecords.forEach((record) => {
-      if (counts[record.type] !== undefined) {
-        counts[record.type]++;
-      } else {
-        counts["أخرى"]++;
-      }
-    });
-
     const entries: { name: AbsenceType; value: number; color: string }[] = [
-      { name: "اضطراري", value: counts["اضطراري"], color: TYPE_COLORS["اضطراري"] },
-      { name: "مرضي", value: counts["مرضي"], color: TYPE_COLORS["مرضي"] },
-      { name: "مرافق", value: counts["مرافق"], color: TYPE_COLORS["مرافق"] },
-      { name: "أخرى", value: counts["أخرى"], color: TYPE_COLORS["أخرى"] },
+      { name: "اضطراري", value: stats.absenceTypeBreakdown["اضطراري"] || 0, color: TYPE_COLORS["اضطراري"] },
+      { name: "مرضي", value: stats.absenceTypeBreakdown["مرضي"] || 0, color: TYPE_COLORS["مرضي"] },
+      { name: "مرافق", value: stats.absenceTypeBreakdown["مرافق"] || 0, color: TYPE_COLORS["مرافق"] },
+      { name: "أخرى", value: stats.absenceTypeBreakdown["أخرى"] || 0, color: TYPE_COLORS["أخرى"] },
     ];
 
     const activeEntries = entries.filter((e) => e.value > 0);
     return activeEntries.length > 0 ? activeEntries : entries;
-  }, [absenceRecords]);
+  }, [stats.absenceTypeBreakdown]);
 
   // 2. Data for Bar Chart (Last 7 Days)
-  const barData = useMemo(() => {
-    const result: { date: string; dayName: string; count: number }[] = [];
-    const today = new Date();
-
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      const dateStr = `${year}-${month}-${day}`;
-      const dayName = ARABIC_DAYS_MAP[d.getDay()];
-
-      const count = absenceRecords.filter((r) => r.date === dateStr).length;
-
-      result.push({
-        date: dateStr,
-        dayName,
-        count,
-      });
-    }
-
-    return result;
-  }, [absenceRecords]);
-
-  const hasAbsences = absenceRecords.length > 0;
+  const barData = stats.absencesLast7Days;
+  const hasBarAbsences = useMemo(() => {
+    return barData.some((item) => item.count > 0);
+  }, [barData]);
 
   if (!mounted || isLoading) {
     return (
@@ -225,7 +188,7 @@ export const AbsenceCharts: React.FC = () => {
             </div>
 
             <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200/60">
-              {absenceRecords.length} حالة مسجلة
+              {totalAbsencesCount} حالة مسجلة
             </span>
           </div>
 
@@ -235,7 +198,7 @@ export const AbsenceCharts: React.FC = () => {
                 <HelpCircle className="w-6 h-6" aria-hidden="true" />
               </div>
               <p className="text-sm font-bold text-slate-700">
-                لا توجد إحصائيات متاحة حتى الآن
+                لا توجد حالات غياب مسجلة حتى الآن
               </p>
               <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
                 ستظهر الرسوم البيانية لتوزيع أنواع الغياب تلقائياً فور تسجيل أول
@@ -280,7 +243,7 @@ export const AbsenceCharts: React.FC = () => {
                                 y={(viewBox.cy || 0) - 4}
                                 className="fill-slate-900 text-3xl font-black font-mono"
                               >
-                                {absenceRecords.length}
+                                {totalAbsencesCount}
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
@@ -336,7 +299,7 @@ export const AbsenceCharts: React.FC = () => {
             </div>
           </div>
 
-          {!hasAbsences ? (
+          {!hasBarAbsences ? (
             <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
               <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
                 <AlertCircle className="w-6 h-6" aria-hidden="true" />
@@ -398,7 +361,7 @@ export const AbsenceCharts: React.FC = () => {
       </div>
 
       {/* 3. تنبيهات التأخر والانصراف */}
-      {delayNoticeStats.total > 0 && (
+      {stats.totalDelayNotices > 0 && (
         <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2.5">
@@ -419,7 +382,7 @@ export const AbsenceCharts: React.FC = () => {
               href="/procedures/delay-notice"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors self-start sm:self-center cursor-pointer"
             >
-              <span>إدارة تنبيهات التأخر ({delayNoticeStats.total})</span>
+              <span>إدارة تنبيهات التأخر ({stats.totalDelayNotices})</span>
               <ArrowLeft className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -431,7 +394,7 @@ export const AbsenceCharts: React.FC = () => {
                 <span>تأخر صباحي</span>
               </div>
               <span className="text-xl font-bold font-mono text-slate-900">
-                {delayNoticeStats.morning}
+                {stats.delayNoticeBreakdown[0]?.count ?? 0}
               </span>
             </div>
 
@@ -441,7 +404,7 @@ export const AbsenceCharts: React.FC = () => {
                 <span>عدم تواجد أثناء الدوام</span>
               </div>
               <span className="text-xl font-bold font-mono text-slate-900">
-                {delayNoticeStats.during}
+                {stats.delayNoticeBreakdown[1]?.count ?? 0}
               </span>
             </div>
 
@@ -451,7 +414,7 @@ export const AbsenceCharts: React.FC = () => {
                 <span>انصراف مبكر</span>
               </div>
               <span className="text-xl font-bold font-mono text-slate-900">
-                {delayNoticeStats.early}
+                {stats.delayNoticeBreakdown[2]?.count ?? 0}
               </span>
             </div>
 
@@ -461,7 +424,7 @@ export const AbsenceCharts: React.FC = () => {
                 <span>خروج وعودة</span>
               </div>
               <span className="text-xl font-bold font-mono text-slate-900">
-                {delayNoticeStats.left}
+                {stats.delayNoticeBreakdown[3]?.count ?? 0}
               </span>
             </div>
           </div>
