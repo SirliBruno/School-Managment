@@ -12,7 +12,6 @@ import {
   AlertCircle,
   ShieldCheck,
   Building2,
-  KeyRound,
   FileSpreadsheet,
   ClipboardList,
   BarChart3,
@@ -111,11 +110,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleFillDefaults = () => {
-    setUsername("wakila");
-    setPassword("123456");
-    setErrorMsg(null);
-  };
 
   if (isLoading) {
     return (
@@ -262,37 +256,8 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* صندوق مساعدة البيانات الافتراضية الأولية */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-right">
-            <div className="bg-slate-100 border border-slate-200 rounded-xl p-3.5 text-xs text-slate-700 flex items-start gap-2.5">
-              <KeyRound className="w-4 h-4 text-teal-700 shrink-0 mt-0.5" />
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-800">
-                    بيانات الحساب الأولية:
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleFillDefaults}
-                    className="text-[11px] text-teal-700 hover:text-teal-900 underline font-bold cursor-pointer"
-                  >
-                    تعبئة تلقائية
-                  </button>
-                </div>
-                <div className="text-[11px] text-slate-600 space-y-0.5 font-mono">
-                  <div>
-                    المستخدم: <strong className="font-bold text-slate-900">wakila</strong>
-                  </div>
-                  <div>
-                    كلمة المرور: <strong className="font-bold text-slate-900">123456</strong>
-                  </div>
-                </div>
-                <p className="text-[10px] text-slate-500 pt-0.5 font-sans">
-                  * يمكنك تغيير اسم المستخدم وكلمة المرور في أي وقت من شريط القائمة الجانبية بعد الدخول.
-                </p>
-              </div>
-            </div>
-          </div>
+
+
 
           {/* شارة الأمان وتوقيع المطور */}
           <div className="mt-6 text-center text-xs flex flex-col items-center gap-2">
