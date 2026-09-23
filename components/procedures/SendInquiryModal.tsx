@@ -25,6 +25,7 @@ import {
   normalizeSaudiMobileInput,
 } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
+import { getSaudiToday } from "@/lib/timeUtils";
 
 interface SendInquiryModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [absenceDate, setAbsenceDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
+    return getSaudiToday();
   });
   const [manualMobile, setManualMobile] = useState("");
   const [saveMobileToProfile, setSaveMobileToProfile] = useState(true);

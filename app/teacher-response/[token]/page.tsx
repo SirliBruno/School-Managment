@@ -18,12 +18,18 @@ import {
   DoorOpen,
   Check,
   FileDown,
+  RefreshCw,
 } from "lucide-react";
 import { DelayNotice } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useTeachers } from "@/context/TeacherContext";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { cn } from "@/lib/utils";
+import {
+  getSaudiToday,
+  calculate48HoursExpiry,
+  isTokenExpired,
+} from "@/lib/timeUtils";
 
 export default function PublicTeacherResponsePage() {
   const params = useParams();
@@ -42,7 +48,7 @@ export default function PublicTeacherResponsePage() {
   // Form Inputs (Stage 2)
   const [teacherReason, setTeacherReason] = useState("");
   const [signatureDate, setSignatureDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
+    return getSaudiToday();
   });
   const [hasConsent, setHasConsent] = useState(false);
 
@@ -105,7 +111,7 @@ export default function PublicTeacherResponsePage() {
                 shareToken: data.share_token || token,
                 tokenExpiresAt:
                   data.token_expires_at ||
-                  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                  calculate48HoursExpiry(),
                 teacherResponseSubmittedAt:
                   data.teacher_response_submitted_at || undefined,
                 teacherIpAddress: data.teacher_ip_address || undefined,
@@ -145,14 +151,11 @@ export default function PublicTeacherResponsePage() {
 
         setNotice(foundNotice);
 
-        // Check expiration (7 days validity)
-        if (foundNotice.tokenExpiresAt) {
-          const expiryDate = new Date(foundNotice.tokenExpiresAt);
-          if (expiryDate < new Date()) {
-            setIsExpired(true);
-            setIsLoading(false);
-            return;
-          }
+        // Check expiration (48 hours validity)
+        if (foundNotice.tokenExpiresAt && isTokenExpired(foundNotice.tokenExpiresAt)) {
+          setIsExpired(true);
+          setIsLoading(false);
+          return;
         }
 
         // Check if already submitted
@@ -180,7 +183,7 @@ export default function PublicTeacherResponsePage() {
   // Handle Form Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!notice) return;
+    if (!notice || isSubmitting || submitSuccess || alreadySubmitted) return;
 
     if (!teacherReason.trim()) {
       setFormError("يرجى كتابة أسباب ومبررات التأخر أو الانصراف.");
@@ -320,6 +323,16 @@ export default function PublicTeacherResponsePage() {
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
             {errorMessage}
           </p>
+          <div className="pt-2 flex flex-col gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              type="button"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white font-medium text-xs sm:text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              إعادة المحاولة
+            </button>
+          </div>
           <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
             نظام الإدارة المدرسية الموحد — منصة الغياب والمتابعة الإدارية
           </div>
@@ -340,7 +353,7 @@ export default function PublicTeacherResponsePage() {
             انتهت صلاحية هذا الرابط
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-            عذراً أستاذة ({notice?.teacherName || "المعلمة"})، لقد انقضت المهلة النظامية المحددة للرد على إشعار التنبيه (7 أيام من تاريخ الإرسال). يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك الورقية.
+            عذراً أستاذة ({notice?.teacherName || "المعلمة"})، لقد انقضت المهلة المحددة للرد على إشعار التنبيه (48 ساعة من تاريخ الإرسال). يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك.
           </p>
           <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
             نظام الإدارة المدرسية الموحد — منصة المتابعة الإدارية

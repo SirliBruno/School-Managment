@@ -23,7 +23,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { Teacher, DelayNotice } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
-import { calculateTimeDifference } from "@/lib/timeUtils";
+import { calculateTimeDifference, getSaudiToday } from "@/lib/timeUtils";
 import { cn } from "@/lib/utils";
 
 interface CreateDelayNoticeModalProps {
@@ -111,7 +111,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [noticeDate, setNoticeDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
+    return getSaudiToday();
   });
 
   // Violation Type dropdown selection & Time range
@@ -197,7 +197,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
         setSelectedTeacherId("");
         setSelectedTeacher(null);
       }
-      setNoticeDate(new Date().toISOString().split("T")[0]);
+      setNoticeDate(getSaudiToday());
       setSelectedViolationType("delay_start");
       setFromTime("07:00");
       setToTime("08:30");

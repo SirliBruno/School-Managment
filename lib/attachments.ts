@@ -126,3 +126,15 @@ export function parseAttachments(rawUrl?: string): InquiryAttachmentItem[] {
   }
   return [{ slotId: "default", label: "المرفق", url: rawUrl }];
 }
+
+export const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10MB max upload
+export const MAX_FALLBACK_DATA_URL_BYTES = 750 * 1024; // 750KB max for localStorage fallback
+
+/**
+ * Validates whether a file can be safely converted to a fallback DataURL
+ * without risking exceeding the browser's 5MB LocalStorage quota.
+ */
+export function isSafeForLocalStorageFallback(fileSize: number): boolean {
+  return fileSize <= MAX_FALLBACK_DATA_URL_BYTES;
+}
+

@@ -16,8 +16,22 @@ import {
   DelayNotice,
   DelayNoticeStatus,
   DirectorOpinion,
+  ArchivedTeacher,
+  ArchivedAbsenceRecord,
+  ArchivedDelayNotice,
 } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import {
+  DbAbsenceRecordRow,
+  DbDelayNoticeRow,
+  DbAbsenceInquiryRow,
+} from "@/types/database";
+import {
+  getSaudiToday,
+  calculate48HoursExpiry,
+  generateSecureToken,
+} from "@/lib/timeUtils";
 
 export interface AddTeachersResult {
   addedCount: number;
@@ -31,8 +45,23 @@ interface TeacherContextType {
   absenceRecords: AbsenceRecord[];
   inquiries: AbsenceInquiry[];
   delayNotices: DelayNotice[];
+  // === Archive System (نظام الأرشيف) ===
+  archivedTeachers: ArchivedTeacher[];
+  archivedAbsences: ArchivedAbsenceRecord[];
+  archivedDelayNotices: ArchivedDelayNotice[];
+  restoreFromArchive: (
+    type: "teacher" | "absence" | "delay",
+    id: string
+  ) => boolean;
+  permanentDeleteFromArchive: (
+    type: "teacher" | "absence" | "delay",
+    id: string
+  ) => boolean;
+  clearArchive: (type?: "teacher" | "absence" | "delay") => void;
   isLoading: boolean;
   isCloudConnected: boolean;
+  pendingSyncCount: number;
+  flushSyncQueue: () => Promise<void>;
   addTeachers: (newTeachers: Teacher[]) => AddTeachersResult;
   addTeacher: (
     teacherData: Omit<Teacher, "id" | "totalAbsences"> &
@@ -109,7 +138,19 @@ const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
 const ABSENCES_STORAGE_KEY = "school_admin_absences_v1";
 const INQUIRIES_STORAGE_KEY = "school_admin_inquiries_v1";
 const DELAY_NOTICES_STORAGE_KEY = "school_admin_delay_notices_v1";
+const ARCHIVED_TEACHERS_STORAGE_KEY = "school_admin_archived_teachers_v1";
+const ARCHIVED_ABSENCES_STORAGE_KEY = "school_admin_archived_absences_v1";
+const ARCHIVED_DELAYS_STORAGE_KEY = "school_admin_archived_delays_v1";
+const PENDING_SYNC_STORAGE_KEY = "school_admin_pending_sync_v1";
 
+export interface PendingSyncOperation {
+  id: string;
+  table: "teachers" | "absence_records" | "delay_notices" | "absence_inquiries";
+  action: "insert" | "update" | "delete";
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: Record<string, any>;
+  timestamp: number;
+}
 
 export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
   const rawFullName =
@@ -394,9 +435,86 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [absenceRecords, setAbsenceRecords] = useState<AbsenceRecord[]>([]);
   const [inquiries, setInquiries] = useState<AbsenceInquiry[]>([]);
   const [delayNotices, setDelayNotices] = useState<DelayNotice[]>([]);
+  // Archive States
+  const [archivedTeachers, setArchivedTeachers] = useState<ArchivedTeacher[]>([]);
+  const [archivedAbsences, setArchivedAbsences] = useState<ArchivedAbsenceRecord[]>([]);
+  const [archivedDelayNotices, setArchivedDelayNotices] = useState<ArchivedDelayNotice[]>([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const isMountedRef = useRef(false);
+
+  // Sync Queue Helpers
+  const queueSyncOperation = useCallback(
+    (op: Omit<PendingSyncOperation, "id" | "timestamp">) => {
+      if (typeof window === "undefined") return;
+      try {
+        const raw = localStorage.getItem(PENDING_SYNC_STORAGE_KEY);
+        const queue: PendingSyncOperation[] = raw ? JSON.parse(raw) : [];
+        const newOp: PendingSyncOperation = {
+          ...op,
+          id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          timestamp: Date.now(),
+        };
+        queue.push(newOp);
+        localStorage.setItem(PENDING_SYNC_STORAGE_KEY, JSON.stringify(queue));
+        setPendingSyncCount(queue.length);
+      } catch (e) {
+        console.error("فشل إضافة العملية لطابور المزامنة:", e);
+      }
+    },
+    []
+  );
+
+  const flushSyncQueue = useCallback(async () => {
+    if (!isSupabaseConfigured() || !supabase || typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(PENDING_SYNC_STORAGE_KEY);
+      if (!raw) return;
+      const queue: PendingSyncOperation[] = JSON.parse(raw);
+      if (!Array.isArray(queue) || queue.length === 0) return;
+
+      console.info(`[Sync Queue] جاري مزامنة ${queue.length} عملية معلقة مع سوبابيز...`);
+      const remaining: PendingSyncOperation[] = [];
+
+      for (const op of queue) {
+        try {
+          if (op.action === "insert") {
+            const { error } = await supabase.from(op.table).upsert(op.data);
+            if (error) throw error;
+          } else if (op.action === "update") {
+            const { error } = await supabase
+              .from(op.table)
+              .update(op.data)
+              .eq("id", op.data.id);
+            if (error) throw error;
+          } else if (op.action === "delete") {
+            const { error } = await supabase
+              .from(op.table)
+              .delete()
+              .eq("id", op.data.id);
+            if (error) throw error;
+          }
+        } catch (itemErr) {
+          console.warn(`تعذر مزامنة العملية ${op.id}:`, itemErr);
+          remaining.push(op);
+        }
+      }
+
+      if (remaining.length > 0) {
+        localStorage.setItem(PENDING_SYNC_STORAGE_KEY, JSON.stringify(remaining));
+        setPendingSyncCount(remaining.length);
+      } else {
+        localStorage.removeItem(PENDING_SYNC_STORAGE_KEY);
+        setPendingSyncCount(0);
+        setIsCloudConnected(true);
+        console.info("[Sync Queue] اكتملت مزامنة كافة العمليات المعلقة بنجاح ✓");
+      }
+    } catch (e) {
+      console.warn("خطأ أثناء تصفية طابور المزامنة:", e);
+    }
+  }, []);
 
   // 1. Initial Load: Load fast from localStorage with auto-migration, then hydrate from Supabase if configured
   useEffect(() => {
@@ -457,12 +575,35 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 (dn.shareToken as string) ||
                 (typeof crypto !== "undefined" && crypto.randomUUID
                   ? crypto.randomUUID().replace(/-/g, "")
-                  : `dltok-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`),
+                  : generateSecureToken(16)),
               tokenExpiresAt:
                 (dn.tokenExpiresAt as string) ||
-                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                calculate48HoursExpiry(),
             })) as DelayNotice[];
           }
+        }
+
+        // Load Archives from LocalStorage
+        const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
+        if (storedArchTeachers) {
+          try {
+            const parsed = JSON.parse(storedArchTeachers);
+            if (Array.isArray(parsed)) setArchivedTeachers(parsed);
+          } catch {}
+        }
+        const storedArchAbsences = localStorage.getItem(ARCHIVED_ABSENCES_STORAGE_KEY);
+        if (storedArchAbsences) {
+          try {
+            const parsed = JSON.parse(storedArchAbsences);
+            if (Array.isArray(parsed)) setArchivedAbsences(parsed);
+          } catch {}
+        }
+        const storedArchDelays = localStorage.getItem(ARCHIVED_DELAYS_STORAGE_KEY);
+        if (storedArchDelays) {
+          try {
+            const parsed = JSON.parse(storedArchDelays);
+            if (Array.isArray(parsed)) setArchivedDelayNotices(parsed);
+          } catch {}
         }
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
@@ -602,9 +743,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             .order("created_at", { ascending: false });
 
           if (!inqErr && dbInquiries && dbInquiries.length > 0) {
-            const mappedInquiries: AbsenceInquiry[] = dbInquiries.map(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (inq: any) => ({
+            const mappedInquiries: AbsenceInquiry[] = (dbInquiries as unknown as DbAbsenceInquiryRow[]).map(
+              (inq: DbAbsenceInquiryRow) => ({
                 id: inq.id,
                 teacherId: inq.teacher_id,
                 teacherName: inq.teacher_name,
@@ -625,6 +765,60 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             );
             setInquiries(mappedInquiries);
           }
+
+          // Hydrate delay notices from Supabase
+          const { data: dbDelays, error: delayErr } = await supabase
+            .from("delay_notices")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+          if (!delayErr && dbDelays && dbDelays.length > 0) {
+            const mappedDelays: DelayNotice[] = (dbDelays as unknown as DbDelayNoticeRow[]).map((dn: DbDelayNoticeRow) => ({
+              id: dn.id,
+              noticeNumber: dn.notice_number || undefined,
+              teacherId: dn.teacher_id,
+              teacherName: dn.teacher_name,
+              jobNumber: dn.job_number,
+              specialty: dn.specialty || undefined,
+              noticeDate: dn.notice_date,
+              date: dn.notice_date,
+              violationDelayStart: dn.violation_delay_start,
+              delayStartTime: dn.delay_start_time || undefined,
+              violationAbsentDuring: dn.violation_absent_during,
+              absentFromTime: dn.absent_from_time || undefined,
+              absentToTime: dn.absent_to_time || undefined,
+              violationEarlyDeparture: dn.violation_early_departure,
+              earlyDepartureTime: dn.early_departure_time || undefined,
+              violationLeftSchool: dn.violation_left_school,
+              leftSchoolDetails: dn.left_school_details || undefined,
+              additionalNotes: dn.additional_notes || undefined,
+              notes: dn.additional_notes || undefined,
+              status: dn.status,
+              teacherReason: dn.teacher_reason || undefined,
+              teacherSignatureDate: dn.teacher_signature_date || undefined,
+              directorOpinion: dn.director_opinion || null,
+              directorNotes: dn.director_notes || undefined,
+              directorSignatureDate: dn.director_signature_date || undefined,
+              hijriYear: dn.hijri_year || "١٤٤٨",
+              shareToken: dn.share_token,
+              tokenExpiresAt: dn.token_expires_at,
+              teacherResponseSubmittedAt: dn.teacher_response_submitted_at || undefined,
+              teacherIpAddress: dn.teacher_ip_address || undefined,
+              linkSharedAt: dn.link_shared_at || undefined,
+              createdAt: dn.created_at,
+            }));
+
+            // Merge local and cloud delay notices
+            const delayMap = new Map<string, DelayNotice>();
+            for (const loc of localDelayNotices) {
+              if (loc.id) delayMap.set(loc.id, loc);
+            }
+            for (const cl of mappedDelays) {
+              if (cl.id) delayMap.set(cl.id, cl);
+            }
+            const mergedDelays = Array.from(delayMap.values());
+            setDelayNotices(mergedDelays);
+          }
         } catch (cloudErr) {
           console.warn(
             "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
@@ -633,12 +827,24 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
+      // Check initial pending sync count
+      if (typeof window !== "undefined") {
+        try {
+          const rawQ = localStorage.getItem(PENDING_SYNC_STORAGE_KEY);
+          if (rawQ) {
+            const q = JSON.parse(rawQ);
+            if (Array.isArray(q)) setPendingSyncCount(q.length);
+          }
+        } catch {}
+      }
+
       setIsLoading(false);
       isMountedRef.current = true;
+      flushSyncQueue();
     };
 
     loadInitialData();
-  }, []);
+  }, [flushSyncQueue]);
 
   // 2. Persist to localStorage whenever state changes
   useEffect(() => {
@@ -686,6 +892,186 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [delayNotices, isLoading]);
 
+  // Persist Archives to localStorage
+  useEffect(() => {
+    if (!isMountedRef.current || isLoading) return;
+    try {
+      localStorage.setItem(
+        ARCHIVED_TEACHERS_STORAGE_KEY,
+        JSON.stringify(archivedTeachers)
+      );
+      localStorage.setItem(
+        ARCHIVED_ABSENCES_STORAGE_KEY,
+        JSON.stringify(archivedAbsences)
+      );
+      localStorage.setItem(
+        ARCHIVED_DELAYS_STORAGE_KEY,
+        JSON.stringify(archivedDelayNotices)
+      );
+    } catch (error) {
+      console.error("فشل حفظ بيانات الأرشيف محلياً:", error);
+    }
+  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, isLoading]);
+
+  // Handle Online / Offline network status changes
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleOnline = () => {
+      setIsCloudConnected(true);
+      flushSyncQueue();
+    };
+
+    const handleOffline = () => {
+      setIsCloudConnected(false);
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [flushSyncQueue]);
+
+  // Realtime Subscriptions via Supabase Channels (Live Cross-Device Sync)
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !supabase) return;
+
+    const channel = supabase
+      .channel("school-platform-realtime-sync")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "absence_records" },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          if (payload.eventType === "INSERT") {
+            const r = payload.new as unknown as DbAbsenceRecordRow;
+            if (!r || !r.id) return;
+            const newRec: AbsenceRecord = {
+              id: r.id,
+              teacherId: r.teacher_id,
+              teacherName: r.teacher_name,
+              jobNumber: r.job_number,
+              specialty: r.specialty || "",
+              date: r.date,
+              type: r.type,
+              reason: r.reason,
+              notes: r.notes || undefined,
+              attachmentUrl: r.attachment_url || undefined,
+              timestamp: r.timestamp || new Date().toISOString(),
+            };
+            setAbsenceRecords((prev) => {
+              if (prev.some((item) => item.id === newRec.id)) return prev;
+              return [newRec, ...prev];
+            });
+            setTeachers((prev) =>
+              prev.map((t) =>
+                t.id === newRec.teacherId
+                  ? { ...t, totalAbsences: (t.totalAbsences || 0) + 1 }
+                  : t
+              )
+            );
+          } else if (payload.eventType === "DELETE") {
+            const oldRow = payload.old as Partial<DbAbsenceRecordRow>;
+            if (oldRow && oldRow.id) {
+              setAbsenceRecords((prev) => prev.filter((r) => r.id !== oldRow.id));
+            }
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "delay_notices" },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const row = payload.new as unknown as DbDelayNoticeRow;
+            if (!row || !row.id) return;
+            const updatedNotice: DelayNotice = {
+              id: row.id,
+              noticeNumber: row.notice_number || undefined,
+              teacherId: row.teacher_id,
+              teacherName: row.teacher_name,
+              jobNumber: row.job_number,
+              specialty: row.specialty || undefined,
+              noticeDate: row.notice_date,
+              date: row.notice_date,
+              violationDelayStart: row.violation_delay_start,
+              delayStartTime: row.delay_start_time || undefined,
+              violationAbsentDuring: row.violation_absent_during,
+              absentFromTime: row.absent_from_time || undefined,
+              absentToTime: row.absent_to_time || undefined,
+              violationEarlyDeparture: row.violation_early_departure,
+              earlyDepartureTime: row.early_departure_time || undefined,
+              violationLeftSchool: row.violation_left_school,
+              leftSchoolDetails: row.left_school_details || undefined,
+              additionalNotes: row.additional_notes || undefined,
+              notes: row.additional_notes || undefined,
+              status: row.status,
+              teacherReason: row.teacher_reason || undefined,
+              teacherSignatureDate: row.teacher_signature_date || undefined,
+              directorOpinion: row.director_opinion || null,
+              directorNotes: row.director_notes || undefined,
+              directorSignatureDate: row.director_signature_date || undefined,
+              hijriYear: row.hijri_year || "١٤٤٨",
+              shareToken: row.share_token,
+              tokenExpiresAt: row.token_expires_at,
+              teacherResponseSubmittedAt: row.teacher_response_submitted_at || undefined,
+              teacherIpAddress: row.teacher_ip_address || undefined,
+              linkSharedAt: row.link_shared_at || undefined,
+              createdAt: row.created_at,
+            };
+            setDelayNotices((prev) => {
+              const exists = prev.some((d) => d.id === updatedNotice.id);
+              if (exists) {
+                return prev.map((d) => (d.id === updatedNotice.id ? updatedNotice : d));
+              }
+              return [updatedNotice, ...prev];
+            });
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "absence_inquiries" },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const inq = payload.new as unknown as DbAbsenceInquiryRow;
+            if (!inq || !inq.id) return;
+            const updatedInq: AbsenceInquiry = {
+              id: inq.id,
+              teacherId: inq.teacher_id,
+              teacherName: inq.teacher_name,
+              jobNumber: inq.job_number,
+              specialty: inq.specialty || undefined,
+              mobile: inq.mobile || undefined,
+              absenceDate: inq.absence_date,
+              token: inq.token,
+              status: inq.status,
+              expiresAt: inq.expires_at,
+              absenceType: inq.absence_type || undefined,
+              teacherReason: inq.teacher_reason || undefined,
+              attachmentUrl: inq.attachment_url || undefined,
+              adminNotes: inq.admin_notes || undefined,
+              submittedAt: inq.submitted_at || undefined,
+              createdAt: inq.created_at,
+            };
+            setInquiries((prev) => {
+              const exists = prev.some((i) => i.id === updatedInq.id);
+              if (exists) {
+                return prev.map((i) => (i.id === updatedInq.id ? updatedInq : i));
+              }
+              return [updatedInq, ...prev];
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase?.removeChannel(channel);
+    };
+  }, []);
 
   // 3. Add multiple teachers (Excel or Batch Import) with Upsert on username
   const addTeachers = useCallback(
@@ -944,10 +1330,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     [teachers]
   );
 
-  // 6. Delete Teacher with Cascade Deletion
+  // 6. Delete Teacher with Cascade Deletion & Archive
   const deleteTeacher = useCallback((id: string) => {
     let deletedTeacher: Teacher | undefined;
     let deletedRecords: AbsenceRecord[] = [];
+    let deletedInquiries: AbsenceInquiry[] = [];
+    let deletedDelayNotices: DelayNotice[] = [];
 
     setTeachers((prev) => {
       deletedTeacher = prev.find((t) => t.id === id);
@@ -960,8 +1348,27 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     // Remove associated inquiries and delay notices
-    setInquiries((prev) => prev.filter((inq) => inq.teacherId !== id));
-    setDelayNotices((prev) => prev.filter((dn) => dn.teacherId !== id));
+    setInquiries((prev) => {
+      deletedInquiries = prev.filter((inq) => inq.teacherId === id);
+      return prev.filter((inq) => inq.teacherId !== id);
+    });
+    setDelayNotices((prev) => {
+      deletedDelayNotices = prev.filter((dn) => dn.teacherId === id);
+      return prev.filter((dn) => dn.teacherId !== id);
+    });
+
+    // Archive the deleted teacher and related data
+    setArchivedTeachers((prev) => {
+      if (!deletedTeacher) return prev;
+      const archivedItem: ArchivedTeacher = {
+        teacher: deletedTeacher,
+        associatedRecords: deletedRecords,
+        associatedInquiries: deletedInquiries,
+        associatedDelayNotices: deletedDelayNotices,
+        archivedAt: new Date().toISOString(),
+      };
+      return [archivedItem, ...prev.filter((a) => a.teacher.id !== id)];
+    });
 
     if (isSupabaseConfigured() && supabase) {
       supabase
@@ -1135,32 +1542,45 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return nextRecords;
       });
 
-      // Background sync to Supabase
+      // Background sync to Supabase with Offline Queue fallback
+      const absencePayload = {
+        id: newRecord.id,
+        teacher_id: newRecord.teacherId,
+        teacher_name: newRecord.teacherName,
+        job_number: newRecord.jobNumber,
+        specialty: newRecord.specialty,
+        date: newRecord.date,
+        type: newRecord.type,
+        reason: newRecord.reason,
+        notes: newRecord.notes || null,
+        attachment_url: newRecord.attachmentUrl || null,
+        timestamp: newRecord.timestamp,
+      };
+
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("absence_records")
-          .insert({
-            id: newRecord.id,
-            teacher_id: newRecord.teacherId,
-            teacher_name: newRecord.teacherName,
-            job_number: newRecord.jobNumber,
-            specialty: newRecord.specialty,
-            date: newRecord.date,
-            type: newRecord.type,
-            reason: newRecord.reason,
-            notes: newRecord.notes || null,
-            attachment_url: newRecord.attachmentUrl || null,
-            timestamp: newRecord.timestamp,
-          })
-          .then(({ error }) => {
-            if (error) console.error("فشل إدراج المساءلة في سوبابيز:", error);
-          });
+          .insert(absencePayload)
+          .then(
+            ({ error }) => {
+              if (error) {
+                console.warn("فشل إدراج المساءلة في سوبابيز، تحويل للطابور:", error.message);
+                queueSyncOperation({ table: "absence_records", action: "insert", data: absencePayload });
+              }
+            },
+            (err) => {
+              console.warn("خطأ اتصال أثناء حفظ المساءلة، تحويل للطابور:", err);
+              queueSyncOperation({ table: "absence_records", action: "insert", data: absencePayload });
+            }
+          );
 
         supabase
           .from("teachers")
           .update({ total_absences: newCount })
           .eq("id", data.teacherId)
           .then(() => {});
+      } else {
+        queueSyncOperation({ table: "absence_records", action: "insert", data: absencePayload });
       }
 
       return newRecord;
@@ -1264,6 +1684,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       return nextRecords;
     });
 
+    if (deletedRecord) {
+      const archivedItem: ArchivedAbsenceRecord = {
+        record: deletedRecord,
+        archivedAt: new Date().toISOString(),
+      };
+      setArchivedAbsences((prev) => [
+        archivedItem,
+        ...prev.filter((a) => a.record.id !== id),
+      ]);
+    }
+
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("absence_records")
@@ -1345,12 +1776,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       const token =
         typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID().replace(/-/g, "")
-          : `${Date.now()}${Math.random().toString(36).substring(2, 10)}`;
+          : generateSecureToken(16);
 
-      // 7 days validity
-      const expiresAt = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString();
+      // 48 hours validity as approved by school administration
+      const expiresAt = calculate48HoursExpiry();
       const createdAt = new Date().toISOString();
 
       const newInquiry: AbsenceInquiry = {
@@ -1543,13 +1972,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           : `dln-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
       const shareToken =
-        typeof crypto !== "undefined" && crypto.randomUUID
+        data.shareToken ||
+        (typeof crypto !== "undefined" && crypto.randomUUID
           ? crypto.randomUUID().replace(/-/g, "")
-          : `${Date.now()}${Math.random().toString(36).substring(2, 12)}`;
+          : generateSecureToken(16));
 
-      const tokenExpiresAt = new Date(
-        Date.now() + 7 * 24 * 60 * 60 * 1000
-      ).toISOString();
+      // 48 hours validity as approved by school administration
+      const tokenExpiresAt =
+        data.tokenExpiresAt || calculate48HoursExpiry();
 
       const hijriYear = data.hijriYear || "١٤٤٨";
       let createdNotice: DelayNotice | null = null;
@@ -1575,7 +2005,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           noticeDate:
             data.noticeDate ||
             data.date ||
-            new Date().toISOString().split("T")[0],
+            getSaudiToday(),
           notes: data.additionalNotes || data.notes,
           additionalNotes: data.additionalNotes || data.notes,
           shareToken,
@@ -1594,35 +2024,51 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         )
       );
 
-      if (isSupabaseConfigured() && supabase && createdNotice) {
+      if (createdNotice) {
         const n: DelayNotice = createdNotice;
-        supabase
-          .from("delay_notices")
-          .insert({
-            id: n.id,
-            teacher_id: n.teacherId,
-            teacher_name: n.teacherName,
-            job_number: n.jobNumber,
-            specialty: n.specialty,
-            notice_date: n.noticeDate,
-            violation_delay_start: n.violationDelayStart,
-            delay_start_time: n.delayStartTime || null,
-            violation_absent_during: n.violationAbsentDuring,
-            absent_from_time: n.absentFromTime || null,
-            absent_to_time: n.absentToTime || null,
-            violation_early_departure: n.violationEarlyDeparture,
-            early_departure_time: n.earlyDepartureTime || null,
-            violation_left_school: n.violationLeftSchool,
-            left_school_details: n.leftSchoolDetails || null,
-            additional_notes: n.additionalNotes || null,
-            status: n.status,
-            hijri_year: n.hijriYear,
-            created_at: n.createdAt,
-            share_token: n.shareToken,
-            token_expires_at: n.tokenExpiresAt,
-            notice_number: n.noticeNumber || null,
-          })
-          .then(() => {});
+        const delayPayload = {
+          id: n.id,
+          teacher_id: n.teacherId,
+          teacher_name: n.teacherName,
+          job_number: n.jobNumber,
+          specialty: n.specialty,
+          notice_date: n.noticeDate,
+          violation_delay_start: n.violationDelayStart,
+          delay_start_time: n.delayStartTime || null,
+          violation_absent_during: n.violationAbsentDuring,
+          absent_from_time: n.absentFromTime || null,
+          absent_to_time: n.absentToTime || null,
+          violation_early_departure: n.violationEarlyDeparture,
+          early_departure_time: n.earlyDepartureTime || null,
+          violation_left_school: n.violationLeftSchool,
+          left_school_details: n.leftSchoolDetails || null,
+          additional_notes: n.additionalNotes || null,
+          status: n.status,
+          hijri_year: n.hijriYear,
+          created_at: n.createdAt,
+          share_token: n.shareToken,
+          token_expires_at: n.tokenExpiresAt,
+          notice_number: n.noticeNumber || null,
+        };
+
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("delay_notices")
+            .insert(delayPayload)
+            .then(
+              ({ error }) => {
+                if (error) {
+                  console.warn("فشل حفظ التنبيه في سوبابيز، تحويل للطابور:", error.message);
+                  queueSyncOperation({ table: "delay_notices", action: "insert", data: delayPayload });
+                }
+              },
+              () => {
+                queueSyncOperation({ table: "delay_notices", action: "insert", data: delayPayload });
+              }
+            );
+        } else {
+          queueSyncOperation({ table: "delay_notices", action: "insert", data: delayPayload });
+        }
       }
 
       return { success: true, notice: createdNotice || undefined };
@@ -1689,8 +2135,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       teacherSignatureDate?: string
     ): { success: boolean; notice?: DelayNotice; error?: string } => {
       let updatedNotice: DelayNotice | undefined;
-      const sigDate =
-        teacherSignatureDate || new Date().toISOString().split("T")[0];
+      const sigDate = teacherSignatureDate || getSaudiToday();
 
       setDelayNotices((prev) =>
         prev.map((dn) => {
@@ -1738,8 +2183,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       directorSignatureDate?: string
     ): { success: boolean; notice?: DelayNotice; error?: string } => {
       let updatedNotice: DelayNotice | undefined;
-      const sigDate =
-        directorSignatureDate || new Date().toISOString().split("T")[0];
+      const sigDate = directorSignatureDate || getSaudiToday();
 
       setDelayNotices((prev) =>
         prev.map((dn) => {
@@ -1780,7 +2224,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // 19. Delete Delay Notice
+  // 19. Delete Delay Notice with Archive
   const deleteDelayNotice = useCallback((id: string): { deletedNotice?: DelayNotice } => {
     let deletedNotice: DelayNotice | undefined;
 
@@ -1798,6 +2242,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             : t
         )
       );
+
+      // Archive deleted delay notice
+      const archivedItem: ArchivedDelayNotice = {
+        notice: deletedNotice,
+        archivedAt: new Date().toISOString(),
+      };
+      setArchivedDelayNotices((prev) => [
+        archivedItem,
+        ...prev.filter((a) => a.notice.id !== id),
+      ]);
 
       if (isSupabaseConfigured() && supabase) {
         supabase
@@ -1862,6 +2316,117 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // === Archive Management Methods ===
+  const restoreFromArchive = useCallback(
+    (type: "teacher" | "absence" | "delay", id: string): boolean => {
+      if (type === "teacher") {
+        const found = archivedTeachers.find((a) => a.teacher.id === id);
+        if (!found) return false;
+
+        // Restore teacher
+        setTeachers((prev) =>
+          prev.some((t) => t.id === id) ? prev : [found.teacher, ...prev]
+        );
+
+        // Restore associated records
+        if (found.associatedRecords && found.associatedRecords.length > 0) {
+          setAbsenceRecords((prev) => {
+            const existingIds = new Set(prev.map((r) => r.id));
+            const toAdd = found.associatedRecords.filter((r) => !existingIds.has(r.id));
+            return [...toAdd, ...prev];
+          });
+        }
+
+        // Restore associated inquiries
+        if (found.associatedInquiries && found.associatedInquiries.length > 0) {
+          setInquiries((prev) => {
+            const existingIds = new Set(prev.map((i) => i.id));
+            const toAdd = found.associatedInquiries.filter((i) => !existingIds.has(i.id));
+            return [...toAdd, ...prev];
+          });
+        }
+
+        // Restore associated delay notices
+        if (found.associatedDelayNotices && found.associatedDelayNotices.length > 0) {
+          setDelayNotices((prev) => {
+            const existingIds = new Set(prev.map((d) => d.id));
+            const toAdd = found.associatedDelayNotices.filter((d) => !existingIds.has(d.id));
+            return [...toAdd, ...prev];
+          });
+        }
+
+        // Remove from archivedTeachers
+        setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
+        return true;
+      } else if (type === "absence") {
+        const found = archivedAbsences.find((a) => a.record.id === id);
+        if (!found) return false;
+
+        setAbsenceRecords((prev) =>
+          prev.some((r) => r.id === id) ? prev : [found.record, ...prev]
+        );
+
+        setTeachers((prev) =>
+          prev.map((t) =>
+            t.id === found.record.teacherId
+              ? { ...t, totalAbsences: (t.totalAbsences || 0) + 1 }
+              : t
+          )
+        );
+
+        setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== id));
+        return true;
+      } else if (type === "delay") {
+        const found = archivedDelayNotices.find((a) => a.notice.id === id);
+        if (!found) return false;
+
+        setDelayNotices((prev) =>
+          prev.some((d) => d.id === id) ? prev : [found.notice, ...prev]
+        );
+
+        setTeachers((prev) =>
+          prev.map((t) =>
+            t.id === found.notice.teacherId
+              ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
+              : t
+          )
+        );
+
+        setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== id));
+        return true;
+      }
+
+      return false;
+    },
+    [archivedTeachers, archivedAbsences, archivedDelayNotices]
+  );
+
+  const permanentDeleteFromArchive = useCallback(
+    (type: "teacher" | "absence" | "delay", id: string): boolean => {
+      if (type === "teacher") {
+        setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
+        return true;
+      } else if (type === "absence") {
+        setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== id));
+        return true;
+      } else if (type === "delay") {
+        setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== id));
+        return true;
+      }
+      return false;
+    },
+    []
+  );
+
+  const clearArchive = useCallback(
+    (type?: "teacher" | "absence" | "delay") => {
+      if (!type || type === "teacher") setArchivedTeachers([]);
+      if (!type || type === "absence") setArchivedAbsences([]);
+      if (!type || type === "delay") setArchivedDelayNotices([]);
+    },
+    []
+  );
+
   // 21. Mark Delay Notice Link Shared
   const markDelayNoticeLinkShared = useCallback((id: string) => {
     const timestamp = new Date().toISOString();
@@ -1886,8 +2451,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       teacherSignatureDate?: string,
       teacherIpAddress?: string
     ): Promise<{ success: boolean; notice?: DelayNotice; error?: string }> => {
-      const sigDate =
-        teacherSignatureDate || new Date().toISOString().split("T")[0];
+      const sigDate = teacherSignatureDate || getSaudiToday();
       const submittedAt = new Date().toISOString();
 
       let targetNotice: DelayNotice | undefined;
@@ -1942,6 +2506,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       absenceRecords,
       inquiries,
       delayNotices,
+      archivedTeachers,
+      archivedAbsences,
+      archivedDelayNotices,
+      restoreFromArchive,
+      permanentDeleteFromArchive,
+      clearArchive,
       isLoading,
       isCloudConnected,
       addTeachers,
@@ -1969,14 +2539,24 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreDelayNotice,
       markDelayNoticeLinkShared,
       submitTeacherResponseByToken,
+      pendingSyncCount,
+      flushSyncQueue,
     }),
     [
       teachers,
       absenceRecords,
       inquiries,
       delayNotices,
+      archivedTeachers,
+      archivedAbsences,
+      archivedDelayNotices,
+      restoreFromArchive,
+      permanentDeleteFromArchive,
+      clearArchive,
       isLoading,
       isCloudConnected,
+      pendingSyncCount,
+      flushSyncQueue,
       addTeachers,
       addTeacher,
       updateTeacher,

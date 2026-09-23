@@ -32,6 +32,8 @@ import { printAbsencePdf } from "@/lib/printPdfService";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { cn } from "@/lib/utils";
+import { getSaudiToday } from "@/lib/timeUtils";
+import { MAX_FALLBACK_DATA_URL_BYTES } from "@/lib/attachments";
 
 
 
@@ -77,13 +79,13 @@ const ABSENCE_TYPES: {
 ];
 
 export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
-  const { teachers, recordAbsence } = useTeachers();
+  const { teachers, recordAbsence, absenceRecords } = useTeachers();
 
   // Form states
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
   const [absenceDate, setAbsenceDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
+    return getSaudiToday();
   });
   const [absenceType, setAbsenceType] = useState<AbsenceType>("اضطراري");
   const [reason, setReason] = useState("");
@@ -131,7 +133,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const handleReset = () => {
     setSelectedTeacherId("");
     setSelectedTeacher(null);
-    setAbsenceDate(new Date().toISOString().split("T")[0]);
+    setAbsenceDate(getSaudiToday());
     setAbsenceType("اضطراري");
     setReason("");
     setNotes("");
@@ -220,12 +222,18 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
     }
 
     if (!publicUrl && attachmentFile) {
-      publicUrl = await new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => resolve("");
-        reader.readAsDataURL(attachmentFile);
-      });
+      if (attachmentFile.size <= MAX_FALLBACK_DATA_URL_BYTES) {
+        publicUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(attachmentFile);
+        });
+      } else {
+        console.warn(
+          `حجم المرفق (${(attachmentFile.size / 1024).toFixed(0)}KB) يتجاوز الحد الآمن للحفظ المحلي (750KB). تم تخطي تخزينه محلياً لتفادي امتلاء المتصفح.`
+        );
+      }
     }
 
     return publicUrl || undefined;
@@ -240,6 +248,18 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
     if (!absenceDate) {
       newErrors.date = "يرجى تحديد تاريخ الغياب.";
+    } else {
+      const today = getSaudiToday();
+      if (absenceDate > today) {
+        newErrors.date = "لا يمكن تسجيل غياب بتاريخ مستقبلي يتجاوز تاريخ اليوم.";
+      } else if (selectedTeacherId) {
+        const isDuplicate = absenceRecords.some(
+          (rec) => rec.teacherId === selectedTeacherId && rec.date === absenceDate
+        );
+        if (isDuplicate) {
+          newErrors.date = "تم تسجيل غياب لهذه المعلمة مسبقاً في هذا التاريخ.";
+        }
+      }
     }
 
     if (!reason.trim()) {
@@ -476,11 +496,14 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <input
                 id={`${formId}-date`}
                 type="date"
+                max={getSaudiToday()}
                 value={absenceDate}
                 onChange={(e) => {
                   setAbsenceDate(e.target.value);
                   setErrors((prev) => ({ ...prev, date: "" }));
                 }}
+                aria-invalid={!!errors.date}
+                aria-describedby={errors.date ? `${formId}-date-error` : undefined}
                 className={cn(
                   "w-full px-3.5 py-2.5 min-h-[48px] rounded-xl border text-base md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-2xs",
                   errors.date
@@ -490,7 +513,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               />
             </div>
             {errors.date && (
-              <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+              <p
+                id={`${formId}-date-error`}
+                className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1"
+              >
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{errors.date}</span>
               </p>
@@ -586,6 +612,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               setReason(e.target.value);
               setErrors((prev) => ({ ...prev, reason: "" }));
             }}
+            aria-invalid={!!errors.reason}
+            aria-describedby={errors.reason ? `${formId}-reason-error` : undefined}
             placeholder="اكتبي سبب الغياب الموضح من المعلمة أو سبب رصد المساءلة بالتفصيل..."
             className={cn(
               "w-full p-3.5 min-h-[96px] rounded-xl border text-base md:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
@@ -595,7 +623,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             )}
           />
           {errors.reason && (
-            <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+            <p
+              id={`${formId}-reason-error`}
+              className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1"
+            >
               <AlertCircle className="w-3.5 h-3.5 shrink-0" />
               <span>{errors.reason}</span>
             </p>
@@ -709,6 +740,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                     rel="noreferrer"
                     className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
                     title="معاينة المرفق بالحجم الكامل"
+                    aria-label="معاينة المرفق بالحجم الكامل"
                   >
                     <Eye className="w-4 h-4" />
                   </a>
@@ -718,6 +750,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   onClick={removeSelectedFile}
                   className="p-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 transition-colors cursor-pointer"
                   title="حذف هذا المرفق"
+                  aria-label="حذف هذا المرفق"
                 >
                   <X className="w-4 h-4" />
                 </button>

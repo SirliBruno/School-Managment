@@ -477,7 +477,7 @@ export const RecentAbsencesTable: React.FC = () => {
                   </div>
 
                   <div className="text-slate-700 pt-1.5 border-t border-slate-200/60">
-                    <span className="text-slate-400 font-medium ml-1">السبب:</span>
+                    <span className="text-slate-400 font-medium me-1">السبب:</span>
                     <span className="font-medium">{record.reason}</span>
                   </div>
 

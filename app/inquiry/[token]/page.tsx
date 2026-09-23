@@ -22,6 +22,7 @@ import {
   HelpCircle,
   FileDown,
   Check,
+  RefreshCw,
 } from "lucide-react";
 import { AbsenceInquiry, AbsenceType } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
@@ -31,6 +32,7 @@ import {
   getAttachmentSlotsForType,
   parseAttachments,
   InquiryAttachmentItem,
+  MAX_FALLBACK_DATA_URL_BYTES,
 } from "@/lib/attachments";
 
 const ABSENCE_TYPES: {
@@ -304,7 +306,8 @@ export default function TeacherInquiryPage() {
   // Handle Form Submit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate() || !inquiry) return;
+    if (isSubmitting || submittedSuccess || !inquiry || inquiry.status !== "pending") return;
+    if (!validate()) return;
 
     setIsSubmitting(true);
     setUploadProgress("جاري معالجة ورفع المرفقات والتحقق...");
@@ -348,12 +351,18 @@ export default function TeacherInquiryPage() {
 
         // 2. Fallback to Data URL if storage fails or not configured
         if (!finalUrl) {
-          finalUrl = await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = () => resolve("");
-            reader.readAsDataURL(slotData.file);
-          });
+          if (slotData.file.size <= MAX_FALLBACK_DATA_URL_BYTES) {
+            finalUrl = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = () => resolve("");
+              reader.readAsDataURL(slotData.file);
+            });
+          } else {
+            console.warn(
+              `الملف (${slot.label}) بحجم ${(slotData.file.size / 1024).toFixed(0)}KB أكبر من الحد الآمن للحفظ المحلي (750KB). تم تخطي تخزينه محلياً.`
+            );
+          }
         }
 
         if (finalUrl) {
@@ -472,6 +481,16 @@ export default function TeacherInquiryPage() {
           <p className="text-sm text-slate-600 leading-relaxed">
             {errorMessage || "رابط المساءلة غير صحيح أو تم حذفه من قبل الإدارة."}
           </p>
+          <div className="pt-2 flex flex-col gap-2">
+            <button
+              onClick={() => window.location.reload()}
+              type="button"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white font-medium text-xs sm:text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              إعادة المحاولة
+            </button>
+          </div>
           <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
             إذا كنتِ تعتقدين أن هذا خطأ، يرجى التواصل مع إدارة المدرسة لتجديد الرابط.
           </div>
@@ -480,7 +499,7 @@ export default function TeacherInquiryPage() {
     );
   }
 
-  // Check 7-day expiration
+  // Check 48-hour expiration
   const isExpired =
     inquiry.status === "pending" &&
     new Date(inquiry.expiresAt).getTime() < Date.now();
@@ -494,7 +513,7 @@ export default function TeacherInquiryPage() {
           </div>
           <h1 className="text-lg font-bold text-slate-900">انتهت صلاحية الرابط</h1>
           <p className="text-sm text-slate-600 leading-relaxed">
-            عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (أسبوع واحد من تاريخ الإرسال).
+            عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (48 ساعة من تاريخ الإرسال).
           </p>
           <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-800 text-right space-y-1">
             <p className="font-bold">بيانات المساءلة:</p>

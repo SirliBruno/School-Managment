@@ -17,6 +17,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { DelayNotice } from "@/types/teacher";
 import { cn } from "@/lib/utils";
+import { getSaudiToday } from "@/lib/timeUtils";
 
 interface TeacherResponseModalProps {
   isOpen: boolean;
@@ -35,7 +36,7 @@ export const TeacherResponseModal: React.FC<TeacherResponseModalProps> = ({
 
   const [teacherReason, setTeacherReason] = useState("");
   const [teacherSignedAt, setTeacherSignedAt] = useState(() => {
-    return new Date().toISOString().split("T")[0];
+    return getSaudiToday();
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export const TeacherResponseModal: React.FC<TeacherResponseModalProps> = ({
       setTeacherSignedAt(
         notice.teacherSignatureDate ||
           notice.teacherSignedAt ||
-          new Date().toISOString().split("T")[0]
+          getSaudiToday()
       );
     }
     setErrorMsg(null);

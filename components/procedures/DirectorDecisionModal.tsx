@@ -19,6 +19,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { DelayNotice, DirectorOpinion } from "@/types/teacher";
 import { cn } from "@/lib/utils";
+import { getSaudiToday } from "@/lib/timeUtils";
 
 interface DirectorDecisionModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
     useState<DirectorOpinion>("accepted");
   const [directorNotes, setDirectorNotes] = useState("");
   const [directorSignedAt, setDirectorSignedAt] = useState(() => {
-    return new Date().toISOString().split("T")[0];
+    return getSaudiToday();
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
       setDirectorOpinion(notice.directorOpinion || "accepted");
       setDirectorNotes(notice.directorNotes || "");
       setDirectorSignedAt(
-        notice.directorSignedAt || new Date().toISOString().split("T")[0]
+        notice.directorSignedAt || getSaudiToday()
       );
     }
     setErrorMsg(null);
@@ -169,7 +170,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                 <FileText className="w-4 h-4 text-sky-600" />
                 <span>إفادة ومبرر المعلمة المسجلة:</span>
                 {(notice.teacherSignatureDate || notice.teacherSignedAt) && (
-                  <span className="text-[11px] text-slate-400 font-normal mr-auto">
+                  <span className="text-[11px] text-slate-400 font-normal ms-auto">
                     بتاريخ: {notice.teacherSignatureDate || notice.teacherSignedAt}
                   </span>
                 )}

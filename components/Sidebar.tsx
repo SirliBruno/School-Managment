@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   MessageCircle,
   Building2,
+  Archive,
+  RotateCcw,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -89,6 +91,13 @@ export const NAV_ITEMS: NavItem[] = [
       },
     ],
   },
+  {
+    id: "archive",
+    label: "الأرشيف الإداري",
+    icon: Archive,
+    href: "/archive",
+    hasChildren: false,
+  },
 ];
 
 
@@ -100,10 +109,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const stats = useDashboardStats();
+  const {
+    archivedTeachers,
+    archivedAbsences,
+    archivedDelayNotices,
+    isCloudConnected,
+    pendingSyncCount,
+    flushSyncQueue,
+  } = useTeachers();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const pendingDirectorDelayCount = stats.pendingDelayNotices;
   const pendingAbsencesCount = Math.max(0, stats.pendingProcedures - stats.pendingDelayNotices);
+  const totalArchivedCount =
+    (archivedTeachers?.length || 0) +
+    (archivedAbsences?.length || 0) +
+    (archivedDelayNotices?.length || 0);
 
   // "الإجراءات الإدارية" is EXPANDED by default
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
@@ -254,7 +275,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-                      className="overflow-hidden pr-7 pl-2 py-1 space-y-1 border-r-2 border-teal-400/40 mr-3"
+                      className="overflow-hidden pe-7 ps-2 py-1 space-y-1 border-s-2 border-teal-400/40 ms-3"
                     >
                       {item.children.map((subItem) => {
                         const isSubActive =
@@ -331,7 +352,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className="w-5 h-5 text-teal-100 shrink-0"
                 aria-hidden="true"
               />
-              <span>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
+              {item.id === "archive" && totalArchivedCount > 0 && (
+                <span className="px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-200 text-[11px] font-bold ring-1 ring-teal-300/30">
+                  {totalArchivedCount}
+                </span>
+              )}
             </Link>
           );
         })}
@@ -377,6 +403,34 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
+      {/* Cloud Connectivity & Realtime Sync Status */}
+      <div className="mx-3.5 mb-2.5 p-2 rounded-xl bg-black/20 border border-teal-500/30 flex items-center justify-between text-[11px]">
+        <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              "w-2 h-2 rounded-full",
+              isCloudConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+            )}
+          />
+          <span className="font-medium text-teal-100 text-[10px]">
+            {isCloudConnected ? "سحابي ولحظي (Supabase)" : "حفظ محلي (انقطاع مؤقت)"}
+          </span>
+        </div>
+        {pendingSyncCount > 0 ? (
+          <button
+            type="button"
+            onClick={() => flushSyncQueue()}
+            className="text-[10px] bg-amber-400/20 text-amber-200 hover:text-white px-2 py-0.5 rounded border border-amber-400/40 flex items-center gap-1 cursor-pointer"
+            title="مزامنة التغييرات المعلقة مع السحابة"
+          >
+            <span>{pendingSyncCount} معلق</span>
+            <RotateCcw className="w-2.5 h-2.5" />
+          </button>
+        ) : (
+          <span className="text-[10px] text-teal-200/80">متزامن ✓</span>
+        )}
+      </div>
+
       {/* Footer Branding & Developer Credit */}
       <div className="p-3.5 border-t border-teal-600/40 bg-black/15 text-center">
         <p className="text-[11px] text-teal-100 font-medium">
@@ -415,8 +469,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Users className="w-5 h-5" aria-hidden="true" />
           </div>
           <div>
-            <span className="font-bold text-sm tracking-wide block leading-tight">
-              نظام الإدارة المدرسية
+            <span className="font-bold text-sm tracking-wide flex items-center gap-1.5 leading-tight">
+              <span>نظام الإدارة المدرسية</span>
+              <span
+                className={cn(
+                  "w-2 h-2 rounded-full",
+                  isCloudConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                )}
+                title={isCloudConnected ? "متصل سحابياً" : "حفظ محلي"}
+              />
             </span>
             <span className="text-[10px] text-teal-100 font-medium">
               بوابة وكيلة الشؤون التعليمية

@@ -42,6 +42,28 @@ interface AuthContextType {
 
 const SESSION_KEY = "school_admin_session_v1";
 const LOCAL_CREDS_KEY = "school_admin_credentials_v1";
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours session validity
+
+interface StoredSession {
+  user: AdminUser;
+  expiresAt: number;
+}
+
+// Helper to set secure cookie
+const setSessionCookie = (user: AdminUser, maxAgeSeconds: number) => {
+  if (typeof document !== "undefined") {
+    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+    document.cookie = `school_admin_auth=${encodeURIComponent(
+      user.username
+    )}; Path=/; max-age=${maxAgeSeconds}; SameSite=Strict${isHttps ? "; Secure" : ""}`;
+  }
+};
+
+const clearSessionCookie = () => {
+  if (typeof document !== "undefined") {
+    document.cookie = "school_admin_auth=; Path=/; max-age=0; SameSite=Strict";
+  }
+};
 
 // الحساب الافتراضي للوكيلة: wakila / 123456
 const DEFAULT_STORED_CREDS: StoredCredentials = {
@@ -61,19 +83,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // استرجاع الجلسة الحالية عند الإقلاع
+  // استرجاع والتحقق من صلاحية الجلسة الحالية عند الإقلاع
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
         const savedSession = localStorage.getItem(SESSION_KEY);
         if (savedSession) {
           const parsed = JSON.parse(savedSession);
-          if (parsed && parsed.username) {
-            setUser({
+          // Check expiration
+          const expiresAt = parsed.expiresAt as number | undefined;
+          if (expiresAt && Date.now() > expiresAt) {
+            console.info("انتهت صلاحية جلسة تسجيل الدخول الإدارية (تجاوزت 12 ساعة).");
+            localStorage.removeItem(SESSION_KEY);
+            clearSessionCookie();
+            setUser(null);
+          } else {
+            const activeUser: AdminUser = parsed.user || {
               username: parsed.username,
               fullName: parsed.fullName || "وكيلة الشؤون التعليمية",
               role: parsed.role || "vice_principal",
-            });
+            };
+            setUser(activeUser);
+            // Refresh cookie
+            setSessionCookie(activeUser, 12 * 60 * 60);
           }
         }
       }
@@ -83,6 +115,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(false);
     }
   }, []);
+
+  // Periodic session expiration check (every 5 minutes)
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      try {
+        const saved = localStorage.getItem(SESSION_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
+            localStorage.removeItem(SESSION_KEY);
+            clearSessionCookie();
+            setUser(null);
+          }
+        }
+      } catch {}
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   /**
    * جلب بيانات الاعتماد المخزنة (من سوبابيز أولاً مع استخدام التخزين المحلي كاحتياطي)
@@ -164,16 +216,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
 
-      // نجاح الدخول - حفظ الجلسة
+      // نجاح الدخول - حفظ الجلسة الآمنة بمهلة 12 ساعة
       const activeUser: AdminUser = {
         username: creds.username,
         fullName: creds.fullName,
         role: creds.role,
       };
 
+      const expiresAt = Date.now() + SESSION_TTL_MS;
+      const sessionData: StoredSession = {
+        user: activeUser,
+        expiresAt,
+      };
+
       setUser(activeUser);
       if (typeof window !== "undefined") {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(activeUser));
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+        setSessionCookie(activeUser, 12 * 60 * 60);
       }
 
       return { success: true };
@@ -188,6 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setUser(null);
     if (typeof window !== "undefined") {
       localStorage.removeItem(SESSION_KEY);
+      clearSessionCookie();
     }
   }, []);
 
@@ -264,9 +324,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         role: newCreds.role,
       };
 
+      const expiresAt = Date.now() + SESSION_TTL_MS;
+      const updatedSession: StoredSession = {
+        user: updatedUser,
+        expiresAt,
+      };
+
       setUser(updatedUser);
       if (typeof window !== "undefined") {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedUser));
+        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
+        setSessionCookie(updatedUser, 12 * 60 * 60);
       }
 
       return { success: true };

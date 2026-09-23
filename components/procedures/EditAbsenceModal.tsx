@@ -21,6 +21,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType } from "@/types/teacher";
 import { cn } from "@/lib/utils";
+import { getSaudiToday } from "@/lib/timeUtils";
 
 interface EditAbsenceModalProps {
   isOpen: boolean;
@@ -87,7 +88,7 @@ export const EditAbsenceModal: React.FC<EditAbsenceModalProps> = ({
   // Populate data when record changes
   useEffect(() => {
     if (record && isOpen) {
-      setAbsenceDate(record.date || new Date().toISOString().split("T")[0]);
+      setAbsenceDate(record.date || getSaudiToday());
       setAbsenceType(record.type || "اضطراري");
       setReason(record.reason || "");
       setNotes(record.notes || "");

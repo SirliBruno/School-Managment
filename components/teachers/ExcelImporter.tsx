@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useCallback } from "react";
-import * as XLSX from "xlsx";
 import {
   UploadCloud,
   FileSpreadsheet,
@@ -96,6 +95,7 @@ export const ExcelImporter: React.FC = () => {
 
     try {
       const data = await file.arrayBuffer();
+      const XLSX = await import("xlsx");
       const workbook = XLSX.read(data, { type: "array" });
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
@@ -335,7 +335,8 @@ export const ExcelImporter: React.FC = () => {
   };
 
   // Generate and download 7-column real school sample template
-  const handleDownloadSampleTemplate = () => {
+  const handleDownloadSampleTemplate = async () => {
+    const XLSX = await import("xlsx");
     const sampleData = [
       {
         "اسم المستخدم": "1048291",

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useMemo } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -26,8 +27,25 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { KpiCards } from "@/components/analytics/KpiCards";
-import { AbsenceCharts } from "@/components/analytics/AbsenceCharts";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
+
+const AbsenceCharts = dynamic(
+  () =>
+    import("@/components/analytics/AbsenceCharts").then(
+      (mod) => mod.AbsenceCharts
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-80 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center animate-pulse">
+        <div className="flex items-center gap-2 text-slate-400 text-xs font-medium">
+          <Loader2 className="w-4 h-4 animate-spin text-[#137a85]" />
+          <span>جاري تجهيز الرسوم البيانية...</span>
+        </div>
+      </div>
+    ),
+  }
+);
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
@@ -502,6 +520,7 @@ export default function DashboardPage() {
                                 disabled={isExporting}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
                                 title="تصدير استمارة مساءلة الغياب الرسمية PDF"
+                                aria-label={`تصدير استمارة مساءلة الغياب للمعلمة ${item.teacherName} بصيغة PDF`}
                               >
                                 {isExporting ? (
                                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -521,6 +540,7 @@ export default function DashboardPage() {
                                 }
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                                 title="عرض ملف المعلمة"
+                                aria-label={`عرض الملف الشامل للمعلمة ${item.teacherName}`}
                               >
                                 <Eye className="w-3.5 h-3.5 text-slate-500" />
                                 <span>الملف</span>
@@ -531,6 +551,7 @@ export default function DashboardPage() {
                                 onClick={() => setRecordToEdit(item)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
                                 title="تعديل سجل الغياب"
+                                aria-label={`تعديل سجل غياب المعلمة ${item.teacherName}`}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                                 <span>تعديل</span>
@@ -541,6 +562,7 @@ export default function DashboardPage() {
                                 onClick={() => setRecordToDelete(item)}
                                 className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
                                 title="حذف سجل الغياب"
+                                aria-label={`حذف سجل غياب المعلمة ${item.teacherName}`}
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                                 <span className="sr-only sm:not-sr-only">حذف</span>
@@ -580,6 +602,7 @@ export default function DashboardPage() {
                               item.teacherId
                             )
                           }
+                          aria-label={`عرض الملف الشامل للمعلمة ${item.teacherName}`}
                           className="flex items-center gap-2.5 text-right hover:text-[#137a85] cursor-pointer"
                         >
                           <div className="w-9 h-9 rounded-full bg-teal-50 text-[#137a85] flex items-center justify-center font-bold text-sm shrink-0 border border-teal-100">
@@ -620,7 +643,7 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="text-slate-700 pt-1 border-t border-slate-200/60">
-                          <span className="text-slate-400 font-medium ml-1">السبب:</span>
+                          <span className="text-slate-400 font-medium me-1">السبب:</span>
                           <span className="font-medium">{item.reason}</span>
                         </div>
                       </div>
@@ -634,6 +657,7 @@ export default function DashboardPage() {
                           disabled={isExporting}
                           className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50"
                           title="تصدير استمارة مساءلة الغياب الرسمية PDF"
+                          aria-label={`تصدير استمارة مساءلة الغياب للمعلمة ${item.teacherName} بصيغة PDF`}
                         >
                           {isExporting ? (
                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -654,6 +678,7 @@ export default function DashboardPage() {
                           }
                           className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
                           title="عرض ملف المعلمة"
+                          aria-label={`عرض الملف الشامل للمعلمة ${item.teacherName}`}
                         >
                           <Eye className="w-3.5 h-3.5 text-slate-500" />
                           <span>الملف</span>
@@ -665,6 +690,7 @@ export default function DashboardPage() {
                           onClick={() => setRecordToEdit(item)}
                           className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
                           title="تعديل سجل الغياب"
+                          aria-label={`تعديل سجل غياب المعلمة ${item.teacherName}`}
                         >
                           <Pencil className="w-3.5 h-3.5" />
                           <span>تعديل</span>
@@ -676,6 +702,7 @@ export default function DashboardPage() {
                           onClick={() => setRecordToDelete(item)}
                           className="w-full min-h-[44px] inline-flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50/60 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
                           title="حذف سجل الغياب"
+                          aria-label={`حذف سجل غياب المعلمة ${item.teacherName}`}
                         >
                           <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                           <span>حذف</span>

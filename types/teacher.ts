@@ -135,3 +135,22 @@ export interface DelayNotice {
   linkSharedAt?: string;              // وقت مشاركة الرابط أو إرساله للمعلمة
 }
 
+// === Archive Types (نظام الأرشيف) ===
+export interface ArchivedTeacher {
+  teacher: Teacher;
+  associatedRecords: AbsenceRecord[];
+  associatedInquiries: AbsenceInquiry[];
+  associatedDelayNotices: DelayNotice[];
+  archivedAt: string;
+}
+
+export interface ArchivedAbsenceRecord {
+  record: AbsenceRecord;
+  archivedAt: string;
+}
+
+export interface ArchivedDelayNotice {
+  notice: DelayNotice;
+  archivedAt: string;
+}
+

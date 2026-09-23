@@ -112,3 +112,89 @@ export function calculateTimeDifference(
     isValid: true,
   };
 }
+
+/**
+ * دالة استخراج التاريخ بالتوقيت المحلي لمدينة مكة المكرمة / الرياض (Asia/Riyadh)
+ * بصيغة YYYY-MM-DD تفادياً لخطأ UTC ISO بين 12 منتصف الليل و 3 فجراً
+ */
+export function getSaudiToday(targetDate: Date = new Date()): string {
+  try {
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Riyadh",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    return formatter.format(targetDate);
+  } catch {
+    // خطة احتياطية في حال عدم دعم Intl مع إضافة 3 ساعات لتوقيت السعودية
+    const saudiMs = targetDate.getTime() + 3 * 60 * 60 * 1000;
+    const d = new Date(saudiMs);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+}
+
+/**
+ * تفاصيل اليوم والشهر والسنة بتوقيت الرياض
+ */
+export function getSaudiDateInfo(targetDate: Date = new Date()): {
+  year: number;
+  month: number;
+  day: number;
+  dateStr: string;
+  monthStr: string;
+} {
+  const dateStr = getSaudiToday(targetDate);
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return {
+    year: y,
+    month: m,
+    day: d,
+    dateStr,
+    monthStr: `${y}-${String(m).padStart(2, "0")}`,
+  };
+}
+
+/**
+ * حساب مهلة انتهاء الصلاحية بعد 48 ساعة بالضبط بصيغة ISO
+ */
+export function calculate48HoursExpiry(baseDate: Date = new Date()): string {
+  return new Date(baseDate.getTime() + 48 * 60 * 60 * 1000).toISOString();
+}
+
+/**
+ * فحص ما إذا كان الرابط قد تجاوز مهلة الـ 48 ساعة
+ */
+export function isTokenExpired(expiresAt?: string): boolean {
+  if (!expiresAt) return false;
+  try {
+    const expiryTime = new Date(expiresAt).getTime();
+    if (isNaN(expiryTime)) return false;
+    return Date.now() > expiryTime;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * توليد رمز آمن فريد غير قابل للتخمين للروابط العامة
+ */
+export function generateSecureToken(byteLength: number = 16): string {
+  if (typeof window !== "undefined" && window.crypto && window.crypto.getRandomValues) {
+    const arr = new Uint8Array(byteLength);
+    window.crypto.getRandomValues(arr);
+    return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  // Node / Server environment or crypto fallback
+  try {
+    const cryptoModule = require("crypto");
+    return cryptoModule.randomBytes(byteLength).toString("hex");
+  } catch {
+    // Cryptographically secure fallback
+    const fallback = `${Date.now()}_${Math.random().toString(36).slice(2)}${Math.random().toString(36).slice(2)}`;
+    return fallback;
+  }
+}
