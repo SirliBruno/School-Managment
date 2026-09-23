@@ -82,7 +82,13 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
         ? window.location.origin
         : "https://school-absence.gov.sa";
     const link = `${origin}/inquiry/${inq.token}`;
-    const msg = generateInquiryMessage(inq.teacherName, inq.absenceDate, link);
+    const msg = generateInquiryMessage(
+      inq.teacherName,
+      inq.absenceDate,
+      link,
+      inq.absenceEndDate,
+      inq.daysCount
+    );
 
     try {
       await navigator.clipboard.writeText(msg);
@@ -100,7 +106,13 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
         ? window.location.origin
         : "https://school-absence.gov.sa";
     const link = `${origin}/inquiry/${inq.token}`;
-    const msg = generateInquiryMessage(inq.teacherName, inq.absenceDate, link);
+    const msg = generateInquiryMessage(
+      inq.teacherName,
+      inq.absenceDate,
+      link,
+      inq.absenceEndDate,
+      inq.daysCount
+    );
     const waUrl = getWhatsAppDirectUrl(inq.mobile || "", msg);
     window.open(waUrl, "_blank", "noopener,noreferrer");
   };
@@ -258,7 +270,18 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
 
                     {/* Absence Date */}
                     <td className="py-3.5 px-4 font-mono font-bold text-slate-700">
-                      {inq.absenceDate}
+                      {inq.absenceEndDate && inq.absenceEndDate !== inq.absenceDate ? (
+                        <div className="flex flex-col gap-1 items-start">
+                          <span className="text-xs">
+                            {inq.absenceDate} إلى {inq.absenceEndDate}
+                          </span>
+                          <span className="inline-flex items-center gap-1 text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded-md border border-teal-200">
+                            {inq.daysCount || 2} أيام
+                          </span>
+                        </div>
+                      ) : (
+                        <span>{inq.absenceDate}</span>
+                      )}
                     </td>
 
                     {/* Mobile */}

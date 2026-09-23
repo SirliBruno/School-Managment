@@ -87,8 +87,11 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
         specialty: inquiry.specialty || teacher?.specialty || "الكادر التعليمي",
         jobTitle: teacher?.jobTitle || "معلم",
         employmentStatus: teacher?.employmentStatus || "دائم",
-        absenceCount: (teacher?.totalAbsences || 0) + (inquiry.status === "approved" ? 0 : 1),
-        absenceDate: inquiry.absenceDate,
+        absenceCount: (teacher?.totalAbsences || 0) + (inquiry.status === "approved" ? 0 : (inquiry.daysCount || 1)),
+        absenceDate:
+          inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+            ? `${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+            : inquiry.absenceDate,
         absenceType: inquiry.absenceType || "مرضي",
         absenceReason: inquiry.teacherReason || "إفادة المساءلة الإلكترونية",
       });
@@ -187,9 +190,15 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">تاريخ الغياب</span>
-                <span className="font-bold text-[#137a85] mt-0.5 block font-mono">
-                  {inquiry.absenceDate}
+                <span className="text-slate-400 block text-[11px]">
+                  {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                    ? "فترة الغياب"
+                    : "تاريخ الغياب"}
+                </span>
+                <span className="font-bold text-[#137a85] mt-0.5 block font-mono text-xs">
+                  {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                    ? `${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                    : inquiry.absenceDate}
                 </span>
               </div>
               <div>

@@ -198,3 +198,48 @@ export function generateSecureToken(byteLength: number = 16): string {
     return fallback;
   }
 }
+
+/**
+ * حساب عدد أيام الغياب بين تاريخ البداية وتاريخ النهاية (شاملاً)
+ */
+export function calculateDaysBetween(startDateStr: string, endDateStr: string): number {
+  if (!startDateStr || !endDateStr) return 1;
+  const start = new Date(startDateStr + "T00:00:00");
+  const end = new Date(endDateStr + "T00:00:00");
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+  const diffTime = end.getTime() - start.getTime();
+  const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return Math.max(1, diffDays);
+}
+
+/**
+ * صياغة عدد الأيام لغوياً بالعربية الفصحى (يوم واحد، يومان، 3 أيام...)
+ */
+export function formatDaysCountArabic(count: number): string {
+  if (count <= 1) return "يوم واحد";
+  if (count === 2) return "يومان";
+  if (count >= 3 && count <= 10) return `${count} أيام`;
+  return `${count} يوماً`;
+}
+
+/**
+ * استخراج مصفوفة التواريخ المحصورة بين تاريخين
+ */
+export function getDatesInRange(startDateStr: string, endDateStr: string): string[] {
+  if (!startDateStr) return [];
+  if (!endDateStr || endDateStr === startDateStr) return [startDateStr];
+  const start = new Date(startDateStr + "T00:00:00");
+  const end = new Date(endDateStr + "T00:00:00");
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return [startDateStr];
+
+  const dates: string[] = [];
+  const curr = new Date(start);
+  while (curr <= end) {
+    const y = curr.getFullYear();
+    const m = String(curr.getMonth() + 1).padStart(2, "0");
+    const d = String(curr.getDate()).padStart(2, "0");
+    dates.push(`${y}-${m}-${d}`);
+    curr.setDate(curr.getDate() + 1);
+  }
+  return dates;
+}

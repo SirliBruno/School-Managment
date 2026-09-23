@@ -31,6 +31,7 @@ import {
   getSaudiToday,
   calculate48HoursExpiry,
   generateSecureToken,
+  getDatesInRange,
 } from "@/lib/timeUtils";
 
 export interface AddTeachersResult {
@@ -88,7 +89,9 @@ interface TeacherContextType {
   restoreAbsenceRecord: (record: AbsenceRecord) => void;
   createInquiry: (
     teacherId: string,
-    absenceDate: string
+    absenceDate: string,
+    absenceEndDate?: string,
+    daysCount?: number
   ) => Promise<{ success: boolean; inquiry?: AbsenceInquiry; error?: string }>;
   updateInquiryDecision: (
     inquiryId: string,
@@ -1839,7 +1842,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const createInquiry = useCallback(
     async (
       teacherId: string,
-      absenceDate: string
+      absenceDate: string,
+      absenceEndDate?: string,
+      daysCount?: number
     ): Promise<{ success: boolean; inquiry?: AbsenceInquiry; error?: string }> => {
       const teacher = teachers.find((t) => t.id === teacherId);
       if (!teacher) {
@@ -1859,6 +1864,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       // 48 hours validity as approved by school administration
       const expiresAt = calculate48HoursExpiry();
       const createdAt = new Date().toISOString();
+      const isMulti = Boolean(absenceEndDate && absenceEndDate !== absenceDate);
+      const calculatedDays = isMulti ? daysCount || 2 : 1;
 
       const newInquiry: AbsenceInquiry = {
         id,
@@ -1868,6 +1875,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         specialty: teacher.specialty || teacher.teachingField,
         mobile: teacher.mobile,
         absenceDate,
+        absenceEndDate: isMulti ? absenceEndDate : undefined,
+        daysCount: calculatedDays,
+        isMultiDay: isMulti,
         token,
         status: "pending",
         expiresAt,
@@ -1878,7 +1888,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (isSupabaseConfigured() && supabase) {
         try {
-          const { error } = await supabase.from("absence_inquiries").insert({
+          const insertPayload: Record<string, unknown> = {
             id: newInquiry.id,
             teacher_id: newInquiry.teacherId,
             teacher_name: newInquiry.teacherName,
@@ -1890,10 +1900,35 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             status: newInquiry.status,
             expires_at: newInquiry.expiresAt,
             created_at: newInquiry.createdAt,
-          });
+          };
+          if (newInquiry.absenceEndDate) {
+            insertPayload.absence_end_date = newInquiry.absenceEndDate;
+          }
+          if (newInquiry.daysCount) {
+            insertPayload.days_count = newInquiry.daysCount;
+          }
+
+          const { error } = await supabase.from("absence_inquiries").insert(insertPayload);
 
           if (error) {
-            console.warn("تنبيه حفظ المساءلة في سوبابيز:", error.message);
+            // If schema doesn't have absence_end_date column yet, fallback to base insert
+            if (error.code === "PGRST204" || error.message?.includes("column")) {
+              await supabase.from("absence_inquiries").insert({
+                id: newInquiry.id,
+                teacher_id: newInquiry.teacherId,
+                teacher_name: newInquiry.teacherName,
+                job_number: newInquiry.jobNumber,
+                specialty: newInquiry.specialty || null,
+                mobile: newInquiry.mobile || null,
+                absence_date: newInquiry.absenceDate,
+                token: newInquiry.token,
+                status: newInquiry.status,
+                expires_at: newInquiry.expiresAt,
+                created_at: newInquiry.createdAt,
+              });
+            } else {
+              console.warn("تنبيه حفظ المساءلة في سوبابيز:", error.message);
+            }
           }
         } catch (err) {
           console.warn("خطأ أثناء الاتصال بسوبابيز للمساءلة:", err);
@@ -1929,24 +1964,47 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // If approved, document it in absenceRecords if not recorded already
       if (status === "approved") {
-        const alreadyRecorded = absenceRecords.some(
-          (a) =>
-            a.teacherId === updatedInquiry.teacherId &&
-            a.date === updatedInquiry.absenceDate
-        );
+        if (updatedInquiry.isMultiDay && updatedInquiry.absenceEndDate) {
+          const dates = getDatesInRange(updatedInquiry.absenceDate, updatedInquiry.absenceEndDate);
+          dates.forEach((d, idx) => {
+            const alreadyRecorded = absenceRecords.some(
+              (a) => a.teacherId === updatedInquiry.teacherId && a.date === d
+            );
 
-        if (!alreadyRecorded) {
-          recordAbsence({
-            teacherId: updatedInquiry.teacherId,
-            teacherName: updatedInquiry.teacherName,
-            jobNumber: updatedInquiry.jobNumber,
-            specialty: updatedInquiry.specialty || "عام",
-            date: updatedInquiry.absenceDate,
-            type: updatedInquiry.absenceType || "مرضي",
-            reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد من الإدارة",
-            notes: adminNotes || updatedInquiry.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
-            attachmentUrl: updatedInquiry.attachmentUrl || undefined,
+            if (!alreadyRecorded) {
+              recordAbsence({
+                teacherId: updatedInquiry.teacherId,
+                teacherName: updatedInquiry.teacherName,
+                jobNumber: updatedInquiry.jobNumber,
+                specialty: updatedInquiry.specialty || "عام",
+                date: d,
+                type: updatedInquiry.absenceType || "مرضي",
+                reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد للفترة",
+                notes: adminNotes || updatedInquiry.adminNotes || `مساءلة معتمدة للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate} (اليوم ${idx + 1} من ${dates.length})`,
+                attachmentUrl: updatedInquiry.attachmentUrl || undefined,
+              });
+            }
           });
+        } else {
+          const alreadyRecorded = absenceRecords.some(
+            (a) =>
+              a.teacherId === updatedInquiry.teacherId &&
+              a.date === updatedInquiry.absenceDate
+          );
+
+          if (!alreadyRecorded) {
+            recordAbsence({
+              teacherId: updatedInquiry.teacherId,
+              teacherName: updatedInquiry.teacherName,
+              jobNumber: updatedInquiry.jobNumber,
+              specialty: updatedInquiry.specialty || "عام",
+              date: updatedInquiry.absenceDate,
+              type: updatedInquiry.absenceType || "مرضي",
+              reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد من الإدارة",
+              notes: adminNotes || updatedInquiry.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+              attachmentUrl: updatedInquiry.attachmentUrl || undefined,
+            });
+          }
         }
       }
 

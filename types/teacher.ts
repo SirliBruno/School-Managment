@@ -64,6 +64,9 @@ export interface AbsenceInquiry {
   specialty?: string;
   mobile?: string;
   absenceDate: string;
+  absenceEndDate?: string;
+  daysCount?: number;
+  isMultiDay?: boolean;
   token: string;
   status: InquiryStatus;
   expiresAt: string;

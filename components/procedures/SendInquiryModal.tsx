@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useId } from "react";
+import React, { useState, useEffect, useId, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -25,7 +25,11 @@ import {
   normalizeSaudiMobileInput,
 } from "@/lib/whatsapp";
 import { cn } from "@/lib/utils";
-import { getSaudiToday } from "@/lib/timeUtils";
+import {
+  getSaudiToday,
+  calculateDaysBetween,
+  formatDaysCountArabic,
+} from "@/lib/timeUtils";
 
 interface SendInquiryModalProps {
   isOpen: boolean;
@@ -43,7 +47,11 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
 
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [durationMode, setDurationMode] = useState<"single" | "multiple">("single");
   const [absenceDate, setAbsenceDate] = useState(() => {
+    return getSaudiToday();
+  });
+  const [absenceEndDate, setAbsenceEndDate] = useState(() => {
     return getSaudiToday();
   });
   const [manualMobile, setManualMobile] = useState("");
@@ -52,6 +60,16 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Computed days for multi-day range
+  const calculatedDays = useMemo(() => {
+    if (durationMode === "single") return 1;
+    return calculateDaysBetween(absenceDate, absenceEndDate);
+  }, [durationMode, absenceDate, absenceEndDate]);
+
+  const daysLabel = useMemo(() => {
+    return formatDaysCountArabic(calculatedDays);
+  }, [calculatedDays]);
 
   // Sync preselected teacher if provided
   useEffect(() => {
@@ -96,6 +114,17 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
       return false;
     }
 
+    if (durationMode === "multiple") {
+      if (!absenceEndDate) {
+        setErrorMsg("يرجى تحديد تاريخ نهاية الغياب.");
+        return false;
+      }
+      if (absenceEndDate < absenceDate) {
+        setErrorMsg("تاريخ نهاية الغياب يجب ألا يسبق تاريخ البداية.");
+        return false;
+      }
+    }
+
     const phone = getEffectiveMobile();
     if (!phone) {
       setErrorMsg("رقم جوال المعلمة مطلوب لإرسال رسالة الواتساب.");
@@ -124,8 +153,15 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         updateTeacher(selectedTeacher.id, { mobile: phone });
       }
 
+      const isMulti = durationMode === "multiple" && absenceEndDate !== absenceDate;
+
       // Create inquiry
-      const res = await createInquiry(selectedTeacher.id, absenceDate);
+      const res = await createInquiry(
+        selectedTeacher.id,
+        absenceDate,
+        isMulti ? absenceEndDate : undefined,
+        isMulti ? calculatedDays : 1
+      );
       if (!res.success || !res.inquiry) {
         setErrorMsg(res.error || "فشل إنشاء رابط المساءلة.");
         setIsProcessing(false);
@@ -136,7 +172,9 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
       const message = generateInquiryMessage(
         selectedTeacher.fullName || selectedTeacher.name || "معلمة",
         absenceDate,
-        inquiryLink
+        inquiryLink,
+        isMulti ? absenceEndDate : undefined,
+        isMulti ? calculatedDays : 1
       );
 
       const waUrl = getWhatsAppDirectUrl(phone, message);
@@ -164,7 +202,14 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         updateTeacher(selectedTeacher.id, { mobile: phone });
       }
 
-      const res = await createInquiry(selectedTeacher.id, absenceDate);
+      const isMulti = durationMode === "multiple" && absenceEndDate !== absenceDate;
+
+      const res = await createInquiry(
+        selectedTeacher.id,
+        absenceDate,
+        isMulti ? absenceEndDate : undefined,
+        isMulti ? calculatedDays : 1
+      );
       if (!res.success || !res.inquiry) {
         setErrorMsg(res.error || "فشل إنشاء رابط المساءلة.");
         setIsProcessing(false);
@@ -175,7 +220,9 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
       const message = generateInquiryMessage(
         selectedTeacher.fullName || selectedTeacher.name || "معلمة",
         absenceDate,
-        inquiryLink
+        inquiryLink,
+        isMulti ? absenceEndDate : undefined,
+        isMulti ? calculatedDays : 1
       );
 
       await navigator.clipboard.writeText(message);
@@ -270,28 +317,135 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
               />
             </div>
 
-            {/* Absence Date */}
+            {/* Absence Duration Type Toggle */}
             <div className="space-y-1.5">
-              <label
-                htmlFor={`${formId}-date`}
-                className="block text-xs font-bold text-slate-700"
-              >
-                تاريخ الغياب المعني بالمساءلة <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-slate-700">
+                نوع ومدة الغياب <span className="text-rose-500">*</span>
               </label>
-              <div className="relative">
-                <Calendar
-                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                  aria-hidden="true"
-                />
-                <input
-                  id={`${formId}-date`}
-                  type="date"
-                  value={absenceDate}
-                  onChange={(e) => setAbsenceDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
-                />
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setDurationMode("single")}
+                  className={cn(
+                    "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                    durationMode === "single"
+                      ? "bg-white text-[#137a85] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>يوم واحد</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDurationMode("multiple");
+                    if (absenceEndDate <= absenceDate) {
+                      const next = new Date(absenceDate);
+                      next.setDate(next.getDate() + 1);
+                      setAbsenceEndDate(next.toISOString().split("T")[0]);
+                    }
+                  }}
+                  className={cn(
+                    "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                    durationMode === "multiple"
+                      ? "bg-white text-[#137a85] shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                  <span>عدة أيام (فترة غياب)</span>
+                </button>
               </div>
             </div>
+
+            {/* Date Pickers */}
+            {durationMode === "single" ? (
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`${formId}-date`}
+                  className="block text-xs font-bold text-slate-700"
+                >
+                  تاريخ الغياب المعني بالمساءلة <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <Calendar
+                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id={`${formId}-date`}
+                    type="date"
+                    value={absenceDate}
+                    onChange={(e) => setAbsenceDate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5 p-3.5 rounded-2xl bg-teal-50/40 border border-teal-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`${formId}-start-date`}
+                      className="block text-xs font-bold text-slate-700"
+                    >
+                      من تاريخ (بداية الغياب) <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar
+                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        aria-hidden="true"
+                      />
+                      <input
+                        id={`${formId}-start-date`}
+                        type="date"
+                        value={absenceDate}
+                        onChange={(e) => {
+                          setAbsenceDate(e.target.value);
+                          if (absenceEndDate < e.target.value) {
+                            setAbsenceEndDate(e.target.value);
+                          }
+                        }}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label
+                      htmlFor={`${formId}-end-date`}
+                      className="block text-xs font-bold text-slate-700"
+                    >
+                      إلى تاريخ (نهاية الغياب) <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <Calendar
+                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        aria-hidden="true"
+                      />
+                      <input
+                        id={`${formId}-end-date`}
+                        type="date"
+                        min={absenceDate}
+                        value={absenceEndDate}
+                        onChange={(e) => setAbsenceEndDate(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Days Count Badge */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-teal-200 text-xs">
+                  <span className="text-slate-600 font-medium">إجمالي مدة الغياب المحسوبة:</span>
+                  <span className="font-bold text-[#137a85] flex items-center gap-1.5 font-mono">
+                    <span>{daysLabel}</span>
+                    <span className="text-[11px] text-teal-700 font-sans">({calculatedDays} يوم)</span>
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Teacher Mobile Number Input */}
             <div className="space-y-1.5">
@@ -352,7 +506,17 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   </span>
                 </p>
                 <p className="mt-1 text-slate-600">
-                  السلام عليكم ورحمة الله وبركاته،، نأمل منكِ التكرم بتقديم الإفادة عن سبب الغياب ليوم ({absenceDate}) وإرفاق التقرير الطبي أو ما يعادله عبر الرابط:
+                  السلام عليكم ورحمة الله وبركاته،، نأمل منكِ التكرم بتقديم الإفادة عن سبب الغياب{" "}
+                  {durationMode === "multiple" && absenceEndDate !== absenceDate ? (
+                    <span className="font-bold text-slate-900">
+                      للفترة من ({absenceDate}) إلى ({absenceEndDate}) ولمدة ({daysLabel})
+                    </span>
+                  ) : (
+                    <span>
+                      ليوم (<strong className="font-bold text-slate-900">{absenceDate}</strong>)
+                    </span>
+                  )}{" "}
+                  مع إرفاق التقرير الطبي أو ما يعادله عبر الرابط:
                 </p>
                 <p className="mt-1 text-[#137a85] font-mono text-[11px] underline">
                   [رابط الاستمارة الآمن الخاص بالمعلمة]

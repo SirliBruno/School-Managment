@@ -76,12 +76,21 @@ export function normalizeSaudiMobileInput(raw: string): string {
 export function generateInquiryMessage(
   teacherName: string,
   absenceDate: string,
-  inquiryUrl: string
+  inquiryUrl: string,
+  absenceEndDate?: string,
+  daysCount?: number
 ): string {
+  let periodText = `ليوم (${absenceDate})`;
+  if (absenceEndDate && absenceEndDate !== absenceDate) {
+    const count = daysCount || 2;
+    const daysLabel = count === 2 ? "يومين" : count <= 10 ? `${count} أيام` : `${count} يوماً`;
+    periodText = `للفترة من (${absenceDate}) إلى (${absenceEndDate}) ولمدة (${daysLabel})`;
+  }
+
   return (
     `المكرمة الأستاذة / ${teacherName.trim()} المحترمة\n` +
     `السلام عليكم ورحمة الله وبركاته،،\n\n` +
-    `نأمل منكِ التكرم بتقديم الإفادة عن سبب الغياب ليوم (${absenceDate}) مع إرفاق التقرير الطبي أو ما يعادله عبر الرابط الإلكتروني التالي:\n` +
+    `نأمل منكِ التكرم بتقديم الإفادة عن سبب الغياب ${periodText} مع إرفاق التقرير الطبي أو ما يعادله عبر الرابط الإلكتروني التالي:\n` +
     `${inquiryUrl}\n\n` +
     `*ملاحظة: الرابط صالح لمدة أسبوع من تاريخه.*\n` +
     `شاكرين ومقدرين حسن تعاونك.\n` +

@@ -516,8 +516,12 @@ export default function TeacherInquiryPage() {
             عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (48 ساعة من تاريخ الإرسال).
           </p>
           <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-800 text-right space-y-1">
-            <p className="font-bold">بيانات المساءلة:</p>
-            <p>تاريخ الغياب: {inquiry.absenceDate}</p>
+            <p>
+              تاريخ الغياب:{" "}
+              {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                : inquiry.absenceDate}
+            </p>
             <p>تاريخ الانتهاء: {new Date(inquiry.expiresAt).toLocaleDateString("ar-SA")}</p>
           </div>
           <p className="text-xs text-slate-400">
@@ -557,7 +561,11 @@ export default function TeacherInquiryPage() {
           <div className="bg-slate-50 rounded-2xl p-4 text-right text-xs space-y-2.5 border border-slate-100">
             <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
               <span className="text-slate-500">تاريخ الغياب المعني:</span>
-              <span className="font-bold text-slate-800">{inquiry.absenceDate}</span>
+              <span className="font-bold text-slate-800">
+                {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                  : inquiry.absenceDate}
+              </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
               <span className="text-slate-500">نوع الغياب المختار:</span>
@@ -674,10 +682,16 @@ export default function TeacherInquiryPage() {
             <div className="bg-teal-50/70 p-3 rounded-2xl border border-teal-200">
               <span className="text-[#137a85] block text-[11px] font-semibold flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
-                <span>تاريخ الغياب المطلوب</span>
+                <span>
+                  {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                    ? "فترة الغياب المطلوبة"
+                    : "تاريخ الغياب المطلوب"}
+                </span>
               </span>
               <span className="font-extrabold text-[#137a85] text-sm mt-0.5 block">
-                {inquiry.absenceDate}
+                {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                  : inquiry.absenceDate}
               </span>
             </div>
           </div>

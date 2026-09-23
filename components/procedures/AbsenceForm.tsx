@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useId, useRef } from "react";
+import React, { useState, useId, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -32,9 +32,14 @@ import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
-import { cn } from "@/lib/utils";
-import { getSaudiToday } from "@/lib/timeUtils";
+import {
+  getSaudiToday,
+  calculateDaysBetween,
+  formatDaysCountArabic,
+  getDatesInRange,
+} from "@/lib/timeUtils";
 import { MAX_FALLBACK_DATA_URL_BYTES } from "@/lib/attachments";
+import { cn } from "@/lib/utils";
 
 
 
@@ -86,12 +91,26 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   // Form states
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [durationMode, setDurationMode] = useState<"single" | "multiple">("single");
   const [absenceDate, setAbsenceDate] = useState(() => {
+    return getSaudiToday();
+  });
+  const [absenceEndDate, setAbsenceEndDate] = useState(() => {
     return getSaudiToday();
   });
   const [absenceType, setAbsenceType] = useState<AbsenceType | "">("");
   const [reason, setReason] = useState("");
   const [notes, setNotes] = useState("");
+
+  // Computed days for multi-day range
+  const calculatedDays = useMemo(() => {
+    if (durationMode === "single") return 1;
+    return calculateDaysBetween(absenceDate, absenceEndDate);
+  }, [durationMode, absenceDate, absenceEndDate]);
+
+  const daysLabel = useMemo(() => {
+    return formatDaysCountArabic(calculatedDays);
+  }, [calculatedDays]);
 
   // Attachment states
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
@@ -135,7 +154,9 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const handleReset = () => {
     setSelectedTeacherId("");
     setSelectedTeacher(null);
+    setDurationMode("single");
     setAbsenceDate(getSaudiToday());
+    setAbsenceEndDate(getSaudiToday());
     setAbsenceType("اضطراري");
     setReason("");
     setNotes("");
@@ -248,18 +269,39 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       newErrors.teacherId = "يرجى اختيار المعلمة من القائمة.";
     }
 
+    const today = getSaudiToday();
+
     if (!absenceDate) {
       newErrors.date = "يرجى تحديد تاريخ الغياب.";
-    } else {
-      const today = getSaudiToday();
-      if (absenceDate > today) {
-        newErrors.date = "لا يمكن تسجيل غياب بتاريخ مستقبلي يتجاوز تاريخ اليوم.";
-      } else if (selectedTeacherId) {
+    } else if (absenceDate > today) {
+      newErrors.date = "لا يمكن تسجيل غياب بتاريخ مستقبلي يتجاوز تاريخ اليوم.";
+    }
+
+    if (durationMode === "multiple") {
+      if (!absenceEndDate) {
+        newErrors.endDate = "يرجى تحديد تاريخ نهاية الغياب.";
+      } else if (absenceEndDate > today) {
+        newErrors.endDate = "لا يمكن أن يتجاوز تاريخ نهاية الغياب تاريخ اليوم.";
+      } else if (absenceEndDate < absenceDate) {
+        newErrors.endDate = "تاريخ نهاية الغياب يجب ألا يسبق تاريخ البداية.";
+      }
+    }
+
+    if (selectedTeacherId && !newErrors.date && !newErrors.endDate) {
+      if (durationMode === "single") {
         const isDuplicate = absenceRecords.some(
           (rec) => rec.teacherId === selectedTeacherId && rec.date === absenceDate
         );
         if (isDuplicate) {
           newErrors.date = "تم تسجيل غياب لهذه المعلمة مسبقاً في هذا التاريخ.";
+        }
+      } else {
+        const dates = getDatesInRange(absenceDate, absenceEndDate);
+        const duplicateDates = dates.filter((d) =>
+          absenceRecords.some((rec) => rec.teacherId === selectedTeacherId && rec.date === d)
+        );
+        if (duplicateDates.length > 0) {
+          newErrors.endDate = `يوجد غياب مسجل مسبقاً للمعلمة في التواريخ: ${duplicateDates.slice(0, 3).join(", ")}${duplicateDates.length > 3 ? "..." : ""}`;
         }
       }
     }
@@ -281,29 +323,56 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   const saveRecord = async (): Promise<AbsenceRecord | null> => {
     if (!validate() || !selectedTeacher || !absenceType) return null;
 
+    const daysCount = durationMode === "multiple" ? calculatedDays : 1;
     const teacherSnapshot = {
       ...selectedTeacher,
-      totalAbsences: (selectedTeacher.totalAbsences || 0) + 1,
+      totalAbsences: (selectedTeacher.totalAbsences || 0) + daysCount,
     };
 
     const attachmentUrl = await uploadAttachment();
 
-    const newRecord = recordAbsence({
-      teacherId: selectedTeacher.id,
-      teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
-      jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
-      specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
-      date: absenceDate,
-      type: absenceType,
-      reason: reason.trim(),
-      notes: notes.trim() || undefined,
-      attachmentUrl,
-    });
+    let primaryRecord: AbsenceRecord | null = null;
 
-    setLastSavedRecord(newRecord);
-    setLastSavedTeacher(teacherSnapshot);
+    if (durationMode === "multiple") {
+      const dates = getDatesInRange(absenceDate, absenceEndDate);
+      dates.forEach((targetDate, index) => {
+        const rec = recordAbsence({
+          teacherId: selectedTeacher.id,
+          teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
+          jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
+          specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
+          date: targetDate,
+          type: absenceType,
+          reason: reason.trim(),
+          notes: notes.trim()
+            ? `${notes.trim()} (ضمن فترة غياب ${daysLabel}: من ${absenceDate} إلى ${absenceEndDate})`
+            : `ضمن فترة غياب ${daysLabel}: من ${absenceDate} إلى ${absenceEndDate}`,
+          attachmentUrl,
+        });
+        if (index === 0) {
+          primaryRecord = rec;
+        }
+      });
+    } else {
+      primaryRecord = recordAbsence({
+        teacherId: selectedTeacher.id,
+        teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
+        jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
+        specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
+        date: absenceDate,
+        type: absenceType,
+        reason: reason.trim(),
+        notes: notes.trim() || undefined,
+        attachmentUrl,
+      });
+    }
 
-    return newRecord;
+    if (primaryRecord) {
+      setLastSavedRecord(primaryRecord);
+      setLastSavedTeacher(teacherSnapshot);
+    }
+
+    return primaryRecord;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -317,10 +386,15 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
         return;
       }
 
+      const daysCount = durationMode === "multiple" ? calculatedDays : 1;
       setSuccessMessage(
-        `تم تسجيل إجراء مساءلة الغياب للمعلمة (${newRecord.teacherName}) بنجاح وزيادة رصيد الغياب إلى ${
-          (selectedTeacher?.totalAbsences || 0) + 1
-        }.`
+        durationMode === "multiple"
+          ? `تم تسجيل غياب المعلمة (${newRecord.teacherName}) لفترة ${daysLabel} بنجاح وزيادة رصيد الغياب إلى ${
+              (selectedTeacher?.totalAbsences || 0) + daysCount
+            }.`
+          : `تم تسجيل إجراء مساءلة الغياب للمعلمة (${newRecord.teacherName}) بنجاح وزيادة رصيد الغياب إلى ${
+              (selectedTeacher?.totalAbsences || 0) + 1
+            }.`
       );
 
       handleReset();
@@ -351,6 +425,12 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
         return;
       }
 
+      const daysCount = durationMode === "multiple" ? calculatedDays : 1;
+      const formattedAbsenceDate =
+        durationMode === "multiple"
+          ? `من ${absenceDate} إلى ${absenceEndDate} (${daysLabel})`
+          : newRecord.date;
+
       // Send directly to print service
       try {
         printAbsencePdf({
@@ -359,8 +439,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
           specialty: newRecord.specialty,
           jobTitle: selectedTeacher.jobTitle || "معلم",
           employmentStatus: selectedTeacher.employmentStatus || "دائم",
-          absenceCount: (selectedTeacher.totalAbsences || 0) + 1,
-          absenceDate: newRecord.date,
+          absenceCount: (selectedTeacher.totalAbsences || 0) + daysCount,
+          absenceDate: formattedAbsenceDate,
           absenceType: newRecord.type,
           absenceReason: newRecord.reason,
         });
@@ -483,9 +563,9 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
       {/* Form Body */}
       <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-6">
-        {/* Row 1: Teacher Combobox & Absence Date */}
+        {/* Row 1: Teacher Combobox & Absence Duration Mode */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-          <div className="md:col-span-8">
+          <div className="md:col-span-7">
             <TeacherCombobox
               teachers={teachers}
               selectedTeacherId={selectedTeacherId}
@@ -495,7 +575,53 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             />
           </div>
 
-          <div className="md:col-span-4 space-y-1.5">
+          <div className="md:col-span-5 space-y-1.5">
+            <label className="block text-xs font-bold text-slate-700">
+              نوع ومدة الغياب <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setDurationMode("single")}
+                className={cn(
+                  "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                  durationMode === "single"
+                    ? "bg-white text-[#137a85] shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>يوم واحد</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setDurationMode("multiple");
+                  if (absenceEndDate <= absenceDate) {
+                    const next = new Date(absenceDate);
+                    next.setDate(next.getDate() + 1);
+                    const todayStr = getSaudiToday();
+                    const nextStr = next.toISOString().split("T")[0];
+                    setAbsenceEndDate(nextStr > todayStr ? todayStr : nextStr);
+                  }
+                }}
+                className={cn(
+                  "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
+                  durationMode === "multiple"
+                    ? "bg-white text-[#137a85] shadow-xs"
+                    : "text-slate-600 hover:text-slate-900"
+                )}
+              >
+                <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                <span>عدة أيام (فترة غياب)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Date Selection */}
+        {durationMode === "single" ? (
+          <div className="space-y-1.5">
             <label
               htmlFor={`${formId}-date`}
               className="block text-xs font-bold text-slate-700"
@@ -536,7 +662,101 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               </p>
             )}
           </div>
-        </div>
+        ) : (
+          <div className="space-y-3 p-4 rounded-xl bg-teal-50/50 border border-teal-100">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
+                <Calendar className="w-4 h-4 text-[#137a85]" />
+                <span>تحديد فترة الغياب الممتدة</span>
+              </span>
+              {calculatedDays > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#137a85] text-white shadow-xs">
+                  <span>المدة:</span>
+                  <span>{daysLabel}</span>
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`${formId}-start-date`}
+                  className="block text-xs font-bold text-slate-700"
+                >
+                  من تاريخ (بداية الغياب) <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <Calendar
+                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id={`${formId}-start-date`}
+                    type="date"
+                    max={getSaudiToday()}
+                    value={absenceDate}
+                    onChange={(e) => {
+                      setAbsenceDate(e.target.value);
+                      if (e.target.value > absenceEndDate) {
+                        setAbsenceEndDate(e.target.value);
+                      }
+                      setErrors((prev) => ({ ...prev, date: "" }));
+                    }}
+                    className={cn(
+                      "w-full px-3.5 py-2.5 min-h-[48px] rounded-xl border text-base md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-sm",
+                      errors.date
+                        ? "border-rose-400 focus:ring-rose-200"
+                        : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                    )}
+                  />
+                </div>
+                {errors.date && (
+                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{errors.date}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`${formId}-end-date`}
+                  className="block text-xs font-bold text-slate-700"
+                >
+                  إلى تاريخ (نهاية الغياب) <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <Calendar
+                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id={`${formId}-end-date`}
+                    type="date"
+                    min={absenceDate}
+                    max={getSaudiToday()}
+                    value={absenceEndDate}
+                    onChange={(e) => {
+                      setAbsenceEndDate(e.target.value);
+                      setErrors((prev) => ({ ...prev, endDate: "" }));
+                    }}
+                    className={cn(
+                      "w-full px-3.5 py-2.5 min-h-[48px] rounded-xl border text-base md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-sm",
+                      errors.endDate
+                        ? "border-rose-400 focus:ring-rose-200"
+                        : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                    )}
+                  />
+                </div>
+                {errors.endDate && (
+                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{errors.endDate}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Row 2: Absence Type (Segmented Cards) */}
         <div className="space-y-2">
