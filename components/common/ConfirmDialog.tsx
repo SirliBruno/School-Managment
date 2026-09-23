@@ -67,7 +67,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
           onClick={() => {
             if (!isLoading) onCancel();
           }}
@@ -85,7 +85,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <div className="flex items-start gap-3.5">
             <div
               className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-2xs",
+                "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm",
                 variant === "danger"
                   ? "bg-rose-50 text-rose-600 border border-rose-200"
                   : variant === "warning"

@@ -181,7 +181,7 @@ export const EditAbsenceModal: React.FC<EditAbsenceModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
           onClick={isSubmitting ? undefined : onClose}
           aria-hidden="true"
         />

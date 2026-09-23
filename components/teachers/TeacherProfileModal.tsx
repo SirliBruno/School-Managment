@@ -207,6 +207,17 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     }
   };
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   if (!currentTeacher) return null;
 
   return (
@@ -223,7 +234,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -345,7 +356,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Total */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 shadow-sm"
                 >
                   <span className="block text-[11px] font-medium text-slate-500 mb-1">
                     إجمالي الغياب
@@ -361,7 +372,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Sick */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/60 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/60 shadow-sm"
                 >
                   <span className="block text-[11px] font-medium text-blue-700 mb-1">
                     إجازات مرضية
@@ -377,7 +388,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Emergency */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-rose-50/50 border border-rose-200/60 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-rose-50/50 border border-rose-200/60 shadow-sm"
                 >
                   <span className="block text-[11px] font-medium text-rose-700 mb-1">
                     غياب اضطراري
@@ -393,7 +404,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 {/* Companion / Other */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-200/60 shadow-2xs"
+                  className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-200/60 shadow-sm"
                 >
                   <span className="block text-[11px] font-medium text-purple-700 mb-1">
                     مرافق وأخرى
@@ -411,7 +422,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   whileHover={{ y: -2 }}
                   onClick={() => setActiveHistoryTab("delays")}
                   className={cn(
-                    "p-3.5 rounded-xl border shadow-2xs cursor-pointer transition-all",
+                    "p-3.5 rounded-xl border shadow-sm cursor-pointer transition-all",
                     activeHistoryTab === "delays"
                       ? "bg-amber-50 border-amber-300 ring-2 ring-amber-400/20"
                       : "bg-amber-50/50 border-amber-200/60 hover:bg-amber-50"
@@ -440,7 +451,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     className={cn(
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                       activeHistoryTab === "absences"
-                        ? "bg-[#137a85] text-white shadow-2xs"
+                        ? "bg-[#137a85] text-white shadow-sm"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     )}
                   >
@@ -453,7 +464,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     className={cn(
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       activeHistoryTab === "delays"
-                        ? "bg-amber-600 text-white shadow-2xs"
+                        ? "bg-amber-600 text-white shadow-sm"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     )}
                   >
@@ -483,7 +494,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-right text-xs">
                           <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
@@ -596,7 +607,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-2xs">
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-right text-xs">
                           <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">

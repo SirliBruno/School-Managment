@@ -192,6 +192,17 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
     }
   };
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen && !isProcessing) {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isProcessing, onClose]);
+
   if (!isOpen) return null;
 
   const currentMobile = getEffectiveMobile();
@@ -199,7 +210,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -209,7 +220,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
           {/* Header */}
           <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
                 <MessageCircle className="w-5 h-5" />
               </div>
               <div>
@@ -223,7 +234,9 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
             </div>
 
             <button
+              type="button"
               onClick={onClose}
+              aria-label="إغلاق النافذة"
               className="w-8 h-8 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
@@ -275,7 +288,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   type="date"
                   value={absenceDate}
                   onChange={(e) => setAbsenceDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
                 />
               </div>
             </div>
@@ -307,7 +320,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   placeholder="9665XXXXXXXX"
                   value={manualMobile}
                   onChange={(e) => setManualMobile(normalizeSaudiMobileInput(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs font-mono font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm font-mono font-medium"
                 />
               </div>
               {selectedTeacher && (
@@ -363,7 +376,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
               type="button"
               onClick={handleCopyLink}
               disabled={isProcessing}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
             >
               <Copy className="w-3.5 h-3.5 text-slate-500" />
               <span>نسخ الرسالة والرابط</span>
