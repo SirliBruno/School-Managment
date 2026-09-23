@@ -259,29 +259,8 @@ export default function LoginPage() {
 
 
 
-          {/* شارة الأمان وتوقيع المطور */}
-          <div className="mt-6 text-center text-xs flex flex-col items-center gap-2">
-            <div className="flex items-center justify-center gap-1.5 text-slate-500 text-[11px]">
-              <span>تطوير:</span>
-              <strong className="font-bold text-slate-800">محمد هارون</strong>
-              <span className="text-slate-300">•</span>
-              <a
-                href="https://wa.me/966557013720"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 font-bold font-mono transition-colors"
-                title="تواصل مع المطور عبر الواتساب"
-              >
-                <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                <span dir="ltr">0557013720</span>
-              </a>
-            </div>
-            <div className="text-slate-400 text-[10px] flex items-center justify-center gap-1">
-              <ShieldCheck className="w-3 h-3 text-teal-600/80" />
-              <span>نظام إدارة مدرسية آمن • المملكة العربية السعودية</span>
-            </div>
-          </div>
         </motion.div>
+
       </div>
 
       {/* 2. Left Side: Platform Features & Value Proposition (المميزات) */}
