@@ -642,36 +642,39 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // 1. Initial Load: Load fast from localStorage with auto-migration, then hydrate from Supabase if configured
   useEffect(() => {
     const loadInitialData = async () => {
-      let localTeachers: Teacher[] = [];
-      let localAbsences: AbsenceRecord[] = [];
-      let localInquiries: AbsenceInquiry[] = [];
-      let localDelayNotices: DelayNotice[] = [];
-      let parsedArchTeachers: ArchivedTeacher[] = [];
-      let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
-      let parsedArchDelays: ArchivedDelayNotice[] = [];
-
-      // One-time total wipe per explicit user instruction
-      const WIPE_FLAG_KEY = "school_admin_wipe_all_teachers_2026";
-      let isCleared = false;
       try {
-        if (!localStorage.getItem(WIPE_FLAG_KEY)) {
-          localStorage.setItem(WIPE_FLAG_KEY, "done");
-          localStorage.setItem("school_admin_teachers_cleared_v1", "true");
-          localStorage.setItem(TEACHERS_STORAGE_KEY, "[]");
-          localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
-          localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
-          localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
-        }
-        isCleared = localStorage.getItem("school_admin_teachers_cleared_v1") === "true";
+        let localTeachers: Teacher[] = [];
+        let localAbsences: AbsenceRecord[] = [];
+        let localInquiries: AbsenceInquiry[] = [];
+        let localDelayNotices: DelayNotice[] = [];
+        let parsedArchTeachers: ArchivedTeacher[] = [];
+        let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
+        let parsedArchDelays: ArchivedDelayNotice[] = [];
 
-        if (!isCleared) {
+        // One-time total wipe per explicit user instruction
+        const WIPE_FLAG_KEY = "school_admin_wipe_all_teachers_2026";
+        let isCleared = false;
+        try {
+          if (!localStorage.getItem(WIPE_FLAG_KEY)) {
+            localStorage.setItem(WIPE_FLAG_KEY, "done");
+            localStorage.setItem("school_admin_teachers_cleared_v1", "true");
+            localStorage.setItem(TEACHERS_STORAGE_KEY, "[]");
+            localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
+            localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
+            localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
+          }
+          isCleared = localStorage.getItem("school_admin_teachers_cleared_v1") === "true";
+
           const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
           if (storedTeachers) {
             const parsed = JSON.parse(storedTeachers);
-            if (Array.isArray(parsed)) {
+            if (Array.isArray(parsed) && parsed.length > 0) {
               localTeachers = parsed.map((item) =>
                 normalizeTeacher(item as Record<string, unknown>)
               );
+              // If teachers exist in storage, we are not in cleared state
+              isCleared = false;
+              localStorage.removeItem("school_admin_teachers_cleared_v1");
             }
           }
 
@@ -722,7 +725,6 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               })) as DelayNotice[];
             }
           }
-        }
 
         // Load Archives from LocalStorage with cascade auto-migration
         const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
@@ -890,14 +892,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               supabase.from("absence_records").delete().neq("id", ""),
               supabase.from("delay_notices").delete().neq("id", ""),
               supabase.from("absence_inquiries").delete().neq("id", ""),
-            ]);
+            ]).catch((err) => console.warn("Supabase clean:", err));
             setIsCloudConnected(true);
-            return;
-          }
-          const { data: dbTeachers, error: tErr } = await supabase
-            .from("teachers")
-            .select("*")
-            .order("created_at", { ascending: true });
+          } else {
+            const { data: dbTeachers, error: tErr } = await supabase
+              .from("teachers")
+              .select("*")
+              .order("created_at", { ascending: true });
 
           const { data: dbAbsences, error: aErr } = await supabase
             .from("absence_records")
@@ -1188,29 +1189,33 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             const mergedDelays = Array.from(delayMap.values());
             setDelayNotices(mergedDelays);
           }
-        } catch (cloudErr) {
-          console.warn(
-            "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
-            cloudErr
-          );
         }
+      } catch (cloudErr) {
+        console.warn(
+          "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
+          cloudErr
+        );
       }
+    }
+  } catch (err) {
+    console.error("خطأ أثناء تحميل البيانات الأولية:", err);
+  } finally {
+    // Check initial pending sync count
+    if (typeof window !== "undefined") {
+      try {
+        const rawQ = localStorage.getItem(PENDING_SYNC_STORAGE_KEY);
+        if (rawQ) {
+          const q = JSON.parse(rawQ);
+          if (Array.isArray(q)) setPendingSyncCount(q.length);
+        }
+      } catch {}
+    }
 
-      // Check initial pending sync count
-      if (typeof window !== "undefined") {
-        try {
-          const rawQ = localStorage.getItem(PENDING_SYNC_STORAGE_KEY);
-          if (rawQ) {
-            const q = JSON.parse(rawQ);
-            if (Array.isArray(q)) setPendingSyncCount(q.length);
-          }
-        } catch {}
-      }
-
-      setIsLoading(false);
-      isMountedRef.current = true;
-      flushSyncQueue();
-    };
+    setIsLoading(false);
+    isMountedRef.current = true;
+    flushSyncQueue();
+  }
+};
 
     loadInitialData();
   }, [flushSyncQueue]);
@@ -1594,6 +1599,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return next;
       });
 
+      // Remove cleared flag and immediately persist to localStorage
+      try {
+        localStorage.removeItem("school_admin_teachers_cleared_v1");
+        if (nextTeachers.length > 0) {
+          localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(nextTeachers));
+        }
+      } catch (e) {
+        console.warn("فشل حفظ المعلمات المستوردة في التخزين المحلي:", e);
+      }
+
       // Background sync to Supabase
       if (isSupabaseConfigured() && supabase && nextTeachers.length > 0) {
         const toUpsert = [
@@ -1769,6 +1784,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       setTeachers((prev) => [newTeacher, ...prev]);
+
+      try {
+        localStorage.removeItem("school_admin_teachers_cleared_v1");
+      } catch {}
 
       // Supabase sync
       if (isSupabaseConfigured() && supabase) {
