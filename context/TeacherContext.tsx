@@ -303,6 +303,7 @@ export const auditAndMigrateData = (
   orphanDelayNoticesCount: number;
   removedDuplicatesCount: number;
   mergedGroupsCount: number;
+  removedTeacherIds: string[];
 } => {
   // Phase 1: One-time Deduplication and merging of duplicate teachers with the same nationalId
   const dedup = cleanAndDeduplicateSystemData(
@@ -533,6 +534,7 @@ export const auditAndMigrateData = (
     orphanDelayNoticesCount,
     removedDuplicatesCount: dedup.removedDuplicatesCount,
     mergedGroupsCount: dedup.mergedGroupsCount,
+    removedTeacherIds: dedup.removedTeacherIds,
   };
 };
 
@@ -877,6 +879,52 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 localDelayNotices,
                 localInquiries
               );
+
+              // If duplicate teachers were merged/removed in cloud reconcile, sync deletions & updates to Supabase
+              if (
+                cloudReconciled.removedTeacherIds &&
+                cloudReconciled.removedTeacherIds.length > 0
+              ) {
+                try {
+                  await supabase
+                    .from("teachers")
+                    .delete()
+                    .in("id", cloudReconciled.removedTeacherIds);
+
+                  const toUpsertClean = cloudReconciled.cleanTeachers.map((t) => ({
+                    id: t.id,
+                    name: t.fullName,
+                    full_name: t.fullName,
+                    national_id: t.nationalId,
+                    job_number: t.nationalId,
+                    username: t.nationalId,
+                    mobile: t.mobile || null,
+                    email: t.email || null,
+                    employment_status: t.employmentStatus || "دائم",
+                    job_title: t.jobTitle || "معلم",
+                    teaching_field: t.teachingField || t.specialty || null,
+                    specialty: t.specialty || null,
+                    total_absences: t.totalAbsences || 0,
+                    total_delay_notices: t.totalDelayNotices || 0,
+                    updated_at: new Date().toISOString(),
+                  }));
+                  await supabase.from("teachers").upsert(toUpsertClean);
+                } catch (syncErr) {
+                  console.warn("فشل مزامنة حذف السجلات المكررة مع سوبابيز:", syncErr);
+                }
+              }
+
+              // Update local storage with clean data
+              try {
+                localStorage.setItem(
+                  TEACHERS_STORAGE_KEY,
+                  JSON.stringify(cloudReconciled.cleanTeachers)
+                );
+                localStorage.setItem(
+                  ABSENCES_STORAGE_KEY,
+                  JSON.stringify(cloudReconciled.cleanAbsences)
+                );
+              } catch {}
 
               setTeachers(cloudReconciled.cleanTeachers);
               setAbsenceRecords(cloudReconciled.cleanAbsences);

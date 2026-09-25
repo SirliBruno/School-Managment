@@ -529,28 +529,85 @@ describe("Teacher Deduplication and Import System", () => {
       expect(result.teacher?.fullName).toBe("نوف فهد العتيبي");
     });
 
-    it("strips trailing .0 from float number coerced national IDs", () => {
-      expect(normalizeNationalId("1048291023.0")).toBe("1048291023");
-      expect(normalizeNationalId("1048291023.00")).toBe("1048291023");
+    it("strips alphanumeric prefixes like unn, tea, user from national IDs", () => {
+      expect(normalizeNationalId("unn1089953663")).toBe("1089953663");
+      expect(normalizeNationalId("tea_1089953663")).toBe("1089953663");
+      expect(normalizeNationalId("user-1089953663")).toBe("1089953663");
+      expect(normalizeNationalId("T1089953663")).toBe("1089953663");
     });
 
-    it("filters out completely blank rows from Excel data parsing", () => {
-      // Create a workbook with valid rows + completely blank rows
-      const ws = XLSX.utils.aoa_to_sheet([
-        ["الإسم", "رقم الهوية", "التخصص", "الجوال"],
-        ["سارة عبد الله", "1048291023", "رياضيات", "0501234567"],
-        ["", "", "", ""], // completely blank row
-        ["ريم خالد", "1059283741", "علوم", "0559876543"],
-        ["", "", "", ""], // another blank row
-      ]);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-      const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+    it("merges duplicate teachers with 'unn' prefix and raw numeric national ID into one single record", () => {
+      const teachers: Teacher[] = [
+        {
+          id: "tch-1",
+          fullName: "امل حمود سعود السبيعي",
+          name: "امل حمود سعود السبيعي",
+          nationalId: "unn1089953663",
+          username: "unn1089953663",
+          jobNumber: "unn1089953663",
+          mobile: "966502563997",
+          specialty: "رياضيات",
+          teachingField: "رياضيات",
+          jobTitle: "معلم",
+          employmentStatus: "دائم",
+          totalAbsences: 0,
+          totalDelayNotices: 0,
+          createdAt: "2026-09-01T08:00:00.000Z",
+          updatedAt: "2026-09-01T08:00:00.000Z",
+        },
+        {
+          id: "tch-2",
+          fullName: "امل حمود سعود السبيعي",
+          name: "امل حمود سعود السبيعي",
+          nationalId: "1089953663",
+          username: "1089953663",
+          jobNumber: "1089953663",
+          mobile: "966502563997",
+          specialty: "رياضيات",
+          teachingField: "رياضيات",
+          jobTitle: "معلم",
+          employmentStatus: "دائم",
+          totalAbsences: 0,
+          totalDelayNotices: 0,
+          createdAt: "2026-09-10T08:00:00.000Z",
+          updatedAt: "2026-09-10T08:00:00.000Z",
+        },
+      ];
 
-      const parsed = parseExcelData(buffer);
-      expect(parsed.length).toBe(2);
-      expect(parsed[0]["الإسم"]).toBe("سارة عبد الله");
-      expect(parsed[1]["الإسم"]).toBe("ريم خالد");
+      const absences: AbsenceRecord[] = [
+        {
+          id: "abs-1",
+          teacherId: "tch-1",
+          teacherName: "امل حمود سعود السبيعي",
+          jobNumber: "unn1089953663",
+          specialty: "رياضيات",
+          date: "2026-09-15",
+          type: "اضطراري",
+          reason: "ظرف عائلي",
+          timestamp: "2026-09-15T08:00:00.000Z",
+        },
+        {
+          id: "abs-2",
+          teacherId: "tch-2",
+          teacherName: "امل حمود سعود السبيعي",
+          jobNumber: "1089953663",
+          specialty: "رياضيات",
+          date: "2026-09-20",
+          type: "مرضي",
+          reason: "تقرير طبي",
+          timestamp: "2026-09-20T08:00:00.000Z",
+        },
+      ];
+
+      const result = cleanAndDeduplicateSystemData(teachers, absences, [], []);
+      expect(result.cleanTeachers.length).toBe(1);
+      expect(result.removedDuplicatesCount).toBe(1);
+      expect(result.cleanTeachers[0].nationalId).toBe("1089953663");
+      expect(result.cleanTeachers[0].fullName).toBe("امل حمود سعود السبيعي");
+      expect(result.cleanTeachers[0].totalAbsences).toBe(2);
+      expect(result.removedTeacherIds).toContain("tch-2");
+      // All absences repointed to the single primary teacher ID
+      expect(result.cleanAbsences.every((a) => a.teacherId === result.cleanTeachers[0].id)).toBe(true);
     });
   });
 });

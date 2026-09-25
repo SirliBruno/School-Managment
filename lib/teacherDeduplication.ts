@@ -31,8 +31,8 @@ export function normalizeArabicDigits(str: string | number | undefined | null): 
 /**
  * Normalizes a National ID string:
  * - Converts Arabic numerals to standard digits
- * - Strips whitespace, hyphens, slashes, punctuation
  * - Strips trailing .0 from number floats
+ * - Strips alphanumeric prefixes (unn, tea, user, etc.) and extracts digits
  * - Returns clean digit string
  */
 export function normalizeNationalId(raw: string | number | undefined | null): string {
@@ -41,7 +41,28 @@ export function normalizeNationalId(raw: string | number | undefined | null): st
   // Strip trailing .0 from float numbers (e.g., 1048291023.0)
   s = s.replace(/\.0+$/, "");
   const withAscii = normalizeArabicDigits(s);
+  // Extract all digits if there are at least 3 digits (handles "unn1089953663", "tea_1089953663", etc.)
+  const digitsOnly = withAscii.replace(/[^\d]/g, "");
+  if (digitsOnly.length >= 3) {
+    return digitsOnly;
+  }
   return withAscii.replace(/[\s\-_/\\,.]/g, "").trim();
+}
+
+/**
+ * Normalizes Arabic names by removing diacritics, unifying alef/yaa/taa-marboota variants,
+ * and collapsing whitespace for accurate duplicate comparison.
+ */
+export function normalizeArabicName(name: string | undefined | null): string {
+  if (!name) return "";
+  return String(name)
+    .trim()
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/[ة]/g, "ه")
+    .replace(/[ى]/g, "ي")
+    .replace(/[\u064B-\u065F\u0670]/g, "") // tashkeel
+    .replace(/\s+/g, " ")
+    .toLowerCase();
 }
 
 /**
@@ -652,32 +673,111 @@ export function cleanAndDeduplicateSystemData(
   removedDuplicatesCount: number;
   migratedRecordsCount: number;
   mergedGroupsCount: number;
+  removedTeacherIds: string[];
 } {
-  // 1. Group active teachers by normalized nationalId
-  const groups = new Map<string, Teacher[]>();
+  const n = teachers.length;
+  if (n === 0) {
+    return {
+      cleanTeachers: [],
+      cleanAbsences: absenceRecords,
+      cleanDelayNotices: delayNotices,
+      cleanInquiries: inquiries,
+      cleanArchivedTeachers: archivedTeachers,
+      cleanArchivedAbsences: archivedAbsences,
+      cleanArchivedDelayNotices: archivedDelayNotices,
+      removedDuplicatesCount: 0,
+      migratedRecordsCount: 0,
+      mergedGroupsCount: 0,
+      removedTeacherIds: [],
+    };
+  }
 
-  for (const t of teachers) {
-    const cleanId = normalizeNationalId(t.nationalId || t.username || t.jobNumber);
-    if (!cleanId) continue;
-    const list = groups.get(cleanId) || [];
-    list.push(t);
-    groups.set(cleanId, list);
+  // Union-Find data structure for multi-dimensional clustering
+  const parent = Array.from({ length: n }, (_, i) => i);
+  const find = (i: number): number => {
+    if (parent[i] === i) return i;
+    parent[i] = find(parent[i]);
+    return parent[i];
+  };
+  const union = (i: number, j: number) => {
+    const rootI = find(i);
+    const rootJ = find(j);
+    if (rootI !== rootJ) {
+      parent[rootI] = rootJ;
+    }
+  };
+
+  const idToIdx = new Map<string, number>();
+  const natIdToIdx = new Map<string, number>();
+  const nameMobileToIdx = new Map<string, number>();
+  const nameSpecToIdx = new Map<string, number>();
+  const quadNameToIdx = new Map<string, number>();
+
+  for (let i = 0; i < n; i++) {
+    const t = teachers[i];
+    const cleanNatId = normalizeNationalId(t.nationalId || t.username || t.jobNumber);
+    const normName = normalizeArabicName(t.fullName || t.name);
+    const normMobile = normalizeSaudiMobile(t.mobile);
+    const normSpec = normalizeArabicName(t.specialty || t.teachingField);
+
+    // 1. Direct system ID match
+    if (t.id) {
+      if (idToIdx.has(t.id)) union(i, idToIdx.get(t.id)!);
+      else idToIdx.set(t.id, i);
+    }
+
+    // 2. Normalized National ID match (digits extracted, >= 3 digits)
+    if (cleanNatId && cleanNatId.length >= 3) {
+      if (natIdToIdx.has(cleanNatId)) union(i, natIdToIdx.get(cleanNatId)!);
+      else natIdToIdx.set(cleanNatId, i);
+    }
+
+    // 3. Normalized Name + Mobile match (when both present)
+    if (normName && normMobile) {
+      const nmKey = `${normName}|${normMobile}`;
+      if (nameMobileToIdx.has(nmKey)) union(i, nameMobileToIdx.get(nmKey)!);
+      else nameMobileToIdx.set(nmKey, i);
+    }
+
+    // 4. Normalized Name (3+ words) + Specialty match
+    const words = normName.split(" ").filter(Boolean);
+    if (normName && words.length >= 3 && normSpec) {
+      const nsKey = `${normName}|${normSpec}`;
+      if (nameSpecToIdx.has(nsKey)) union(i, nameSpecToIdx.get(nsKey)!);
+      else nameSpecToIdx.set(nsKey, i);
+    }
+
+    // 5. Full Quad Arabic Name match (4+ words, e.g. "امل حمود سعود السبيعي")
+    if (normName && words.length >= 4) {
+      if (quadNameToIdx.has(normName)) union(i, quadNameToIdx.get(normName)!);
+      else quadNameToIdx.set(normName, i);
+    }
+  }
+
+  // Collect clusters
+  const clusters = new Map<number, Teacher[]>();
+  for (let i = 0; i < n; i++) {
+    const root = find(i);
+    const list = clusters.get(root) || [];
+    list.push(teachers[i]);
+    clusters.set(root, list);
   }
 
   const idMapping = new Map<string, Teacher>(); // duplicateId -> retainedTeacher
   const retainedTeachers: Teacher[] = [];
   let removedDuplicatesCount = 0;
   let mergedGroupsCount = 0;
-  for (const group of Array.from(groups.values())) {
+
+  for (const group of Array.from(clusters.values())) {
     if (group.length === 1) {
       const single = group[0];
       const cleanSingleNatId = normalizeNationalId(single.nationalId || single.username || single.jobNumber);
       const normalizedSingle: Teacher = {
         ...single,
-        nationalId: cleanSingleNatId,
+        nationalId: cleanSingleNatId || single.nationalId,
         name: single.fullName || single.name,
-        username: cleanSingleNatId,
-        jobNumber: cleanSingleNatId,
+        username: cleanSingleNatId || single.username,
+        jobNumber: cleanSingleNatId || single.jobNumber,
         mobile: normalizeSaudiMobile(single.mobile) || undefined,
         email: single.email ? single.email.trim().toLowerCase() : undefined,
       };
@@ -685,27 +785,41 @@ export function cleanAndDeduplicateSystemData(
       continue;
     }
 
-    // Multiple records with the same National ID!
+    // Multiple records representing the same teacher!
     mergedGroupsCount++;
 
-    // Sort by createdAt ascending (oldest first)
+    // Pick best primary: prefer record with standard 10-digit ID and oldest creation date
     const sorted = [...group].sort((a, b) => {
+      const aNatId = normalizeNationalId(a.nationalId || a.username || a.jobNumber);
+      const bNatId = normalizeNationalId(b.nationalId || b.username || b.jobNumber);
+      const aIsStandard = /^\d{10}$/.test(aNatId) ? 1 : 0;
+      const bIsStandard = /^\d{10}$/.test(bNatId) ? 1 : 0;
+      if (aIsStandard !== bIsStandard) return bIsStandard - aIsStandard;
+
       const timeA = a.createdAt && !isNaN(new Date(a.createdAt).getTime()) ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt && !isNaN(new Date(b.createdAt).getTime()) ? new Date(b.createdAt).getTime() : 0;
       return timeA - timeB;
     });
 
     const primary = { ...sorted[0] };
-    primary.nationalId = normalizeNationalId(
-      primary.nationalId || primary.username || primary.jobNumber
-    );
+    // Choose best national ID among the group
+    let bestNatId = normalizeNationalId(primary.nationalId || primary.username || primary.jobNumber);
+    for (const member of sorted) {
+      const memberNatId = normalizeNationalId(member.nationalId || member.username || member.jobNumber);
+      if (/^\d{10}$/.test(memberNatId)) {
+        bestNatId = memberNatId;
+        break;
+      }
+    }
+
+    primary.nationalId = bestNatId;
     primary.mobile = normalizeSaudiMobile(primary.mobile) || undefined;
     primary.email = primary.email ? primary.email.trim().toLowerCase() : undefined;
 
     const duplicates = sorted.slice(1);
     removedDuplicatesCount += duplicates.length;
 
-    // Fill missing blanks in primary from duplicates (never overwrite existing)
+    // Fill missing blanks in primary from duplicates (never overwrite existing non-empty values)
     for (const dup of duplicates) {
       idMapping.set(dup.id, primary);
 
@@ -735,14 +849,6 @@ export function cleanAndDeduplicateSystemData(
     primary.jobNumber = primary.nationalId;
 
     retainedTeachers.push(primary);
-  }
-
-  // Handle any teachers without nationalId (if any)
-  for (const t of teachers) {
-    const cleanId = normalizeNationalId(t.nationalId || t.username || t.jobNumber);
-    if (!cleanId) {
-      retainedTeachers.push(t);
-    }
   }
 
   let migratedRecordsCount = 0;
@@ -859,6 +965,8 @@ export function cleanAndDeduplicateSystemData(
     totalDelayNotices: delayCountMap.get(t.id) || 0,
   }));
 
+  const removedTeacherIds = Array.from(idMapping.keys());
+
   return {
     cleanTeachers,
     cleanAbsences,
@@ -870,5 +978,6 @@ export function cleanAndDeduplicateSystemData(
     removedDuplicatesCount,
     migratedRecordsCount,
     mergedGroupsCount,
+    removedTeacherIds,
   };
 }
