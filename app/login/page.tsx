@@ -100,11 +100,20 @@ export default function LoginPage() {
     try {
       const res = await login(cleanInput, password);
       if (res.success) {
-        router.push("/");
+        // توجيه مؤكد ومباشر للوحة التحكم
+        router.replace("/");
+        if (typeof window !== "undefined") {
+          setTimeout(() => {
+            if (window.location.pathname === "/login") {
+              window.location.href = "/";
+            }
+          }, 300);
+        }
       } else {
         setErrorMsg(res.error || "تعذر تسجيل الدخول، يرجى مراجعة البيانات المدخلة");
       }
-    } catch {
+    } catch (err) {
+      console.error("Login Page Submit Exception:", err);
       setErrorMsg("حدث خطأ غير متوقع أثناء تسجيل الدخول");
     } finally {
       setIsSubmitting(false);

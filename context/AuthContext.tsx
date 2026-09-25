@@ -36,79 +36,84 @@ interface AuthContextType {
 }
 
 /**
- * ترجمة رسائل أخطاء Supabase Auth إلى لغة عربية واضحة ومفهومة للمستخدم
+ * معالجة وتنسيق رسائل أخطاء Supabase Auth مع الحفاظ على نص الخطأ الأصلي
  */
-export const mapSupabaseAuthError = (err: unknown): string => {
-  if (!err) return "حدث خطأ غير متوقع أثناء عملية المصادقة";
+export const formatAuthErrorMessage = (err: unknown): string => {
+  if (!err) return "حدث خطأ غير متوقع أثناء تسجيل الدخول";
 
-  const errorObj = err as { message?: string; error_description?: string; code?: string };
-  const msg = (errorObj.message || errorObj.error_description || "").toLowerCase();
+  const errorObj = err as {
+    message?: string;
+    error_description?: string;
+    code?: string;
+    status?: number;
+  };
+  const rawMsg = errorObj.message || errorObj.error_description || String(err);
+  const lower = rawMsg.toLowerCase();
   const code = (errorObj.code || "").toLowerCase();
 
-  if (
-    msg.includes("invalid login credentials") ||
-    msg.includes("invalid_credentials") ||
-    code === "invalid_credentials" ||
-    msg.includes("invalid username or password")
-  ) {
-    return "بيانات الاعتماد غير صحيحة، يرجى التأكد من البريد الإلكتروني / اسم المستخدم وكلمة المرور";
-  }
+  let arabicExplanation = "";
 
   if (
-    msg.includes("email not confirmed") ||
+    lower.includes("invalid login credentials") ||
+    lower.includes("invalid_credentials") ||
+    code === "invalid_credentials"
+  ) {
+    arabicExplanation =
+      "بيانات الدخول غير صحيحة: يرجى التأكد من كتابة البريد الإلكتروني وكلمة المرور المطابقة لحسابك في Supabase بدقة";
+  } else if (
+    lower.includes("email not confirmed") ||
     code === "email_not_confirmed" ||
-    msg.includes("email address not confirmed")
+    lower.includes("email address not confirmed")
   ) {
-    return "البريد الإلكتروني لم يتم تأكيده بعد. يرجى تفعيل الحساب من الرسالة المرسلة لبريدك، أو تعطيل خيار تأكيد البريد في إعدادات Supabase";
-  }
-
-  if (
-    msg.includes("invalid email") ||
-    msg.includes("unable to validate email") ||
+    arabicExplanation =
+      "البريد الإلكتروني لم يتم تأكيده بعد: يجب تفعيل الحساب من رابط البريد، أو تفعيل (Auto Confirm User) في لوحة تحكم Supabase Auth";
+  } else if (
+    lower.includes("invalid email") ||
+    lower.includes("unable to validate email") ||
     code === "validation_failed"
   ) {
-    return "صيغة البريد الإلكتروني غير صالحة. يرجى كتابة بريد إلكتروني صحيح (مثال: admin@school.com)";
-  }
-
-  if (msg.includes("user not found") || code === "user_not_found") {
-    return "لا يوجد حساب مسجل بهذه البيانات في Supabase";
-  }
-
-  if (
-    msg.includes("password should be at least") ||
-    msg.includes("weak_password") ||
-    msg.includes("password is too short")
+    arabicExplanation =
+      "صيغة البريد الإلكتروني غير صالحة. يرجى إدخال بريد إلكتروني صحيح (مثال: admin@school.com)";
+  } else if (lower.includes("user not found") || code === "user_not_found") {
+    arabicExplanation =
+      "المستخدم غير مسجل: لم يتم العثور على حساب مسجل بهذا البريد في Supabase Auth";
+  } else if (
+    lower.includes("password should be at least") ||
+    lower.includes("weak_password") ||
+    lower.includes("password is too short")
   ) {
-    return "يجب ألا تقل كلمة المرور عن 6 خانات وفقاً لسياسات أمان Supabase";
-  }
-
-  if (
-    msg.includes("rate limit") ||
-    msg.includes("too many requests") ||
+    arabicExplanation =
+      "كلمة المرور قصيرة (يجب أن تتكون من 6 خانات على الأقل وفقاً لسياسات أمان Supabase)";
+  } else if (
+    lower.includes("rate limit") ||
+    lower.includes("too many requests") ||
     code === "over_request_rate_limit" ||
     code === "over_email_send_rate_limit"
   ) {
-    return "تم تجاوز الحد المسموح به من المحاولات، يرجى الانتظار قليلاً ثم إعادة المحاولة";
-  }
-
-  if (
-    msg.includes("network") ||
-    msg.includes("failed to fetch") ||
-    msg.includes("fetch failed") ||
-    msg.includes("connection refused")
+    arabicExplanation =
+      "تم تجاوز عدد المحاولات المسموح بها مؤقتاً، يرجى الانتظار دقيقة ثم إعادة المحاولة";
+  } else if (
+    lower.includes("network") ||
+    lower.includes("failed to fetch") ||
+    lower.includes("fetch failed") ||
+    lower.includes("connection refused")
   ) {
-    return "تعذر الاتصال بخادم Supabase، يرجى التأكد من اتصال الإنترنت وصحة إعدادات .env";
+    arabicExplanation =
+      "تعذر الاتصال بخادم Supabase: يرجى التحقق من اتصال الإنترنت وصحة إعدادات NEXT_PUBLIC_SUPABASE_URL في .env";
+  } else if (lower.includes("auth session missing")) {
+    arabicExplanation = "انتهت صلاحية الجلسة، يرجى إعادة تسجيل الدخول";
   }
 
-  if (msg.includes("auth session missing")) {
-    return "انتهت جلسة تسجيل الدخول الحالية، يرجى تسجيل الدخول مجدداً";
+  // إرجاع التفسير العربي مدعوماً بنص الخطأ التقني الأصلي للشفافية
+  if (arabicExplanation) {
+    return `${arabicExplanation} [${rawMsg}]`;
   }
 
-  return errorObj.message || "فشلت عملية المصادقة، يرجى المحاولة مرة أخرى";
+  return rawMsg;
 };
 
 /**
- * استخراج بيانات المستخدم الإدارية من مستخدم وجلسة Supabase
+ * استخراج بيانات المستخدم الإدارية من كائن مستخدم Supabase
  */
 const extractAdminUser = (sbUser: User): AdminUser => {
   const metadata = sbUser.user_metadata || {};
@@ -146,40 +151,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // إدارة جلسة المستخدم الحقيقية بالكامل عبر Supabase Auth
+  // إدارة الجلسة الحقيقية عبر Supabase Auth حصراً (بدون أي Mock أو LocalStorage للمصادقة)
   useEffect(() => {
     let isMounted = true;
 
     if (!isSupabaseConfigured() || !supabase) {
-      console.warn("Supabase غير مهيأ، يرجى التحقق من متغيرات البيئة في .env");
+      console.error("[Supabase Auth] العميل غير مهيأ، يرجى التحقق من مفاتيح .env");
       setIsLoading(false);
       return;
     }
 
-    // 1. جلب الجلسة الحالية المخزنة في Supabase Auth Client
+    // 1. جلب الجلسة الحالية المخزنة في عميل Supabase
     supabase.auth
       .getSession()
       .then(({ data, error }) => {
         if (!isMounted) return;
+        if (error) {
+          console.error("Supabase Auth Error (getSession):", error);
+        }
         if (!error && data.session) {
           setSession(data.session);
           setUser(extractAdminUser(data.session.user));
+          console.info("[Supabase Auth] تم استعادة الجلسة بنجاح للمستخدم:", data.session.user.email);
         } else {
           setSession(null);
           setUser(null);
         }
       })
       .catch((err) => {
-        console.error("خطأ أثناء استرجاع جلسة Supabase:", err);
+        console.error("Supabase Auth Error (getSession Exception):", err);
       })
       .finally(() => {
         if (isMounted) setIsLoading(false);
       });
 
-    // 2. الاستماع الفوري واللحظي لتغيرات حالة المصادقة (onAuthStateChange)
+    // 2. الاستماع اللحظي لكافة أحداث المصادقة (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, USER_UPDATED)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
+      console.info(`[Supabase Auth Event] حدث مصادقة: ${event}`, {
+        userEmail: newSession?.user?.email || "لا يوجد",
+      });
       if (!isMounted) return;
       if (newSession && newSession.user) {
         setSession(newSession);
@@ -209,23 +221,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!cleanIdentifier || !password) {
         return {
           success: false,
-          error: "يرجى إدخال البريد الإلكتروني / اسم المستخدم وكلمة المرور",
+          error: "يرجى إدخال البريد الإلكتروني أو اسم المستخدم وكلمة المرور",
         };
       }
 
       if (!isSupabaseConfigured() || !supabase) {
+        console.error("Supabase Auth Error: Supabase client is not configured or missing keys in .env");
         return {
           success: false,
-          error:
-            "إعدادات الربط مع Supabase غير متوفرة في ملف .env (تأكد من NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY أو VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY)",
+          error: "بيانات الاتصال بـ Supabase غير مهيأة بشكل صحيح في ملف .env",
         };
       }
 
-      // تحديد البريد الإلكتروني: إذا تم إدخال بريد إلكتروني صريح يحتوي على @، نستخدمه مباشرة
-      // إذا كان اسم مستخدم بدون @، نجهزه بصيغة بريد افتراضية متوافقة
+      // تحديد البريد المستهدف:
+      // إذا كان المدخل بريداً إلكترونياً (يحوي @) يستخدمه مباشرة بعد تحويله لأحرف صغيرة
+      // إذا كان اسم مستخدم فقط، يتم تجهيزه بنطاق افتراضي
       const targetEmail = cleanIdentifier.includes("@")
-        ? cleanIdentifier
-        : `${cleanIdentifier}@school.edu.sa`;
+        ? cleanIdentifier.toLowerCase()
+        : `${cleanIdentifier.toLowerCase()}@school.edu.sa`;
+
+      // طباعة البريد المدخل في وحدة التحكم (بدون كشف كلمة المرور)
+      console.log("Supabase Auth: محاولة تسجيل الدخول للمستخدم:", targetEmail);
 
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -234,14 +250,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         });
 
         if (error) {
-          // إذا فشل بالبريد الافتراضي وكان الإدخال اسم مستخدم فقط، نجرب صيغة أخرى شائعة (@school.com)
-          if (!cleanIdentifier.includes("@") && error.message.includes("Invalid login credentials")) {
+          // طباعة كائن الخطأ كاملاً للتشخيص الفوري
+          console.error("Supabase Auth Error:", error);
+
+          // إذا كان الإدخال اسم مستخدم فقط وفشل المحاولة الأولى، نجرب نطاقاً بديلاً (@school.com)
+          if (
+            !cleanIdentifier.includes("@") &&
+            error.message.toLowerCase().includes("invalid login credentials")
+          ) {
+            console.log("Supabase Auth: جاري محاولة بديلة بالنطاق @school.com...");
             const secondAttempt = await supabase.auth.signInWithPassword({
-              email: `${cleanIdentifier}@school.com`,
+              email: `${cleanIdentifier.toLowerCase()}@school.com`,
               password: password,
             });
 
-            if (!secondAttempt.error && secondAttempt.data.session) {
+            if (secondAttempt.error) {
+              console.error("Supabase Auth Error (Attempt 2):", secondAttempt.error);
+            } else if (secondAttempt.data.session) {
+              console.log("Supabase Auth: تم تسجيل الدخول بنجاح عبر المحاولة الثانية!");
               setSession(secondAttempt.data.session);
               setUser(extractAdminUser(secondAttempt.data.session.user));
               return { success: true };
@@ -250,11 +276,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           return {
             success: false,
-            error: mapSupabaseAuthError(error),
+            error: formatAuthErrorMessage(error),
           };
         }
 
         if (data.session) {
+          console.log("Supabase Auth: تم التحقق وتسجيل الدخول بنجاح للمستخدم:", data.session.user.email);
           setSession(data.session);
           setUser(extractAdminUser(data.session.user));
           return { success: true };
@@ -262,12 +289,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         return {
           success: false,
-          error: "لم يتم إنشاء جلسة الدخول بنجاح، يرجى المحاولة لاحقاً",
+          error: "لم يتم إنشاء جلسة دخول صالحة من Supabase، يرجى المحاولة لاحقاً",
         };
-      } catch (err) {
+      } catch (err: unknown) {
+        console.error("Supabase Auth Error (Catch):", err);
         return {
           success: false,
-          error: mapSupabaseAuthError(err),
+          error: formatAuthErrorMessage(err),
         };
       }
     },
@@ -280,6 +308,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = useCallback(async (): Promise<void> => {
     try {
       if (supabase) {
+        console.log("Supabase Auth: جاري تسجيل الخروج...");
         await supabase.auth.signOut();
       }
     } catch (e) {
@@ -291,7 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   /**
-   * تحديث بيانات المستخدم (اسم المستخدم، الاسم الكامل، وكلمة المرور) في Supabase Auth برمجياً
+   * تحديث بيانات المستخدم في Supabase Auth برمجياً
    */
   const updateCredentials = useCallback(
     async (
@@ -344,38 +373,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           role: currentMeta.role || "vice_principal",
         };
 
+        console.log("Supabase Auth: جاري إرسال تحديث الحساب إلى Supabase...", {
+          email: user?.email,
+          newUsername: updatedUsername,
+          newFullName: updatedFullName,
+          hasNewPassword: Boolean(newPassword),
+        });
+
         const { data, error } = await supabase.auth.updateUser(updatePayload);
 
         if (error) {
+          console.error("Supabase Auth Error (updateUser):", error);
           return {
             success: false,
-            error: mapSupabaseAuthError(error),
+            error: formatAuthErrorMessage(error),
           };
         }
 
         if (data.user) {
+          console.log("Supabase Auth: تم تحديث المستخدم بنجاح في auth.users ✓");
           const updated = extractAdminUser(data.user);
           setUser(updated);
         }
 
-        // مزامنة إضافية لجدول admin_credentials (إن وجد كجدول مكمل)
+        // مزامنة تكميلية لجدول admin_credentials في قاعدة البيانات
         try {
-          await supabase.from("admin_credentials").upsert({
-            id: "vice_principal",
-            username: updatedUsername,
-            full_name: updatedFullName,
-            role: currentMeta.role || "vice_principal",
-            updated_at: new Date().toISOString(),
-          });
-        } catch {
-          // تجاوز إذا كان الجدول غير مستخدم
+          await supabase
+            .from("admin_credentials")
+            .update({
+              username: updatedUsername,
+              full_name: updatedFullName,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", "vice_principal");
+        } catch (dbErr) {
+          console.warn("تنبيه: تعذر تحديث جدول admin_credentials التكميلي:", dbErr);
         }
 
         return { success: true };
-      } catch (err) {
+      } catch (err: unknown) {
+        console.error("Supabase Auth Error (updateUser Catch):", err);
         return {
           success: false,
-          error: mapSupabaseAuthError(err),
+          error: formatAuthErrorMessage(err),
         };
       }
     },

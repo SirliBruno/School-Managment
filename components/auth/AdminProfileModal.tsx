@@ -180,6 +180,18 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
               )}
             </AnimatePresence>
 
+            {/* تنبيه البريد الإلكتروني المرتبط في Supabase */}
+            {user?.email && (
+              <div className="p-3 rounded-xl bg-teal-50/80 border border-teal-200/80 flex items-center justify-between text-xs">
+                <span className="text-teal-900 font-bold">
+                  البريد الإلكتروني في Supabase:
+                </span>
+                <span className="font-mono text-teal-800 font-semibold" dir="ltr">
+                  {user.email}
+                </span>
+              </div>
+            )}
+
             {/* الاسم الكامل المعروض */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-slate-700">
