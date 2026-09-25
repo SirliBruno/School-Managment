@@ -16,6 +16,7 @@ import {
   Filter,
   MessageCircle,
   Pencil,
+  Sparkles,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -44,12 +45,20 @@ type FilterStatus = "all" | "دائم" | "عقد" | "with_absence";
 
 export const TeacherTable: React.FC = () => {
   const router = useRouter();
-  const { teachers, deleteTeacher, isLoading } = useTeachers();
+  const {
+    teachers,
+    deleteTeacher,
+    clearTeachers,
+    loadOfficialTeachers,
+    isLoading,
+  } = useTeachers();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>("all");
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
   const [teacherToEdit, setTeacherToEdit] = useState<Teacher | null>(null);
+  const [isClearAllModalOpen, setIsClearAllModalOpen] = useState(false);
+  const [isImportingOfficial, setIsImportingOfficial] = useState(false);
   const [selectedTeacherForProfile, setSelectedTeacherForProfile] =
     useState<Teacher | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -57,6 +66,28 @@ export const TeacherTable: React.FC = () => {
   const [inquiryTeacherId, setInquiryTeacherId] = useState<string | undefined>(
     undefined
   );
+
+  const handleConfirmClearAll = () => {
+    clearTeachers();
+    setIsClearAllModalOpen(false);
+    showToast({
+      message: "تم حذف كافة بيانات المعلمات بنجاح وتفريغ المنصة بالكامل",
+      type: "success",
+    });
+  };
+
+  const handleLoadOfficialTeachers = () => {
+    setIsImportingOfficial(true);
+    try {
+      const count = loadOfficialTeachers();
+      showToast({
+        message: `تم استيراد قائمة الكادر التعليمي المعتمد (${count} معلمة) بنجاح وببيانات مكتملة 100%`,
+        type: "success",
+      });
+    } finally {
+      setIsImportingOfficial(false);
+    }
+  };
 
   // Active (non-archived) teachers only
   const activeTeachers = useMemo(
@@ -198,6 +229,20 @@ export const TeacherTable: React.FC = () => {
             </button>
           </div>
 
+          {/* Delete All Teachers Button (only when teachers exist) */}
+          {activeTeachers.length > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.96 }}
+              type="button"
+              onClick={() => setIsClearAllModalOpen(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100/80 border border-rose-200/80 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+              title="حذف جميع بيانات المعلمات المسجلات في المنصة"
+            >
+              <Trash2 className="w-4 h-4 text-rose-500" />
+              <span>حذف كافة المعلمات</span>
+            </motion.button>
+          )}
+
           {/* Add Teacher Manually Button */}
           <motion.button
             whileTap={{ scale: 0.96 }}
@@ -237,25 +282,40 @@ export const TeacherTable: React.FC = () => {
           /* Empty State */
           <div className="p-12 text-center flex flex-col items-center justify-center space-y-4">
             <div className="w-16 h-16 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center shadow-inner">
-              <FileSpreadsheet className="w-8 h-8" aria-hidden="true" />
+              <Users className="w-8 h-8" aria-hidden="true" />
             </div>
             <div className="max-w-md space-y-1.5">
               <h3 className="text-base font-bold text-slate-800">
-                لا يوجد معلمات مسجلات حالياً
+                لا يوجد معلمات مسجلات حالياً في المنصة
               </h3>
               <p className="text-xs text-slate-500 leading-relaxed">
-                يمكنك استيراد ملف Excel منسوبات ث5 المعتمد أو إضافة المعلمات
-                واحدة تلو الأخرى يدوياً.
+                تم إفراغ المنصة بنجاح. يمكنك استيراد قائمة الكادر التعليمي المعتمد رسمياً لثانوية 5 (37 معلمة ببيانات مكتملة 100% دون تكرار)، أو استيراد ملف Excel جديد، أو إضافة المعلمات يدوياً.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 transition-all cursor-pointer shadow-xs"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>إضافة أول معلمة يدوياً</span>
-            </button>
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleLoadOfficialTeachers}
+                disabled={isImportingOfficial}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs md:text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all cursor-pointer shadow-sm hover:shadow active:scale-[0.98] disabled:opacity-60"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-200" />
+                <span>
+                  {isImportingOfficial
+                    ? "جاري الاستيراد..."
+                    : "استيراد الكادر المعتمد (37 معلمة)"}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsAddModalOpen(true)}
+                className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer shadow-2xs"
+              >
+                <UserPlus className="w-4 h-4 text-slate-500" />
+                <span>إضافة معلمة يدوياً</span>
+              </button>
+            </div>
           </div>
         ) : filteredTeachers.length === 0 ? (
           /* Filtered Results Empty State */
@@ -682,6 +742,19 @@ export const TeacherTable: React.FC = () => {
         showReasonInput={true}
         onConfirm={confirmDelete}
         onCancel={() => setTeacherToDelete(null)}
+      />
+
+      {/* Confirm Delete All Teachers Dialog */}
+      <ConfirmDialog
+        isOpen={isClearAllModalOpen}
+        title="حذف كافة المعلمات من المنصة"
+        message="هل أنتِ متأكدة من رغبتكِ في حذف كافة بيانات المعلمات وسجلات الغياب والتأخر التابعة لهن بالكامل من المنصة؟ هذا الإجراء سيفرغ المنصة تماماً لتتمكني من بدء استيراد نظيف."
+        confirmLabel="نعم، حذف كافة البيانات"
+        cancelLabel="إلغاء"
+        variant="danger"
+        showReasonInput={false}
+        onConfirm={handleConfirmClearAll}
+        onCancel={() => setIsClearAllModalOpen(false)}
       />
 
       {/* Manual Add / Edit Teacher Modal */}

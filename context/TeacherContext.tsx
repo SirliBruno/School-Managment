@@ -47,7 +47,10 @@ import {
   parseInquiryMeta,
   serializeInquiryMeta,
 } from "@/lib/timeUtils";
-import { reconcileWithOfficialTeachers } from "@/lib/officialTeachersData";
+import {
+  reconcileWithOfficialTeachers,
+  getOfficialTeachersList,
+} from "@/lib/officialTeachersData";
 
 export interface AddTeachersResult {
   addedCount: number;
@@ -97,6 +100,7 @@ interface TeacherContextType {
   ) => { deletedTeacher?: Teacher; deletedRecords: AbsenceRecord[] };
   restoreTeacher: (teacher: Teacher, associatedRecords?: AbsenceRecord[]) => void;
   clearTeachers: () => void;
+  loadOfficialTeachers: () => number;
   updateAbsences: (id: string, count: number) => void;
   recalculateAbsences: () => void;
   recalculateTeacherAbsences: () => void;
@@ -646,62 +650,77 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
       let parsedArchDelays: ArchivedDelayNotice[] = [];
 
+      // One-time total wipe per explicit user instruction
+      const WIPE_FLAG_KEY = "school_admin_wipe_all_teachers_2026";
+      let isCleared = false;
       try {
-        const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
-        if (storedTeachers) {
-          const parsed = JSON.parse(storedTeachers);
-          if (Array.isArray(parsed)) {
-            localTeachers = parsed.map((item) =>
-              normalizeTeacher(item as Record<string, unknown>)
-            );
-          }
+        if (!localStorage.getItem(WIPE_FLAG_KEY)) {
+          localStorage.setItem(WIPE_FLAG_KEY, "done");
+          localStorage.setItem("school_admin_teachers_cleared_v1", "true");
+          localStorage.setItem(TEACHERS_STORAGE_KEY, "[]");
+          localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
+          localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
+          localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
         }
+        isCleared = localStorage.getItem("school_admin_teachers_cleared_v1") === "true";
 
-        const storedAbsences = localStorage.getItem(ABSENCES_STORAGE_KEY);
-        if (storedAbsences) {
-          const parsed = JSON.parse(storedAbsences);
-          if (Array.isArray(parsed)) {
-            localAbsences = parsed.map((a: Record<string, unknown>) => ({
-              id: String(a.id || ""),
-              teacherId: String(a.teacherId || a.teacher_id || ""),
-              teacherName: String(a.teacherName || a.teacher_name || a.name || ""),
-              jobNumber: String(a.jobNumber || a.job_number || a.username || ""),
-              specialty: String(a.specialty || ""),
-              date: String(a.date || ""),
-              type: (a.type as AbsenceRecord["type"]) || "اضطراري",
-              reason: String(a.reason || ""),
-              notes: a.notes ? String(a.notes) : undefined,
-              attachmentUrl: (a.attachmentUrl || a.attachment_url)
-                ? String(a.attachmentUrl || a.attachment_url)
-                : undefined,
-              timestamp: String(a.timestamp || new Date().toISOString()),
-            }));
+        if (!isCleared) {
+          const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
+          if (storedTeachers) {
+            const parsed = JSON.parse(storedTeachers);
+            if (Array.isArray(parsed)) {
+              localTeachers = parsed.map((item) =>
+                normalizeTeacher(item as Record<string, unknown>)
+              );
+            }
           }
-        }
 
-        const storedInquiries = localStorage.getItem(INQUIRIES_STORAGE_KEY);
-        if (storedInquiries) {
-          const parsed = JSON.parse(storedInquiries);
-          if (Array.isArray(parsed)) {
-            localInquiries = parsed;
+          const storedAbsences = localStorage.getItem(ABSENCES_STORAGE_KEY);
+          if (storedAbsences) {
+            const parsed = JSON.parse(storedAbsences);
+            if (Array.isArray(parsed)) {
+              localAbsences = parsed.map((a: Record<string, unknown>) => ({
+                id: String(a.id || ""),
+                teacherId: String(a.teacherId || a.teacher_id || ""),
+                teacherName: String(a.teacherName || a.teacher_name || a.name || ""),
+                jobNumber: String(a.jobNumber || a.job_number || a.username || ""),
+                specialty: String(a.specialty || ""),
+                date: String(a.date || ""),
+                type: (a.type as AbsenceRecord["type"]) || "اضطراري",
+                reason: String(a.reason || ""),
+                notes: a.notes ? String(a.notes) : undefined,
+                attachmentUrl: (a.attachmentUrl || a.attachment_url)
+                  ? String(a.attachmentUrl || a.attachment_url)
+                  : undefined,
+                timestamp: String(a.timestamp || new Date().toISOString()),
+              }));
+            }
           }
-        }
 
-        const storedDelayNotices = localStorage.getItem(DELAY_NOTICES_STORAGE_KEY);
-        if (storedDelayNotices) {
-          const parsed = JSON.parse(storedDelayNotices);
-          if (Array.isArray(parsed)) {
-            localDelayNotices = parsed.map((dn: Record<string, unknown>) => ({
-              ...dn,
-              shareToken:
-                (dn.shareToken as string) ||
-                (typeof crypto !== "undefined" && crypto.randomUUID
-                  ? crypto.randomUUID().replace(/-/g, "")
-                  : generateSecureToken(16)),
-              tokenExpiresAt:
-                (dn.tokenExpiresAt as string) ||
-                calculate48HoursExpiry(),
-            })) as DelayNotice[];
+          const storedInquiries = localStorage.getItem(INQUIRIES_STORAGE_KEY);
+          if (storedInquiries) {
+            const parsed = JSON.parse(storedInquiries);
+            if (Array.isArray(parsed)) {
+              localInquiries = parsed;
+            }
+          }
+
+          const storedDelayNotices = localStorage.getItem(DELAY_NOTICES_STORAGE_KEY);
+          if (storedDelayNotices) {
+            const parsed = JSON.parse(storedDelayNotices);
+            if (Array.isArray(parsed)) {
+              localDelayNotices = parsed.map((dn: Record<string, unknown>) => ({
+                ...dn,
+                shareToken:
+                  (dn.shareToken as string) ||
+                  (typeof crypto !== "undefined" && crypto.randomUUID
+                    ? crypto.randomUUID().replace(/-/g, "")
+                    : generateSecureToken(16)),
+                tokenExpiresAt:
+                  (dn.tokenExpiresAt as string) ||
+                  calculate48HoursExpiry(),
+              })) as DelayNotice[];
+            }
           }
         }
 
@@ -780,28 +799,35 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // 1. Reconcile with 37 official real teacher records (corrects IDs, fills blanks, avoids duplicates)
-      const officialReconciled = reconcileWithOfficialTeachers(localTeachers);
-      if (officialReconciled.changed) {
-        localTeachers = officialReconciled.teachers;
-        for (const abs of localAbsences) {
-          if (officialReconciled.updatedNationalIdByTeacherId.has(abs.teacherId)) {
-            const correctId = officialReconciled.updatedNationalIdByTeacherId.get(abs.teacherId)!;
-            abs.jobNumber = correctId;
-            abs.nationalId = correctId;
+      let officialReconciled = {
+        changed: false,
+        teachers: localTeachers,
+        updatedNationalIdByTeacherId: new Map<string, string>(),
+      };
+      if (!isCleared && localTeachers.length > 0) {
+        officialReconciled = reconcileWithOfficialTeachers(localTeachers);
+        if (officialReconciled.changed) {
+          localTeachers = officialReconciled.teachers;
+          for (const abs of localAbsences) {
+            if (officialReconciled.updatedNationalIdByTeacherId.has(abs.teacherId)) {
+              const correctId = officialReconciled.updatedNationalIdByTeacherId.get(abs.teacherId)!;
+              abs.jobNumber = correctId;
+              abs.nationalId = correctId;
+            }
           }
-        }
-        for (const dn of localDelayNotices) {
-          if (officialReconciled.updatedNationalIdByTeacherId.has(dn.teacherId)) {
-            const correctId = officialReconciled.updatedNationalIdByTeacherId.get(dn.teacherId)!;
-            dn.jobNumber = correctId;
-            dn.nationalId = correctId;
+          for (const dn of localDelayNotices) {
+            if (officialReconciled.updatedNationalIdByTeacherId.has(dn.teacherId)) {
+              const correctId = officialReconciled.updatedNationalIdByTeacherId.get(dn.teacherId)!;
+              dn.jobNumber = correctId;
+              dn.nationalId = correctId;
+            }
           }
-        }
-        for (const inq of localInquiries) {
-          if (officialReconciled.updatedNationalIdByTeacherId.has(inq.teacherId)) {
-            const correctId = officialReconciled.updatedNationalIdByTeacherId.get(inq.teacherId)!;
-            inq.jobNumber = correctId;
-            inq.nationalId = correctId;
+          for (const inq of localInquiries) {
+            if (officialReconciled.updatedNationalIdByTeacherId.has(inq.teacherId)) {
+              const correctId = officialReconciled.updatedNationalIdByTeacherId.get(inq.teacherId)!;
+              inq.jobNumber = correctId;
+              inq.nationalId = correctId;
+            }
           }
         }
       }
@@ -858,6 +884,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
         try {
+          if (isCleared) {
+            await Promise.all([
+              supabase.from("teachers").delete().neq("id", ""),
+              supabase.from("absence_records").delete().neq("id", ""),
+              supabase.from("delay_notices").delete().neq("id", ""),
+              supabase.from("absence_inquiries").delete().neq("id", ""),
+            ]);
+            setIsCloudConnected(true);
+            return;
+          }
           const { data: dbTeachers, error: tErr } = await supabase
             .from("teachers")
             .select("*")
@@ -2073,14 +2109,69 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const clearTeachers = useCallback(() => {
     setTeachers([]);
     setAbsenceRecords([]);
+    setDelayNotices([]);
+    setInquiries([]);
+
+    try {
+      localStorage.setItem(TEACHERS_STORAGE_KEY, "[]");
+      localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
+      localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
+      localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
+      localStorage.setItem("school_admin_teachers_cleared_v1", "true");
+    } catch (e) {
+      console.error("فشل حفظ حالة الإفراغ في التخزين المحلي:", e);
+    }
+
+    if (isSupabaseConfigured() && supabase) {
+      Promise.all([
+        supabase.from("teachers").delete().neq("id", ""),
+        supabase.from("absence_records").delete().neq("id", ""),
+        supabase.from("delay_notices").delete().neq("id", ""),
+        supabase.from("absence_inquiries").delete().neq("id", ""),
+      ]).catch((err) => {
+        console.warn("خطأ أثناء تفريغ سوبابيز:", err);
+      });
+    }
+  }, []);
+
+  // 7.b Load official 37 verified teachers
+  const loadOfficialTeachers = useCallback((): number => {
+    const list = getOfficialTeachersList();
+    setTeachers(list);
+
+    try {
+      localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(list));
+      localStorage.removeItem("school_admin_teachers_cleared_v1");
+    } catch (e) {
+      console.error("فشل حفظ الكادر المعتمد في التخزين المحلي:", e);
+    }
 
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("teachers")
-        .delete()
-        .neq("id", "")
+        .upsert(
+          list.map((t) => ({
+            id: t.id,
+            name: t.fullName,
+            full_name: t.fullName,
+            national_id: t.nationalId,
+            job_number: t.nationalId,
+            username: t.nationalId,
+            mobile: t.mobile,
+            email: t.email || null,
+            employment_status: t.employmentStatus,
+            job_title: t.jobTitle,
+            teaching_field: t.teachingField,
+            specialty: t.specialty,
+            total_absences: 0,
+            total_delay_notices: 0,
+            updated_at: new Date().toISOString(),
+          }))
+        )
         .then(() => {});
     }
+
+    return list.length;
   }, []);
 
   // 8. Update absences manually
@@ -3637,6 +3728,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       deleteTeacher,
       restoreTeacher,
       clearTeachers,
+      loadOfficialTeachers,
       updateAbsences,
       recalculateAbsences,
       recalculateTeacherAbsences,
@@ -3684,6 +3776,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       deleteTeacher,
       restoreTeacher,
       clearTeachers,
+      loadOfficialTeachers,
       updateAbsences,
       recalculateAbsences,
       recalculateTeacherAbsences,

@@ -25,6 +25,7 @@ import {
 import {
   OFFICIAL_TEACHERS,
   reconcileWithOfficialTeachers,
+  getOfficialTeachersList,
 } from "../officialTeachersData";
 import * as XLSX from "xlsx";
 
@@ -683,6 +684,34 @@ describe("Teacher Deduplication and Import System", () => {
       expect(maryam).toBeDefined();
       expect(maryam?.nationalId).toBe("1110566468"); // Fixed 10-digit ID!
       expect(updatedNationalIdByTeacherId.get("tea-maryam")).toBe("1110566468");
+    });
+
+    it("does not auto-populate 37 teachers when list is empty unless explicitly requested", () => {
+      const emptyResult = reconcileWithOfficialTeachers([]);
+      expect(emptyResult.teachers.length).toBe(0);
+      expect(emptyResult.changed).toBe(false);
+
+      const seededResult = reconcileWithOfficialTeachers([], { insertMissing: true });
+      expect(seededResult.teachers.length).toBe(37);
+      expect(seededResult.changed).toBe(true);
+    });
+
+    it("getOfficialTeachersList returns 37 valid teachers with 10-digit national IDs and clean phone numbers", () => {
+      const list = getOfficialTeachersList();
+      expect(list.length).toBe(37);
+
+      const raniah = list.find((t) => t.fullName === "رانيه كمال محمد قاروت");
+      expect(raniah).toBeDefined();
+      expect(raniah?.nationalId).toBe("1019409836");
+      expect(raniah?.mobile).toBe("966552244081");
+
+      const uniqueIds = new Set(list.map((t) => t.nationalId));
+      expect(uniqueIds.size).toBe(37);
+
+      for (const t of list) {
+        expect(t.nationalId).toMatch(/^1\d{9}$/); // Exactly 10 digits starting with 1
+        expect(t.mobile).toMatch(/^966\d{9}$/); // Saudi mobile
+      }
     });
   });
 });

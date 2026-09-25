@@ -411,13 +411,20 @@ export function createTeacherFromOfficial(off: OfficialTeacherRecord): Teacher {
   };
 }
 
+export function getOfficialTeachersList(): Teacher[] {
+  return OFFICIAL_TEACHERS.map(createTeacherFromOfficial);
+}
+
 /**
  * Reconciles any teachers list against the 37 official records:
  * - Fixes any truncated or invalid national IDs (e.g. 2309, 6468, 9836, 298990892)
  * - Fills in missing official details
  * - Prevents duplicate teacher entries
  */
-export function reconcileWithOfficialTeachers(existingTeachers: Teacher[]): {
+export function reconcileWithOfficialTeachers(
+  existingTeachers: Teacher[],
+  options?: { insertMissing?: boolean }
+): {
   teachers: Teacher[];
   changed: boolean;
   updatedNationalIdByTeacherId: Map<string, string>;
@@ -426,13 +433,20 @@ export function reconcileWithOfficialTeachers(existingTeachers: Teacher[]): {
   const updatedNationalIdByTeacherId = new Map<string, string>();
 
   if (!existingTeachers || existingTeachers.length === 0) {
-    const list = OFFICIAL_TEACHERS.map(createTeacherFromOfficial);
-    for (const t of list) {
-      updatedNationalIdByTeacherId.set(t.id, t.nationalId);
+    if (options?.insertMissing) {
+      const list = getOfficialTeachersList();
+      for (const t of list) {
+        updatedNationalIdByTeacherId.set(t.id, t.nationalId);
+      }
+      return {
+        teachers: list,
+        changed: true,
+        updatedNationalIdByTeacherId,
+      };
     }
     return {
-      teachers: list,
-      changed: true,
+      teachers: [],
+      changed: false,
       updatedNationalIdByTeacherId,
     };
   }
@@ -503,7 +517,7 @@ export function reconcileWithOfficialTeachers(existingTeachers: Teacher[]): {
         current.updatedAt = new Date().toISOString();
         changed = true;
       }
-    } else {
+    } else if (options?.insertMissing !== false) {
       // Missing teacher from official roster: add them
       const newTeacher = createTeacherFromOfficial(off);
       updatedTeachers.push(newTeacher);
