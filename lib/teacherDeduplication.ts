@@ -8,6 +8,7 @@ import {
   ArchivedDelayNotice,
   ExcelTeacherRow,
 } from "@/types/teacher";
+import { OFFICIAL_TEACHERS } from "./officialTeachersData";
 
 /**
  * Normalizes Eastern Arabic-Indic digits (٠-٩) and Persian digits (۰-۹) to standard ASCII digits (0-9).
@@ -342,8 +343,23 @@ export function validateAndParseRow(
     };
   }
 
-  // Check 2: National ID is mandatory
-  const cleanNationalId = normalizeNationalId(rawNationalId);
+  // Check 2: National ID resolution and mandatory check
+  let cleanNationalId = normalizeNationalId(rawNationalId);
+
+  // Auto-resolve official 10-digit ID if username was truncated or not a 10-digit ID
+  if (!cleanNationalId || cleanNationalId.length !== 10) {
+    const normName = normalizeArabicName(cleanFullName);
+    const normMob = normalizeSaudiMobile(rawMobile);
+    const matchedOfficial = OFFICIAL_TEACHERS.find(
+      (off) =>
+        (normName && normalizeArabicName(off.fullName) === normName) ||
+        (normMob && normalizeSaudiMobile(off.mobile) === normMob)
+    );
+    if (matchedOfficial) {
+      cleanNationalId = matchedOfficial.nationalId;
+    }
+  }
+
   if (!cleanNationalId) {
     return {
       skippedReason: "رقم الهوية فارغ",

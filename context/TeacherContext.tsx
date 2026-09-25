@@ -47,6 +47,7 @@ import {
   parseInquiryMeta,
   serializeInquiryMeta,
 } from "@/lib/timeUtils";
+import { reconcileWithOfficialTeachers } from "@/lib/officialTeachersData";
 
 export interface AddTeachersResult {
   addedCount: number;
@@ -778,7 +779,34 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
 
-      // Reconcile, deduplicate and audit local data
+      // 1. Reconcile with 37 official real teacher records (corrects IDs, fills blanks, avoids duplicates)
+      const officialReconciled = reconcileWithOfficialTeachers(localTeachers);
+      if (officialReconciled.changed) {
+        localTeachers = officialReconciled.teachers;
+        for (const abs of localAbsences) {
+          if (officialReconciled.updatedNationalIdByTeacherId.has(abs.teacherId)) {
+            const correctId = officialReconciled.updatedNationalIdByTeacherId.get(abs.teacherId)!;
+            abs.jobNumber = correctId;
+            abs.nationalId = correctId;
+          }
+        }
+        for (const dn of localDelayNotices) {
+          if (officialReconciled.updatedNationalIdByTeacherId.has(dn.teacherId)) {
+            const correctId = officialReconciled.updatedNationalIdByTeacherId.get(dn.teacherId)!;
+            dn.jobNumber = correctId;
+            dn.nationalId = correctId;
+          }
+        }
+        for (const inq of localInquiries) {
+          if (officialReconciled.updatedNationalIdByTeacherId.has(inq.teacherId)) {
+            const correctId = officialReconciled.updatedNationalIdByTeacherId.get(inq.teacherId)!;
+            inq.jobNumber = correctId;
+            inq.nationalId = correctId;
+          }
+        }
+      }
+
+      // 2. Reconcile, deduplicate and audit local data
       const reconciled = auditAndMigrateData(
         localTeachers,
         localAbsences,
@@ -799,6 +827,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Save back clean data to localStorage if migration/cleanup occurred
       if (
+        officialReconciled.changed ||
         reconciled.migratedAbsencesCount > 0 ||
         reconciled.orphanAbsencesCount > 0 ||
         reconciled.migratedDelayNoticesCount > 0 ||

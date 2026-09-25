@@ -22,6 +22,10 @@ import {
   ArchivedTeacher,
   ExcelTeacherRow,
 } from "@/types/teacher";
+import {
+  OFFICIAL_TEACHERS,
+  reconcileWithOfficialTeachers,
+} from "../officialTeachersData";
 import * as XLSX from "xlsx";
 
 describe("Teacher Deduplication and Import System", () => {
@@ -608,6 +612,77 @@ describe("Teacher Deduplication and Import System", () => {
       expect(result.removedTeacherIds).toContain("tch-2");
       // All absences repointed to the single primary teacher ID
       expect(result.cleanAbsences.every((a) => a.teacherId === result.cleanTeachers[0].id)).toBe(true);
+    });
+  });
+
+  // =========================================================================
+  // Official Authentic Teachers Roster & Incomplete ID Auto-Correction
+  // =========================================================================
+  describe("Official Authentic Teachers Roster & Incomplete ID Auto-Correction", () => {
+    it("contains exactly 37 official real teachers with 0 duplicates and valid 10-digit IDs", () => {
+      expect(OFFICIAL_TEACHERS.length).toBe(37);
+
+      const idSet = new Set<string>();
+      const mobileSet = new Set<string>();
+      const nameSet = new Set<string>();
+
+      for (const t of OFFICIAL_TEACHERS) {
+        expect(t.nationalId).toMatch(/^\d{10}$/);
+        expect(t.nationalId.startsWith("1")).toBe(true);
+        expect(idSet.has(t.nationalId)).toBe(false);
+        idSet.add(t.nationalId);
+
+        expect(t.mobile).toMatch(/^9665\d{8}$/);
+        expect(mobileSet.has(t.mobile)).toBe(false);
+        mobileSet.add(t.mobile);
+
+        expect(nameSet.has(t.fullName)).toBe(false);
+        nameSet.add(t.fullName);
+
+        expect(["دائم", "عقد"]).toContain(t.employmentStatus);
+        expect(t.specialty.length).toBeGreaterThan(0);
+      }
+    });
+
+    it("corrects incomplete national IDs (e.g. 2309 and 6468) automatically", () => {
+      const faultyTeachers: Teacher[] = [
+        {
+          id: "tea-kholood",
+          nationalId: "2309",
+          fullName: "خلود خالد محمد الجيزاني",
+          name: "خلود خالد محمد الجيزاني",
+          username: "kholood2309",
+          jobNumber: "2309",
+          totalAbsences: 0,
+          totalDelayNotices: 0,
+        },
+        {
+          id: "tea-maryam",
+          nationalId: "6468",
+          fullName: "مريم مساعد فايز الرحيلي",
+          name: "مريم مساعد فايز الرحيلي",
+          username: "mm6468",
+          jobNumber: "6468",
+          totalAbsences: 0,
+          totalDelayNotices: 0,
+        },
+      ];
+
+      const { teachers, changed, updatedNationalIdByTeacherId } =
+        reconcileWithOfficialTeachers(faultyTeachers);
+
+      expect(changed).toBe(true);
+      expect(teachers.length).toBe(37); // All 37 teachers populated without duplicates
+
+      const kholood = teachers.find((t) => t.fullName === "خلود خالد محمد الجيزاني");
+      expect(kholood).toBeDefined();
+      expect(kholood?.nationalId).toBe("1010262309"); // Fixed 10-digit ID!
+      expect(updatedNationalIdByTeacherId.get("tea-kholood")).toBe("1010262309");
+
+      const maryam = teachers.find((t) => t.fullName === "مريم مساعد فايز الرحيلي");
+      expect(maryam).toBeDefined();
+      expect(maryam?.nationalId).toBe("1110566468"); // Fixed 10-digit ID!
+      expect(updatedNationalIdByTeacherId.get("tea-maryam")).toBe("1110566468");
     });
   });
 });
