@@ -85,8 +85,9 @@ export default function LoginPage() {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!username.trim()) {
-      setErrorMsg("يرجى إدخال اسم المستخدم");
+    const cleanInput = username.trim();
+    if (!cleanInput) {
+      setErrorMsg("يرجى إدخال البريد الإلكتروني أو اسم المستخدم");
       return;
     }
 
@@ -97,11 +98,11 @@ export default function LoginPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await login(username, password);
+      const res = await login(cleanInput, password);
       if (res.success) {
         router.push("/");
       } else {
-        setErrorMsg(res.error || "اسم المستخدم أو كلمة المرور غير صحيحة");
+        setErrorMsg(res.error || "تعذر تسجيل الدخول، يرجى مراجعة البيانات المدخلة");
       }
     } catch {
       setErrorMsg("حدث خطأ غير متوقع أثناء تسجيل الدخول");
@@ -109,7 +110,6 @@ export default function LoginPage() {
       setIsSubmitting(false);
     }
   };
-
 
   if (isLoading) {
     return (
@@ -170,10 +170,10 @@ export default function LoginPage() {
 
           {/* نموذج الإدخال */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* حقل اسم المستخدم */}
+            {/* حقل اسم المستخدم أو البريد الإلكتروني */}
             <div className="space-y-1.5 text-right">
               <label className="block text-xs font-bold text-slate-700">
-                اسم المستخدم
+                البريد الإلكتروني أو اسم المستخدم
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
@@ -187,8 +187,8 @@ export default function LoginPage() {
                     setUsername(e.target.value);
                     if (errorMsg) setErrorMsg(null);
                   }}
-                  placeholder="wakila"
-                  autoComplete="username"
+                  placeholder="admin@school.com أو wakila"
+                  autoComplete="username email"
                   required
                   className="w-full pr-10 pl-4 py-3 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-medium"
                 />

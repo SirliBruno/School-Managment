@@ -243,3 +243,45 @@ export function getDatesInRange(startDateStr: string, endDateStr: string): strin
   }
   return dates;
 }
+
+/**
+ * ترميز بيانات فترة الغياب المتعددة لحفظها بأمان في admin_notes في سوبابيز كطبقة أمان إضافية
+ */
+export function serializeInquiryMeta(
+  absenceEndDate?: string,
+  daysCount?: number,
+  notes?: string
+): string | undefined {
+  if (!absenceEndDate && !notes) return undefined;
+  if (!absenceEndDate) return notes;
+  const meta = {
+    end: absenceEndDate,
+    days: daysCount || 2,
+    text: notes || "",
+  };
+  return JSON.stringify(meta);
+}
+
+/**
+ * فك ترميز بيانات فترة الغياب المتعددة من admin_notes
+ */
+export function parseInquiryMeta(rawNotes?: string | null): {
+  absenceEndDate?: string;
+  daysCount?: number;
+  adminNotes?: string;
+} {
+  if (!rawNotes) return {};
+  try {
+    if (rawNotes.startsWith("{") && rawNotes.includes('"end"')) {
+      const parsed = JSON.parse(rawNotes);
+      return {
+        absenceEndDate: parsed.end || undefined,
+        daysCount: parsed.days ? Number(parsed.days) : undefined,
+        adminNotes: parsed.text || undefined,
+      };
+    }
+  } catch {
+    // not JSON
+  }
+  return { adminNotes: rawNotes };
+}

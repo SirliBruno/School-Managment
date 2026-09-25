@@ -80,6 +80,9 @@ export interface DbAbsenceInquiryRow {
   specialty: string | null;
   mobile: string | null;
   absence_date: string;
+  absence_end_date?: string | null;
+  days_count?: number | null;
+  is_multi_day?: boolean | null;
   token: string;
   status: InquiryStatus;
   expires_at: string;

@@ -49,6 +49,9 @@ CREATE TABLE IF NOT EXISTS public.absence_inquiries (
     specialty TEXT,
     mobile TEXT,
     absence_date DATE NOT NULL,
+    absence_end_date DATE,
+    days_count INTEGER DEFAULT 1,
+    is_multi_day BOOLEAN DEFAULT FALSE,
     token TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL DEFAULT 'pending', -- pending, submitted, approved, rejected, expired
     expires_at TIMESTAMPTZ NOT NULL,
@@ -59,6 +62,11 @@ CREATE TABLE IF NOT EXISTS public.absence_inquiries (
     submitted_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- تحديث حقول فترة الغياب في حال كان الجدول منشأ مسبقاً
+ALTER TABLE public.absence_inquiries ADD COLUMN IF NOT EXISTS absence_end_date DATE;
+ALTER TABLE public.absence_inquiries ADD COLUMN IF NOT EXISTS days_count INTEGER DEFAULT 1;
+ALTER TABLE public.absence_inquiries ADD COLUMN IF NOT EXISTS is_multi_day BOOLEAN DEFAULT FALSE;
 
 CREATE INDEX IF NOT EXISTS idx_inquiries_token ON public.absence_inquiries(token);
 CREATE INDEX IF NOT EXISTS idx_inquiries_teacher_id ON public.absence_inquiries(teacher_id);

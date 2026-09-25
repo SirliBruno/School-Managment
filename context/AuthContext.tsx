@@ -7,72 +7,134 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
+import type { Session, User } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-import { hashPassword, verifyPassword } from "@/lib/authCrypto";
 
 export interface AdminUser {
+  id: string;
+  email: string;
   username: string;
   fullName: string;
   role: string;
-}
-
-interface StoredCredentials {
-  username: string;
-  passwordHash: string;
-  fullName: string;
-  role: string;
-  updatedAt: string;
 }
 
 interface AuthContextType {
   user: AdminUser | null;
+  session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (
-    username: string,
+    identifier: string,
     password: string
   ) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateCredentials: (
-    newUsername: string,
+    newUsername?: string,
     newPassword?: string,
     newFullName?: string
   ) => Promise<{ success: boolean; error?: string }>;
 }
 
-const SESSION_KEY = "school_admin_session_v1";
-const LOCAL_CREDS_KEY = "school_admin_credentials_v1";
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours session validity
+/**
+ * ترجمة رسائل أخطاء Supabase Auth إلى لغة عربية واضحة ومفهومة للمستخدم
+ */
+export const mapSupabaseAuthError = (err: unknown): string => {
+  if (!err) return "حدث خطأ غير متوقع أثناء عملية المصادقة";
 
-interface StoredSession {
-  user: AdminUser;
-  expiresAt: number;
-}
+  const errorObj = err as { message?: string; error_description?: string; code?: string };
+  const msg = (errorObj.message || errorObj.error_description || "").toLowerCase();
+  const code = (errorObj.code || "").toLowerCase();
 
-// Helper to set secure cookie
-const setSessionCookie = (user: AdminUser, maxAgeSeconds: number) => {
-  if (typeof document !== "undefined") {
-    const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
-    document.cookie = `school_admin_auth=${encodeURIComponent(
-      user.username
-    )}; Path=/; max-age=${maxAgeSeconds}; SameSite=Strict${isHttps ? "; Secure" : ""}`;
+  if (
+    msg.includes("invalid login credentials") ||
+    msg.includes("invalid_credentials") ||
+    code === "invalid_credentials" ||
+    msg.includes("invalid username or password")
+  ) {
+    return "بيانات الاعتماد غير صحيحة، يرجى التأكد من البريد الإلكتروني / اسم المستخدم وكلمة المرور";
   }
+
+  if (
+    msg.includes("email not confirmed") ||
+    code === "email_not_confirmed" ||
+    msg.includes("email address not confirmed")
+  ) {
+    return "البريد الإلكتروني لم يتم تأكيده بعد. يرجى تفعيل الحساب من الرسالة المرسلة لبريدك، أو تعطيل خيار تأكيد البريد في إعدادات Supabase";
+  }
+
+  if (
+    msg.includes("invalid email") ||
+    msg.includes("unable to validate email") ||
+    code === "validation_failed"
+  ) {
+    return "صيغة البريد الإلكتروني غير صالحة. يرجى كتابة بريد إلكتروني صحيح (مثال: admin@school.com)";
+  }
+
+  if (msg.includes("user not found") || code === "user_not_found") {
+    return "لا يوجد حساب مسجل بهذه البيانات في Supabase";
+  }
+
+  if (
+    msg.includes("password should be at least") ||
+    msg.includes("weak_password") ||
+    msg.includes("password is too short")
+  ) {
+    return "يجب ألا تقل كلمة المرور عن 6 خانات وفقاً لسياسات أمان Supabase";
+  }
+
+  if (
+    msg.includes("rate limit") ||
+    msg.includes("too many requests") ||
+    code === "over_request_rate_limit" ||
+    code === "over_email_send_rate_limit"
+  ) {
+    return "تم تجاوز الحد المسموح به من المحاولات، يرجى الانتظار قليلاً ثم إعادة المحاولة";
+  }
+
+  if (
+    msg.includes("network") ||
+    msg.includes("failed to fetch") ||
+    msg.includes("fetch failed") ||
+    msg.includes("connection refused")
+  ) {
+    return "تعذر الاتصال بخادم Supabase، يرجى التأكد من اتصال الإنترنت وصحة إعدادات .env";
+  }
+
+  if (msg.includes("auth session missing")) {
+    return "انتهت جلسة تسجيل الدخول الحالية، يرجى تسجيل الدخول مجدداً";
+  }
+
+  return errorObj.message || "فشلت عملية المصادقة، يرجى المحاولة مرة أخرى";
 };
 
-const clearSessionCookie = () => {
-  if (typeof document !== "undefined") {
-    document.cookie = "school_admin_auth=; Path=/; max-age=0; SameSite=Strict";
-  }
-};
+/**
+ * استخراج بيانات المستخدم الإدارية من مستخدم وجلسة Supabase
+ */
+const extractAdminUser = (sbUser: User): AdminUser => {
+  const metadata = sbUser.user_metadata || {};
+  const email = sbUser.email || "";
+  const fallbackUsername = email ? email.split("@")[0] : "wakila";
 
-// الحساب الافتراضي للوكيلة: wakila / 123456
-const DEFAULT_STORED_CREDS: StoredCredentials = {
-  username: "wakila",
-  passwordHash:
-    "b70712d928b2a236fb29eaed2cd9d9720885bb65609b4063e15df5d4ca28019c", // hash for '123456'
-  fullName: "وكيلة الشؤون التعليمية",
-  role: "vice_principal",
-  updatedAt: new Date().toISOString(),
+  const username =
+    (metadata.username as string) ||
+    (metadata.user_name as string) ||
+    fallbackUsername;
+
+  const fullName =
+    (metadata.full_name as string) ||
+    (metadata.fullName as string) ||
+    (metadata.name as string) ||
+    "وكيلة الشؤون التعليمية";
+
+  const role = (metadata.role as string) || "vice_principal";
+
+  return {
+    id: sbUser.id,
+    email,
+    username,
+    fullName,
+    role,
+  };
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,271 +143,251 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<AdminUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // استرجاع والتحقق من صلاحية الجلسة الحالية عند الإقلاع
+  // إدارة جلسة المستخدم الحقيقية بالكامل عبر Supabase Auth
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const savedSession = localStorage.getItem(SESSION_KEY);
-        if (savedSession) {
-          const parsed = JSON.parse(savedSession);
-          // Check expiration
-          const expiresAt = parsed.expiresAt as number | undefined;
-          if (expiresAt && Date.now() > expiresAt) {
-            console.info("انتهت صلاحية جلسة تسجيل الدخول الإدارية (تجاوزت 12 ساعة).");
-            localStorage.removeItem(SESSION_KEY);
-            clearSessionCookie();
-            setUser(null);
-          } else {
-            const activeUser: AdminUser = parsed.user || {
-              username: parsed.username,
-              fullName: parsed.fullName || "وكيلة الشؤون التعليمية",
-              role: parsed.role || "vice_principal",
-            };
-            setUser(activeUser);
-            // Refresh cookie
-            setSessionCookie(activeUser, 12 * 60 * 60);
-          }
-        }
-      }
-    } catch (e) {
-      console.error("خطأ في قراءة الجلسة المحفوظة:", e);
-    } finally {
+    let isMounted = true;
+
+    if (!isSupabaseConfigured() || !supabase) {
+      console.warn("Supabase غير مهيأ، يرجى التحقق من متغيرات البيئة في .env");
       setIsLoading(false);
+      return;
     }
-  }, []);
 
-  // Periodic session expiration check (every 5 minutes)
-  useEffect(() => {
-    if (!user) return;
-    const interval = setInterval(() => {
-      try {
-        const saved = localStorage.getItem(SESSION_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed.expiresAt && Date.now() > parsed.expiresAt) {
-            localStorage.removeItem(SESSION_KEY);
-            clearSessionCookie();
-            setUser(null);
-          }
+    // 1. جلب الجلسة الحالية المخزنة في Supabase Auth Client
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (!isMounted) return;
+        if (!error && data.session) {
+          setSession(data.session);
+          setUser(extractAdminUser(data.session.user));
+        } else {
+          setSession(null);
+          setUser(null);
         }
-      } catch {}
-    }, 5 * 60 * 1000);
+      })
+      .catch((err) => {
+        console.error("خطأ أثناء استرجاع جلسة Supabase:", err);
+      })
+      .finally(() => {
+        if (isMounted) setIsLoading(false);
+      });
 
-    return () => clearInterval(interval);
-  }, [user]);
-
-  /**
-   * جلب بيانات الاعتماد المخزنة (من سوبابيز أولاً مع استخدام التخزين المحلي كاحتياطي)
-   */
-  const getStoredCredentials = useCallback(async (): Promise<StoredCredentials> => {
-    // 1. محاولة الجلب من سوبابيز إذا كانت متصلة
-    if (isSupabaseConfigured() && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from("admin_credentials")
-          .select("*")
-          .eq("id", "vice_principal")
-          .maybeSingle();
-
-        if (!error && data && data.username && data.password_hash) {
-          const creds: StoredCredentials = {
-            username: data.username,
-            passwordHash: data.password_hash,
-            fullName: data.full_name || "وكيلة الشؤون التعليمية",
-            role: data.role || "vice_principal",
-            updatedAt: data.updated_at || new Date().toISOString(),
-          };
-          // تحديث النسخة المحلية
-          if (typeof window !== "undefined") {
-            localStorage.setItem(LOCAL_CREDS_KEY, JSON.stringify(creds));
-          }
-          return creds;
-        }
-      } catch (e) {
-        console.warn("تعذر الاستعلام من سوبابيز لبيانات الحساب، الانتقال للنسخة المحلية:", e);
+    // 2. الاستماع الفوري واللحظي لتغيرات حالة المصادقة (onAuthStateChange)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!isMounted) return;
+      if (newSession && newSession.user) {
+        setSession(newSession);
+        setUser(extractAdminUser(newSession.user));
+      } else {
+        setSession(null);
+        setUser(null);
       }
-    }
+      setIsLoading(false);
+    });
 
-    // 2. القراءة من التخزين المحلي
-    if (typeof window !== "undefined") {
-      try {
-        const local = localStorage.getItem(LOCAL_CREDS_KEY);
-        if (local) {
-          return JSON.parse(local) as StoredCredentials;
-        }
-      } catch (e) {
-        console.error("خطأ في قراءة بيانات الحساب المحلية:", e);
-      }
-    }
-
-    // 3. القيمة الافتراضية
-    return DEFAULT_STORED_CREDS;
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   /**
-   * تسجيل الدخول
+   * تسجيل الدخول الفعلي عبر supabase.auth.signInWithPassword
    */
   const login = useCallback(
     async (
-      username: string,
+      identifier: string,
       password: string
     ): Promise<{ success: boolean; error?: string }> => {
-      const cleanUser = username.trim();
-      if (!cleanUser || !password) {
-        return { success: false, error: "يرجى كتابة اسم المستخدم وكلمة المرور" };
-      }
-
-      const creds = await getStoredCredentials();
-
-      // مطابقة اسم المستخدم
-      if (cleanUser.toLowerCase() !== creds.username.toLowerCase()) {
+      const cleanIdentifier = identifier.trim();
+      if (!cleanIdentifier || !password) {
         return {
           success: false,
-          error: "اسم المستخدم أو كلمة المرور غير صحيحة",
+          error: "يرجى إدخال البريد الإلكتروني / اسم المستخدم وكلمة المرور",
         };
       }
 
-      // مطابقة كلمة المرور
-      const isMatch = await verifyPassword(password, creds.passwordHash);
-      if (!isMatch) {
+      if (!isSupabaseConfigured() || !supabase) {
         return {
           success: false,
-          error: "اسم المستخدم أو كلمة المرور غير صحيحة",
+          error:
+            "إعدادات الربط مع Supabase غير متوفرة في ملف .env (تأكد من NEXT_PUBLIC_SUPABASE_URL و NEXT_PUBLIC_SUPABASE_ANON_KEY أو VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY)",
         };
       }
 
-      // نجاح الدخول - حفظ الجلسة الآمنة بمهلة 12 ساعة
-      const activeUser: AdminUser = {
-        username: creds.username,
-        fullName: creds.fullName,
-        role: creds.role,
-      };
+      // تحديد البريد الإلكتروني: إذا تم إدخال بريد إلكتروني صريح يحتوي على @، نستخدمه مباشرة
+      // إذا كان اسم مستخدم بدون @، نجهزه بصيغة بريد افتراضية متوافقة
+      const targetEmail = cleanIdentifier.includes("@")
+        ? cleanIdentifier
+        : `${cleanIdentifier}@school.edu.sa`;
 
-      const expiresAt = Date.now() + SESSION_TTL_MS;
-      const sessionData: StoredSession = {
-        user: activeUser,
-        expiresAt,
-      };
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: targetEmail,
+          password: password,
+        });
 
-      setUser(activeUser);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        setSessionCookie(activeUser, 12 * 60 * 60);
+        if (error) {
+          // إذا فشل بالبريد الافتراضي وكان الإدخال اسم مستخدم فقط، نجرب صيغة أخرى شائعة (@school.com)
+          if (!cleanIdentifier.includes("@") && error.message.includes("Invalid login credentials")) {
+            const secondAttempt = await supabase.auth.signInWithPassword({
+              email: `${cleanIdentifier}@school.com`,
+              password: password,
+            });
+
+            if (!secondAttempt.error && secondAttempt.data.session) {
+              setSession(secondAttempt.data.session);
+              setUser(extractAdminUser(secondAttempt.data.session.user));
+              return { success: true };
+            }
+          }
+
+          return {
+            success: false,
+            error: mapSupabaseAuthError(error),
+          };
+        }
+
+        if (data.session) {
+          setSession(data.session);
+          setUser(extractAdminUser(data.session.user));
+          return { success: true };
+        }
+
+        return {
+          success: false,
+          error: "لم يتم إنشاء جلسة الدخول بنجاح، يرجى المحاولة لاحقاً",
+        };
+      } catch (err) {
+        return {
+          success: false,
+          error: mapSupabaseAuthError(err),
+        };
       }
-
-      return { success: true };
     },
-    [getStoredCredentials]
+    []
   );
 
   /**
-   * تسجيل الخروج
+   * تسجيل الخروج الفعلي عبر supabase.auth.signOut
    */
-  const logout = useCallback(() => {
-    setUser(null);
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(SESSION_KEY);
-      clearSessionCookie();
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      if (supabase) {
+        await supabase.auth.signOut();
+      }
+    } catch (e) {
+      console.warn("تنبيه أثناء تسجيل الخروج من Supabase:", e);
+    } finally {
+      setUser(null);
+      setSession(null);
     }
   }, []);
 
   /**
-   * تحديث اسم المستخدم أو كلمة المرور
+   * تحديث بيانات المستخدم (اسم المستخدم، الاسم الكامل، وكلمة المرور) في Supabase Auth برمجياً
    */
   const updateCredentials = useCallback(
     async (
-      newUsername: string,
+      newUsername?: string,
       newPassword?: string,
       newFullName?: string
     ): Promise<{ success: boolean; error?: string }> => {
-      const cleanUser = newUsername.trim();
-      if (!cleanUser) {
-        return { success: false, error: "اسم المستخدم لا يمكن أن يكون فارغاً" };
+      if (!isSupabaseConfigured() || !supabase) {
+        return {
+          success: false,
+          error: "Supabase غير متصل، لا يمكن تحديث بيانات الحساب",
+        };
       }
 
-      if (cleanUser.length < 3) {
+      const cleanUser = newUsername?.trim();
+      if (cleanUser !== undefined && cleanUser.length > 0 && cleanUser.length < 3) {
         return {
           success: false,
           error: "اسم المستخدم يجب أن يتكون من 3 أحرف على الأقل",
         };
       }
 
-      if (newPassword && newPassword.length < 4) {
+      if (newPassword && newPassword.length < 6) {
         return {
           success: false,
-          error: "كلمة المرور يجب أن تتكون من 4 خانات على الأقل",
+          error: "كلمة المرور في Supabase يجب أن تتكون من 6 خانات على الأقل",
         };
       }
 
-      const currentCreds = await getStoredCredentials();
-      const updatedHash = newPassword
-        ? await hashPassword(newPassword)
-        : currentCreds.passwordHash;
-      const updatedFullName = newFullName?.trim() || currentCreds.fullName;
+      try {
+        const updatePayload: {
+          password?: string;
+          data?: Record<string, unknown>;
+        } = {};
 
-      const newCreds: StoredCredentials = {
-        username: cleanUser,
-        passwordHash: updatedHash,
-        fullName: updatedFullName,
-        role: currentCreds.role,
-        updatedAt: new Date().toISOString(),
-      };
-
-      // 1. التحديث المحلي
-      if (typeof window !== "undefined") {
-        localStorage.setItem(LOCAL_CREDS_KEY, JSON.stringify(newCreds));
-      }
-
-      // 2. التحديث في سوبابيز
-      if (isSupabaseConfigured() && supabase) {
-        try {
-          const { error } = await supabase.from("admin_credentials").upsert({
-            id: "vice_principal",
-            username: newCreds.username,
-            password_hash: newCreds.passwordHash,
-            full_name: newCreds.fullName,
-            role: newCreds.role,
-            updated_at: newCreds.updatedAt,
-          });
-          if (error) {
-            console.warn("تنبيه مزامنة سوبابيز عند تحديث الحساب:", error.message);
-          }
-        } catch (err) {
-          console.warn("تعذر رفع تحديث الحساب لسوبابيز:", err);
+        if (newPassword && newPassword.trim()) {
+          updatePayload.password = newPassword.trim();
         }
+
+        const currentMeta = user || ({} as Partial<AdminUser>);
+        const updatedUsername = cleanUser || currentMeta.username || "wakila";
+        const updatedFullName =
+          newFullName?.trim() || currentMeta.fullName || "وكيلة الشؤون التعليمية";
+
+        updatePayload.data = {
+          username: updatedUsername,
+          user_name: updatedUsername,
+          full_name: updatedFullName,
+          fullName: updatedFullName,
+          role: currentMeta.role || "vice_principal",
+        };
+
+        const { data, error } = await supabase.auth.updateUser(updatePayload);
+
+        if (error) {
+          return {
+            success: false,
+            error: mapSupabaseAuthError(error),
+          };
+        }
+
+        if (data.user) {
+          const updated = extractAdminUser(data.user);
+          setUser(updated);
+        }
+
+        // مزامنة إضافية لجدول admin_credentials (إن وجد كجدول مكمل)
+        try {
+          await supabase.from("admin_credentials").upsert({
+            id: "vice_principal",
+            username: updatedUsername,
+            full_name: updatedFullName,
+            role: currentMeta.role || "vice_principal",
+            updated_at: new Date().toISOString(),
+          });
+        } catch {
+          // تجاوز إذا كان الجدول غير مستخدم
+        }
+
+        return { success: true };
+      } catch (err) {
+        return {
+          success: false,
+          error: mapSupabaseAuthError(err),
+        };
       }
-
-      // 3. تحديث الجلسة النشطة
-      const updatedUser: AdminUser = {
-        username: newCreds.username,
-        fullName: newCreds.fullName,
-        role: newCreds.role,
-      };
-
-      const expiresAt = Date.now() + SESSION_TTL_MS;
-      const updatedSession: StoredSession = {
-        user: updatedUser,
-        expiresAt,
-      };
-
-      setUser(updatedUser);
-      if (typeof window !== "undefined") {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(updatedSession));
-        setSessionCookie(updatedUser, 12 * 60 * 60);
-      }
-
-      return { success: true };
     },
-    [getStoredCredentials]
+    [user]
   );
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: Boolean(user),
+        session,
+        isAuthenticated: Boolean(session && user),
         isLoading,
         login,
         logout,

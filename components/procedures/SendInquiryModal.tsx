@@ -168,7 +168,8 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         return;
       }
 
-      const inquiryLink = `${getBaseOrigin()}/inquiry/${res.inquiry.token}`;
+      const queryParam = isMulti ? `?end=${absenceEndDate}&days=${calculatedDays}` : "";
+      const inquiryLink = `${getBaseOrigin()}/inquiry/${res.inquiry.token}${queryParam}`;
       const message = generateInquiryMessage(
         selectedTeacher.fullName || selectedTeacher.name || "معلمة",
         absenceDate,
@@ -216,7 +217,8 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         return;
       }
 
-      const inquiryLink = `${getBaseOrigin()}/inquiry/${res.inquiry.token}`;
+      const queryParam = isMulti ? `?end=${absenceEndDate}&days=${calculatedDays}` : "";
+      const inquiryLink = `${getBaseOrigin()}/inquiry/${res.inquiry.token}${queryParam}`;
       const message = generateInquiryMessage(
         selectedTeacher.fullName || selectedTeacher.name || "معلمة",
         absenceDate,

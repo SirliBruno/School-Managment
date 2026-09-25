@@ -65,8 +65,8 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
     }
 
     if (newPassword) {
-      if (newPassword.length < 4) {
-        setErrorMsg("كلمة المرور يجب أن تتكون من 4 خانات على الأقل");
+      if (newPassword.length < 6) {
+        setErrorMsg("كلمة المرور يجب أن تتكون من 6 خانات على الأقل لضمان الأمان في Supabase");
         return;
       }
 
@@ -85,7 +85,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
       );
 
       if (res.success) {
-        setSuccessMsg("تم حفظ وتحديث بيانات حساب الوكيلة بنجاح!");
+        setSuccessMsg("تم حفظ وتحديث بيانات حساب الوكيلة في Supabase بنجاح!");
         setNewPassword("");
         setConfirmPassword("");
         setTimeout(() => {
@@ -239,7 +239,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                     dir="ltr"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="كلمة مرور جديدة (4 خانات فأكثر)"
+                    placeholder="كلمة مرور جديدة (6 خانات فأكثر)"
                     className="w-full pr-10 pl-11 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono"
                   />
                   <button

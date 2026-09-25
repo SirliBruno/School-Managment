@@ -81,7 +81,9 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       typeof window !== "undefined"
         ? window.location.origin
         : "https://school-absence.gov.sa";
-    const link = `${origin}/inquiry/${inq.token}`;
+    const isMulti = Boolean(inq.absenceEndDate && inq.absenceEndDate !== inq.absenceDate);
+    const queryParam = isMulti ? `?end=${inq.absenceEndDate}&days=${inq.daysCount || 2}` : "";
+    const link = `${origin}/inquiry/${inq.token}${queryParam}`;
     const msg = generateInquiryMessage(
       inq.teacherName,
       inq.absenceDate,
@@ -105,7 +107,9 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       typeof window !== "undefined"
         ? window.location.origin
         : "https://school-absence.gov.sa";
-    const link = `${origin}/inquiry/${inq.token}`;
+    const isMulti = Boolean(inq.absenceEndDate && inq.absenceEndDate !== inq.absenceDate);
+    const queryParam = isMulti ? `?end=${inq.absenceEndDate}&days=${inq.daysCount || 2}` : "";
+    const link = `${origin}/inquiry/${inq.token}${queryParam}`;
     const msg = generateInquiryMessage(
       inq.teacherName,
       inq.absenceDate,

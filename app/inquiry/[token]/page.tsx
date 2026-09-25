@@ -34,6 +34,11 @@ import {
   InquiryAttachmentItem,
   MAX_FALLBACK_DATA_URL_BYTES,
 } from "@/lib/attachments";
+import {
+  calculateDaysBetween,
+  formatDaysCountArabic,
+  parseInquiryMeta,
+} from "@/lib/timeUtils";
 
 const ABSENCE_TYPES: {
   type: AbsenceType;
@@ -112,6 +117,18 @@ export default function TeacherInquiryPage() {
       try {
         let foundInquiry: AbsenceInquiry | null = null;
 
+        // Extract URL query params if present (e.g. ?end=2026-09-27&days=3)
+        let urlEndDate: string | null = null;
+        let urlDays: number | null = null;
+        if (typeof window !== "undefined") {
+          const sp = new URLSearchParams(window.location.search);
+          urlEndDate = sp.get("end");
+          const d = sp.get("days");
+          if (d && !isNaN(Number(d))) {
+            urlDays = Number(d);
+          }
+        }
+
         // Try Supabase first
         if (isSupabaseConfigured() && supabase) {
           try {
@@ -122,6 +139,23 @@ export default function TeacherInquiryPage() {
               .maybeSingle();
 
             if (!error && data) {
+              const meta = parseInquiryMeta(data.admin_notes);
+              const resolvedEndDate =
+                urlEndDate ||
+                data.absence_end_date ||
+                meta.absenceEndDate ||
+                undefined;
+              const isMulti = Boolean(
+                resolvedEndDate && resolvedEndDate !== data.absence_date
+              );
+              const resolvedDays =
+                urlDays ||
+                data.days_count ||
+                meta.daysCount ||
+                (isMulti && resolvedEndDate
+                  ? calculateDaysBetween(data.absence_date, resolvedEndDate)
+                  : 1);
+
               foundInquiry = {
                 id: data.id,
                 teacherId: data.teacher_id,
@@ -130,13 +164,16 @@ export default function TeacherInquiryPage() {
                 specialty: data.specialty || undefined,
                 mobile: data.mobile || undefined,
                 absenceDate: data.absence_date,
+                absenceEndDate: isMulti ? resolvedEndDate : undefined,
+                daysCount: resolvedDays,
+                isMultiDay: isMulti,
                 token: data.token,
                 status: data.status,
                 expiresAt: data.expires_at,
                 absenceType: data.absence_type || undefined,
                 teacherReason: data.teacher_reason || undefined,
                 attachmentUrl: data.attachment_url || undefined,
-                adminNotes: data.admin_notes || undefined,
+                adminNotes: meta.adminNotes,
                 submittedAt: data.submitted_at || undefined,
                 createdAt: data.created_at,
               };
@@ -152,7 +189,32 @@ export default function TeacherInquiryPage() {
           if (stored) {
             const list: AbsenceInquiry[] = JSON.parse(stored);
             const match = list.find((item) => item.token === token);
-            if (match) foundInquiry = match;
+            if (match) {
+              const meta = parseInquiryMeta(match.adminNotes);
+              const resolvedEndDate =
+                urlEndDate ||
+                match.absenceEndDate ||
+                meta.absenceEndDate ||
+                undefined;
+              const isMulti = Boolean(
+                resolvedEndDate && resolvedEndDate !== match.absenceDate
+              );
+              const resolvedDays =
+                urlDays ||
+                match.daysCount ||
+                meta.daysCount ||
+                (isMulti && resolvedEndDate
+                  ? calculateDaysBetween(match.absenceDate, resolvedEndDate)
+                  : 1);
+
+              foundInquiry = {
+                ...match,
+                absenceEndDate: isMulti ? resolvedEndDate : undefined,
+                daysCount: resolvedDays,
+                isMultiDay: isMulti,
+                adminNotes: meta.adminNotes || match.adminNotes,
+              };
+            }
           }
         }
 
@@ -519,7 +581,7 @@ export default function TeacherInquiryPage() {
             <p>
               تاريخ الغياب:{" "}
               {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
                 : inquiry.absenceDate}
             </p>
             <p>تاريخ الانتهاء: {new Date(inquiry.expiresAt).toLocaleDateString("ar-SA")}</p>
@@ -563,7 +625,7 @@ export default function TeacherInquiryPage() {
               <span className="text-slate-500">تاريخ الغياب المعني:</span>
               <span className="font-bold text-slate-800">
                 {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
                   : inquiry.absenceDate}
               </span>
             </div>
@@ -690,7 +752,7 @@ export default function TeacherInquiryPage() {
               </span>
               <span className="font-extrabold text-[#137a85] text-sm mt-0.5 block">
                 {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
                   : inquiry.absenceDate}
               </span>
             </div>

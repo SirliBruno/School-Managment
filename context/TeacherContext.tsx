@@ -32,6 +32,9 @@ import {
   calculate48HoursExpiry,
   generateSecureToken,
   getDatesInRange,
+  calculateDaysBetween,
+  parseInquiryMeta,
+  serializeInquiryMeta,
 } from "@/lib/timeUtils";
 
 export interface AddTeachersResult {
@@ -772,24 +775,34 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
           if (!inqErr && dbInquiries && dbInquiries.length > 0) {
             const mappedInquiries: AbsenceInquiry[] = (dbInquiries as unknown as DbAbsenceInquiryRow[]).map(
-              (inq: DbAbsenceInquiryRow) => ({
-                id: inq.id,
-                teacherId: inq.teacher_id,
-                teacherName: inq.teacher_name,
-                jobNumber: inq.job_number,
-                specialty: inq.specialty || undefined,
-                mobile: inq.mobile || undefined,
-                absenceDate: inq.absence_date,
-                token: inq.token,
-                status: inq.status,
-                expiresAt: inq.expires_at,
-                absenceType: inq.absence_type || undefined,
-                teacherReason: inq.teacher_reason || undefined,
-                attachmentUrl: inq.attachment_url || undefined,
-                adminNotes: inq.admin_notes || undefined,
-                submittedAt: inq.submitted_at || undefined,
-                createdAt: inq.created_at,
-              })
+              (inq: DbAbsenceInquiryRow) => {
+                const meta = parseInquiryMeta(inq.admin_notes);
+                const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
+                const isMulti = Boolean(endDate && endDate !== inq.absence_date);
+                const days = inq.days_count || meta.daysCount || (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
+
+                return {
+                  id: inq.id,
+                  teacherId: inq.teacher_id,
+                  teacherName: inq.teacher_name,
+                  jobNumber: inq.job_number,
+                  specialty: inq.specialty || undefined,
+                  mobile: inq.mobile || undefined,
+                  absenceDate: inq.absence_date,
+                  absenceEndDate: isMulti ? endDate : undefined,
+                  daysCount: days,
+                  isMultiDay: isMulti,
+                  token: inq.token,
+                  status: inq.status,
+                  expiresAt: inq.expires_at,
+                  absenceType: inq.absence_type || undefined,
+                  teacherReason: inq.teacher_reason || undefined,
+                  attachmentUrl: inq.attachment_url || undefined,
+                  adminNotes: meta.adminNotes,
+                  submittedAt: inq.submitted_at || undefined,
+                  createdAt: inq.created_at,
+                };
+              }
             );
             setInquiries(mappedInquiries);
 
@@ -1106,6 +1119,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const inq = payload.new as unknown as DbAbsenceInquiryRow;
             if (!inq || !inq.id) return;
+            const meta = parseInquiryMeta(inq.admin_notes);
+            const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
+            const isMulti = Boolean(endDate && endDate !== inq.absence_date);
+            const days = inq.days_count || meta.daysCount || (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
+
             const updatedInq: AbsenceInquiry = {
               id: inq.id,
               teacherId: inq.teacher_id,
@@ -1114,13 +1132,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               specialty: inq.specialty || undefined,
               mobile: inq.mobile || undefined,
               absenceDate: inq.absence_date,
+              absenceEndDate: isMulti ? endDate : undefined,
+              daysCount: days,
+              isMultiDay: isMulti,
               token: inq.token,
               status: inq.status,
               expiresAt: inq.expires_at,
               absenceType: inq.absence_type || undefined,
               teacherReason: inq.teacher_reason || undefined,
               attachmentUrl: inq.attachment_url || undefined,
-              adminNotes: inq.admin_notes || undefined,
+              adminNotes: meta.adminNotes,
               submittedAt: inq.submitted_at || undefined,
               createdAt: inq.created_at,
             };
@@ -1866,6 +1887,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       const createdAt = new Date().toISOString();
       const isMulti = Boolean(absenceEndDate && absenceEndDate !== absenceDate);
       const calculatedDays = isMulti ? daysCount || 2 : 1;
+      const serializedNotes = serializeInquiryMeta(
+        isMulti ? absenceEndDate : undefined,
+        calculatedDays,
+        undefined
+      );
 
       const newInquiry: AbsenceInquiry = {
         id,
@@ -1881,6 +1907,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         token,
         status: "pending",
         expiresAt,
+        adminNotes: serializedNotes,
         createdAt,
       };
 
@@ -1899,6 +1926,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             token: newInquiry.token,
             status: newInquiry.status,
             expires_at: newInquiry.expiresAt,
+            admin_notes: serializedNotes || null,
             created_at: newInquiry.createdAt,
           };
           if (newInquiry.absenceEndDate) {
@@ -1907,11 +1935,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           if (newInquiry.daysCount) {
             insertPayload.days_count = newInquiry.daysCount;
           }
+          if (newInquiry.isMultiDay !== undefined) {
+            insertPayload.is_multi_day = newInquiry.isMultiDay;
+          }
 
           const { error } = await supabase.from("absence_inquiries").insert(insertPayload);
 
           if (error) {
-            // If schema doesn't have absence_end_date column yet, fallback to base insert
+            // If schema doesn't have absence_end_date column yet, fallback to base insert WITH admin_notes metadata
             if (error.code === "PGRST204" || error.message?.includes("column")) {
               await supabase.from("absence_inquiries").insert({
                 id: newInquiry.id,
@@ -1924,6 +1955,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 token: newInquiry.token,
                 status: newInquiry.status,
                 expires_at: newInquiry.expiresAt,
+                admin_notes: serializedNotes || null,
                 created_at: newInquiry.createdAt,
               });
             } else {
