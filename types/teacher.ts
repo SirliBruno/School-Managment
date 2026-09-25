@@ -200,3 +200,43 @@ export interface ArchivedDelayNotice {
   archivedByCascade?: boolean;
 }
 
+// === Import & Deduplication Types ===
+export interface SkippedRowDetail {
+  rowNumber: number;
+  nationalId?: string;
+  fullName?: string;
+  reason: string;
+  rawRow?: Record<string, unknown>;
+}
+
+export interface TeacherImportPlan {
+  newTeachers: Teacher[];
+  updatedTeachers: {
+    teacher: Teacher;
+    filledFields: string[];
+    originalTeacher: Teacher;
+  }[];
+  restoredTeachers: {
+    teacher: Teacher;
+    archivedItem: ArchivedTeacher;
+    filledFields: string[];
+  }[];
+  skippedRows: SkippedRowDetail[];
+  totalRows: number;
+}
+
+export interface TeacherImportResult {
+  addedCount: number;
+  updatedCount: number;
+  restoredCount: number;
+  skippedCount: number;
+  totalProcessed: number;
+  skippedRows: SkippedRowDetail[];
+  newTeachersList: Teacher[];
+  updatedTeachersList: Teacher[];
+  restoredTeachersList: Teacher[];
+  backupAvailable: boolean;
+}
+
+
+

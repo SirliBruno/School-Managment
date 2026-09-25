@@ -19,7 +19,18 @@ import {
   ArchivedTeacher,
   ArchivedAbsenceRecord,
   ArchivedDelayNotice,
+  ExcelTeacherRow,
+  TeacherImportPlan,
+  TeacherImportResult,
+  SkippedRowDetail,
 } from "@/types/teacher";
+import {
+  normalizeArabicDigits,
+  normalizeNationalId,
+  normalizeSaudiMobile,
+  planTeacherImport,
+  cleanAndDeduplicateSystemData,
+} from "@/lib/teacherDeduplication";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import {
@@ -67,6 +78,10 @@ interface TeacherContextType {
   pendingSyncCount: number;
   flushSyncQueue: () => Promise<void>;
   addTeachers: (newTeachers: Teacher[]) => AddTeachersResult;
+  planImport: (rawRows: ExcelTeacherRow[]) => TeacherImportPlan;
+  executeImportPlan: (plan: TeacherImportPlan) => TeacherImportResult;
+  undoLastImport: () => { success: boolean; message: string };
+  canUndoImport: boolean;
   addTeacher: (
     teacherData: Omit<Teacher, "id" | "totalAbsences"> &
       Partial<Pick<Teacher, "id" | "totalAbsences">>
@@ -194,14 +209,14 @@ export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
       t["رقم الوظيفة"] ??
       t["Job Number"] ??
       ""
-  ).trim();
+  );
 
   const fullName = String(rawFullName).trim();
-  const nationalId = rawNationalId;
+  const nationalId = normalizeNationalId(rawNationalId);
   const rawMobile = String(
     t.mobile ?? t.phone ?? t.phoneNumber ?? t["الجوال"] ?? t["رقم الجوال"] ?? ""
-  ).trim();
-  const mobile = rawMobile || undefined;
+  );
+  const mobile = normalizeSaudiMobile(rawMobile) || undefined;
 
   const rawEmail = String(
     t.email ?? t.Email ?? t["البريد الإلكتروني"] ?? ""
@@ -270,34 +285,53 @@ export const auditAndMigrateData = (
   rawTeachers: Teacher[],
   rawAbsences: AbsenceRecord[],
   rawDelayNotices: DelayNotice[],
-  rawInquiries: AbsenceInquiry[]
+  rawInquiries: AbsenceInquiry[],
+  archivedTeachers: ArchivedTeacher[] = [],
+  archivedAbsences: ArchivedAbsenceRecord[] = [],
+  archivedDelayNotices: ArchivedDelayNotice[] = []
 ): {
   cleanTeachers: Teacher[];
   cleanAbsences: AbsenceRecord[];
   cleanDelayNotices: DelayNotice[];
   cleanInquiries: AbsenceInquiry[];
+  cleanArchivedTeachers: ArchivedTeacher[];
+  cleanArchivedAbsences: ArchivedAbsenceRecord[];
+  cleanArchivedDelayNotices: ArchivedDelayNotice[];
   migratedAbsencesCount: number;
   orphanAbsencesCount: number;
   migratedDelayNoticesCount: number;
   orphanDelayNoticesCount: number;
+  removedDuplicatesCount: number;
+  mergedGroupsCount: number;
 } => {
+  // Phase 1: One-time Deduplication and merging of duplicate teachers with the same nationalId
+  const dedup = cleanAndDeduplicateSystemData(
+    rawTeachers,
+    rawAbsences,
+    rawDelayNotices,
+    rawInquiries,
+    archivedTeachers,
+    archivedAbsences,
+    archivedDelayNotices
+  );
+
   const teacherIdMap = new Map<string, Teacher>();
   const teacherNationalIdMap = new Map<string, Teacher>();
   const teacherNameMap = new Map<string, Teacher>();
 
-  for (const t of rawTeachers) {
+  for (const t of dedup.cleanTeachers) {
     if (t.id) teacherIdMap.set(t.id, t);
-    const natId = (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase();
+    const natId = normalizeNationalId(t.nationalId || t.username || t.jobNumber);
     if (natId) teacherNationalIdMap.set(natId, t);
     const n = (t.fullName || t.name || "").trim().toLowerCase();
     if (n) teacherNameMap.set(n, t);
   }
 
-  let migratedAbsencesCount = 0;
+  let migratedAbsencesCount = dedup.migratedRecordsCount;
   let orphanAbsencesCount = 0;
   const cleanAbsences: AbsenceRecord[] = [];
 
-  for (const record of rawAbsences) {
+  for (const record of dedup.cleanAbsences) {
     let matchedTeacher: Teacher | undefined = undefined;
 
     // 1. Direct ID match
@@ -307,8 +341,8 @@ export const auditAndMigrateData = (
 
     // 2. Match by nationalId / username / jobNumber
     if (!matchedTeacher) {
-      const u1 = (record.nationalId || record.jobNumber || "").trim().toLowerCase();
-      const u2 = (record.teacherId || "").trim().toLowerCase();
+      const u1 = normalizeNationalId(record.nationalId || record.jobNumber);
+      const u2 = normalizeNationalId(record.teacherId);
       if (u1 && teacherNationalIdMap.has(u1)) {
         matchedTeacher = teacherNationalIdMap.get(u1);
       } else if (u2 && teacherNationalIdMap.has(u2)) {
@@ -347,15 +381,15 @@ export const auditAndMigrateData = (
   let orphanDelayNoticesCount = 0;
   const cleanDelayNotices: DelayNotice[] = [];
 
-  for (const notice of rawDelayNotices) {
+  for (const notice of dedup.cleanDelayNotices) {
     let matchedTeacher: Teacher | undefined = undefined;
 
     if (notice.teacherId && teacherIdMap.has(notice.teacherId)) {
       matchedTeacher = teacherIdMap.get(notice.teacherId);
     }
     if (!matchedTeacher) {
-      const u1 = (notice.nationalId || notice.jobNumber || "").trim().toLowerCase();
-      const u2 = (notice.teacherId || "").trim().toLowerCase();
+      const u1 = normalizeNationalId(notice.nationalId || notice.jobNumber);
+      const u2 = normalizeNationalId(notice.teacherId);
       if (u1 && teacherNationalIdMap.has(u1)) {
         matchedTeacher = teacherNationalIdMap.get(u1);
       } else if (u2 && teacherNationalIdMap.has(u2)) {
@@ -387,14 +421,14 @@ export const auditAndMigrateData = (
 
   // Inquiries migration
   const cleanInquiries: AbsenceInquiry[] = [];
-  for (const inq of rawInquiries) {
+  for (const inq of dedup.cleanInquiries) {
     let matchedTeacher: Teacher | undefined = undefined;
     if (inq.teacherId && teacherIdMap.has(inq.teacherId)) {
       matchedTeacher = teacherIdMap.get(inq.teacherId);
     }
     if (!matchedTeacher) {
-      const u1 = (inq.nationalId || inq.jobNumber || "").trim().toLowerCase();
-      const u2 = (inq.teacherId || "").trim().toLowerCase();
+      const u1 = normalizeNationalId(inq.nationalId || inq.jobNumber);
+      const u2 = normalizeNationalId(inq.teacherId);
       if (u1 && teacherNationalIdMap.has(u1)) {
         matchedTeacher = teacherNationalIdMap.get(u1);
       } else if (u2 && teacherNationalIdMap.has(u2)) {
@@ -455,7 +489,7 @@ export const auditAndMigrateData = (
     delayCountMap[d.teacherId] = (delayCountMap[d.teacherId] || 0) + 1;
   }
 
-  const cleanTeachers = rawTeachers.map((t) => ({
+  const cleanTeachers = dedup.cleanTeachers.map((t) => ({
     ...t,
     totalAbsences: absenceCountMap[t.id] || 0,
     totalDelayNotices: delayCountMap[t.id] || 0,
@@ -463,10 +497,13 @@ export const auditAndMigrateData = (
 
   // Browser Console Reporting
   if (typeof window !== "undefined") {
-    console.group("=== [Audit & Data Migration] فحص وتدقيق ربط سجلات الغياب والتنبيهات ===");
+    console.group("=== [Audit & Data Migration] فحص وتدقيق ربط سجلات الغياب والتنبيهات وتنظيف التكرار ===");
     console.log(`إجمالي المعلمات في المنظومة: ${cleanTeachers.length}`);
     console.log(`إجمالي سجلات الغياب المرتبطة: ${cleanAbsences.length}`);
     console.log(`إجمالي تنبيهات التأخر المرتبطة: ${cleanDelayNotices.length}`);
+    if (dedup.removedDuplicatesCount > 0) {
+      console.warn(`Cleaned up & merged ${dedup.removedDuplicatesCount} duplicate teacher records across ${dedup.mergedGroupsCount} groups.`);
+    }
     if (migratedAbsencesCount > 0) {
       console.log(`Migrated ${migratedAbsencesCount} absence records to correct teacherId.`);
     }
@@ -479,23 +516,6 @@ export const auditAndMigrateData = (
     if (orphanDelayNoticesCount > 0) {
       console.warn(`Cleaned up ${orphanDelayNoticesCount} orphan delay notices.`);
     }
-
-    if (cleanAbsences.length > 0) {
-      console.table(
-        cleanAbsences.map((r) => {
-          const teacher = teacherIdMap.get(r.teacherId);
-          return {
-            recordId: r.id,
-            date: r.date,
-            type: r.type,
-            recordTeacherId: r.teacherId,
-            matchedTeacherId: teacher?.id || "غير معروف",
-            teacherFullName: teacher?.fullName || r.teacherName,
-            status: "Linked ✓",
-          };
-        })
-      );
-    }
     console.groupEnd();
   }
 
@@ -504,10 +524,15 @@ export const auditAndMigrateData = (
     cleanAbsences,
     cleanDelayNotices,
     cleanInquiries,
+    cleanArchivedTeachers: dedup.cleanArchivedTeachers,
+    cleanArchivedAbsences: dedup.cleanArchivedAbsences,
+    cleanArchivedDelayNotices: dedup.cleanArchivedDelayNotices,
     migratedAbsencesCount,
     orphanAbsencesCount,
     migratedDelayNoticesCount,
     orphanDelayNoticesCount,
+    removedDuplicatesCount: dedup.removedDuplicatesCount,
+    mergedGroupsCount: dedup.mergedGroupsCount,
   };
 };
 
@@ -528,7 +553,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [canUndoImport, setCanUndoImport] = useState(false);
   const isMountedRef = useRef(false);
+  const lastImportSnapshotRef = useRef<{
+    teachers: Teacher[];
+    archivedTeachers: ArchivedTeacher[];
+  } | null>(null);
+  const undoTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Sync Queue Helpers
   const queueSyncOperation = useCallback(
@@ -608,7 +639,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       let localAbsences: AbsenceRecord[] = [];
       let localInquiries: AbsenceInquiry[] = [];
       let localDelayNotices: DelayNotice[] = [];
+      let parsedArchTeachers: ArchivedTeacher[] = [];
       let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
+      let parsedArchDelays: ArchivedDelayNotice[] = [];
 
       try {
         const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
@@ -670,9 +703,6 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         // Load Archives from LocalStorage with cascade auto-migration
-        let parsedArchTeachers: ArchivedTeacher[] = [];
-        let parsedArchDelays: ArchivedDelayNotice[] = [];
-
         const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
         if (storedArchTeachers) {
           try {
@@ -746,31 +776,41 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
 
-      // Reconcile and audit local data
+      // Reconcile, deduplicate and audit local data
       const reconciled = auditAndMigrateData(
         localTeachers,
         localAbsences,
         localDelayNotices,
-        localInquiries
+        localInquiries,
+        parsedArchTeachers,
+        parsedArchAbsences,
+        parsedArchDelays
       );
 
       localTeachers = reconciled.cleanTeachers;
       localAbsences = reconciled.cleanAbsences;
       localDelayNotices = reconciled.cleanDelayNotices;
       localInquiries = reconciled.cleanInquiries;
+      parsedArchTeachers = reconciled.cleanArchivedTeachers;
+      parsedArchAbsences = reconciled.cleanArchivedAbsences;
+      parsedArchDelays = reconciled.cleanArchivedDelayNotices;
 
       // Save back clean data to localStorage if migration/cleanup occurred
       if (
         reconciled.migratedAbsencesCount > 0 ||
         reconciled.orphanAbsencesCount > 0 ||
         reconciled.migratedDelayNoticesCount > 0 ||
-        reconciled.orphanDelayNoticesCount > 0
+        reconciled.orphanDelayNoticesCount > 0 ||
+        reconciled.removedDuplicatesCount > 0
       ) {
         try {
           localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(localTeachers));
           localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(localAbsences));
           localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(localDelayNotices));
           localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(localInquiries));
+          localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(parsedArchTeachers));
+          localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(parsedArchAbsences));
+          localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(parsedArchDelays));
         } catch (e) {
           console.warn("فشل تحديث التخزين المحلي بعد الترحيل:", e);
         }
@@ -780,6 +820,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       setAbsenceRecords(localAbsences);
       setInquiries(localInquiries);
       setDelayNotices(localDelayNotices);
+      setArchivedTeachers(parsedArchTeachers);
+      setArchivedAbsences(parsedArchAbsences);
+      setArchivedDelayNotices(parsedArchDelays);
 
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
@@ -1294,73 +1337,95 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  // 3. Add multiple teachers (Excel or Batch Import) with Upsert on nationalId
-  const addTeachers = useCallback(
-    (newTeachers: Teacher[]): AddTeachersResult => {
-      let added = 0;
-      let updated = 0;
-      const duplicates = 0;
+  // 3.a Plan Import (computes dry-run preview and validates all rows)
+  const planImport = useCallback(
+    (rawRows: ExcelTeacherRow[]): TeacherImportPlan => {
+      return planTeacherImport(rawRows, teachers, archivedTeachers);
+    },
+    [teachers, archivedTeachers]
+  );
+
+  // 3.b Execute Import Plan with automatic snapshot backup (Phase 5)
+  const executeImportPlan = useCallback(
+    (plan: TeacherImportPlan): TeacherImportResult => {
+      // Automatic backup: snapshot current teachers & archives before import
+      lastImportSnapshotRef.current = {
+        teachers: JSON.parse(JSON.stringify(teachers)),
+        archivedTeachers: JSON.parse(JSON.stringify(archivedTeachers)),
+      };
+      setCanUndoImport(true);
+
+      if (undoTimerRef.current) {
+        clearTimeout(undoTimerRef.current);
+      }
+      undoTimerRef.current = setTimeout(() => {
+        lastImportSnapshotRef.current = null;
+        setCanUndoImport(false);
+      }, 10000);
+
+      const addedList: Teacher[] = [];
+      const updatedList: Teacher[] = [];
+      const restoredList: Teacher[] = [];
+
+      const restoredIds = new Set(plan.restoredTeachers.map((r) => r.teacher.id));
+      const updatedMap = new Map(
+        plan.updatedTeachers.map((u) => [u.teacher.id, u.teacher])
+      );
+
+      // Remove restored teachers from archive
+      if (restoredIds.size > 0) {
+        setArchivedTeachers((prev) =>
+          prev.filter((a) => !restoredIds.has(a.teacher.id))
+        );
+      }
 
       let nextTeachers: Teacher[] = [];
 
       setTeachers((prev) => {
-        const teacherMap = new Map<string, Teacher>();
-        // Index existing teachers by nationalId (or legacy username/jobNumber)
+        const next: Teacher[] = [];
+        const existingIdSet = new Set<string>();
+
+        // 1. Process active teachers & apply updates
         for (const t of prev) {
-          const key = (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase();
-          if (key) teacherMap.set(key, t);
-        }
-
-        const updatedList: Teacher[] = [...prev];
-
-        for (const item of newTeachers) {
-          const normalized = normalizeTeacher(item as unknown as Record<string, unknown>);
-          const cleanKey = normalized.nationalId.trim().toLowerCase();
-
-          if (!cleanKey || !normalized.fullName) {
-            continue;
-          }
-
-          if (teacherMap.has(cleanKey)) {
-            // Update existing teacher in-place preserving ID, absence history & createdAt
-            const existing = teacherMap.get(cleanKey)!;
-            const updatedTeacher: Teacher = {
-              ...existing,
-              fullName: normalized.fullName,
-              name: normalized.fullName,
-              nationalId: normalized.nationalId,
-              username: normalized.nationalId,
-              jobNumber: normalized.nationalId,
-              mobile: normalized.mobile || existing.mobile,
-              email: normalized.email || existing.email,
-              employmentStatus: normalized.employmentStatus || existing.employmentStatus,
-              jobTitle: normalized.jobTitle || existing.jobTitle,
-              teachingField: normalized.teachingField || existing.teachingField,
-              specialty: normalized.specialty || existing.specialty,
-              updatedAt: new Date().toISOString(),
-            };
-
-            const idx = updatedList.findIndex((t) => t.id === existing.id);
-            if (idx !== -1) {
-              updatedList[idx] = updatedTeacher;
-            }
-            teacherMap.set(cleanKey, updatedTeacher);
-            updated++;
+          if (updatedMap.has(t.id)) {
+            const up = updatedMap.get(t.id)!;
+            next.push(up);
+            updatedList.push(up);
           } else {
-            // Add new teacher
-            updatedList.push(normalized);
-            teacherMap.set(cleanKey, normalized);
-            added++;
+            next.push(t);
+          }
+          existingIdSet.add(t.id);
+        }
+
+        // 2. Add restored teachers
+        for (const item of plan.restoredTeachers) {
+          if (!existingIdSet.has(item.teacher.id)) {
+            next.push(item.teacher);
+            existingIdSet.add(item.teacher.id);
+            restoredList.push(item.teacher);
           }
         }
 
-        nextTeachers = updatedList;
-        return updatedList;
+        // 3. Add brand new teachers
+        for (const item of plan.newTeachers) {
+          if (!existingIdSet.has(item.id)) {
+            next.push(item);
+            existingIdSet.add(item.id);
+            addedList.push(item);
+          }
+        }
+
+        nextTeachers = next;
+        return next;
       });
 
       // Background sync to Supabase
       if (isSupabaseConfigured() && supabase && nextTeachers.length > 0) {
-        const dbPayload = nextTeachers.map((t) => ({
+        const toUpsert = [
+          ...plan.newTeachers,
+          ...plan.updatedTeachers.map((u) => u.teacher),
+          ...plan.restoredTeachers.map((r) => r.teacher),
+        ].map((t) => ({
           id: t.id,
           name: t.fullName,
           full_name: t.fullName,
@@ -1376,22 +1441,106 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           total_absences: t.totalAbsences || 0,
           updated_at: t.updatedAt || new Date().toISOString(),
         }));
-        supabase
-          .from("teachers")
-          .upsert(dbPayload)
-          .then(({ error }) => {
-            if (error) console.error("فشل مزامنة المعلمات مع سوبابيز:", error);
-          });
+
+        if (toUpsert.length > 0) {
+          supabase
+            .from("teachers")
+            .upsert(toUpsert)
+            .then(({ error }) => {
+              if (error)
+                console.warn(
+                  "تنبيه مزامنة استيراد المعلمات مع سوبابيز:",
+                  error.message
+                );
+            });
+        }
       }
 
       return {
-        addedCount: added,
-        updatedCount: updated,
-        duplicateCount: duplicates,
-        totalProcessed: added + updated,
+        addedCount: plan.newTeachers.length,
+        updatedCount: plan.updatedTeachers.length,
+        restoredCount: plan.restoredTeachers.length,
+        skippedCount: plan.skippedRows.length,
+        totalProcessed:
+          plan.newTeachers.length +
+          plan.updatedTeachers.length +
+          plan.restoredTeachers.length,
+        skippedRows: plan.skippedRows,
+        newTeachersList: plan.newTeachers,
+        updatedTeachersList: plan.updatedTeachers.map((u) => u.teacher),
+        restoredTeachersList: plan.restoredTeachers.map((r) => r.teacher),
+        backupAvailable: true,
       };
     },
-    []
+    [teachers, archivedTeachers]
+  );
+
+  // 3.c Undo Last Import (Phase 5 Undo Button)
+  const undoLastImport = useCallback((): {
+    success: boolean;
+    message: string;
+  } => {
+    if (!lastImportSnapshotRef.current) {
+      return {
+        success: false,
+        message:
+          "لا توجد عملية استيراد محفوظة للتراجع عنها، أو انتهت مهلة الـ 10 ثوانٍ.",
+      };
+    }
+
+    const snapshot = lastImportSnapshotRef.current;
+    setTeachers(snapshot.teachers);
+    setArchivedTeachers(snapshot.archivedTeachers);
+    lastImportSnapshotRef.current = null;
+    setCanUndoImport(false);
+
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+    }
+
+    try {
+      localStorage.setItem(
+        TEACHERS_STORAGE_KEY,
+        JSON.stringify(snapshot.teachers)
+      );
+      localStorage.setItem(
+        ARCHIVED_TEACHERS_STORAGE_KEY,
+        JSON.stringify(snapshot.archivedTeachers)
+      );
+    } catch {}
+
+    return {
+      success: true,
+      message:
+        "تم التراجع عن عملية الاستيراد بنجاح واستعادة بيانات المعلمات السابقة.",
+    };
+  }, []);
+
+  // 3.d Legacy / Direct addTeachers wrapper using planTeacherImport
+  const addTeachers = useCallback(
+    (newTeachers: Teacher[]): AddTeachersResult => {
+      const rawRows: ExcelTeacherRow[] = newTeachers.map((t) => ({
+        الإسم: t.fullName || t.name,
+        "رقم الهوية": t.nationalId || t.username || t.jobNumber,
+        الجوال: t.mobile,
+        "البريد الإلكتروني": t.email,
+        "حالة التوظيف": t.employmentStatus,
+        "المسمى الوظيفي": t.jobTitle,
+        "مجال التدريس": t.teachingField,
+        التخصص: t.specialty,
+      }));
+
+      const plan = planTeacherImport(rawRows, teachers, archivedTeachers);
+      const result = executeImportPlan(plan);
+
+      return {
+        addedCount: result.addedCount,
+        updatedCount: result.updatedCount,
+        duplicateCount: result.skippedCount,
+        totalProcessed: result.totalProcessed,
+      };
+    },
+    [teachers, archivedTeachers, executeImportPlan]
   );
 
   // 4. Add single teacher manually (Manual Add Modal)
@@ -3340,6 +3489,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       isLoading,
       isCloudConnected,
       addTeachers,
+      planImport,
+      executeImportPlan,
+      undoLastImport,
+      canUndoImport,
       addTeacher,
       updateTeacher,
       deleteTeacher,
@@ -3383,6 +3536,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       pendingSyncCount,
       flushSyncQueue,
       addTeachers,
+      planImport,
+      executeImportPlan,
+      undoLastImport,
+      canUndoImport,
       addTeacher,
       updateTeacher,
       deleteTeacher,

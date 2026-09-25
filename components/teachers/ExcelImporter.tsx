@@ -9,58 +9,112 @@ import {
   Download,
   X,
   Loader2,
+  RotateCcw,
+  Eye,
+  Info,
+  UserPlus,
+  RefreshCw,
+  ArchiveRestore,
+  ShieldAlert,
+  FileDown,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTeachers } from "@/context/TeacherContext";
-import { Teacher, ExcelTeacherRow } from "@/types/teacher";
-import { formatSaudiMobile } from "@/lib/whatsapp";
-
+import {
+  TeacherImportPlan,
+  TeacherImportResult,
+  SkippedRowDetail,
+  ExcelTeacherRow,
+} from "@/types/teacher";
+import {
+  parseExcelData,
+  downloadEmptyExcelTemplate,
+  downloadSampleExcelTemplate,
+} from "@/lib/excelParser";
 
 export const ExcelImporter: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { addTeachers } = useTeachers();
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const undoCountdownTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const { planImport, executeImportPlan, undoLastImport, canUndoImport } =
+    useTeachers();
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Preview Modal State (Stage 6)
+  const [previewPlan, setPreviewPlan] = useState<TeacherImportPlan | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewActiveTab, setPreviewActiveTab] = useState<
+    "new" | "updated" | "restored" | "skipped"
+  >("new");
+
+  // Summary Result Modal / Toast State (Stage 3 & 5)
+  const [importResult, setImportResult] = useState<TeacherImportResult | null>(
+    null
+  );
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [undoSecondsLeft, setUndoSecondsLeft] = useState(10);
+
+  // General Notification Alert
   const [alertInfo, setAlertInfo] = useState<{
-    type: "success" | "error" | "warning";
+    type: "success" | "error" | "warning" | "info";
     message: string;
     subMessage?: string;
   } | null>(null);
 
-  // Clear toast timeout on unmount
+  // Clear timers on unmount
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (undoCountdownTimerRef.current)
+        clearInterval(undoCountdownTimerRef.current);
     };
   }, []);
 
-  // Display alert with auto-dismiss
+  // Manage 10-second countdown for Undo button
+  useEffect(() => {
+    if (canUndoImport && undoSecondsLeft > 0) {
+      undoCountdownTimerRef.current = setInterval(() => {
+        setUndoSecondsLeft((prev) => {
+          if (prev <= 1) {
+            if (undoCountdownTimerRef.current)
+              clearInterval(undoCountdownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      if (undoCountdownTimerRef.current)
+        clearInterval(undoCountdownTimerRef.current);
+    }
+
+    return () => {
+      if (undoCountdownTimerRef.current)
+        clearInterval(undoCountdownTimerRef.current);
+    };
+  }, [canUndoImport, undoSecondsLeft]);
+
   const showAlert = useCallback(
     (
-      type: "success" | "error" | "warning",
+      type: "success" | "error" | "warning" | "info",
       message: string,
       subMessage?: string
     ) => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       setAlertInfo({ type, message, subMessage });
 
-      // Auto dismiss success messages after 7 seconds
       if (type === "success") {
-        timeoutRef.current = setTimeout(() => {
+        toastTimeoutRef.current = setTimeout(() => {
           setAlertInfo(null);
-        }, 7000);
+        }, 8000);
       }
     },
     []
   );
 
-  // Trigger hidden input
   const handleButtonClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -68,20 +122,12 @@ export const ExcelImporter: React.FC = () => {
     }
   };
 
-  // Helper to normalize header names for resilient comparison
-  const normalizeHeader = (header: string): string => {
-    return header
-      .trim()
-      .replace(/\s+/g, " ")
-      .replace(/[^\u0600-\u06FFa-zA-Z0-9\s]/g, "");
-  };
-
-  // Core file parsing logic
+  // Step 1: Parse file and generate Preview Plan
   const processFile = async (file: File) => {
     setIsLoading(true);
     setAlertInfo(null);
+    setImportResult(null);
 
-    // Validate file extension
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (extension !== "xlsx" && extension !== "xls") {
       showAlert(
@@ -94,227 +140,55 @@ export const ExcelImporter: React.FC = () => {
     }
 
     try {
-      const data = await file.arrayBuffer();
-      const XLSX = await import("xlsx");
-      const workbook = XLSX.read(data, { type: "array" });
-
-      if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        throw new Error("ملف الإكسل فارغ ولا يحتوي على أي ورقة عمل صالحة.");
-      }
-
-      const firstSheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[firstSheetName];
-
-      // Parse JSON from active worksheet
-      const rawRows: ExcelTeacherRow[] = XLSX.utils.sheet_to_json(worksheet, {
-        defval: "",
-        raw: false, // Ensure strings for numerical username/job IDs/mobiles
-      });
+      const buffer = await file.arrayBuffer();
+      const rawRows = parseExcelData(buffer);
 
       if (rawRows.length === 0) {
         showAlert(
           "warning",
           "ورقة العمل المحددة فارغة!",
-          "لم يتم العثور على أي بيانات داخل ورقة العمل الأولى في الملف."
+          "لم يتم العثور على أي صفوف أو بيانات داخل ملف الإكسل المرفوع."
         );
         setIsLoading(false);
         return;
       }
 
-      // Check column headers in the first row
-      const firstRow = rawRows[0];
-      const rawKeys = Object.keys(firstRow);
-      const normalizedKeys = rawKeys.map(normalizeHeader);
+      // Compute dry-run plan
+      const plan = planImport(rawRows);
 
-      const hasNationalId = normalizedKeys.some(
-        (k) =>
-          k.includes("الهوية") ||
-          k.includes("السجل") ||
-          k.includes("المستخدم") ||
-          k.includes("الوظيفة") ||
-          k.includes("الوظيفي") ||
-          k.toLowerCase().includes("id") ||
-          k.toLowerCase().includes("user") ||
-          k.toLowerCase().includes("job")
-      );
-
-      const hasName = normalizedKeys.some(
-        (k) =>
-          k.includes("الإسم") ||
-          k.includes("الاسم") ||
-          k.includes("الرباعي") ||
-          k.includes("اسم المعلمة") ||
-          k.toLowerCase().includes("name")
-      );
-
-      // Report missing critical headers
-      const missingHeaders: string[] = [];
-      if (!hasNationalId) missingHeaders.push("رقم الهوية");
-      if (!hasName) missingHeaders.push("الإسم");
-
-      if (missingHeaders.length > 0) {
-        showAlert(
-          "error",
-          "أعمدة مفقودة في ملف الإكسل!",
-          `الأعمدة الإلزامية التالية غير متوفرة في الصف الأول: (${missingHeaders.join(
-            " ، "
-          )}). يرجى مطابقة أعمدة ملف (منسوبات ث5) المعتمد أو تحميل النموذج.`
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      // Parse 8-column records safely
-      const parsedTeachers: Teacher[] = [];
-      let skippedCount = 0;
-
-      for (let i = 0; i < rawRows.length; i++) {
-        const row = rawRows[i];
-
-        let mobileVal = "";
-        let emailVal = "";
-        let fullNameVal = "";
-        let nationalIdVal = "";
-        let employmentStatusVal = "دائم";
-        let jobTitleVal = "معلم";
-        let teachingFieldVal = "";
-        let specialtyVal = "";
-
-        for (const [key, val] of Object.entries(row)) {
-          const normKey = normalizeHeader(key);
-          const stringVal = String(val ?? "").trim();
-
-          // 1. رقم الهوية (National ID)
-          if (
-            !nationalIdVal &&
-            (normKey.includes("الهوية") ||
-              normKey.includes("السجل") ||
-              normKey.includes("المستخدم") ||
-              normKey.includes("الوظيفة") ||
-              normKey.includes("الوظيفي") ||
-              normKey.toLowerCase().includes("id") ||
-              normKey.toLowerCase().includes("user") ||
-              normKey.toLowerCase().includes("job"))
-          ) {
-            nationalIdVal = stringVal;
-          }
-          // 2. الإسم (Full Name)
-          else if (
-            !fullNameVal &&
-            (normKey.includes("الإسم") ||
-              normKey.includes("الاسم") ||
-              normKey.includes("الرباعي") ||
-              normKey.includes("اسم المعلمة") ||
-              normKey.toLowerCase().includes("name"))
-          ) {
-            fullNameVal = stringVal;
-          }
-          // 3. الجوال (Mobile)
-          else if (
-            !mobileVal &&
-            (normKey.includes("الجوال") ||
-              normKey.includes("هاتف") ||
-              normKey.toLowerCase().includes("mobile") ||
-              normKey.toLowerCase().includes("phone"))
-          ) {
-            mobileVal = stringVal;
-          }
-          // 4. البريد الإلكتروني (Email)
-          else if (
-            !emailVal &&
-            (normKey.includes("البريد") ||
-              normKey.includes("الإلكتروني") ||
-              normKey.includes("ايميل") ||
-              normKey.toLowerCase().includes("mail"))
-          ) {
-            emailVal = stringVal;
-          }
-          // 5. حالة التوظيف (Employment Status: دائم / عقد)
-          else if (
-            normKey.includes("التوظيف") ||
-            normKey.includes("التعاقد") ||
-            normKey.toLowerCase().includes("status")
-          ) {
-            if (stringVal) employmentStatusVal = stringVal;
-          }
-          // 6. المسمى الوظيفي (Job Title)
-          else if (
-            normKey.includes("المسمى") ||
-            normKey.includes("وظيفة") ||
-            normKey.toLowerCase().includes("title")
-          ) {
-            if (stringVal) jobTitleVal = stringVal;
-          }
-          // 7. مجال التدريس (Teaching Field)
-          else if (
-            !teachingFieldVal &&
-            (normKey.includes("مجال التدريس") ||
-              normKey.includes("المجال") ||
-              normKey.toLowerCase().includes("field"))
-          ) {
-            teachingFieldVal = stringVal;
-          }
-          // 8. التخصص (Specialty)
-          else if (
-            !specialtyVal &&
-            (normKey.includes("التخصص") ||
-              normKey.includes("تخصص") ||
-              normKey.toLowerCase().includes("specialty"))
-          ) {
-            specialtyVal = stringVal;
-          }
-        }
-
-        // Strict validation: Skip rows missing nationalId or fullName
-        if (!nationalIdVal || !fullNameVal) {
-          skippedCount++;
-          continue;
-        }
-
-        parsedTeachers.push({
-          id:
-            typeof crypto !== "undefined" && crypto.randomUUID
-              ? crypto.randomUUID()
-              : `tch-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
-          nationalId: nationalIdVal,
-          fullName: fullNameVal,
-          mobile: mobileVal ? formatSaudiMobile(mobileVal) : undefined,
-          email: emailVal ? emailVal.toLowerCase() : undefined,
-          employmentStatus: employmentStatusVal || "دائم",
-          jobTitle: jobTitleVal || "معلم",
-          teachingField: teachingFieldVal || specialtyVal || undefined,
-          specialty: specialtyVal || undefined,
-          totalAbsences: 0,
-          totalDelayNotices: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          name: fullNameVal,
-          username: nationalIdVal,
-          jobNumber: nationalIdVal,
-        });
-      }
-
-      if (parsedTeachers.length === 0) {
+      if (
+        plan.newTeachers.length === 0 &&
+        plan.updatedTeachers.length === 0 &&
+        plan.restoredTeachers.length === 0 &&
+        plan.skippedRows.length === plan.totalRows
+      ) {
+        // All rows were invalid or skipped
+        setPreviewPlan(plan);
+        setPreviewActiveTab("skipped");
+        setIsPreviewOpen(true);
         showAlert(
           "warning",
-          "لا توجد بيانات صالحة للاستيراد",
-          "تأكدي من توفر قيم صحيحة لكل من (رقم الهوية) و (الإسم) في صفوف البيانات."
+          "جميع صفوف الملف تحتوي على أخطاء!",
+          "تم فحص الصفوف وتبين وجود أخطاء تمنع استيرادها. يمكنك معاينة أسباب الاستبعاد أدناه."
         );
-        setIsLoading(false);
         return;
       }
 
-      // Append/Upsert to global state
-      const { addedCount, updatedCount } = addTeachers(parsedTeachers);
-
-      let msg = `تمت معالجة ${parsedTeachers.length} سجل بنجاح: (إضافة ${addedCount} معلمة جديدة، وتحديث بيانات ${updatedCount} معلمة مسجلة مسبقاً).`;
-      if (skippedCount > 0) {
-        msg += ` [تم تخطي ${skippedCount} صفوف غير مكتملة البيانات]`;
+      // Set default active tab
+      if (plan.newTeachers.length > 0) {
+        setPreviewActiveTab("new");
+      } else if (plan.updatedTeachers.length > 0) {
+        setPreviewActiveTab("updated");
+      } else if (plan.restoredTeachers.length > 0) {
+        setPreviewActiveTab("restored");
+      } else {
+        setPreviewActiveTab("skipped");
       }
 
-      showAlert("success", "اكتمل استيراد وتحديث بيانات الكادر بنجاح!", msg);
+      setPreviewPlan(plan);
+      setIsPreviewOpen(true);
     } catch (err: unknown) {
-      console.error("خطأ أثناء معالجة ملف الإكسل:", err);
+      console.error("خطأ أثناء قراءة ملف الإكسل:", err);
       showAlert(
         "error",
         "تعذر قراءة ملف الإكسل!",
@@ -327,6 +201,49 @@ export const ExcelImporter: React.FC = () => {
     }
   };
 
+  // Step 2: Confirm and execute import (Stage 3, 5, 6)
+  const handleConfirmImport = () => {
+    if (!previewPlan) return;
+
+    setIsLoading(true);
+    setIsPreviewOpen(false);
+
+    try {
+      const result = executeImportPlan(previewPlan);
+      setImportResult(result);
+      setUndoSecondsLeft(10);
+      setShowResultModal(true);
+
+      showAlert(
+        "success",
+        "اكتملت عملية الاستيراد بنجاح! 🚀",
+        `تمت معالجة ${result.totalProcessed} سجل (إضافة ${result.addedCount} جديدة، وتحديث ${result.updatedCount} سجل، واستعادة ${result.restoredCount} من الأرشيف).`
+      );
+    } catch (err: unknown) {
+      console.error("خطأ أثناء تنفيذ الاستيراد:", err);
+      showAlert(
+        "error",
+        "حدث خطأ أثناء حفظ البيانات!",
+        err instanceof Error ? err.message : "يرجى المحاولة مرة أخرى."
+      );
+    } finally {
+      setIsLoading(false);
+      setPreviewPlan(null);
+    }
+  };
+
+  // Step 3: Undo Last Import (Stage 5)
+  const handleUndo = () => {
+    const res = undoLastImport();
+    if (res.success) {
+      setShowResultModal(false);
+      setImportResult(null);
+      showAlert("info", "تم التراجع عن الاستيراد ↩️", res.message);
+    } else {
+      showAlert("warning", "تعذر التراجع!", res.message);
+    }
+  };
+
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -334,7 +251,6 @@ export const ExcelImporter: React.FC = () => {
     }
   };
 
-  // Drag and drop handlers
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(true);
@@ -354,139 +270,94 @@ export const ExcelImporter: React.FC = () => {
     }
   };
 
-  // Generate and download 8-column real school sample template
-  const handleDownloadSampleTemplate = async () => {
-    const XLSX = await import("xlsx");
-    const sampleData = [
-      {
-        الجوال: "0501234567",
-        "البريد الإلكتروني": "sara.otaibi@moe.gov.sa",
-        الإسم: "سارة عبد الله سالم العتيبي",
-        "رقم الهوية": "1048291023",
-        "حالة التوظيف": "دائم",
-        "المسمى الوظيفي": "معلم",
-        "مجال التدريس": "لغة عربية",
-        التخصص: "اللغة العربية وآدابها",
-      },
-      {
-        الجوال: "0559876543",
-        "البريد الإلكتروني": "reem.qahtani@moe.gov.sa",
-        الإسم: "ريم خالد فهد القحطاني",
-        "رقم الهوية": "1059283741",
-        "حالة التوظيف": "عقد",
-        "المسمى الوظيفي": "معلم",
-        "مجال التدريس": "رياضيات",
-        التخصص: "رياضيات بحتة",
-      },
-      {
-        الجوال: "0543210987",
-        "البريد الإلكتروني": "fatima.ghamdi@moe.gov.sa",
-        الإسم: "فاطمة محمد علي الغامدي",
-        "رقم الهوية": "1038472910",
-        "حالة التوظيف": "دائم",
-        "المسمى الوظيفي": "معلم ممارس",
-        "مجال التدريس": "علوم طبيعية",
-        التخصص: "فيزياء",
-      },
-      {
-        الجوال: "0567890123",
-        "البريد الإلكتروني": "noura.dosari@moe.gov.sa",
-        الإسم: "نورة مسفر حمد الدوسري",
-        "رقم الهوية": "1074829104",
-        "حالة التوظيف": "دائم",
-        "المسمى الوظيفي": "معلم",
-        "مجال التدريس": "علوم شرعية",
-        التخصص: "دراسات إسلامية",
-      },
-      {
-        الجوال: "0534567890",
-        "البريد الإلكتروني": "hind.shehri@moe.gov.sa",
-        الإسم: "هند عبد الرحمن ظافر الشهري",
-        "رقم الهوية": "1083729105",
-        "حالة التوظيف": "عقد",
-        "المسمى الوظيفي": "معلم",
-        "مجال التدريس": "لغة إنجليزية",
-        التخصص: "لغويات إنجليزية",
-      },
-    ];
-
-    const worksheet = XLSX.utils.json_to_sheet(sampleData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "منسوبات ث5");
-
-    // Set practical column widths
-    worksheet["!cols"] = [
-      { wch: 16 }, // الجوال
-      { wch: 26 }, // البريد الإلكتروني
-      { wch: 30 }, // الإسم
-      { wch: 18 }, // رقم الهوية
-      { wch: 14 }, // حالة التوظيف
-      { wch: 16 }, // المسمى الوظيفي
-      { wch: 18 }, // مجال التدريس
-      { wch: 24 }, // التخصص
-    ];
-
-    XLSX.writeFile(workbook, "نموذج_استيراد_منسوبات_ث5_المعتمد.xlsx");
-  };
-
   return (
-    <div className="space-y-3">
-      {/* Hidden File Input with Accessible Label */}
+    <div className="space-y-4">
+      {/* Hidden File Input */}
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileInputChange}
         accept=".xlsx, .xls"
         className="hidden"
-        aria-label="اختيار ملف إكسل منسوبات ث5 لاستيراد بيانات المعلمات"
+        aria-label="اختيار ملف Excel لاستيراد بيانات المعلمات"
       />
 
-      {/* Action Buttons & Drag Drop Target */}
+      {/* Main Buttons Toolbar & Drop Target */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`flex flex-wrap items-center gap-3 p-2 rounded-2xl transition-all duration-200 ${
+        className={`flex flex-wrap items-center gap-3 p-2.5 rounded-2xl transition-all duration-200 ${
           isDragging
-            ? "bg-teal-50/80 border-2 border-dashed border-[#137a85] scale-[1.01]"
+            ? "bg-teal-50/90 border-2 border-dashed border-[#137a85] scale-[1.01]"
             : "border border-transparent"
         }`}
       >
-        {/* Main Import Button */}
+        {/* Main Import Button (Stage 2 & 5) */}
         <button
           type="button"
           onClick={handleButtonClick}
           disabled={isLoading}
           aria-busy={isLoading}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-[#137a85] text-white hover:bg-teal-700 active:scale-[0.98] shadow-sm hover:shadow transition-all disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-[#137a85] text-white hover:bg-teal-700 active:scale-[0.98] shadow-sm hover:shadow transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] focus-visible:ring-offset-2"
         >
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
           ) : (
             <UploadCloud className="w-4 h-4 md:w-5 md:h-5 text-teal-100" aria-hidden="true" />
           )}
-          <span>{isLoading ? "جاري استيراد وتحديث البيانات..." : "استيراد Excel (منسوبات ث5)"}</span>
+          <span>{isLoading ? "جاري قراءة الملف..." : "استيراد المعلمات من Excel"}</span>
+        </button>
+
+        {/* Download Empty Template Button (Stage 4 - Required) */}
+        <button
+          type="button"
+          onClick={() => downloadEmptyExcelTemplate()}
+          className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white text-slate-700 hover:bg-teal-50/50 hover:text-[#137a85] hover:border-teal-300 active:scale-[0.98] border border-slate-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400 focus-visible:ring-offset-1"
+          title="تحميل قالب فارغ يحتوي على الأعمدة الثمانية المعتمدة"
+        >
+          <FileDown className="w-4 h-4 text-[#137a85]" aria-hidden="true" />
+          <span>تحميل القالب الفارغ</span>
         </button>
 
         {/* Download Sample Template Helper Button */}
         <button
           type="button"
-          onClick={handleDownloadSampleTemplate}
-          className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white text-slate-700 hover:bg-slate-50 active:scale-[0.98] border border-slate-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
-          title="تحميل نموذج إكسل ث5 بـ 8 أعمدة معتمدة"
+          onClick={() => downloadSampleExcelTemplate()}
+          className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-[0.98] border border-slate-200/80 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
+          title="تحميل نموذج معبأ ببيانات تجريبية للاسترشاد"
         >
           <Download className="w-4 h-4 text-slate-500" aria-hidden="true" />
-          <span>تحميل نموذج إكسل المعتمد (8 أعمدة)</span>
+          <span>تحميل نموذج معبأ بأمثلة</span>
         </button>
+
+        {/* Quick Undo Indicator Banner (Stage 5) */}
+        {canUndoImport && undoSecondsLeft > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold shadow-2xs animate-pulse"
+          >
+            <span>التراجع متاح ({undoSecondsLeft} ث):</span>
+            <button
+              type="button"
+              onClick={handleUndo}
+              className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold transition-all shadow-2xs cursor-pointer"
+            >
+              تراجع الآن ↩
+            </button>
+          </motion.div>
+        )}
 
         {isDragging && (
           <span className="text-xs font-bold text-[#137a85] animate-pulse">
-            أفلتي ملف الإكسل هنا للبدء بالاستيراد والمطابقة
+            أفلتي ملف الإكسل هنا لبدء الفحص والمطابقة
           </span>
         )}
       </div>
 
-      {/* Accessible Toast Notification Feedback */}
+      {/* Alert Feedback Toast */}
       {alertInfo && (
         <div
           role="alert"
@@ -496,34 +367,28 @@ export const ExcelImporter: React.FC = () => {
               ? "bg-emerald-50/95 border-emerald-300 text-emerald-950"
               : alertInfo.type === "error"
               ? "bg-rose-50/95 border-rose-300 text-rose-950"
-              : "bg-amber-50/95 border-amber-300 text-amber-950"
+              : alertInfo.type === "warning"
+              ? "bg-amber-50/95 border-amber-300 text-amber-950"
+              : "bg-blue-50/95 border-blue-300 text-blue-950"
           }`}
         >
           <div className="flex items-start gap-3">
             {alertInfo.type === "success" && (
-              <CheckCircle2
-                className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             {alertInfo.type === "error" && (
-              <AlertCircle
-                className="w-5 h-5 text-rose-600 shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
+              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             {alertInfo.type === "warning" && (
-              <FileSpreadsheet
-                className="w-5 h-5 text-amber-600 shrink-0 mt-0.5"
-                aria-hidden="true"
-              />
+              <FileSpreadsheet className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+            )}
+            {alertInfo.type === "info" && (
+              <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             <div className="space-y-0.5">
               <p className="font-bold leading-tight">{alertInfo.message}</p>
               {alertInfo.subMessage && (
-                <p className="text-xs opacity-90 leading-relaxed">
-                  {alertInfo.subMessage}
-                </p>
+                <p className="text-xs opacity-90 leading-relaxed">{alertInfo.subMessage}</p>
               )}
             </div>
           </div>
@@ -538,6 +403,483 @@ export const ExcelImporter: React.FC = () => {
           </button>
         </div>
       )}
+
+      {/* ========================================================================= */}
+      {/* STAGE 6: PREVIEW MODAL BEFORE IMPORT                                      */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {isPreviewOpen && previewPlan && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="preview-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              onClick={() => setIsPreviewOpen(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden z-10"
+            >
+              {/* Modal Header */}
+              <div className="p-5 md:p-6 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center font-bold shadow-2xs">
+                    <Eye className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 id="preview-modal-title" className="text-base md:text-lg font-bold text-slate-900">
+                      معاينة وتدقيق ملف الاستيراد قبل التطبيق
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      تم فحص {previewPlan.totalRows} صف في الملف وتصنيفها وفقاً لقواعد البيانات
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+                  aria-label="إغلاق المعاينة"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* KPI Summary Cards */}
+              <div className="p-5 md:p-6 border-b border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* 1. New Teachers */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewActiveTab("new")}
+                  className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
+                    previewActiveTab === "new"
+                      ? "bg-teal-50/80 border-[#137a85] ring-2 ring-[#137a85]/20 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                    <span>معلمات جديدات</span>
+                    <UserPlus className="w-4 h-4 text-[#137a85]" />
+                  </div>
+                  <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                    {previewPlan.newTeachers.length} 🆕
+                  </p>
+                </button>
+
+                {/* 2. Updated Teachers */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewActiveTab("updated")}
+                  className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
+                    previewActiveTab === "updated"
+                      ? "bg-blue-50/80 border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                    <span>تحديث بيانات</span>
+                    <RefreshCw className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <p className="text-2xl font-extrabold text-blue-700 font-mono">
+                    {previewPlan.updatedTeachers.length} 🔄
+                  </p>
+                </button>
+
+                {/* 3. Restored from Archive */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewActiveTab("restored")}
+                  className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
+                    previewActiveTab === "restored"
+                      ? "bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                    <span>استعادة من الأرشيف</span>
+                    <ArchiveRestore className="w-4 h-4 text-purple-600" />
+                  </div>
+                  <p className="text-2xl font-extrabold text-purple-700 font-mono">
+                    {previewPlan.restoredTeachers.length} ♻️
+                  </p>
+                </button>
+
+                {/* 4. Skipped / Rejected */}
+                <button
+                  type="button"
+                  onClick={() => setPreviewActiveTab("skipped")}
+                  className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
+                    previewActiveTab === "skipped"
+                      ? "bg-rose-50/80 border-rose-500 ring-2 ring-rose-500/20 shadow-xs"
+                      : "bg-white border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                    <span>صفوف مستبعدة</span>
+                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  </div>
+                  <p className="text-2xl font-extrabold text-rose-700 font-mono">
+                    {previewPlan.skippedRows.length} ⚠️
+                  </p>
+                </button>
+              </div>
+
+              {/* Preview Rows Table (Shows First 5 rows of selected category) */}
+              <div className="p-5 md:p-6 overflow-y-auto max-h-[350px] space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-bold text-xs md:text-sm text-slate-800">
+                    {previewActiveTab === "new" &&
+                      `قائمة المعلمات الجديدات (عرض أول 5 من ${previewPlan.newTeachers.length})`}
+                    {previewActiveTab === "updated" &&
+                      `قائمة السجلات التي سيتم استكمال بياناتها (عرض أول 5 من ${previewPlan.updatedTeachers.length})`}
+                    {previewActiveTab === "restored" &&
+                      `قائمة المعلمات المستعادة من الأرشيف (عرض أول 5 من ${previewPlan.restoredTeachers.length})`}
+                    {previewActiveTab === "skipped" &&
+                      `قائمة الصفوف المستبعدة وأسباب الرفض (${previewPlan.skippedRows.length} صف)`}
+                  </h4>
+                  <span className="text-[11px] text-slate-400">
+                    {previewActiveTab === "updated" && "تحديث الفراغات فقط دون استبدال البيانات الحالية"}
+                  </span>
+                </div>
+
+                {/* TAB 1: NEW TEACHERS */}
+                {previewActiveTab === "new" && (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <tr>
+                          <th className="py-2.5 px-3">#</th>
+                          <th className="py-2.5 px-3">اسم المعلمة</th>
+                          <th className="py-2.5 px-3">رقم الهوية</th>
+                          <th className="py-2.5 px-3">التخصص</th>
+                          <th className="py-2.5 px-3">الجوال</th>
+                          <th className="py-2.5 px-3">حالة التوظيف</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {previewPlan.newTeachers.length === 0 ? (
+                          <tr>
+                            <td colSpan={6} className="py-6 text-center text-slate-400">
+                              لا توجد معلمات جديدات في هذا الملف
+                            </td>
+                          </tr>
+                        ) : (
+                          previewPlan.newTeachers.slice(0, 5).map((t, idx) => (
+                            <tr key={t.id || idx} className="hover:bg-slate-50/60">
+                              <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
+                              <td className="py-2 px-3 font-bold text-slate-900">{t.fullName}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600">{t.nationalId}</td>
+                              <td className="py-2 px-3 text-slate-700">{t.specialty || "—"}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600 dir-ltr text-right">
+                                {t.mobile || "—"}
+                              </td>
+                              <td className="py-2 px-3">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  {t.employmentStatus || "دائم"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* TAB 2: UPDATED TEACHERS */}
+                {previewActiveTab === "updated" && (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <tr>
+                          <th className="py-2.5 px-3">#</th>
+                          <th className="py-2.5 px-3">اسم المعلمة</th>
+                          <th className="py-2.5 px-3">رقم الهوية</th>
+                          <th className="py-2.5 px-3">الحقول التي سيتم ملؤها 🔄</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {previewPlan.updatedTeachers.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-6 text-center text-slate-400">
+                              لا توجد سجلات تحتاج لتحديث الفراغات
+                            </td>
+                          </tr>
+                        ) : (
+                          previewPlan.updatedTeachers.slice(0, 5).map((u, idx) => (
+                            <tr key={u.teacher.id || idx} className="hover:bg-slate-50/60">
+                              <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
+                              <td className="py-2 px-3 font-bold text-slate-900">{u.teacher.fullName}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600">{u.teacher.nationalId}</td>
+                              <td className="py-2 px-3">
+                                <div className="flex flex-wrap gap-1">
+                                  {u.filledFields.map((f) => (
+                                    <span
+                                      key={f}
+                                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
+                                    >
+                                      + {f}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* TAB 3: RESTORED TEACHERS */}
+                {previewActiveTab === "restored" && (
+                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <tr>
+                          <th className="py-2.5 px-3">#</th>
+                          <th className="py-2.5 px-3">اسم المعلمة</th>
+                          <th className="py-2.5 px-3">رقم الهوية</th>
+                          <th className="py-2.5 px-3">الإجراء</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {previewPlan.restoredTeachers.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-6 text-center text-slate-400">
+                              لا توجد معلمات مسترجعة من الأرشيف
+                            </td>
+                          </tr>
+                        ) : (
+                          previewPlan.restoredTeachers.slice(0, 5).map((r, idx) => (
+                            <tr key={r.teacher.id || idx} className="hover:bg-slate-50/60">
+                              <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
+                              <td className="py-2 px-3 font-bold text-slate-900">{r.teacher.fullName}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600">{r.teacher.nationalId}</td>
+                              <td className="py-2 px-3">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                  استعادة من الأرشيف وتفعيل السجل
+                                </span>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* TAB 4: SKIPPED ROWS WITH EXACT REASONS (Stage 3 & 6) */}
+                {previewActiveTab === "skipped" && (
+                  <div className="overflow-x-auto border border-rose-200 rounded-xl bg-rose-50/20">
+                    <table className="w-full text-right text-xs">
+                      <thead className="bg-rose-50 text-rose-900 font-bold border-b border-rose-200">
+                        <tr>
+                          <th className="py-2.5 px-3">رقم الصف</th>
+                          <th className="py-2.5 px-3">الاسم (إن وجد)</th>
+                          <th className="py-2.5 px-3">رقم الهوية</th>
+                          <th className="py-2.5 px-3">سبب الاستبعاد ⚠️</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-rose-100">
+                        {previewPlan.skippedRows.length === 0 ? (
+                          <tr>
+                            <td colSpan={4} className="py-6 text-center text-emerald-600 font-bold">
+                              ✓ ملف سليم تماماً! لم يتم استبعاد أي صف.
+                            </td>
+                          </tr>
+                        ) : (
+                          previewPlan.skippedRows.map((s, idx) => (
+                            <tr key={idx} className="hover:bg-rose-50/50">
+                              <td className="py-2 px-3 font-mono font-bold text-rose-700">
+                                صف {s.rowNumber}
+                              </td>
+                              <td className="py-2 px-3 text-slate-800">{s.fullName || "—"}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600">{s.nationalId || "—"}</td>
+                              <td className="py-2 px-3 font-bold text-rose-700">{s.reason}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* Preview Footer Actions */}
+              <div className="p-4 md:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsPreviewOpen(false)}
+                  className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                >
+                  إلغاء العملية
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleConfirmImport}
+                    disabled={
+                      previewPlan.newTeachers.length === 0 &&
+                      previewPlan.updatedTeachers.length === 0 &&
+                      previewPlan.restoredTeachers.length === 0
+                    }
+                    className="px-6 py-2.5 rounded-xl font-bold text-xs md:text-sm bg-[#137a85] text-white hover:bg-teal-700 shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    تأكيد وحفظ الاستيراد ✓
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* STAGE 3: POST-IMPORT RESULT SUMMARY MODAL                                */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {showResultModal && importResult && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="summary-modal-title"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              onClick={() => setShowResultModal(false)}
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 15 }}
+              className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden z-10"
+            >
+              <div className="p-5 md:p-6 border-b border-slate-100 bg-emerald-50 flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-2xs">
+                    <CheckCircle2 className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 id="summary-modal-title" className="text-base md:text-lg font-bold text-emerald-950">
+                      ملخص نتيجة استيراد المعلمات
+                    </h3>
+                    <p className="text-xs text-emerald-800/80 mt-0.5">
+                      تم تحديث قاعدة بيانات المدرسة بنجاح دون أي تكرار
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowResultModal(false)}
+                  className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Statistics Grid */}
+              <div className="p-5 md:p-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 text-center">
+                  <p className="text-[11px] font-bold text-teal-800">معلمات جديدات</p>
+                  <p className="text-2xl font-black text-teal-900 font-mono mt-1">
+                    {importResult.addedCount} 🆕
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-center">
+                  <p className="text-[11px] font-bold text-blue-800">سجلات تم تحديثها</p>
+                  <p className="text-2xl font-black text-blue-900 font-mono mt-1">
+                    {importResult.updatedCount} 🔄
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-center">
+                  <p className="text-[11px] font-bold text-purple-800">استعادة من الأرشيف</p>
+                  <p className="text-2xl font-black text-purple-900 font-mono mt-1">
+                    {importResult.restoredCount} ♻️
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
+                  <p className="text-[11px] font-bold text-rose-800">صفوف تم تجاهلها</p>
+                  <p className="text-2xl font-black text-rose-900 font-mono mt-1">
+                    {importResult.skippedCount} ⚠️
+                  </p>
+                </div>
+              </div>
+
+              {/* Skipped Rows List (If any exist) */}
+              {importResult.skippedRows.length > 0 && (
+                <div className="px-5 md:px-6 pb-4 space-y-2 overflow-y-auto max-h-[200px]">
+                  <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                    <span>الصفوف التي تم تجاهلها وسبب التجاهل:</span>
+                  </p>
+                  <div className="space-y-1.5">
+                    {importResult.skippedRows.map((s, idx) => (
+                      <div
+                        key={idx}
+                        className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-slate-500">صف {s.rowNumber}:</span>
+                          <span className="font-semibold text-slate-800">
+                            {s.fullName || s.nationalId || "صف ناقص"}
+                          </span>
+                        </div>
+                        <span className="text-rose-700 font-medium">{s.reason}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Footer with Undo Button (Stage 5) */}
+              <div className="p-4 md:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+                {canUndoImport && undoSecondsLeft > 0 ? (
+                  <button
+                    type="button"
+                    onClick={handleUndo}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 text-white font-bold text-xs hover:bg-amber-700 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>تراجع عن الاستيراد ({undoSecondsLeft} ث)</span>
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-slate-400">انتهت مهلة التراجع التلقائي</span>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => setShowResultModal(false)}
+                  className="px-6 py-2.5 rounded-xl bg-slate-800 text-white text-xs md:text-sm font-bold hover:bg-slate-900 transition-all cursor-pointer"
+                >
+                  إغلاق الملخص
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

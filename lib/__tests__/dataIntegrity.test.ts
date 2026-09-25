@@ -57,7 +57,7 @@ describe("Data Integrity & Administrative Business Logic Suite", () => {
       expect(teacherNew.jobNumber).toBe("1098765432");
       expect(teacherNew.fullName).toBe("سارة محمد أحمد العتيبي");
       expect(teacherNew.email).toBe("sara.teacher@moe.gov.sa");
-      expect(teacherNew.mobile).toBe("0551234567");
+      expect(teacherNew.mobile).toBe("966551234567");
       expect(teacherNew.employmentStatus).toBe("رسمي");
       expect(teacherNew.jobTitle).toBe("معلم ممارس");
       expect(teacherNew.teachingField).toBe("رياضيات");
