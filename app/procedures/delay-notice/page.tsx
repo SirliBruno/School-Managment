@@ -37,6 +37,7 @@ import { DelayNoticeDetailsModal } from "@/components/procedures/DelayNoticeDeta
 import { ShareDelayNoticeModal } from "@/components/procedures/ShareDelayNoticeModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
+import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type FilterTab = "all" | DelayNoticeStatus;
@@ -146,38 +147,26 @@ export default function DelayNoticePage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Top Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-2xs">
-        <div className="px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-              <span>نظام الإدارة المدرسية</span>
-              <ChevronLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
-              <span>الإجراءات الإدارية</span>
-              <ChevronLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
-              <span className="text-[#137a85] font-semibold">
-                تنبيه عن تأخر / انصراف
-              </span>
-            </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-              <span>تنبيه عن تأخر / انصراف</span>
-              <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
-                نموذج و.م.ع.ن - ٠٢ - ٠٢
-              </span>
-            </h1>
-          </div>
-
+      <PageHeader
+        breadcrumbs={[
+          { label: "الإجراءات الإدارية", href: "/procedures/list" },
+          { label: "تنبيه عن تأخر / انصراف" },
+        ]}
+        title="تنبيه عن تأخر / انصراف"
+        badge="نموذج و.م.ع.ن - ٠٢ - ٠٢"
+        actions={
           <div className="flex items-center gap-3">
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<Plus className="w-4 h-4" />}
               onClick={() => {
                 setNoticeToEdit(null);
                 setIsCreateModalOpen(true);
               }}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#137a85] hover:bg-teal-700 text-white shadow-sm transition-all cursor-pointer hover:shadow"
             >
-              <Plus className="w-4 h-4" />
-              <span>إصدار تنبيه جديد</span>
-            </button>
+              إصدار تنبيه جديد
+            </Button>
 
             <Link
               href="/teachers"
@@ -187,79 +176,38 @@ export default function DelayNoticePage() {
               <span>سجل المعلمات ({teachers.length})</span>
             </Link>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Main Content Body */}
       <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto">
         {/* KPI Mini-Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium">
-                إجمالي تنبيهات التأخر
-              </p>
-              <p className="text-2xl font-extrabold text-slate-900 mt-0.5 font-mono">
-                {totalCount}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center">
-              <Clock className="w-5 h-5" />
-            </div>
-          </div>
-
-          {/* Pending Teacher */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium">
-                بانتظار إفادة المعلمة
-              </p>
-              <p className="text-2xl font-extrabold text-sky-600 mt-0.5 font-mono">
-                {pendingTeacherCount}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
-              <FileEdit className="w-5 h-5" />
-            </div>
-          </div>
-
-          {/* Pending Director */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium">
-                بانتظار قرار المديرة
-              </p>
-              <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl font-extrabold text-amber-600 font-mono">
-                  {pendingDirectorCount}
-                </span>
-                {pendingDirectorCount > 0 && (
-                  <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
-                    يتطلب اعتماد
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5" />
-            </div>
-          </div>
-
-          {/* Completed */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <p className="text-xs text-slate-500 font-medium">
-                إجراءات مكتملة ومعتمدة
-              </p>
-              <p className="text-2xl font-extrabold text-emerald-600 mt-0.5 font-mono">
-                {completedCount}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
+          <KpiCard
+            title="إجمالي تنبيهات التأخر"
+            value={totalCount}
+            variant="teal"
+            icon={<Clock className="w-5 h-5" />}
+          />
+          <KpiCard
+            title="بانتظار إفادة المعلمة"
+            value={pendingTeacherCount}
+            variant="sky"
+            icon={<FileEdit className="w-5 h-5" />}
+          />
+          <KpiCard
+            title="بانتظار قرار المديرة"
+            value={pendingDirectorCount}
+            variant="amber"
+            icon={<ShieldCheck className="w-5 h-5" />}
+            badge={pendingDirectorCount > 0 ? "يتطلب اعتماد" : undefined}
+          />
+          <KpiCard
+            title="إجراءات مكتملة ومعتمدة"
+            value={completedCount}
+            variant="emerald"
+            icon={<CheckCircle2 className="w-5 h-5" />}
+          />
         </div>
 
         {/* Workflow Guide Banner */}

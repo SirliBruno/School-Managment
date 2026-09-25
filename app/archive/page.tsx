@@ -22,6 +22,7 @@ import {
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type ArchiveTab = "all" | "teachers" | "absences" | "delays";
@@ -318,109 +319,51 @@ export default function ArchivePage() {
 
   return (
     <div dir="rtl" className="flex-1 flex flex-col min-w-0 font-sans">
-        {/* Top Header */}
-        <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-2xs">
-          <div className="px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-                <span>نظام الإدارة المدرسية</span>
-                <ChevronLeft
-                  className="w-3.5 h-3.5 rotate-180"
-                  aria-hidden="true"
-                />
-                <span className="text-[#137a85] font-semibold">
-                  الأرشيف الإداري
-                </span>
-              </div>
-              <h1 className="text-xl lg:text-2xl font-bold text-slate-900 flex items-center gap-2.5">
-                <Archive className="w-6 h-6 text-[#137a85]" />
-                <span>الأرشيف الإداري</span>
-                {allUnifiedItems.length > 0 && (
-                  <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                    {allUnifiedItems.length} عنصر
-                  </span>
-                )}
-              </h1>
-              <p className="text-xs text-slate-500 mt-1">
-                جميع العناصر المحذوفة محفوظة هنا. يمكنك استعادتها إلى قوائمها الأصلية أو حذفها نهائياً.
-              </p>
-            </div>
+      {/* Top Header */}
+      <PageHeader
+        breadcrumbs={[
+          { label: "لوحة التحكم", href: "/" },
+          { label: "الأرشيف الإداري" },
+        ]}
+        title="الأرشيف الإداري"
+        subtitle="جميع العناصر المحذوفة محفوظة هنا. يمكنك استعادتها إلى قوائمها الأصلية أو حذفها نهائياً."
+        badge={allUnifiedItems.length > 0 ? `${allUnifiedItems.length} عنصر` : undefined}
+      />
+
+      {/* Main Body */}
+      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto pb-28">
+        {/* 3 KPI Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div onClick={() => setActiveTab("teachers")} className="cursor-pointer">
+            <KpiCard
+              title="المعلمات المؤرشفة"
+              value={archivedTeachers.length}
+              variant="teal"
+              icon={<Users className="w-5 h-5" />}
+              className={activeTab === "teachers" ? "ring-2 ring-[#137a85]" : ""}
+            />
           </div>
-        </header>
 
-        {/* Main Body */}
-        <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto pb-28">
-          {/* 3 KPI Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* Archived Teachers KPI */}
-            <div
-              onClick={() => setActiveTab("teachers")}
-              className={cn(
-                "bg-white p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-xs",
-                activeTab === "teachers"
-                  ? "border-[#137a85] ring-2 ring-[#137a85]/15"
-                  : "border-slate-200 hover:border-slate-300"
-              )}
-            >
-              <div>
-                <p className="text-xs text-slate-500 font-semibold">
-                  المعلمات المؤرشفة
-                </p>
-                <p className="text-2xl font-extrabold text-slate-900 mt-1 font-mono">
-                  {archivedTeachers.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#137a85] border border-teal-100 flex items-center justify-center">
-                <Users className="w-6 h-6" />
-              </div>
-            </div>
-
-            {/* Archived Absences KPI */}
-            <div
-              onClick={() => setActiveTab("absences")}
-              className={cn(
-                "bg-white p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-xs",
-                activeTab === "absences"
-                  ? "border-blue-600 ring-2 ring-blue-600/15"
-                  : "border-slate-200 hover:border-slate-300"
-              )}
-            >
-              <div>
-                <p className="text-xs text-slate-500 font-semibold">
-                  سجلات الغياب المؤرشفة
-                </p>
-                <p className="text-2xl font-extrabold text-blue-700 mt-1 font-mono">
-                  {archivedAbsences.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-                <FileText className="w-6 h-6" />
-              </div>
-            </div>
-
-            {/* Archived Delay Notices KPI */}
-            <div
-              onClick={() => setActiveTab("delays")}
-              className={cn(
-                "bg-white p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-xs",
-                activeTab === "delays"
-                  ? "border-amber-600 ring-2 ring-amber-600/15"
-                  : "border-slate-200 hover:border-slate-300"
-              )}
-            >
-              <div>
-                <p className="text-xs text-slate-500 font-semibold">
-                  تنبيهات التأخر المؤرشفة
-                </p>
-                <p className="text-2xl font-extrabold text-amber-700 mt-1 font-mono">
-                  {archivedDelayNotices.length}
-                </p>
-              </div>
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center">
-                <Clock className="w-6 h-6" />
-              </div>
-            </div>
+          <div onClick={() => setActiveTab("absences")} className="cursor-pointer">
+            <KpiCard
+              title="سجلات الغياب المؤرشفة"
+              value={archivedAbsences.length}
+              variant="sky"
+              icon={<FileText className="w-5 h-5" />}
+              className={activeTab === "absences" ? "ring-2 ring-sky-600" : ""}
+            />
           </div>
+
+          <div onClick={() => setActiveTab("delays")} className="cursor-pointer">
+            <KpiCard
+              title="تنبيهات التأخر المؤرشفة"
+              value={archivedDelayNotices.length}
+              variant="amber"
+              icon={<Clock className="w-5 h-5" />}
+              className={activeTab === "delays" ? "ring-2 ring-amber-600" : ""}
+            />
+          </div>
+        </div>
 
           {/* Filter Tabs + Search + Select All Controls */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">

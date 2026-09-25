@@ -28,6 +28,7 @@ import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { KpiCards } from "@/components/analytics/KpiCards";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
+import { PageHeader } from "@/components/ui";
 import { useRouter } from "next/navigation";
 
 const AbsenceCharts = dynamic(
@@ -217,24 +218,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
-
       {/* Top Bar Header */}
-      <header className="bg-white border-b border-slate-200/90 sticky top-0 z-20 shadow-2xs">
-        <div className="px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
-              <span>نظام الإدارة المدرسية</span>
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span>لوحة التحكم الإدارية</span>
-              <ChevronLeft className="w-3.5 h-3.5" />
-              <span className="text-[#137a85] font-semibold">المؤشرات والإحصائيات</span>
-            </div>
-            <h1 className="text-xl lg:text-2xl font-bold text-slate-900">
-              لوحة التحكم والتحليلات الإدارية
-            </h1>
-          </div>
-
-          {/* Header Controls */}
+      <PageHeader
+        breadcrumbs={[
+          { label: "لوحة التحكم الإدارية", href: "/" },
+          { label: "المؤشرات والإحصائيات" },
+        ]}
+        title="لوحة التحكم والتحليلات الإدارية"
+        actions={
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Vice Principal Name Badge */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#0D9488]/8 border border-[#0D9488]/25 text-xs font-bold text-[#0D9488] shadow-sm">
@@ -252,8 +243,8 @@ export default function DashboardPage() {
               <span>{todayFormatted}</span>
             </div>
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* Animated Feedback Toast */}
       <AnimatePresence>
