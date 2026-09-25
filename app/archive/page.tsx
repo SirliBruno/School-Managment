@@ -19,7 +19,6 @@ import {
   Info,
   Layers,
 } from "lucide-react";
-import { Sidebar } from "@/components/Sidebar";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -318,13 +317,7 @@ export default function ArchivePage() {
   };
 
   return (
-    <div
-      dir="rtl"
-      className="min-h-screen bg-[#f4f7f8] text-slate-900 flex flex-col lg:flex-row font-sans"
-    >
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col min-w-0">
+    <div dir="rtl" className="flex-1 flex flex-col min-w-0 font-sans">
         {/* Top Header */}
         <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-2xs">
           <div className="px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -753,7 +746,6 @@ export default function ArchivePage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
 
       {/* Single Permanent Delete Confirm Dialog */}
       <ConfirmDialog
