@@ -1348,11 +1348,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // 3.b Execute Import Plan with automatic snapshot backup (Phase 5)
   const executeImportPlan = useCallback(
     (plan: TeacherImportPlan): TeacherImportResult => {
-      // Automatic backup: snapshot current teachers & archives before import
+      // Automatic backup: snapshot all state arrays before import (Phase 5)
       lastImportSnapshotRef.current = {
         teachers: JSON.parse(JSON.stringify(teachers)),
+        absenceRecords: JSON.parse(JSON.stringify(absenceRecords)),
+        delayNotices: JSON.parse(JSON.stringify(delayNotices)),
+        inquiries: JSON.parse(JSON.stringify(inquiries)),
         archivedTeachers: JSON.parse(JSON.stringify(archivedTeachers)),
-      };
+        archivedAbsences: JSON.parse(JSON.stringify(archivedAbsences)),
+        archivedDelayNotices: JSON.parse(JSON.stringify(archivedDelayNotices)),
+      } as any;
       setCanUndoImport(true);
 
       if (undoTimerRef.current) {
@@ -1372,11 +1377,68 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         plan.updatedTeachers.map((u) => [u.teacher.id, u.teacher])
       );
 
-      // Remove restored teachers from archive
+      // 1. If any teachers are being restored from archive, reactivate their cascaded records
       if (restoredIds.size > 0) {
+        // Remove restored teachers from archivedTeachers
         setArchivedTeachers((prev) =>
           prev.filter((a) => !restoredIds.has(a.teacher.id))
         );
+
+        // Reactivate cascaded absence records
+        const cascadedAbsencesToRestore: AbsenceRecord[] = [];
+        setArchivedAbsences((prev) => {
+          const remaining: ArchivedAbsenceRecord[] = [];
+          for (const item of prev) {
+            if (restoredIds.has(item.record.teacherId)) {
+              cascadedAbsencesToRestore.push({
+                ...item.record,
+                isArchived: false,
+                archivedAt: undefined,
+                archiveReason: undefined,
+                archivedByCascade: undefined,
+              });
+            } else {
+              remaining.push(item);
+            }
+          }
+          return remaining;
+        });
+
+        if (cascadedAbsencesToRestore.length > 0) {
+          setAbsenceRecords((prev) => {
+            const existingIds = new Set(prev.map((r) => r.id));
+            const newOnes = cascadedAbsencesToRestore.filter((r) => !existingIds.has(r.id));
+            return [...newOnes, ...prev];
+          });
+        }
+
+        // Reactivate cascaded delay notices
+        const cascadedDelaysToRestore: DelayNotice[] = [];
+        setArchivedDelayNotices((prev) => {
+          const remaining: ArchivedDelayNotice[] = [];
+          for (const item of prev) {
+            if (restoredIds.has(item.notice.teacherId)) {
+              cascadedDelaysToRestore.push({
+                ...item.notice,
+                isArchived: false,
+                archivedAt: undefined,
+                archiveReason: undefined,
+                archivedByCascade: undefined,
+              });
+            } else {
+              remaining.push(item);
+            }
+          }
+          return remaining;
+        });
+
+        if (cascadedDelaysToRestore.length > 0) {
+          setDelayNotices((prev) => {
+            const existingIds = new Set(prev.map((d) => d.id));
+            const newOnes = cascadedDelaysToRestore.filter((d) => !existingIds.has(d.id));
+            return [...newOnes, ...prev];
+          });
+        }
       }
 
       let nextTeachers: Teacher[] = [];
@@ -1472,7 +1534,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         backupAvailable: true,
       };
     },
-    [teachers, archivedTeachers]
+    [teachers, archivedTeachers, absenceRecords, delayNotices, inquiries, archivedAbsences, archivedDelayNotices]
   );
 
   // 3.c Undo Last Import (Phase 5 Undo Button)
@@ -1488,9 +1550,15 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       };
     }
 
-    const snapshot = lastImportSnapshotRef.current;
-    setTeachers(snapshot.teachers);
-    setArchivedTeachers(snapshot.archivedTeachers);
+    const snapshot = lastImportSnapshotRef.current as any;
+    if (snapshot.teachers) setTeachers(snapshot.teachers);
+    if (snapshot.absenceRecords) setAbsenceRecords(snapshot.absenceRecords);
+    if (snapshot.delayNotices) setDelayNotices(snapshot.delayNotices);
+    if (snapshot.inquiries) setInquiries(snapshot.inquiries);
+    if (snapshot.archivedTeachers) setArchivedTeachers(snapshot.archivedTeachers);
+    if (snapshot.archivedAbsences) setArchivedAbsences(snapshot.archivedAbsences);
+    if (snapshot.archivedDelayNotices) setArchivedDelayNotices(snapshot.archivedDelayNotices);
+
     lastImportSnapshotRef.current = null;
     setCanUndoImport(false);
 
@@ -1499,14 +1567,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     try {
-      localStorage.setItem(
-        TEACHERS_STORAGE_KEY,
-        JSON.stringify(snapshot.teachers)
-      );
-      localStorage.setItem(
-        ARCHIVED_TEACHERS_STORAGE_KEY,
-        JSON.stringify(snapshot.archivedTeachers)
-      );
+      if (snapshot.teachers) localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(snapshot.teachers));
+      if (snapshot.absenceRecords) localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(snapshot.absenceRecords));
+      if (snapshot.delayNotices) localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(snapshot.delayNotices));
+      if (snapshot.inquiries) localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(snapshot.inquiries));
+      if (snapshot.archivedTeachers) localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(snapshot.archivedTeachers));
+      if (snapshot.archivedAbsences) localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(snapshot.archivedAbsences));
+      if (snapshot.archivedDelayNotices) localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(snapshot.archivedDelayNotices));
     } catch {}
 
     return {
@@ -1549,9 +1616,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       teacherData: Omit<Teacher, "id" | "totalAbsences"> &
         Partial<Pick<Teacher, "id" | "totalAbsences">>
     ) => {
-      const cleanNationalId = String(
+      const cleanNationalId = normalizeNationalId(
         teacherData.nationalId || teacherData.username || teacherData.jobNumber || ""
-      ).trim();
+      );
       const cleanFullName = String(
         teacherData.fullName || teacherData.name || ""
       ).trim();
@@ -1570,8 +1637,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       // Check for uniqueness
       const isExisting = teachers.some(
         (t) =>
-          (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase() ===
-          cleanNationalId.toLowerCase()
+          normalizeNationalId(t.nationalId || t.username || t.jobNumber) ===
+          cleanNationalId
       );
 
       if (isExisting) {
@@ -1628,21 +1695,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     ): { success: boolean; error?: string; teacher?: Teacher } => {
       let updatedTeacher: Teacher | null = null;
 
-      const cleanNationalId = updatedData.nationalId
-        ? String(updatedData.nationalId).trim()
-        : updatedData.username
-        ? String(updatedData.username).trim()
-        : updatedData.jobNumber
-        ? String(updatedData.jobNumber).trim()
-        : undefined;
+      const rawNatId = updatedData.nationalId || updatedData.username || updatedData.jobNumber;
+      const cleanNationalId = rawNatId ? normalizeNationalId(rawNatId) : undefined;
 
       // Validate unique nationalId if changed
       if (cleanNationalId) {
         const isDuplicate = teachers.some(
           (t) =>
             t.id !== id &&
-            (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase() ===
-              cleanNationalId.toLowerCase()
+            normalizeNationalId(t.nationalId || t.username || t.jobNumber) ===
+              cleanNationalId
         );
         if (isDuplicate) {
           return {

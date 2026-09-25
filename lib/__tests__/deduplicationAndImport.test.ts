@@ -505,4 +505,52 @@ describe("Teacher Deduplication and Import System", () => {
       expect(plan.restoredTeachers[0].teacher.mobile).toBe("966534567890");
     });
   });
+
+  // =========================================================================
+  // Advanced Robustness & Edge Cases
+  // =========================================================================
+  describe("Advanced Robustness & Edge Cases", () => {
+    it("handles column reordering when 'المسمى الوظيفي' comes before 'رقم الهوية' without mistaking job title for national ID", () => {
+      // Reordered row object: Job Title first, then ID
+      const row: ExcelTeacherRow = {
+        "المسمى الوظيفي": "معلم ممارس",
+        "حالة التوظيف": "دائم",
+        الإسم: "نوف فهد العتيبي",
+        "رقم الهوية": "1098765432",
+        التخصص: "لغة عربية",
+        "مجال التدريس": "لغة عربية",
+      };
+
+      const result = validateAndParseRow(row, 1);
+      expect(result.skippedReason).toBeUndefined();
+      expect(result.teacher).toBeDefined();
+      expect(result.teacher?.nationalId).toBe("1098765432");
+      expect(result.teacher?.jobTitle).toBe("معلم ممارس");
+      expect(result.teacher?.fullName).toBe("نوف فهد العتيبي");
+    });
+
+    it("strips trailing .0 from float number coerced national IDs", () => {
+      expect(normalizeNationalId("1048291023.0")).toBe("1048291023");
+      expect(normalizeNationalId("1048291023.00")).toBe("1048291023");
+    });
+
+    it("filters out completely blank rows from Excel data parsing", () => {
+      // Create a workbook with valid rows + completely blank rows
+      const ws = XLSX.utils.aoa_to_sheet([
+        ["الإسم", "رقم الهوية", "التخصص", "الجوال"],
+        ["سارة عبد الله", "1048291023", "رياضيات", "0501234567"],
+        ["", "", "", ""], // completely blank row
+        ["ريم خالد", "1059283741", "علوم", "0559876543"],
+        ["", "", "", ""], // another blank row
+      ]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+      const buffer = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+
+      const parsed = parseExcelData(buffer);
+      expect(parsed.length).toBe(2);
+      expect(parsed[0]["الإسم"]).toBe("سارة عبد الله");
+      expect(parsed[1]["الإسم"]).toBe("ريم خالد");
+    });
+  });
 });

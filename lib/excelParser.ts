@@ -34,7 +34,14 @@ export function parseExcelData(data: ArrayBuffer): ExcelTeacherRow[] {
     raw: false,
   });
 
-  return rawRows;
+  // Filter out completely blank rows where every column is empty or whitespace
+  const nonBlankRows = rawRows.filter((row) =>
+    Object.values(row).some(
+      (val) => val !== null && val !== undefined && String(val).trim() !== ""
+    )
+  );
+
+  return nonBlankRows;
 }
 
 /**

@@ -32,11 +32,15 @@ export function normalizeArabicDigits(str: string | number | undefined | null): 
  * Normalizes a National ID string:
  * - Converts Arabic numerals to standard digits
  * - Strips whitespace, hyphens, slashes, punctuation
+ * - Strips trailing .0 from number floats
  * - Returns clean digit string
  */
 export function normalizeNationalId(raw: string | number | undefined | null): string {
   if (raw === null || raw === undefined) return "";
-  const withAscii = normalizeArabicDigits(raw);
+  let s = String(raw).trim();
+  // Strip trailing .0 from float numbers (e.g., 1048291023.0)
+  s = s.replace(/\.0+$/, "");
+  const withAscii = normalizeArabicDigits(s);
   return withAscii.replace(/[\s\-_/\\,.]/g, "").trim();
 }
 
@@ -203,86 +207,105 @@ export function validateAndParseRow(
     const stringVal = String(val ?? "").trim();
     if (!stringVal) continue;
 
-    // 1. رقم الهوية
+    // 1. المسمى الوظيفي (Job Title) - checked before National ID to prevent collision on "الوظيفي"
     if (
+      !rawJobTitle &&
+      (normKey.includes("المسمى") ||
+        normKey.includes("مسمى") ||
+        normKey.toLowerCase().includes("job title") ||
+        normKey.toLowerCase().includes("jobtitle") ||
+        normKey.toLowerCase().includes("title"))
+    ) {
+      rawJobTitle = stringVal;
+    }
+    // 2. حالة التوظيف (Employment Status)
+    else if (
+      !rawEmploymentStatus &&
+      (normKey.includes("حالة") ||
+        normKey.includes("التوظيف") ||
+        normKey.includes("التعاقد") ||
+        normKey.toLowerCase().includes("employment") ||
+        normKey.toLowerCase().includes("status"))
+    ) {
+      rawEmploymentStatus = stringVal;
+    }
+    // 3. مجال التدريس (Teaching Field)
+    else if (
+      !rawTeachingField &&
+      (normKey.includes("مجال التدريس") ||
+        normKey.includes("مجال") ||
+        normKey.includes("تدريس") ||
+        normKey.toLowerCase().includes("teaching field") ||
+        normKey.toLowerCase().includes("field"))
+    ) {
+      rawTeachingField = stringVal;
+    }
+    // 4. التخصص (Specialty)
+    else if (
+      !rawSpecialty &&
+      (normKey.includes("التخصص") ||
+        normKey.includes("تخصص") ||
+        normKey.toLowerCase().includes("specialty") ||
+        normKey.toLowerCase().includes("specialization"))
+    ) {
+      rawSpecialty = stringVal;
+    }
+    // 5. رقم الهوية / السجل المدني / الرقم الوظيفي (National ID)
+    else if (
       !rawNationalId &&
       (normKey.includes("الهوية") ||
+        normKey.includes("هوية") ||
+        normKey.includes("السجل المدني") ||
         normKey.includes("السجل") ||
-        normKey.includes("المستخدم") ||
-        normKey.includes("الوظيفة") ||
-        normKey.includes("الوظيفي") ||
-        normKey.toLowerCase().includes("id") ||
-        normKey.toLowerCase().includes("user") ||
-        normKey.toLowerCase().includes("job"))
+        normKey.includes("الرقم الوظيفي") ||
+        normKey.includes("رقم الوظيفة") ||
+        normKey.includes("اسم المستخدم") ||
+        normKey.toLowerCase().includes("national id") ||
+        normKey.toLowerCase().includes("nationalid") ||
+        normKey.toLowerCase().includes("iqama") ||
+        normKey.toLowerCase() === "id" ||
+        normKey.toLowerCase().includes("job number") ||
+        normKey.toLowerCase().includes("jobnumber") ||
+        normKey.toLowerCase().includes("username")) &&
+      !normKey.includes("المسمى") &&
+      !normKey.includes("مسمى")
     ) {
       rawNationalId = stringVal;
     }
-    // 2. الإسم
+    // 6. الإسم (Full Name)
     else if (
       !rawFullName &&
       (normKey.includes("الإسم") ||
         normKey.includes("الاسم") ||
         normKey.includes("الرباعي") ||
         normKey.includes("اسم المعلمة") ||
-        normKey.toLowerCase().includes("name"))
+        normKey.toLowerCase().includes("name") ||
+        normKey.toLowerCase().includes("fullname")) &&
+      !normKey.includes("المستخدم")
     ) {
       rawFullName = stringVal;
     }
-    // 3. الجوال
+    // 7. الجوال (Mobile)
     else if (
       !rawMobile &&
       (normKey.includes("الجوال") ||
+        normKey.includes("جوال") ||
         normKey.includes("هاتف") ||
         normKey.toLowerCase().includes("mobile") ||
         normKey.toLowerCase().includes("phone"))
     ) {
       rawMobile = stringVal;
     }
-    // 4. البريد الإلكتروني
+    // 8. البريد الإلكتروني (Email)
     else if (
       !rawEmail &&
       (normKey.includes("البريد") ||
         normKey.includes("الإلكتروني") ||
         normKey.includes("ايميل") ||
+        normKey.toLowerCase().includes("email") ||
         normKey.toLowerCase().includes("mail"))
     ) {
       rawEmail = stringVal;
-    }
-    // 5. حالة التوظيف
-    else if (
-      !rawEmploymentStatus &&
-      (normKey.includes("التوظيف") ||
-        normKey.includes("التعاقد") ||
-        normKey.toLowerCase().includes("status"))
-    ) {
-      rawEmploymentStatus = stringVal;
-    }
-    // 6. المسمى الوظيفي
-    else if (
-      !rawJobTitle &&
-      (normKey.includes("المسمى") ||
-        normKey.includes("وظيفة") ||
-        normKey.toLowerCase().includes("title"))
-    ) {
-      rawJobTitle = stringVal;
-    }
-    // 7. مجال التدريس
-    else if (
-      !rawTeachingField &&
-      (normKey.includes("مجال التدريس") ||
-        normKey.includes("المجال") ||
-        normKey.toLowerCase().includes("field"))
-    ) {
-      rawTeachingField = stringVal;
-    }
-    // 8. التخصص
-    else if (
-      !rawSpecialty &&
-      (normKey.includes("التخصص") ||
-        normKey.includes("تخصص") ||
-        normKey.toLowerCase().includes("specialty"))
-    ) {
-      rawSpecialty = stringVal;
     }
   }
 
@@ -486,6 +509,10 @@ export function planTeacherImport(
         updatedAt: new Date().toISOString(),
       };
 
+      if (!existing.fullName && importedTeacher.fullName) {
+        mergedTeacher.fullName = importedTeacher.fullName;
+        filledFields.push("الإسم");
+      }
       if (!existing.mobile && importedTeacher.mobile) {
         mergedTeacher.mobile = importedTeacher.mobile;
         filledFields.push("الجوال");
@@ -514,6 +541,10 @@ export function planTeacherImport(
         filledFields.push("حالة التوظيف");
       }
 
+      mergedTeacher.name = mergedTeacher.fullName;
+      mergedTeacher.username = mergedTeacher.nationalId;
+      mergedTeacher.jobNumber = mergedTeacher.nationalId;
+
       // If any blank field was filled, record as updated teacher
       if (filledFields.length > 0) {
         plan.updatedTeachers.push({
@@ -541,6 +572,10 @@ export function planTeacherImport(
         updatedAt: new Date().toISOString(),
       };
 
+      if (!existingArchivedTeacher.fullName && importedTeacher.fullName) {
+        restoredTeacher.fullName = importedTeacher.fullName;
+        filledFields.push("الإسم");
+      }
       if (!existingArchivedTeacher.mobile && importedTeacher.mobile) {
         restoredTeacher.mobile = importedTeacher.mobile;
         filledFields.push("الجوال");
@@ -561,6 +596,17 @@ export function planTeacherImport(
         restoredTeacher.specialty = importedTeacher.specialty;
         filledFields.push("التخصص");
       }
+      if (
+        (!existingArchivedTeacher.employmentStatus || existingArchivedTeacher.employmentStatus === "") &&
+        importedTeacher.employmentStatus
+      ) {
+        restoredTeacher.employmentStatus = importedTeacher.employmentStatus;
+        filledFields.push("حالة التوظيف");
+      }
+
+      restoredTeacher.name = restoredTeacher.fullName;
+      restoredTeacher.username = restoredTeacher.nationalId;
+      restoredTeacher.jobNumber = restoredTeacher.nationalId;
 
       plan.restoredTeachers.push({
         teacher: restoredTeacher,
@@ -625,9 +671,13 @@ export function cleanAndDeduplicateSystemData(
   for (const group of Array.from(groups.values())) {
     if (group.length === 1) {
       const single = group[0];
+      const cleanSingleNatId = normalizeNationalId(single.nationalId || single.username || single.jobNumber);
       const normalizedSingle: Teacher = {
         ...single,
-        nationalId: normalizeNationalId(single.nationalId || single.username || single.jobNumber),
+        nationalId: cleanSingleNatId,
+        name: single.fullName || single.name,
+        username: cleanSingleNatId,
+        jobNumber: cleanSingleNatId,
         mobile: normalizeSaudiMobile(single.mobile) || undefined,
         email: single.email ? single.email.trim().toLowerCase() : undefined,
       };
@@ -640,8 +690,8 @@ export function cleanAndDeduplicateSystemData(
 
     // Sort by createdAt ascending (oldest first)
     const sorted = [...group].sort((a, b) => {
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      const timeA = a.createdAt && !isNaN(new Date(a.createdAt).getTime()) ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt && !isNaN(new Date(b.createdAt).getTime()) ? new Date(b.createdAt).getTime() : 0;
       return timeA - timeB;
     });
 
