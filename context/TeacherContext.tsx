@@ -56,7 +56,7 @@ interface TeacherContextType {
   restoreFromArchive: (
     type: "teacher" | "absence" | "delay",
     id: string
-  ) => boolean;
+  ) => { success: boolean; error?: string; message?: string };
   permanentDeleteFromArchive: (
     type: "teacher" | "absence" | "delay",
     id: string
@@ -75,7 +75,10 @@ interface TeacherContextType {
     id: string,
     updatedData: Partial<Teacher>
   ) => { success: boolean; error?: string; teacher?: Teacher };
-  deleteTeacher: (id: string) => { deletedTeacher?: Teacher; deletedRecords: AbsenceRecord[] };
+  deleteTeacher: (
+    id: string,
+    archiveReason?: string
+  ) => { deletedTeacher?: Teacher; deletedRecords: AbsenceRecord[] };
   restoreTeacher: (teacher: Teacher, associatedRecords?: AbsenceRecord[]) => void;
   clearTeachers: () => void;
   updateAbsences: (id: string, count: number) => void;
@@ -88,7 +91,10 @@ interface TeacherContextType {
     id: string,
     updatedData: Partial<AbsenceRecord>
   ) => { success: boolean; error?: string; record?: AbsenceRecord };
-  deleteAbsenceRecord: (id: string) => { deletedRecord?: AbsenceRecord };
+  deleteAbsenceRecord: (
+    id: string,
+    archiveReason?: string
+  ) => { deletedRecord?: AbsenceRecord };
   restoreAbsenceRecord: (record: AbsenceRecord) => void;
   createInquiry: (
     teacherId: string,
@@ -101,7 +107,7 @@ interface TeacherContextType {
     status: "approved" | "rejected",
     adminNotes?: string
   ) => Promise<{ success: boolean; error?: string }>;
-  deleteInquiry: (inquiryId: string) => Promise<void>;
+  deleteInquiry: (inquiryId: string, archiveReason?: string) => Promise<void>;
   refreshInquiries: () => Promise<void>;
   // === Delay Notices (تنبيه عن تأخر / انصراف) ===
   createDelayNotice: (
@@ -129,7 +135,10 @@ interface TeacherContextType {
     directorNotes?: string,
     directorSignatureDate?: string
   ) => { success: boolean; notice?: DelayNotice; error?: string };
-  deleteDelayNotice: (id: string) => { deletedNotice?: DelayNotice };
+  deleteDelayNotice: (
+    id: string,
+    archiveReason?: string
+  ) => { deletedNotice?: DelayNotice };
   restoreDelayNotice: (notice: DelayNotice) => void;
   markDelayNoticeLinkShared: (id: string) => void;
   submitTeacherResponseByToken: (
@@ -163,23 +172,53 @@ export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
     (t.fullName as string) ||
     (t.name as string) ||
     (t.full_name as string) ||
+    (t["الإسم"] as string) ||
+    (t["الاسم"] as string) ||
+    (t["الاسم الرباعي"] as string) ||
+    (t["اسم المعلمة"] as string) ||
+    (t["Name"] as string) ||
     "معلمة";
-  const rawUsername = String(
-    t.username ?? t.jobNumber ?? t.job_number ?? ""
+
+  const rawNationalId = String(
+    t.nationalId ??
+      t.national_id ??
+      t["رقم الهوية"] ??
+      t["الهوية"] ??
+      t["السجل المدني"] ??
+      t["رقم السجل المدني"] ??
+      t.username ??
+      t.jobNumber ??
+      t.job_number ??
+      t["اسم المستخدم"] ??
+      t["الرقم الوظيفي"] ??
+      t["رقم الوظيفة"] ??
+      t["Job Number"] ??
+      ""
   ).trim();
 
   const fullName = String(rawFullName).trim();
-  const username = rawUsername;
-  const mobile = String(t.mobile ?? t.phone ?? t.phoneNumber ?? "").trim();
+  const nationalId = rawNationalId;
+  const rawMobile = String(
+    t.mobile ?? t.phone ?? t.phoneNumber ?? t["الجوال"] ?? t["رقم الجوال"] ?? ""
+  ).trim();
+  const mobile = rawMobile || undefined;
+
+  const rawEmail = String(
+    t.email ?? t.Email ?? t["البريد الإلكتروني"] ?? ""
+  ).trim();
+  const email = rawEmail ? rawEmail.toLowerCase() : undefined;
+
   const employmentStatus = String(
-    t.employmentStatus ?? t.employment_status ?? "دائم"
+    t.employmentStatus ?? t.employment_status ?? t["حالة التوظيف"] ?? "دائم"
   ).trim();
   const jobTitle = String(
-    t.jobTitle ?? t.job_title ?? "معلم"
+    t.jobTitle ?? t.job_title ?? t["المسمى الوظيفي"] ?? "معلم"
   ).trim();
-  const specialty = String(t.specialty ?? "").trim();
+  const specialty = String(
+    t.specialty ?? t["التخصص"] ?? t["تخصص المعلمة"] ?? t["Specialty"] ?? ""
+  ).trim();
   const teachingField = String(
-    t.teachingField ?? t.teaching_field ?? specialty ?? ""
+    t.teachingField ?? t.teaching_field ?? t["مجال التدريس"] ?? specialty ?? ""
   ).trim();
   const totalAbsences = typeof t.totalAbsences === "number"
     ? t.totalAbsences
@@ -198,21 +237,32 @@ export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
       ? crypto.randomUUID()
       : `tch-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`);
 
+  const createdAt =
+    (t.createdAt as string) || (t.created_at as string) || new Date().toISOString();
+  const updatedAt =
+    (t.updatedAt as string) || (t.updated_at as string) || new Date().toISOString();
+
   return {
     id,
-    username,
+    nationalId,
     fullName,
-    mobile: mobile || undefined,
+    mobile,
+    email,
     employmentStatus: employmentStatus || "دائم",
     jobTitle: jobTitle || "معلم",
     teachingField: teachingField || specialty || undefined,
     specialty: specialty || undefined,
     totalAbsences: Math.max(0, totalAbsences),
     totalDelayNotices: Math.max(0, totalDelayNotices),
-    createdAt: (t.createdAt as string) || (t.created_at as string) || new Date().toISOString(),
+    createdAt,
+    updatedAt,
+    isArchived: Boolean(t.isArchived ?? t.is_archived ?? false),
+    archivedAt: (t.archivedAt as string) || (t.archived_at as string) || undefined,
+    archiveReason: (t.archiveReason as string) || (t.archive_reason as string) || undefined,
     // Backward compatibility aliases
     name: fullName,
-    jobNumber: username,
+    username: nationalId,
+    jobNumber: nationalId,
   };
 };
 
@@ -232,13 +282,13 @@ export const auditAndMigrateData = (
   orphanDelayNoticesCount: number;
 } => {
   const teacherIdMap = new Map<string, Teacher>();
-  const teacherUsernameMap = new Map<string, Teacher>();
+  const teacherNationalIdMap = new Map<string, Teacher>();
   const teacherNameMap = new Map<string, Teacher>();
 
   for (const t of rawTeachers) {
     if (t.id) teacherIdMap.set(t.id, t);
-    const u = (t.username || t.jobNumber || "").trim().toLowerCase();
-    if (u) teacherUsernameMap.set(u, t);
+    const natId = (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase();
+    if (natId) teacherNationalIdMap.set(natId, t);
     const n = (t.fullName || t.name || "").trim().toLowerCase();
     if (n) teacherNameMap.set(n, t);
   }
@@ -255,14 +305,14 @@ export const auditAndMigrateData = (
       matchedTeacher = teacherIdMap.get(record.teacherId);
     }
 
-    // 2. Match by username / jobNumber
+    // 2. Match by nationalId / username / jobNumber
     if (!matchedTeacher) {
-      const u1 = (record.jobNumber || "").trim().toLowerCase();
+      const u1 = (record.nationalId || record.jobNumber || "").trim().toLowerCase();
       const u2 = (record.teacherId || "").trim().toLowerCase();
-      if (u1 && teacherUsernameMap.has(u1)) {
-        matchedTeacher = teacherUsernameMap.get(u1);
-      } else if (u2 && teacherUsernameMap.has(u2)) {
-        matchedTeacher = teacherUsernameMap.get(u2);
+      if (u1 && teacherNationalIdMap.has(u1)) {
+        matchedTeacher = teacherNationalIdMap.get(u1);
+      } else if (u2 && teacherNationalIdMap.has(u2)) {
+        matchedTeacher = teacherNationalIdMap.get(u2);
       }
     }
 
@@ -283,7 +333,8 @@ export const auditAndMigrateData = (
         ...record,
         teacherId: matchedTeacher.id,
         teacherName: matchedTeacher.fullName || matchedTeacher.name || record.teacherName,
-        jobNumber: matchedTeacher.username || matchedTeacher.jobNumber || record.jobNumber,
+        nationalId: matchedTeacher.nationalId || matchedTeacher.username || matchedTeacher.jobNumber || record.nationalId,
+        jobNumber: matchedTeacher.nationalId || matchedTeacher.username || matchedTeacher.jobNumber || record.jobNumber,
         specialty: matchedTeacher.specialty || matchedTeacher.teachingField || record.specialty,
       });
     } else {
@@ -303,12 +354,12 @@ export const auditAndMigrateData = (
       matchedTeacher = teacherIdMap.get(notice.teacherId);
     }
     if (!matchedTeacher) {
-      const u1 = (notice.jobNumber || "").trim().toLowerCase();
+      const u1 = (notice.nationalId || notice.jobNumber || "").trim().toLowerCase();
       const u2 = (notice.teacherId || "").trim().toLowerCase();
-      if (u1 && teacherUsernameMap.has(u1)) {
-        matchedTeacher = teacherUsernameMap.get(u1);
-      } else if (u2 && teacherUsernameMap.has(u2)) {
-        matchedTeacher = teacherUsernameMap.get(u2);
+      if (u1 && teacherNationalIdMap.has(u1)) {
+        matchedTeacher = teacherNationalIdMap.get(u1);
+      } else if (u2 && teacherNationalIdMap.has(u2)) {
+        matchedTeacher = teacherNationalIdMap.get(u2);
       }
     }
     if (!matchedTeacher) {
@@ -325,7 +376,8 @@ export const auditAndMigrateData = (
         ...notice,
         teacherId: matchedTeacher.id,
         teacherName: matchedTeacher.fullName || matchedTeacher.name || notice.teacherName,
-        jobNumber: matchedTeacher.username || matchedTeacher.jobNumber || notice.jobNumber,
+        nationalId: matchedTeacher.nationalId || matchedTeacher.username || matchedTeacher.jobNumber || notice.nationalId,
+        jobNumber: matchedTeacher.nationalId || matchedTeacher.username || matchedTeacher.jobNumber || notice.jobNumber,
         specialty: matchedTeacher.specialty || matchedTeacher.teachingField || notice.specialty,
       });
     } else {
@@ -341,12 +393,12 @@ export const auditAndMigrateData = (
       matchedTeacher = teacherIdMap.get(inq.teacherId);
     }
     if (!matchedTeacher) {
-      const u1 = (inq.jobNumber || "").trim().toLowerCase();
+      const u1 = (inq.nationalId || inq.jobNumber || "").trim().toLowerCase();
       const u2 = (inq.teacherId || "").trim().toLowerCase();
-      if (u1 && teacherUsernameMap.has(u1)) {
-        matchedTeacher = teacherUsernameMap.get(u1);
-      } else if (u2 && teacherUsernameMap.has(u2)) {
-        matchedTeacher = teacherUsernameMap.get(u2);
+      if (u1 && teacherNationalIdMap.has(u1)) {
+        matchedTeacher = teacherNationalIdMap.get(u1);
+      } else if (u2 && teacherNationalIdMap.has(u2)) {
+        matchedTeacher = teacherNationalIdMap.get(u2);
       }
     }
     if (!matchedTeacher) {
@@ -361,7 +413,8 @@ export const auditAndMigrateData = (
         ...inq,
         teacherId: matchedTeacher.id,
         teacherName: matchedTeacher.fullName || inq.teacherName,
-        jobNumber: matchedTeacher.username || inq.jobNumber,
+        nationalId: matchedTeacher.nationalId || matchedTeacher.username || inq.nationalId,
+        jobNumber: matchedTeacher.nationalId || matchedTeacher.username || inq.jobNumber,
       });
     }
   }
@@ -377,7 +430,8 @@ export const auditAndMigrateData = (
           id: `abs-inq-${inq.id}`,
           teacherId: inq.teacherId,
           teacherName: inq.teacherName,
-          jobNumber: inq.jobNumber,
+          nationalId: inq.nationalId || inq.jobNumber,
+          jobNumber: inq.nationalId || inq.jobNumber,
           specialty: inq.specialty || "عام",
           date: inq.absenceDate,
           type: inq.absenceType || "مرضي",
@@ -554,6 +608,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       let localAbsences: AbsenceRecord[] = [];
       let localInquiries: AbsenceInquiry[] = [];
       let localDelayNotices: DelayNotice[] = [];
+      let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
 
       try {
         const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
@@ -614,28 +669,79 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
 
-        // Load Archives from LocalStorage
+        // Load Archives from LocalStorage with cascade auto-migration
+        let parsedArchTeachers: ArchivedTeacher[] = [];
+        let parsedArchDelays: ArchivedDelayNotice[] = [];
+
         const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
         if (storedArchTeachers) {
           try {
             const parsed = JSON.parse(storedArchTeachers);
-            if (Array.isArray(parsed)) setArchivedTeachers(parsed);
+            if (Array.isArray(parsed)) parsedArchTeachers = parsed;
           } catch {}
         }
         const storedArchAbsences = localStorage.getItem(ARCHIVED_ABSENCES_STORAGE_KEY);
         if (storedArchAbsences) {
           try {
             const parsed = JSON.parse(storedArchAbsences);
-            if (Array.isArray(parsed)) setArchivedAbsences(parsed);
+            if (Array.isArray(parsed)) parsedArchAbsences = parsed;
           } catch {}
         }
         const storedArchDelays = localStorage.getItem(ARCHIVED_DELAYS_STORAGE_KEY);
         if (storedArchDelays) {
           try {
             const parsed = JSON.parse(storedArchDelays);
-            if (Array.isArray(parsed)) setArchivedDelayNotices(parsed);
+            if (Array.isArray(parsed)) parsedArchDelays = parsed;
           } catch {}
         }
+
+        // Migrate any associatedRecords / associatedDelayNotices from archivedTeachers into archivedAbsences / archivedDelayNotices if not already present
+        const archAbsIds = new Set(parsedArchAbsences.map((a) => a.record.id));
+        const archDelayIds = new Set(parsedArchDelays.map((d) => d.notice.id));
+        for (const archTeacher of parsedArchTeachers) {
+          if (Array.isArray(archTeacher.associatedRecords)) {
+            for (const rec of archTeacher.associatedRecords) {
+              if (rec && rec.id && !archAbsIds.has(rec.id)) {
+                archAbsIds.add(rec.id);
+                parsedArchAbsences.push({
+                  record: {
+                    ...rec,
+                    isArchived: true,
+                    archivedAt: archTeacher.archivedAt,
+                    archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                    archivedByCascade: true,
+                  },
+                  archivedAt: archTeacher.archivedAt,
+                  archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                  archivedByCascade: true,
+                });
+              }
+            }
+          }
+          if (Array.isArray(archTeacher.associatedDelayNotices)) {
+            for (const dn of archTeacher.associatedDelayNotices) {
+              if (dn && dn.id && !archDelayIds.has(dn.id)) {
+                archDelayIds.add(dn.id);
+                parsedArchDelays.push({
+                  notice: {
+                    ...dn,
+                    isArchived: true,
+                    archivedAt: archTeacher.archivedAt,
+                    archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                    archivedByCascade: true,
+                  },
+                  archivedAt: archTeacher.archivedAt,
+                  archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                  archivedByCascade: true,
+                });
+              }
+            }
+          }
+        }
+
+        setArchivedTeachers(parsedArchTeachers);
+        setArchivedAbsences(parsedArchAbsences);
+        setArchivedDelayNotices(parsedArchDelays);
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
@@ -737,14 +843,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 id: t.id,
                 name: t.fullName,
                 full_name: t.fullName,
-                job_number: t.username,
-                username: t.username,
+                national_id: t.nationalId,
+                job_number: t.nationalId,
+                username: t.nationalId,
                 mobile: t.mobile || null,
+                email: t.email || null,
                 employment_status: t.employmentStatus || "دائم",
                 job_title: t.jobTitle || "معلم",
                 teaching_field: t.teachingField || t.specialty || null,
                 specialty: t.specialty || null,
                 total_absences: t.totalAbsences || 0,
+                updated_at: t.updatedAt || new Date().toISOString(),
               }));
               await supabase.from("teachers").upsert(toInsertTeachers);
 
@@ -801,16 +910,36 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   adminNotes: meta.adminNotes,
                   submittedAt: inq.submitted_at || undefined,
                   createdAt: inq.created_at,
+                  isArchived: false,
                 };
               }
             );
-            setInquiries(mappedInquiries);
 
-            // Reconcile approved inquiries with absenceRecords
+            // Exclude any inquiry that has been archived locally in parsedArchAbsences
+            const archivedInquiryIds = new Set<string>();
+            const archivedTeacherDatePairs = new Set<string>();
+            for (const archItem of parsedArchAbsences) {
+              if (archItem.record.id) archivedInquiryIds.add(archItem.record.id);
+              if (archItem.linkedInquiry?.id) archivedInquiryIds.add(archItem.linkedInquiry.id);
+              if (archItem.record.teacherId && archItem.record.date) {
+                archivedTeacherDatePairs.add(`${archItem.record.teacherId}:${archItem.record.date}`);
+              }
+            }
+
+            const activeMappedInquiries = mappedInquiries.filter(
+              (inq) =>
+                !archivedInquiryIds.has(inq.id) &&
+                !archivedInquiryIds.has(`abs-inq-${inq.id}`) &&
+                !archivedTeacherDatePairs.has(`${inq.teacherId}:${inq.absenceDate}`)
+            );
+
+            setInquiries(activeMappedInquiries);
+
+            // Reconcile approved non-archived inquiries with absenceRecords
             setAbsenceRecords((prevAbsences) => {
               const toAdd: AbsenceRecord[] = [];
-              for (const inq of mappedInquiries) {
-                if (inq.status === "approved" && inq.absenceDate) {
+              for (const inq of activeMappedInquiries) {
+                if (inq.status === "approved" && inq.absenceDate && !inq.isArchived) {
                   const exists = prevAbsences.some(
                     (a) => a.teacherId === inq.teacherId && a.date === inq.absenceDate
                   );
@@ -827,6 +956,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                       notes: inq.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
                       attachmentUrl: inq.attachmentUrl || undefined,
                       timestamp: inq.submittedAt || inq.createdAt || new Date().toISOString(),
+                      isArchived: false,
                     });
                   }
                 }
@@ -838,7 +968,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               // Update teachers count
               setTeachers((prevTeachers) =>
                 prevTeachers.map((t) => {
-                  const count = nextAbsences.filter((a) => a.teacherId === t.id).length;
+                  const count = nextAbsences.filter(
+                    (a) => a.teacherId === t.id && !a.isArchived
+                  ).length;
                   return t.totalAbsences !== count ? { ...t, totalAbsences: count } : t;
                 })
               );
@@ -1162,7 +1294,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  // 3. Add multiple teachers (Excel or Batch Import) with Upsert on username
+  // 3. Add multiple teachers (Excel or Batch Import) with Upsert on nationalId
   const addTeachers = useCallback(
     (newTeachers: Teacher[]): AddTeachersResult => {
       let added = 0;
@@ -1173,9 +1305,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setTeachers((prev) => {
         const teacherMap = new Map<string, Teacher>();
-        // Index existing teachers by username (case-insensitive)
+        // Index existing teachers by nationalId (or legacy username/jobNumber)
         for (const t of prev) {
-          const key = t.username.trim().toLowerCase();
+          const key = (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase();
           if (key) teacherMap.set(key, t);
         }
 
@@ -1183,24 +1315,29 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
         for (const item of newTeachers) {
           const normalized = normalizeTeacher(item as unknown as Record<string, unknown>);
-          const cleanKey = normalized.username.trim().toLowerCase();
+          const cleanKey = normalized.nationalId.trim().toLowerCase();
 
           if (!cleanKey || !normalized.fullName) {
             continue;
           }
 
           if (teacherMap.has(cleanKey)) {
-            // Update existing teacher in-place preserving ID & absence history
+            // Update existing teacher in-place preserving ID, absence history & createdAt
             const existing = teacherMap.get(cleanKey)!;
             const updatedTeacher: Teacher = {
               ...existing,
               fullName: normalized.fullName,
               name: normalized.fullName,
+              nationalId: normalized.nationalId,
+              username: normalized.nationalId,
+              jobNumber: normalized.nationalId,
               mobile: normalized.mobile || existing.mobile,
+              email: normalized.email || existing.email,
               employmentStatus: normalized.employmentStatus || existing.employmentStatus,
               jobTitle: normalized.jobTitle || existing.jobTitle,
               teachingField: normalized.teachingField || existing.teachingField,
               specialty: normalized.specialty || existing.specialty,
+              updatedAt: new Date().toISOString(),
             };
 
             const idx = updatedList.findIndex((t) => t.id === existing.id);
@@ -1227,14 +1364,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           id: t.id,
           name: t.fullName,
           full_name: t.fullName,
-          job_number: t.username,
-          username: t.username,
+          national_id: t.nationalId,
+          job_number: t.nationalId,
+          username: t.nationalId,
           mobile: t.mobile || null,
+          email: t.email || null,
           employment_status: t.employmentStatus || "دائم",
           job_title: t.jobTitle || "معلم",
           teaching_field: t.teachingField || t.specialty || null,
           specialty: t.specialty || null,
           total_absences: t.totalAbsences || 0,
+          updated_at: t.updatedAt || new Date().toISOString(),
         }));
         supabase
           .from("teachers")
@@ -1260,40 +1400,42 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       teacherData: Omit<Teacher, "id" | "totalAbsences"> &
         Partial<Pick<Teacher, "id" | "totalAbsences">>
     ) => {
-      const cleanUsername = String(
-        teacherData.username || teacherData.jobNumber || ""
+      const cleanNationalId = String(
+        teacherData.nationalId || teacherData.username || teacherData.jobNumber || ""
       ).trim();
       const cleanFullName = String(
         teacherData.fullName || teacherData.name || ""
       ).trim();
 
       if (!cleanFullName) {
-        return { success: false, error: "الاسم الرباعي للمعلمة مطلوب." };
+        return { success: false, error: "اسم المعلمة مطلوب." };
       }
 
-      if (!cleanUsername) {
+      if (!cleanNationalId) {
         return {
           success: false,
-          error: "اسم المستخدم / الرقم الوظيفي مطلوب وفريد.",
+          error: "رقم الهوية مطلوب وفريد.",
         };
       }
 
       // Check for uniqueness
       const isExisting = teachers.some(
-        (t) => t.username.trim().toLowerCase() === cleanUsername.toLowerCase()
+        (t) =>
+          (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase() ===
+          cleanNationalId.toLowerCase()
       );
 
       if (isExisting) {
         return {
           success: false,
-          error: `اسم المستخدم / الرقم الوظيفي (${cleanUsername}) مسجل بالفعل لمعلمة أخرى.`,
+          error: `رقم الهوية (${cleanNationalId}) مسجل بالفعل لمعلمة أخرى.`,
         };
       }
 
       const newTeacher = normalizeTeacher({
         ...teacherData,
         fullName: cleanFullName,
-        username: cleanUsername,
+        nationalId: cleanNationalId,
         totalAbsences: teacherData.totalAbsences ?? 0,
       });
 
@@ -1307,14 +1449,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             id: newTeacher.id,
             name: newTeacher.fullName,
             full_name: newTeacher.fullName,
-            job_number: newTeacher.username,
-            username: newTeacher.username,
+            national_id: newTeacher.nationalId,
+            job_number: newTeacher.nationalId,
+            username: newTeacher.nationalId,
             mobile: newTeacher.mobile || null,
+            email: newTeacher.email || null,
             employment_status: newTeacher.employmentStatus || "دائم",
             job_title: newTeacher.jobTitle || "معلم",
             teaching_field: newTeacher.teachingField || newTeacher.specialty || null,
             specialty: newTeacher.specialty || null,
             total_absences: newTeacher.totalAbsences || 0,
+            updated_at: newTeacher.updatedAt || new Date().toISOString(),
           })
           .then(({ error }) => {
             if (error) console.error("فشل إدراج المعلمة في سوبابيز:", error);
@@ -1334,26 +1479,31 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     ): { success: boolean; error?: string; teacher?: Teacher } => {
       let updatedTeacher: Teacher | null = null;
 
-      const cleanUsername = updatedData.username
+      const cleanNationalId = updatedData.nationalId
+        ? String(updatedData.nationalId).trim()
+        : updatedData.username
         ? String(updatedData.username).trim()
         : updatedData.jobNumber
         ? String(updatedData.jobNumber).trim()
         : undefined;
 
-      // Validate unique username if changed
-      if (cleanUsername) {
+      // Validate unique nationalId if changed
+      if (cleanNationalId) {
         const isDuplicate = teachers.some(
           (t) =>
             t.id !== id &&
-            t.username.trim().toLowerCase() === cleanUsername.toLowerCase()
+            (t.nationalId || t.username || t.jobNumber || "").trim().toLowerCase() ===
+              cleanNationalId.toLowerCase()
         );
         if (isDuplicate) {
           return {
             success: false,
-            error: `اسم المستخدم / الرقم الوظيفي (${cleanUsername}) مسجل بالفعل لمعلمة أخرى.`,
+            error: `رقم الهوية (${cleanNationalId}) مسجل بالفعل لمعلمة أخرى.`,
           };
         }
       }
+
+      const now = new Date().toISOString();
 
       setTeachers((prev) =>
         prev.map((t) => {
@@ -1363,6 +1513,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               ...updatedData,
               id: t.id,
               totalAbsences: t.totalAbsences,
+              updatedAt: now,
             });
             return updatedTeacher;
           }
@@ -1383,7 +1534,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             return {
               ...rec,
               teacherName: finalTeacher.fullName,
-              jobNumber: finalTeacher.username,
+              nationalId: finalTeacher.nationalId,
+              jobNumber: finalTeacher.nationalId,
               specialty:
                 finalTeacher.specialty ||
                 finalTeacher.teachingField ||
@@ -1394,19 +1546,55 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         })
       );
 
+      // Cascade update teacher info on their inquiries
+      setInquiries((prev) =>
+        prev.map((inq) => {
+          if (inq.teacherId === id) {
+            return {
+              ...inq,
+              teacherName: finalTeacher.fullName,
+              nationalId: finalTeacher.nationalId,
+              jobNumber: finalTeacher.nationalId,
+              mobile: finalTeacher.mobile || inq.mobile,
+              specialty: finalTeacher.specialty || finalTeacher.teachingField || inq.specialty,
+            };
+          }
+          return inq;
+        })
+      );
+
+      // Cascade update teacher info on their delay notices
+      setDelayNotices((prev) =>
+        prev.map((dn) => {
+          if (dn.teacherId === id) {
+            return {
+              ...dn,
+              teacherName: finalTeacher.fullName,
+              nationalId: finalTeacher.nationalId,
+              jobNumber: finalTeacher.nationalId,
+              specialty: finalTeacher.specialty || finalTeacher.teachingField || dn.specialty,
+            };
+          }
+          return dn;
+        })
+      );
+
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("teachers")
           .update({
             name: finalTeacher.fullName,
             full_name: finalTeacher.fullName,
-            job_number: finalTeacher.username,
-            username: finalTeacher.username,
+            national_id: finalTeacher.nationalId,
+            job_number: finalTeacher.nationalId,
+            username: finalTeacher.nationalId,
             mobile: finalTeacher.mobile || null,
+            email: finalTeacher.email || null,
             employment_status: finalTeacher.employmentStatus,
             job_title: finalTeacher.jobTitle,
             teaching_field: finalTeacher.teachingField,
             specialty: finalTeacher.specialty,
+            updated_at: finalTeacher.updatedAt,
           })
           .eq("id", id)
           .then(({ error }) => {
@@ -1419,45 +1607,89 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     [teachers]
   );
 
-  // 6. Delete Teacher with Cascade Deletion & Archive
-  const deleteTeacher = useCallback((id: string) => {
-    let deletedTeacher: Teacher | undefined;
-    let deletedRecords: AbsenceRecord[] = [];
-    let deletedInquiries: AbsenceInquiry[] = [];
-    let deletedDelayNotices: DelayNotice[] = [];
+  // 6. Delete Teacher with Cascade Soft-Delete & Archive
+  const deleteTeacher = useCallback((id: string, archiveReason?: string) => {
+    const now = new Date().toISOString();
+    const cleanReason = archiveReason?.trim() || undefined;
+    const cascadeReason = cleanReason || "أرشفة تلقائية مع المعلمة";
 
-    setTeachers((prev) => {
-      deletedTeacher = prev.find((t) => t.id === id);
-      return prev.filter((t) => t.id !== id);
-    });
+    const targetTeacher = teachers.find((t) => t.id === id);
+    const targetRecords = absenceRecords.filter((a) => a.teacherId === id);
+    const targetInquiries = inquiries.filter((inq) => inq.teacherId === id);
+    const targetDelayNotices = delayNotices.filter((dn) => dn.teacherId === id);
 
-    setAbsenceRecords((prev) => {
-      deletedRecords = prev.filter((a) => a.teacherId === id);
-      return prev.filter((a) => a.teacherId !== id);
-    });
+    const deletedTeacher: Teacher | undefined = targetTeacher
+      ? {
+          ...targetTeacher,
+          isArchived: true,
+          archivedAt: now,
+          archiveReason: cleanReason,
+        }
+      : undefined;
 
-    // Remove associated inquiries and delay notices
-    setInquiries((prev) => {
-      deletedInquiries = prev.filter((inq) => inq.teacherId === id);
-      return prev.filter((inq) => inq.teacherId !== id);
-    });
-    setDelayNotices((prev) => {
-      deletedDelayNotices = prev.filter((dn) => dn.teacherId === id);
-      return prev.filter((dn) => dn.teacherId !== id);
-    });
+    const deletedRecords: AbsenceRecord[] = targetRecords.map((r) => ({
+      ...r,
+      isArchived: true,
+      archivedAt: now,
+      archiveReason: cascadeReason,
+      archivedByCascade: true,
+    }));
 
-    // Archive the deleted teacher and related data
-    setArchivedTeachers((prev) => {
-      if (!deletedTeacher) return prev;
+    const deletedDelayNotices: DelayNotice[] = targetDelayNotices.map((dn) => ({
+      ...dn,
+      isArchived: true,
+      archivedAt: now,
+      archiveReason: cascadeReason,
+      archivedByCascade: true,
+    }));
+
+    setTeachers((prev) => prev.filter((t) => t.id !== id));
+    setAbsenceRecords((prev) => prev.filter((a) => a.teacherId !== id));
+    setInquiries((prev) => prev.filter((inq) => inq.teacherId !== id));
+    setDelayNotices((prev) => prev.filter((dn) => dn.teacherId !== id));
+
+    if (deletedTeacher) {
       const archivedItem: ArchivedTeacher = {
         teacher: deletedTeacher,
         associatedRecords: deletedRecords,
-        associatedInquiries: deletedInquiries,
+        associatedInquiries: targetInquiries,
         associatedDelayNotices: deletedDelayNotices,
-        archivedAt: new Date().toISOString(),
+        archivedAt: now,
+        archiveReason: cleanReason,
       };
-      return [archivedItem, ...prev.filter((a) => a.teacher.id !== id)];
-    });
+      setArchivedTeachers((prev) => [
+        archivedItem,
+        ...prev.filter((a) => a.teacher.id !== id),
+      ]);
+    }
+
+    // Cascade archive all associated absence records with archivedByCascade = true
+    if (deletedRecords.length > 0) {
+      setArchivedAbsences((prev) => {
+        const deletedIds = new Set(deletedRecords.map((r) => r.id));
+        const cascadedItems: ArchivedAbsenceRecord[] = deletedRecords.map((rec) => ({
+          record: rec,
+          archivedAt: now,
+          archiveReason: cascadeReason,
+          archivedByCascade: true,
+        }));
+        return [...cascadedItems, ...prev.filter((a) => !deletedIds.has(a.record.id))];
+      });
+    }
+
+    // Cascade archive all associated delay notices with archivedByCascade = true
+    if (deletedDelayNotices.length > 0) {
+      setArchivedDelayNotices((prev) => {
+        const deletedIds = new Set(deletedDelayNotices.map((dn) => dn.id));
+        const cascadedItems: ArchivedDelayNotice[] = deletedDelayNotices.map((dn) => ({
+          notice: dn,
+          archivedAt: now,
+          archiveReason: cascadeReason,
+          archivedByCascade: true,
+        }));
+        return [...cascadedItems, ...prev.filter((a) => !deletedIds.has(a.notice.id))];
+      });
+    }
 
     if (isSupabaseConfigured() && supabase) {
       supabase
@@ -1488,39 +1720,60 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     return { deletedTeacher, deletedRecords };
-  }, []);
+  }, [teachers, absenceRecords, inquiries, delayNotices]);
 
   // 6.b Restore Teacher (Undo Support)
   const restoreTeacher = useCallback(
     (teacher: Teacher, associatedRecords: AbsenceRecord[] = []) => {
+      const cleanTeacher: Teacher = {
+        ...teacher,
+        isArchived: false,
+        archivedAt: undefined,
+        archiveReason: undefined,
+      };
       setTeachers((prev) => {
-        if (prev.some((t) => t.id === teacher.id)) return prev;
-        return [teacher, ...prev];
+        if (prev.some((t) => t.id === cleanTeacher.id)) return prev;
+        return [cleanTeacher, ...prev];
       });
 
       if (associatedRecords.length > 0) {
+        const cleanRecords = associatedRecords.map((r) => ({
+          ...r,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        }));
         setAbsenceRecords((prev) => {
           const existingIds = new Set(prev.map((r) => r.id));
-          const toAdd = associatedRecords.filter((r) => !existingIds.has(r.id));
+          const toAdd = cleanRecords.filter((r) => !existingIds.has(r.id));
           return [...toAdd, ...prev];
         });
       }
+
+      // Also remove from archive lists if Undo is pressed
+      setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacher.id));
+      setArchivedAbsences((prev) => prev.filter((a) => a.record.teacherId !== teacher.id));
+      setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.teacherId !== teacher.id));
 
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("teachers")
           .insert({
-            id: teacher.id,
-            name: teacher.fullName,
-            full_name: teacher.fullName,
-            job_number: teacher.username,
-            username: teacher.username,
-            mobile: teacher.mobile || null,
-            employment_status: teacher.employmentStatus || "دائم",
-            job_title: teacher.jobTitle || "معلم",
-            teaching_field: teacher.teachingField || teacher.specialty || null,
-            specialty: teacher.specialty || null,
-            total_absences: teacher.totalAbsences || 0,
+            id: cleanTeacher.id,
+            name: cleanTeacher.fullName,
+            full_name: cleanTeacher.fullName,
+            national_id: cleanTeacher.nationalId,
+            job_number: cleanTeacher.nationalId,
+            username: cleanTeacher.nationalId,
+            mobile: cleanTeacher.mobile || null,
+            email: cleanTeacher.email || null,
+            employment_status: cleanTeacher.employmentStatus || "دائم",
+            job_title: cleanTeacher.jobTitle || "معلم",
+            teaching_field: cleanTeacher.teachingField || cleanTeacher.specialty || null,
+            specialty: cleanTeacher.specialty || null,
+            total_absences: cleanTeacher.totalAbsences || 0,
+            updated_at: cleanTeacher.updatedAt || new Date().toISOString(),
           })
           .then(() => {});
       }
@@ -1565,13 +1818,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     setTeachers((currentTeachers) => {
       const countMap: Record<string, number> = {};
       for (const record of absenceRecords) {
-        if (record.teacherId) {
+        if (record.teacherId && !record.isArchived) {
           countMap[record.teacherId] = (countMap[record.teacherId] || 0) + 1;
         }
       }
       const delayCountMap: Record<string, number> = {};
       for (const dn of delayNotices) {
-        if (dn.teacherId) {
+        if (dn.teacherId && !dn.isArchived) {
           delayCountMap[dn.teacherId] = (delayCountMap[dn.teacherId] || 0) + 1;
         }
       }
@@ -1606,6 +1859,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             ? crypto.randomUUID()
             : `abs-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         timestamp: new Date().toISOString(),
+        isArchived: false,
       };
 
       let newCount = 1;
@@ -1615,7 +1869,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         // Recalculate teacher total absences
         const countMap: Record<string, number> = {};
         for (const r of nextRecords) {
-          countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+          if (!r.isArchived) {
+            countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+          }
         }
 
         setTeachers((currentTeachers) =>
@@ -1717,7 +1973,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         // Recalculate counts
         const countMap: Record<string, number> = {};
         for (const r of nextRecords) {
-          countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+          if (!r.isArchived) {
+            countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+          }
         }
         setTeachers((currentTeachers) =>
           currentTeachers.map((t) => ({
@@ -1755,68 +2013,119 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // 10.b Delete Absence Record
-  const deleteAbsenceRecord = useCallback((id: string) => {
-    let deletedRecord: AbsenceRecord | undefined;
-    let affectedTeacherId: string | null = null;
-    let newCount = 0;
+  // 10.b Delete Absence Record (Soft Delete to Archive)
+  const deleteAbsenceRecord = useCallback(
+    (id: string, archiveReason?: string) => {
+      const now = new Date().toISOString();
+      const cleanReason = archiveReason?.trim() || undefined;
+      const foundRecord = absenceRecords.find((r) => r.id === id);
+      const deletedRecord: AbsenceRecord | undefined = foundRecord
+        ? {
+            ...foundRecord,
+            isArchived: true,
+            archivedAt: now,
+            archiveReason: cleanReason,
+            archivedByCascade: false,
+          }
+        : undefined;
 
-    setAbsenceRecords((prev) => {
-      deletedRecord = prev.find((r) => r.id === id);
-      const nextRecords = prev.filter((r) => r.id !== id);
+      // Also check if there is a linked WhatsApp AbsenceInquiry for the same teacher and date
+      const matchedInquiry = foundRecord
+        ? inquiries.find(
+            (inq) =>
+              inq.id === id.replace(/^abs-inq-/, "") ||
+              (inq.teacherId === foundRecord.teacherId &&
+                inq.absenceDate === foundRecord.date)
+          )
+        : undefined;
+
+      let affectedTeacherId: string | null = foundRecord?.teacherId || null;
+      let newCount = 0;
+
+      setAbsenceRecords((prev) => {
+        const nextRecords = prev.filter((r) => r.id !== id);
+        if (affectedTeacherId) {
+          const countMap: Record<string, number> = {};
+          for (const r of nextRecords) {
+            if (!r.isArchived) {
+              countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+            }
+          }
+          setTeachers((currentTeachers) =>
+            currentTeachers.map((t) => {
+              if (t.id === affectedTeacherId) {
+                newCount = countMap[t.id] || 0;
+                return { ...t, totalAbsences: newCount };
+              }
+              return t;
+            })
+          );
+        }
+        return nextRecords;
+      });
+
+      if (matchedInquiry) {
+        setInquiries((prev) => prev.filter((inq) => inq.id !== matchedInquiry.id));
+      }
 
       if (deletedRecord) {
-        affectedTeacherId = deletedRecord.teacherId;
-        const countMap: Record<string, number> = {};
-        for (const r of nextRecords) {
-          countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+        const archivedItem: ArchivedAbsenceRecord = {
+          record: deletedRecord,
+          archivedAt: now,
+          archiveReason: cleanReason,
+          archivedByCascade: false,
+          linkedInquiry: matchedInquiry
+            ? {
+                ...matchedInquiry,
+                isArchived: true,
+                archivedAt: now,
+                archiveReason: cleanReason,
+              }
+            : undefined,
+          isInquiryOnly: false,
+        };
+        setArchivedAbsences((prev) => {
+          const next = [
+            archivedItem,
+            ...prev.filter((a) => a.record.id !== id),
+          ];
+          try {
+            localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("absence_records")
+          .delete()
+          .eq("id", id)
+          .then(({ error }) => {
+            if (error) console.error("فشل حذف المساءلة من سوبابيز:", error);
+          });
+
+        if (matchedInquiry) {
+          supabase
+            .from("absence_inquiries")
+            .delete()
+            .eq("id", matchedInquiry.id)
+            .then(() => {});
         }
 
-        setTeachers((currentTeachers) =>
-          currentTeachers.map((t) => {
-            if (t.id === affectedTeacherId) {
-              newCount = countMap[t.id] || 0;
-              return { ...t, totalAbsences: newCount };
-            }
-            return t;
-          })
-        );
+        if (affectedTeacherId) {
+          supabase
+            .from("teachers")
+            .update({ total_absences: newCount })
+            .eq("id", affectedTeacherId)
+            .then(() => {});
+        }
       }
 
-      return nextRecords;
-    });
-
-    if (deletedRecord) {
-      const archivedItem: ArchivedAbsenceRecord = {
-        record: deletedRecord,
-        archivedAt: new Date().toISOString(),
-      };
-      setArchivedAbsences((prev) => [
-        archivedItem,
-        ...prev.filter((a) => a.record.id !== id),
-      ]);
-    }
-
-    if (isSupabaseConfigured() && supabase) {
-      supabase
-        .from("absence_records")
-        .delete()
-        .eq("id", id)
-        .then(({ error }) => {
-          if (error) console.error("فشل حذف المساءلة من سوبابيز:", error);
-        });
-
-      if (affectedTeacherId) {
-        supabase
-          .from("teachers")
-          .update({ total_absences: newCount })
-          .eq("id", affectedTeacherId)
-          .then(() => {});
-      }
-    }
-
-    return { deletedRecord };
-  }, []);
+      return { deletedRecord };
+    },
+    [absenceRecords, inquiries]
+  );
 
   // 10.c Restore Absence Record (Undo Support)
   const restoreAbsenceRecord = useCallback((record: AbsenceRecord) => {
@@ -1897,7 +2206,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         id,
         teacherId: teacher.id,
         teacherName: teacher.fullName || teacher.name || "معلمة",
-        jobNumber: teacher.username || teacher.jobNumber || "—",
+        nationalId: teacher.nationalId || teacher.username || teacher.jobNumber,
+        jobNumber: teacher.nationalId || teacher.username || teacher.jobNumber || "—",
         specialty: teacher.specialty || teacher.teachingField,
         mobile: teacher.mobile,
         absenceDate,
@@ -2059,21 +2369,144 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     [inquiries, absenceRecords, recordAbsence]
   );
 
-  // 13. Delete Inquiry
-  const deleteInquiry = useCallback(async (inquiryId: string) => {
-    setInquiries((prev) => prev.filter((inq) => inq.id !== inquiryId));
+  // 13. Delete Inquiry (Soft Delete to Archive & Sync Linked AbsenceRecord)
+  const deleteInquiry = useCallback(
+    async (inquiryId: string, archiveReason?: string) => {
+      const now = new Date().toISOString();
+      const cleanReason = archiveReason?.trim() || undefined;
+      const targetInquiry = inquiries.find((inq) => inq.id === inquiryId);
 
-    if (isSupabaseConfigured() && supabase) {
-      try {
-        await supabase
-          .from("absence_inquiries")
-          .delete()
-          .eq("id", inquiryId);
-      } catch (err) {
-        console.warn("فشل حذف المساءلة من سوبابيز:", err);
+      // Find any linked AbsenceRecord (either abs-inq-${inquiryId} or same teacherId + absenceDate)
+      const matchedRecord = targetInquiry
+        ? absenceRecords.find(
+            (r) =>
+              r.id === `abs-inq-${inquiryId}` ||
+              (r.teacherId === targetInquiry.teacherId &&
+                r.date === targetInquiry.absenceDate)
+          )
+        : undefined;
+
+      setInquiries((prev) => prev.filter((inq) => inq.id !== inquiryId));
+
+      let newCount = 0;
+      const affectedTeacherId =
+        targetInquiry?.teacherId || matchedRecord?.teacherId || null;
+
+      setAbsenceRecords((prev) => {
+        const nextRecords = matchedRecord
+          ? prev.filter((r) => r.id !== matchedRecord.id)
+          : prev;
+
+        if (affectedTeacherId) {
+          const countMap: Record<string, number> = {};
+          for (const r of nextRecords) {
+            if (!r.isArchived) {
+              countMap[r.teacherId] = (countMap[r.teacherId] || 0) + 1;
+            }
+          }
+          setTeachers((currentTeachers) =>
+            currentTeachers.map((t) => {
+              if (t.id === affectedTeacherId) {
+                newCount = countMap[t.id] || 0;
+                return { ...t, totalAbsences: newCount };
+              }
+              return t;
+            })
+          );
+        }
+
+        return nextRecords;
+      });
+
+      if (targetInquiry) {
+        const synthesizedOrMatchedRecord: AbsenceRecord = matchedRecord
+          ? {
+              ...matchedRecord,
+              isArchived: true,
+              archivedAt: now,
+              archiveReason: cleanReason,
+              archivedByCascade: false,
+            }
+          : {
+              id: targetInquiry.id,
+              teacherId: targetInquiry.teacherId,
+              teacherName: targetInquiry.teacherName,
+              jobNumber: targetInquiry.jobNumber,
+              specialty: targetInquiry.specialty || "عام",
+              date: targetInquiry.absenceDate,
+              type: targetInquiry.absenceType || "اضطراري",
+              reason:
+                targetInquiry.teacherReason ||
+                "مساءلة غياب إلكترونية عبر الواتساب",
+              notes: targetInquiry.adminNotes || undefined,
+              attachmentUrl: targetInquiry.attachmentUrl || undefined,
+              timestamp: targetInquiry.createdAt || now,
+              isArchived: true,
+              archivedAt: now,
+              archiveReason: cleanReason,
+              archivedByCascade: false,
+            };
+
+        const archivedItem: ArchivedAbsenceRecord = {
+          record: synthesizedOrMatchedRecord,
+          archivedAt: now,
+          archiveReason: cleanReason,
+          archivedByCascade: false,
+          linkedInquiry: {
+            ...targetInquiry,
+            isArchived: true,
+            archivedAt: now,
+            archiveReason: cleanReason,
+          },
+          isInquiryOnly: !matchedRecord && targetInquiry.status !== "approved",
+        };
+
+        setArchivedAbsences((prev) => {
+          const next = [
+            archivedItem,
+            ...prev.filter(
+              (a) =>
+                a.record.id !== synthesizedOrMatchedRecord.id &&
+                a.linkedInquiry?.id !== inquiryId
+            ),
+          ];
+          try {
+            localStorage.setItem(
+              ARCHIVED_ABSENCES_STORAGE_KEY,
+              JSON.stringify(next)
+            );
+          } catch {}
+          return next;
+        });
       }
-    }
-  }, []);
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          await supabase
+            .from("absence_inquiries")
+            .delete()
+            .eq("id", inquiryId);
+
+          if (matchedRecord) {
+            await supabase
+              .from("absence_records")
+              .delete()
+              .eq("id", matchedRecord.id);
+          }
+
+          if (affectedTeacherId) {
+            await supabase
+              .from("teachers")
+              .update({ total_absences: newCount })
+              .eq("id", affectedTeacherId);
+          }
+        } catch (err) {
+          console.warn("فشل حذف المساءلة من سوبابيز:", err);
+        }
+      }
+    },
+    [inquiries, absenceRecords]
+  );
 
   // 14. Refresh Inquiries
   const refreshInquiries = useCallback(async () => {
@@ -2157,7 +2590,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           id,
           noticeNumber: noticeNum,
           teacherName: teacher.fullName || teacher.name,
-          jobNumber: teacher.username || teacher.jobNumber,
+          nationalId: teacher.nationalId || teacher.username || teacher.jobNumber,
+          jobNumber: teacher.nationalId || teacher.username || teacher.jobNumber,
           specialty: teacher.specialty || teacher.teachingField,
           hijriYear,
           status: "pending_teacher",
@@ -2385,93 +2819,114 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
-  // 19. Delete Delay Notice with Archive
-  const deleteDelayNotice = useCallback((id: string): { deletedNotice?: DelayNotice } => {
-    let deletedNotice: DelayNotice | undefined;
+  // 19. Delete Delay Notice with Archive (Soft Delete)
+  const deleteDelayNotice = useCallback(
+    (id: string, archiveReason?: string): { deletedNotice?: DelayNotice } => {
+      const now = new Date().toISOString();
+      const cleanReason = archiveReason?.trim() || undefined;
+      const foundNotice = delayNotices.find((dn) => dn.id === id);
+      const deletedNotice: DelayNotice | undefined = foundNotice
+        ? {
+            ...foundNotice,
+            isArchived: true,
+            archivedAt: now,
+            archiveReason: cleanReason,
+            archivedByCascade: false,
+          }
+        : undefined;
 
-    setDelayNotices((prev) => {
-      deletedNotice = prev.find((dn) => dn.id === id);
-      return prev.filter((dn) => dn.id !== id);
-    });
+      setDelayNotices((prev) => prev.filter((dn) => dn.id !== id));
 
-    if (deletedNotice) {
-      const teacherId = (deletedNotice as DelayNotice).teacherId;
-      setTeachers((prev) =>
-        prev.map((t) =>
-          t.id === teacherId
-            ? { ...t, totalDelayNotices: Math.max(0, (t.totalDelayNotices || 0) - 1) }
-            : t
-        )
-      );
+      if (deletedNotice) {
+        const teacherId = deletedNotice.teacherId;
+        setTeachers((prev) =>
+          prev.map((t) =>
+            t.id === teacherId
+              ? { ...t, totalDelayNotices: Math.max(0, (t.totalDelayNotices || 0) - 1) }
+              : t
+          )
+        );
 
-      // Archive deleted delay notice
-      const archivedItem: ArchivedDelayNotice = {
-        notice: deletedNotice,
-        archivedAt: new Date().toISOString(),
-      };
-      setArchivedDelayNotices((prev) => [
-        archivedItem,
-        ...prev.filter((a) => a.notice.id !== id),
-      ]);
+        const archivedItem: ArchivedDelayNotice = {
+          notice: deletedNotice,
+          archivedAt: now,
+          archiveReason: cleanReason,
+          archivedByCascade: false,
+        };
+        setArchivedDelayNotices((prev) => [
+          archivedItem,
+          ...prev.filter((a) => a.notice.id !== id),
+        ]);
 
-      if (isSupabaseConfigured() && supabase) {
-        supabase
-          .from("delay_notices")
-          .delete()
-          .eq("id", id)
-          .then(() => {});
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("delay_notices")
+            .delete()
+            .eq("id", id)
+            .then(() => {});
+        }
       }
-    }
 
-    return { deletedNotice };
-  }, []);
+      return { deletedNotice };
+    },
+    [delayNotices]
+  );
 
   // 20. Restore Delay Notice (Undo)
   const restoreDelayNotice = useCallback((notice: DelayNotice) => {
+    const cleanNotice: DelayNotice = {
+      ...notice,
+      isArchived: false,
+      archivedAt: undefined,
+      archiveReason: undefined,
+      archivedByCascade: undefined,
+    };
     setDelayNotices((prev) => {
-      if (prev.some((dn) => dn.id === notice.id)) return prev;
-      return [notice, ...prev];
+      if (prev.some((dn) => dn.id === cleanNotice.id)) return prev;
+      return [cleanNotice, ...prev];
     });
 
     setTeachers((prev) =>
       prev.map((t) =>
-        t.id === notice.teacherId
+        t.id === cleanNotice.teacherId
           ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
           : t
       )
     );
 
+    setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== cleanNotice.id));
+
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("delay_notices")
         .insert({
-          id: notice.id,
-          teacher_id: notice.teacherId,
-          teacher_name: notice.teacherName,
-          job_number: notice.jobNumber,
-          specialty: notice.specialty,
-          notice_date: notice.noticeDate,
-          violation_delay_start: notice.violationDelayStart,
-          delay_start_time: notice.delayStartTime || null,
-          violation_absent_during: notice.violationAbsentDuring,
-          absent_from_time: notice.absentFromTime || null,
-          absent_to_time: notice.absentToTime || null,
-          violation_early_departure: notice.violationEarlyDeparture,
-          early_departure_time: notice.earlyDepartureTime || null,
-          violation_left_school: notice.violationLeftSchool,
-          left_school_details: notice.leftSchoolDetails || null,
-          additional_notes: notice.additionalNotes || null,
-          status: notice.status,
-          teacher_reason: notice.teacherReason || null,
-          teacher_signature_date: notice.teacherSignatureDate || null,
-          director_opinion: notice.directorOpinion || null,
-          director_signature_date: notice.directorSignatureDate || null,
-          hijri_year: notice.hijriYear,
-          created_at: notice.createdAt,
-          share_token: notice.shareToken,
-          token_expires_at: notice.tokenExpiresAt,
-          teacher_response_submitted_at: notice.teacherResponseSubmittedAt || null,
-          link_shared_at: notice.linkSharedAt || null,
+          id: cleanNotice.id,
+          teacher_id: cleanNotice.teacherId,
+          teacher_name: cleanNotice.teacherName,
+          job_number: cleanNotice.jobNumber,
+          specialty: cleanNotice.specialty,
+          notice_date: cleanNotice.noticeDate,
+          violation_delay_start: cleanNotice.violationDelayStart,
+          delay_start_time: cleanNotice.delayStartTime || null,
+          violation_absent_during: cleanNotice.violationAbsentDuring,
+          absent_from_time: cleanNotice.absentFromTime || null,
+          absent_to_time: cleanNotice.absentToTime || null,
+          violation_early_departure: cleanNotice.violationEarlyDeparture,
+          early_departure_time: cleanNotice.earlyDepartureTime || null,
+          violation_left_school: cleanNotice.violationLeftSchool,
+          left_school_details: cleanNotice.leftSchoolDetails || null,
+          additional_notes: cleanNotice.additionalNotes || null,
+          status: cleanNotice.status,
+          teacher_reason: cleanNotice.teacherReason || null,
+          teacher_signature_date: cleanNotice.teacherSignatureDate || null,
+          director_opinion: cleanNotice.directorOpinion || null,
+          director_signature_date: cleanNotice.directorSignatureDate || null,
+          hijri_year: cleanNotice.hijriYear,
+          created_at: cleanNotice.createdAt,
+          share_token: cleanNotice.shareToken,
+          token_expires_at: cleanNotice.tokenExpiresAt,
+          teacher_response_submitted_at: cleanNotice.teacherResponseSubmittedAt || null,
+          link_shared_at: cleanNotice.linkSharedAt || null,
         })
         .then(() => {});
     }
@@ -2479,21 +2934,85 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // === Archive Management Methods ===
   const restoreFromArchive = useCallback(
-    (type: "teacher" | "absence" | "delay", id: string): boolean => {
+    (
+      type: "teacher" | "absence" | "delay",
+      id: string
+    ): { success: boolean; error?: string; message?: string } => {
       if (type === "teacher") {
         const found = archivedTeachers.find((a) => a.teacher.id === id);
-        if (!found) return false;
+        if (!found) {
+          return { success: false, error: "المعلمة غير موجودة في الأرشيف." };
+        }
+
+        // Edge Case 1 & 2: Find remaining cascaded records in archivedAbsences & archivedDelayNotices
+        // (Any record that was permanently deleted from archivedAbsences will not be present here)
+        const remainingCascadedAbsences = archivedAbsences
+          .filter(
+            (a) =>
+              a.record.teacherId === id &&
+              (a.archivedByCascade ||
+                a.record.archivedByCascade ||
+                Math.abs(
+                  new Date(a.archivedAt).getTime() -
+                    new Date(found.archivedAt).getTime()
+                ) <= 2000)
+          )
+          .map((a) => ({
+            ...a.record,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            archivedByCascade: undefined,
+          }));
+
+        const remainingCascadedDelays = archivedDelayNotices
+          .filter(
+            (d) =>
+              d.notice.teacherId === id &&
+              (d.archivedByCascade ||
+                d.notice.archivedByCascade ||
+                Math.abs(
+                  new Date(d.archivedAt).getTime() -
+                    new Date(found.archivedAt).getTime()
+                ) <= 2000)
+          )
+          .map((d) => ({
+            ...d.notice,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            archivedByCascade: undefined,
+          }));
+
+        const activeTeacherAbsencesCount =
+          absenceRecords.filter((r) => r.teacherId === id && !r.isArchived).length +
+          remainingCascadedAbsences.length;
+
+        const activeTeacherDelaysCount =
+          delayNotices.filter((d) => d.teacherId === id && !d.isArchived).length +
+          remainingCascadedDelays.length;
+
+        const restoredTeacher: Teacher = {
+          ...found.teacher,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          totalAbsences: activeTeacherAbsencesCount,
+          totalDelayNotices: activeTeacherDelaysCount,
+        };
 
         // Restore teacher
         setTeachers((prev) =>
-          prev.some((t) => t.id === id) ? prev : [found.teacher, ...prev]
+          prev.some((t) => t.id === id)
+            ? prev.map((t) => (t.id === id ? restoredTeacher : t))
+            : [restoredTeacher, ...prev]
         );
 
-        // Restore associated records
-        if (found.associatedRecords && found.associatedRecords.length > 0) {
+        // Restore remaining cascaded absence records
+        if (remainingCascadedAbsences.length > 0) {
           setAbsenceRecords((prev) => {
             const existingIds = new Set(prev.map((r) => r.id));
-            const toAdd = found.associatedRecords.filter((r) => !existingIds.has(r.id));
+            const toAdd = remainingCascadedAbsences.filter((r) => !existingIds.has(r.id));
             return [...toAdd, ...prev];
           });
         }
@@ -2502,76 +3021,221 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         if (found.associatedInquiries && found.associatedInquiries.length > 0) {
           setInquiries((prev) => {
             const existingIds = new Set(prev.map((i) => i.id));
-            const toAdd = found.associatedInquiries.filter((i) => !existingIds.has(i.id));
+            const toAdd = found.associatedInquiries
+              .filter((i) => !existingIds.has(i.id))
+              .map((i) => ({
+                ...i,
+                isArchived: false,
+                archivedAt: undefined,
+                archiveReason: undefined,
+                archivedByCascade: undefined,
+              }));
             return [...toAdd, ...prev];
           });
         }
 
-        // Restore associated delay notices
-        if (found.associatedDelayNotices && found.associatedDelayNotices.length > 0) {
+        // Restore remaining cascaded delay notices
+        if (remainingCascadedDelays.length > 0) {
           setDelayNotices((prev) => {
             const existingIds = new Set(prev.map((d) => d.id));
-            const toAdd = found.associatedDelayNotices.filter((d) => !existingIds.has(d.id));
+            const toAdd = remainingCascadedDelays.filter((d) => !existingIds.has(d.id));
             return [...toAdd, ...prev];
           });
         }
 
-        // Remove from archivedTeachers
+        // Remove teacher and her cascaded records from Archive
+        const restoredAbsIds = new Set(remainingCascadedAbsences.map((r) => r.id));
+        const restoredDelayIds = new Set(remainingCascadedDelays.map((d) => d.id));
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
-        return true;
+        setArchivedAbsences((prev) => prev.filter((a) => !restoredAbsIds.has(a.record.id)));
+        setArchivedDelayNotices((prev) => prev.filter((d) => !restoredDelayIds.has(d.notice.id)));
+
+        return {
+          success: true,
+          message: "تم استعادة المعلمة وجميع سجلاتها المرتبطة بنجاح",
+        };
       } else if (type === "absence") {
         const found = archivedAbsences.find((a) => a.record.id === id);
-        if (!found) return false;
+        if (!found) {
+          return { success: false, error: "سجل الغياب غير موجود في الأرشيف." };
+        }
 
-        setAbsenceRecords((prev) =>
-          prev.some((r) => r.id === id) ? prev : [found.record, ...prev]
-        );
+        const teacherId = found.record.teacherId;
+        const activeTeacher = teachers.find((t) => t.id === teacherId);
+        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
 
-        setTeachers((prev) =>
-          prev.map((t) =>
-            t.id === found.record.teacherId
-              ? { ...t, totalAbsences: (t.totalAbsences || 0) + 1 }
-              : t
-          )
-        );
+        // Edge Case 3: Teacher was permanently deleted
+        if (!activeTeacher && !archivedTeacher) {
+          return {
+            success: false,
+            error: "لا يمكن استعادة سجل الغياب لأن المعلمة المرتبطة به محذوفة نهائياً",
+          };
+        }
+
+        const cleanRecord: AbsenceRecord = {
+          ...found.record,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        };
+
+        // Restore linked inquiry if present
+        if (found.linkedInquiry) {
+          const cleanInquiry: AbsenceInquiry = {
+            ...found.linkedInquiry,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            archivedByCascade: undefined,
+          };
+          setInquiries((prev) =>
+            prev.some((i) => i.id === cleanInquiry.id)
+              ? prev.map((i) => (i.id === cleanInquiry.id ? cleanInquiry : i))
+              : [cleanInquiry, ...prev]
+          );
+        }
+
+        const shouldRestoreAbsenceRecord = !found.isInquiryOnly;
+
+        // If teacher is currently in archivedTeachers, restore the teacher alongside the record so it's never orphaned
+        if (!activeTeacher && archivedTeacher) {
+          const restoredTeacher: Teacher = {
+            ...archivedTeacher.teacher,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            totalAbsences: shouldRestoreAbsenceRecord ? 1 : 0,
+            totalDelayNotices: 0,
+          };
+          setTeachers((prev) =>
+            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+          );
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+        } else if (shouldRestoreAbsenceRecord) {
+          setTeachers((prev) =>
+            prev.map((t) =>
+              t.id === teacherId
+                ? { ...t, totalAbsences: (t.totalAbsences || 0) + 1 }
+                : t
+            )
+          );
+        }
+
+        if (shouldRestoreAbsenceRecord) {
+          setAbsenceRecords((prev) =>
+            prev.some((r) => r.id === id) ? prev : [cleanRecord, ...prev]
+          );
+        }
 
         setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== id));
-        return true;
+        return {
+          success: true,
+          message:
+            !activeTeacher && archivedTeacher
+              ? "تم استعادة سجل الغياب مع استعادة المعلمة المرتبطة به"
+              : "تم استعادة سجل الغياب بنجاح",
+        };
       } else if (type === "delay") {
         const found = archivedDelayNotices.find((a) => a.notice.id === id);
-        if (!found) return false;
+        if (!found) {
+          return { success: false, error: "التنبيه غير موجود في الأرشيف." };
+        }
+
+        const teacherId = found.notice.teacherId;
+        const activeTeacher = teachers.find((t) => t.id === teacherId);
+        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+
+        // Edge Case 3: Teacher was permanently deleted
+        if (!activeTeacher && !archivedTeacher) {
+          return {
+            success: false,
+            error: "لا يمكن استعادة التنبيه لأن المعلمة المرتبطة به محذوفة نهائياً",
+          };
+        }
+
+        const cleanNotice: DelayNotice = {
+          ...found.notice,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        };
+
+        if (!activeTeacher && archivedTeacher) {
+          const restoredTeacher: Teacher = {
+            ...archivedTeacher.teacher,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            totalAbsences: 0,
+            totalDelayNotices: 1,
+          };
+          setTeachers((prev) =>
+            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+          );
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+        } else {
+          setTeachers((prev) =>
+            prev.map((t) =>
+              t.id === teacherId
+                ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
+                : t
+            )
+          );
+        }
 
         setDelayNotices((prev) =>
-          prev.some((d) => d.id === id) ? prev : [found.notice, ...prev]
-        );
-
-        setTeachers((prev) =>
-          prev.map((t) =>
-            t.id === found.notice.teacherId
-              ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
-              : t
-          )
+          prev.some((d) => d.id === id) ? prev : [cleanNotice, ...prev]
         );
 
         setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== id));
-        return true;
+        return {
+          success: true,
+          message:
+            !activeTeacher && archivedTeacher
+              ? "تم استعادة تنبيه التأخر مع استعادة المعلمة المرتبطة به"
+              : "تم استعادة تنبيه التأخر بنجاح",
+        };
       }
 
-      return false;
+      return { success: false, error: "نوع العنصر غير معروف." };
     },
-    [archivedTeachers, archivedAbsences, archivedDelayNotices]
+    [teachers, absenceRecords, delayNotices, archivedTeachers, archivedAbsences, archivedDelayNotices]
   );
 
   const permanentDeleteFromArchive = useCallback(
     (type: "teacher" | "absence" | "delay", id: string): boolean => {
       if (type === "teacher") {
+        // Edge Case 4: Permanently deleting a teacher removes all her associated records (active or archived)
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
+        setArchivedAbsences((prev) => prev.filter((a) => a.record.teacherId !== id));
+        setArchivedDelayNotices((prev) => prev.filter((d) => d.notice.teacherId !== id));
+        setAbsenceRecords((prev) => prev.filter((r) => r.teacherId !== id));
+        setDelayNotices((prev) => prev.filter((d) => d.teacherId !== id));
+        setInquiries((prev) => prev.filter((i) => i.teacherId !== id));
         return true;
       } else if (type === "absence") {
+        // Remove from archivedAbsences AND from associatedRecords inside archivedTeachers (Edge Case 2)
         setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== id));
+        setArchivedTeachers((prev) =>
+          prev.map((at) => ({
+            ...at,
+            associatedRecords: (at.associatedRecords || []).filter((r) => r.id !== id),
+          }))
+        );
         return true;
       } else if (type === "delay") {
+        // Remove from archivedDelayNotices AND from associatedDelayNotices inside archivedTeachers (Edge Case 2)
         setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== id));
+        setArchivedTeachers((prev) =>
+          prev.map((at) => ({
+            ...at,
+            associatedDelayNotices: (at.associatedDelayNotices || []).filter(
+              (d) => d.id !== id
+            ),
+          }))
+        );
         return true;
       }
       return false;

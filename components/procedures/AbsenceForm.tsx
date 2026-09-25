@@ -339,7 +339,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
         const rec = recordAbsence({
           teacherId: selectedTeacher.id,
           teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
-          jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
+          jobNumber: selectedTeacher.nationalId || selectedTeacher.username || selectedTeacher.jobNumber || "—",
+          nationalId: selectedTeacher.nationalId,
           specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
           date: targetDate,
           type: absenceType,
@@ -357,7 +358,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       primaryRecord = recordAbsence({
         teacherId: selectedTeacher.id,
         teacherName: selectedTeacher.fullName || selectedTeacher.name || "معلمة",
-        jobNumber: selectedTeacher.username || selectedTeacher.jobNumber || "—",
+        jobNumber: selectedTeacher.nationalId || selectedTeacher.username || selectedTeacher.jobNumber || "—",
+        nationalId: selectedTeacher.nationalId,
         specialty: selectedTeacher.specialty || selectedTeacher.teachingField || "عام",
         date: absenceDate,
         type: absenceType,
@@ -435,7 +437,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
       try {
         printAbsencePdf({
           teacherName: newRecord.teacherName,
-          username: newRecord.jobNumber,
+          nationalId: newRecord.nationalId || selectedTeacher.nationalId,
+          username: newRecord.nationalId || newRecord.jobNumber,
           specialty: newRecord.specialty,
           jobTitle: selectedTeacher.jobTitle || "معلم",
           employmentStatus: selectedTeacher.employmentStatus || "دائم",
@@ -472,7 +475,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
     try {
       printAbsencePdf({
         teacherName: lastSavedRecord.teacherName,
-        username: lastSavedRecord.jobNumber,
+        nationalId: lastSavedRecord.nationalId || lastSavedTeacher.nationalId,
+        username: lastSavedRecord.nationalId || lastSavedRecord.jobNumber,
         specialty: lastSavedRecord.specialty,
         jobTitle: lastSavedTeacher.jobTitle || "معلم",
         employmentStatus: lastSavedTeacher.employmentStatus || "دائم",

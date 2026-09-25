@@ -48,7 +48,8 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
     return teachers.filter(
       (t) =>
         (t.fullName || t.name || "").toLowerCase().includes(q) ||
-        (t.username || t.jobNumber || "").toLowerCase().includes(q) ||
+        (t.nationalId || t.username || t.jobNumber || "").toLowerCase().includes(q) ||
+        (t.email || "").toLowerCase().includes(q) ||
         (t.specialty || "").toLowerCase().includes(q) ||
         (t.teachingField || "").toLowerCase().includes(q) ||
         (t.mobile || "").toLowerCase().includes(q)
@@ -169,7 +170,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                   {selectedTeacher.fullName || selectedTeacher.name}
                 </span>
                 <span className="block text-[11px] text-slate-400 font-mono">
-                  {selectedTeacher.username || selectedTeacher.jobNumber} • {selectedTeacher.specialty || selectedTeacher.teachingField || "عام"}
+                  {selectedTeacher.nationalId || selectedTeacher.username || selectedTeacher.jobNumber} • {selectedTeacher.specialty || selectedTeacher.teachingField || "عام"}
                 </span>
               </div>
             </div>
@@ -196,7 +197,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
           </div>
         ) : (
           <div className="flex items-center justify-between w-full text-slate-400 text-xs md:text-sm">
-            <span>ابحثي بالاسم أو الرقم الوظيفي لاختيار المعلمة...</span>
+            <span>ابحثي بالاسم أو رقم الهوية لاختيار المعلمة...</span>
             <ChevronDown
               className={cn(
                 "w-4 h-4 text-slate-400 transition-transform duration-200",
@@ -225,7 +226,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="اكتبي اسم المعلمة أو اسم المستخدم... (الأسهم للتنقل و Enter للاختيار)"
+                placeholder="اكتبي اسم المعلمة أو رقم الهوية... (الأسهم للتنقل و Enter للاختيار)"
                 className="w-full pl-3 pr-9 py-2 text-xs bg-white rounded-lg border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85]"
               />
             </div>
@@ -274,7 +275,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                           {teacher.fullName || teacher.name}
                         </div>
                         <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
-                          <span className="font-mono">{teacher.username || teacher.jobNumber}</span>
+                          <span className="font-mono">{teacher.nationalId || teacher.username || teacher.jobNumber}</span>
                           <span>•</span>
                           <span>{teacher.specialty || teacher.teachingField || "عام"}</span>
                         </div>
@@ -410,7 +411,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                                 {teacher.fullName || teacher.name}
                               </div>
                               <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                                <span className="font-mono">{teacher.username || teacher.jobNumber}</span>
+                                <span className="font-mono">{teacher.nationalId || teacher.username || teacher.jobNumber}</span>
                                 <span>•</span>
                                 <span>{teacher.specialty || teacher.teachingField || "عام"}</span>
                               </div>

@@ -212,9 +212,9 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">الرقم الوظيفي</span>
+                <span className="text-slate-400 block text-[11px]">رقم الهوية</span>
                 <span className="font-bold text-slate-800 mt-0.5 block font-mono">
-                  {notice.jobNumber}
+                  {notice.nationalId || notice.jobNumber}
                 </span>
               </div>
               <div>

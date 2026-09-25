@@ -7,7 +7,8 @@ import {
 
 export interface AbsencePdfData {
   teacherName: string;
-  username: string;
+  username?: string;
+  nationalId?: string;
   specialty: string;
   jobTitle: string;
   employmentStatus: string;
@@ -64,7 +65,7 @@ function buildHtml(data: AbsencePdfData): string {
   const dayName = getArabicDayName(data.absenceDate);
   const dateDMY = formatDMY(data.absenceDate);
   const name = esc(data.teacherName);
-  const uname = esc(data.username);
+  const uname = esc(data.nationalId || data.username);
   const spec = esc(data.specialty || "عام");
   const job = esc(data.jobTitle || "معلم");
   const count = data.absenceCount;

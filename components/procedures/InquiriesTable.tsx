@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle,
@@ -11,6 +12,7 @@ import {
   Copy,
   ExternalLink,
   Trash2,
+  Archive,
   Search,
   Filter,
   Send,
@@ -22,6 +24,7 @@ import {
 } from "lucide-react";
 import { AbsenceInquiry } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { InquiryReviewModal } from "@/components/procedures/InquiryReviewModal";
 import {
   formatSaudiMobile,
@@ -37,6 +40,7 @@ interface InquiriesTableProps {
 export const InquiriesTable: React.FC<InquiriesTableProps> = ({
   onOpenNewInquiryModal,
 }) => {
+  const router = useRouter();
   const { inquiries, deleteInquiry } = useTeachers();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -45,13 +49,23 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     useState<AbsenceInquiry | null>(null);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [copyFeedbackId, setCopyFeedbackId] = useState<string | null>(null);
+  const [inquiryToDelete, setInquiryToDelete] = useState<AbsenceInquiry | null>(
+    null
+  );
+  const [archiveToast, setArchiveToast] = useState<string | null>(null);
+
+  const activeInquiries = useMemo(
+    () => inquiries.filter((inq) => !inq.isArchived),
+    [inquiries]
+  );
 
   // Filtered inquiries
   const filteredInquiries = useMemo(() => {
-    return inquiries.filter((inq) => {
+    return activeInquiries.filter((inq) => {
       const matchesSearch =
         inq.teacherName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        inq.jobNumber.includes(searchQuery);
+        (inq.nationalId && inq.nationalId.includes(searchQuery)) ||
+        (inq.jobNumber && inq.jobNumber.includes(searchQuery));
 
       if (!matchesSearch) return false;
 
@@ -63,17 +77,17 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
 
       return true;
     });
-  }, [inquiries, searchQuery, statusFilter]);
+  }, [activeInquiries, searchQuery, statusFilter]);
 
   // Counts
   const counts = useMemo(() => {
     return {
-      all: inquiries.length,
-      pending: inquiries.filter((i) => i.status === "pending").length,
-      submitted: inquiries.filter((i) => i.status === "submitted").length,
-      approved: inquiries.filter((i) => i.status === "approved").length,
+      all: activeInquiries.length,
+      pending: activeInquiries.filter((i) => i.status === "pending").length,
+      submitted: activeInquiries.filter((i) => i.status === "submitted").length,
+      approved: activeInquiries.filter((i) => i.status === "approved").length,
     };
-  }, [inquiries]);
+  }, [activeInquiries]);
 
   // Copy Link Helper
   const handleCopyLink = async (inq: AbsenceInquiry) => {
@@ -268,7 +282,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-900">{inq.teacherName}</div>
                       <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                        {inq.jobNumber}
+                        {inq.nationalId || inq.jobNumber}
                       </div>
                     </td>
 
@@ -394,16 +408,12 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                           </button>
                         )}
 
-                        {/* Delete button */}
+                        {/* Archive / Delete button */}
                         <button
                           type="button"
-                          onClick={() => {
-                            if (confirm(`هل أنتِ متأكدة من رغبتك في حذف مساءلة المعلمة (${inq.teacherName})؟`)) {
-                              deleteInquiry(inq.id);
-                            }
-                          }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="حذف المساءلة"
+                          onClick={() => setInquiryToDelete(inq)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                          title="نقل المساءلة إلى الأرشيف"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -416,6 +426,49 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           </tbody>
         </table>
       </div>
+
+      {/* Archive Confirmation Modal */}
+      <ConfirmDialog
+        isOpen={!!inquiryToDelete}
+        onCancel={() => setInquiryToDelete(null)}
+        onConfirm={(reason) => {
+          if (inquiryToDelete) {
+            deleteInquiry(inquiryToDelete.id, reason);
+            setInquiryToDelete(null);
+            setArchiveToast("تم نقل سجل الغياب إلى الأرشيف الإداري");
+            setTimeout(() => setArchiveToast(null), 4500);
+          }
+        }}
+        title="نقل المساءلة للأرشيف"
+        message={
+          inquiryToDelete
+            ? `سيتم نقل سجل مساءلة الغياب للمعلمة (${inquiryToDelete.teacherName}) بتاريخ (${inquiryToDelete.absenceDate}) إلى الأرشيف الإداري مع إمكانية استعادته في أي وقت.`
+            : ""
+        }
+        confirmLabel="نقل إلى الأرشيف"
+        variant="archive"
+        showReasonInput={true}
+      />
+
+      {/* Archive Toast Notification */}
+      {archiveToast && (
+        <div
+          dir="rtl"
+          className="fixed bottom-6 left-6 z-50 flex items-center gap-3 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 animate-in fade-in slide-in-from-bottom-4 duration-200"
+        >
+          <div className="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+            <Archive className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-bold">{archiveToast}</span>
+          <button
+            type="button"
+            onClick={() => router.push("/archive")}
+            className="text-xs font-extrabold text-amber-400 hover:text-amber-300 underline underline-offset-4 mr-1 cursor-pointer"
+          >
+            عرض الأرشيف
+          </button>
+        </div>
+      )}
 
       {/* Review Modal */}
       <InquiryReviewModal

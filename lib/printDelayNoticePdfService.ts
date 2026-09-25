@@ -52,7 +52,7 @@ function esc(s: string | undefined | null): string {
 function buildHtml(data: DelayNoticePdfData): string {
   const { notice, teacher } = data;
   const teacherName = esc(notice.teacherName || teacher.fullName || teacher.name);
-  const jobNumber = esc(notice.jobNumber || teacher.username || teacher.jobNumber);
+  const jobNumber = esc(notice.nationalId || teacher.nationalId || notice.jobNumber || teacher.username || teacher.jobNumber);
   const specialty = esc(notice.specialty || teacher.specialty || teacher.teachingField || "عام");
   const jobTitle = esc(teacher.jobTitle || "معلم");
 
@@ -271,8 +271,9 @@ export function printDelayNoticePdf(notice: DelayNotice, teacher?: Teacher): voi
     id: notice.teacherId,
     fullName: notice.teacherName || "معلمة",
     name: notice.teacherName || "معلمة",
-    username: notice.jobNumber || "—",
-    jobNumber: notice.jobNumber || "—",
+    nationalId: notice.nationalId || notice.jobNumber || "—",
+    username: notice.nationalId || notice.jobNumber || "—",
+    jobNumber: notice.nationalId || notice.jobNumber || "—",
     specialty: notice.specialty || "عام",
     totalAbsences: 0,
     employmentStatus: "دائم",

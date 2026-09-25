@@ -28,6 +28,7 @@ import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { KpiCards } from "@/components/analytics/KpiCards";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
+import { useRouter } from "next/navigation";
 
 const AbsenceCharts = dynamic(
   () =>
@@ -90,7 +91,8 @@ const tableRowVariants = {
 };
 
 export default function DashboardPage() {
-  const { teachers, absenceRecords, deleteAbsenceRecord, restoreAbsenceRecord } =
+  const router = useRouter();
+  const { teachers, absenceRecords, deleteAbsenceRecord } =
     useTeachers();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,27 +108,19 @@ export default function DashboardPage() {
     message: string;
   } | null>(null);
 
-  const confirmDeleteRecord = () => {
+  const confirmDeleteRecord = (reason?: string) => {
     if (recordToDelete) {
       const rec = recordToDelete;
-      const { deletedRecord } = deleteAbsenceRecord(rec.id);
+      deleteAbsenceRecord(rec.id, reason);
       setRecordToDelete(null);
 
       showToast({
-        message: `تم حذف سجل غياب المعلمة (${rec.teacherName}) بتاريخ (${rec.date}).`,
+        message: "تم نقل العنصر إلى الأرشيف الإداري",
         type: "success",
-        action: deletedRecord
-          ? {
-              label: "تراجع",
-              onClick: () => {
-                restoreAbsenceRecord(deletedRecord);
-                showToast({
-                  message: `تم استرجاع سجل غياب المعلمة (${rec.teacherName}) بنجاح.`,
-                  type: "info",
-                });
-              },
-            }
-          : undefined,
+        action: {
+          label: "عرض الأرشيف",
+          onClick: () => router.push("/archive"),
+        },
       });
     }
   };
@@ -147,17 +141,19 @@ export default function DashboardPage() {
     }
   }, []);
 
-  // Filter recent absences based on search
+  // Filter recent active absences based on search
   const filteredRecentAbsences = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    const records = absenceRecords.slice(0, 10);
+    const activeRecords = absenceRecords.filter((r) => !r.isArchived);
+    const records = activeRecords.slice(0, 10);
     if (!q) return records;
 
     return records.filter(
       (r) =>
         r.teacherName.toLowerCase().includes(q) ||
         r.specialty.toLowerCase().includes(q) ||
-        r.jobNumber.toLowerCase().includes(q) ||
+        (r.nationalId && r.nationalId.toLowerCase().includes(q)) ||
+        (r.jobNumber && r.jobNumber.toLowerCase().includes(q)) ||
         r.type.toLowerCase().includes(q)
     );
   }, [absenceRecords, searchQuery]);
@@ -170,8 +166,11 @@ export default function DashboardPage() {
       teachers.find((t) => t.id === record.teacherId) ||
       ({
         id: record.teacherId,
+        fullName: record.teacherName,
         name: record.teacherName,
-        jobNumber: record.jobNumber,
+        nationalId: record.nationalId,
+        username: record.nationalId || record.jobNumber,
+        jobNumber: record.nationalId || record.jobNumber,
         specialty: record.specialty,
         totalAbsences: 1,
       } as Teacher);
@@ -182,7 +181,8 @@ export default function DashboardPage() {
     try {
       printAbsencePdf({
         teacherName: record.teacherName,
-        username: record.jobNumber,
+        nationalId: record.nationalId || teacher.nationalId,
+        username: record.nationalId || record.jobNumber,
         specialty: record.specialty,
         jobTitle: teacher.jobTitle || "معلم",
         employmentStatus: teacher.employmentStatus || "دائم",
@@ -379,7 +379,7 @@ export default function DashboardPage() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="بحث باسم المعلمة، الرقم الوظيفي، أو التخصص..."
+                placeholder="بحث باسم المعلمة، رقم الهوية، أو التخصص..."
                 className="w-full pl-8 pr-9 py-2 text-xs rounded-xl border border-slate-200 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
               />
               {searchQuery && (
@@ -624,7 +624,7 @@ export default function DashboardPage() {
                               {item.teacherName}
                             </span>
                             <span className="text-[11px] text-slate-500 font-medium">
-                              {item.specialty} • {item.jobNumber}
+                              {item.specialty} • {item.nationalId || item.jobNumber}
                             </span>
                           </div>
                         </button>
@@ -757,18 +757,19 @@ export default function DashboardPage() {
         onClose={() => setRecordToEdit(null)}
       />
 
-      {/* Confirm Delete Absence Record Dialog */}
+      {/* Confirm Archive Absence Record Dialog */}
       <ConfirmDialog
         isOpen={Boolean(recordToDelete)}
-        title="تأكيد حذف سجل الغياب"
+        title="نقل سجل الغياب إلى الأرشيف"
         message={
           recordToDelete
-            ? `هل أنتِ متأكدة من حذف سجل غياب المعلمة "${recordToDelete.teacherName}" بتاريخ ${recordToDelete.date} (${recordToDelete.type})؟ سيتم تحديث رصيد غياب المعلمة تلقائياً مع توفر خيار التراجع الفوري.`
+            ? `المعلمة: "${recordToDelete.teacherName}" (${recordToDelete.date} — ${recordToDelete.type})\nسيتم نقل هذا السجل إلى الأرشيف الإداري وتحديث عداد المعلمة تلقائياً.`
             : ""
         }
-        confirmLabel="نعم، حذف السجل"
+        confirmLabel="نقل إلى الأرشيف"
         cancelLabel="إلغاء"
-        variant="danger"
+        variant="archive"
+        showReasonInput={true}
         onConfirm={confirmDeleteRecord}
         onCancel={() => setRecordToDelete(null)}
       />

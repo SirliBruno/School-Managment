@@ -126,29 +126,31 @@ export const ExcelImporter: React.FC = () => {
       const rawKeys = Object.keys(firstRow);
       const normalizedKeys = rawKeys.map(normalizeHeader);
 
-      const hasUsername = normalizedKeys.some(
+      const hasNationalId = normalizedKeys.some(
         (k) =>
+          k.includes("الهوية") ||
+          k.includes("السجل") ||
           k.includes("المستخدم") ||
           k.includes("الوظيفة") ||
           k.includes("الوظيفي") ||
-          k.includes("السجل") ||
-          k.includes("الهوية") ||
+          k.toLowerCase().includes("id") ||
           k.toLowerCase().includes("user") ||
           k.toLowerCase().includes("job")
       );
 
       const hasName = normalizedKeys.some(
         (k) =>
-          k.includes("الرباعي") ||
+          k.includes("الإسم") ||
           k.includes("الاسم") ||
+          k.includes("الرباعي") ||
           k.includes("اسم المعلمة") ||
           k.toLowerCase().includes("name")
       );
 
       // Report missing critical headers
       const missingHeaders: string[] = [];
-      if (!hasUsername) missingHeaders.push("اسم المستخدم");
-      if (!hasName) missingHeaders.push("الاسم الرباعي");
+      if (!hasNationalId) missingHeaders.push("رقم الهوية");
+      if (!hasName) missingHeaders.push("الإسم");
 
       if (missingHeaders.length > 0) {
         showAlert(
@@ -156,22 +158,23 @@ export const ExcelImporter: React.FC = () => {
           "أعمدة مفقودة في ملف الإكسل!",
           `الأعمدة الإلزامية التالية غير متوفرة في الصف الأول: (${missingHeaders.join(
             " ، "
-          )}). يرجى مطابقة أعمدة ملف (منسوبات ث5) أو تحميل النموذج المعتمد.`
+          )}). يرجى مطابقة أعمدة ملف (منسوبات ث5) المعتمد أو تحميل النموذج.`
         );
         setIsLoading(false);
         return;
       }
 
-      // Parse 7-column records safely
+      // Parse 8-column records safely
       const parsedTeachers: Teacher[] = [];
       let skippedCount = 0;
 
       for (let i = 0; i < rawRows.length; i++) {
         const row = rawRows[i];
 
-        let usernameVal = "";
-        let fullNameVal = "";
         let mobileVal = "";
+        let emailVal = "";
+        let fullNameVal = "";
+        let nationalIdVal = "";
         let employmentStatusVal = "دائم";
         let jobTitleVal = "معلم";
         let teachingFieldVal = "";
@@ -181,24 +184,26 @@ export const ExcelImporter: React.FC = () => {
           const normKey = normalizeHeader(key);
           const stringVal = String(val ?? "").trim();
 
-          // 1. اسم المستخدم (Username / Job ID)
+          // 1. رقم الهوية (National ID)
           if (
-            !usernameVal &&
-            (normKey.includes("المستخدم") ||
+            !nationalIdVal &&
+            (normKey.includes("الهوية") ||
+              normKey.includes("السجل") ||
+              normKey.includes("المستخدم") ||
               normKey.includes("الوظيفة") ||
               normKey.includes("الوظيفي") ||
-              normKey.includes("السجل") ||
-              normKey.includes("الهوية") ||
+              normKey.toLowerCase().includes("id") ||
               normKey.toLowerCase().includes("user") ||
               normKey.toLowerCase().includes("job"))
           ) {
-            usernameVal = stringVal;
+            nationalIdVal = stringVal;
           }
-          // 2. الاسم الرباعي (Full Name)
+          // 2. الإسم (Full Name)
           else if (
             !fullNameVal &&
-            (normKey.includes("الرباعي") ||
+            (normKey.includes("الإسم") ||
               normKey.includes("الاسم") ||
+              normKey.includes("الرباعي") ||
               normKey.includes("اسم المعلمة") ||
               normKey.toLowerCase().includes("name"))
           ) {
@@ -214,7 +219,17 @@ export const ExcelImporter: React.FC = () => {
           ) {
             mobileVal = stringVal;
           }
-          // 4. حالة التوظيف (Employment Status: دائم / عقد)
+          // 4. البريد الإلكتروني (Email)
+          else if (
+            !emailVal &&
+            (normKey.includes("البريد") ||
+              normKey.includes("الإلكتروني") ||
+              normKey.includes("ايميل") ||
+              normKey.toLowerCase().includes("mail"))
+          ) {
+            emailVal = stringVal;
+          }
+          // 5. حالة التوظيف (Employment Status: دائم / عقد)
           else if (
             normKey.includes("التوظيف") ||
             normKey.includes("التعاقد") ||
@@ -222,7 +237,7 @@ export const ExcelImporter: React.FC = () => {
           ) {
             if (stringVal) employmentStatusVal = stringVal;
           }
-          // 5. المسمى الوظيفي (Job Title)
+          // 6. المسمى الوظيفي (Job Title)
           else if (
             normKey.includes("المسمى") ||
             normKey.includes("وظيفة") ||
@@ -230,7 +245,7 @@ export const ExcelImporter: React.FC = () => {
           ) {
             if (stringVal) jobTitleVal = stringVal;
           }
-          // 6. مجال التدريس (Teaching Field)
+          // 7. مجال التدريس (Teaching Field)
           else if (
             !teachingFieldVal &&
             (normKey.includes("مجال التدريس") ||
@@ -239,7 +254,7 @@ export const ExcelImporter: React.FC = () => {
           ) {
             teachingFieldVal = stringVal;
           }
-          // 7. التخصص (Specialty)
+          // 8. التخصص (Specialty)
           else if (
             !specialtyVal &&
             (normKey.includes("التخصص") ||
@@ -250,8 +265,8 @@ export const ExcelImporter: React.FC = () => {
           }
         }
 
-        // Strict validation: Skip rows missing username or fullName
-        if (!usernameVal || !fullNameVal) {
+        // Strict validation: Skip rows missing nationalId or fullName
+        if (!nationalIdVal || !fullNameVal) {
           skippedCount++;
           continue;
         }
@@ -261,16 +276,21 @@ export const ExcelImporter: React.FC = () => {
             typeof crypto !== "undefined" && crypto.randomUUID
               ? crypto.randomUUID()
               : `tch-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 7)}`,
-          username: usernameVal,
+          nationalId: nationalIdVal,
           fullName: fullNameVal,
           mobile: mobileVal ? formatSaudiMobile(mobileVal) : undefined,
+          email: emailVal ? emailVal.toLowerCase() : undefined,
           employmentStatus: employmentStatusVal || "دائم",
           jobTitle: jobTitleVal || "معلم",
           teachingField: teachingFieldVal || specialtyVal || undefined,
           specialty: specialtyVal || undefined,
           totalAbsences: 0,
+          totalDelayNotices: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           name: fullNameVal,
-          jobNumber: usernameVal,
+          username: nationalIdVal,
+          jobNumber: nationalIdVal,
         });
       }
 
@@ -278,7 +298,7 @@ export const ExcelImporter: React.FC = () => {
         showAlert(
           "warning",
           "لا توجد بيانات صالحة للاستيراد",
-          "تأكدي من توفر قيم صحيحة لكل من (اسم المستخدم) و (الاسم الرباعي) في صفوف البيانات."
+          "تأكدي من توفر قيم صحيحة لكل من (رقم الهوية) و (الإسم) في صفوف البيانات."
         );
         setIsLoading(false);
         return;
@@ -292,7 +312,7 @@ export const ExcelImporter: React.FC = () => {
         msg += ` [تم تخطي ${skippedCount} صفوف غير مكتملة البيانات]`;
       }
 
-      showAlert("success", "اكتمل استيراد بيانات الكادر بنجاح!", msg);
+      showAlert("success", "اكتمل استيراد وتحديث بيانات الكادر بنجاح!", msg);
     } catch (err: unknown) {
       console.error("خطأ أثناء معالجة ملف الإكسل:", err);
       showAlert(
@@ -334,50 +354,55 @@ export const ExcelImporter: React.FC = () => {
     }
   };
 
-  // Generate and download 7-column real school sample template
+  // Generate and download 8-column real school sample template
   const handleDownloadSampleTemplate = async () => {
     const XLSX = await import("xlsx");
     const sampleData = [
       {
-        "اسم المستخدم": "1048291",
-        "الاسم الرباعي": "سارة عبد الله سالم العتيبي",
         الجوال: "0501234567",
+        "البريد الإلكتروني": "sara.otaibi@moe.gov.sa",
+        الإسم: "سارة عبد الله سالم العتيبي",
+        "رقم الهوية": "1048291023",
         "حالة التوظيف": "دائم",
         "المسمى الوظيفي": "معلم",
         "مجال التدريس": "لغة عربية",
         التخصص: "اللغة العربية وآدابها",
       },
       {
-        "اسم المستخدم": "1048292",
-        "الاسم الرباعي": "ريم خالد فهد القحطاني",
         الجوال: "0559876543",
+        "البريد الإلكتروني": "reem.qahtani@moe.gov.sa",
+        الإسم: "ريم خالد فهد القحطاني",
+        "رقم الهوية": "1059283741",
         "حالة التوظيف": "عقد",
         "المسمى الوظيفي": "معلم",
         "مجال التدريس": "رياضيات",
         التخصص: "رياضيات بحتة",
       },
       {
-        "اسم المستخدم": "1048293",
-        "الاسم الرباعي": "فاطمة محمد علي الغامدي",
         الجوال: "0543210987",
+        "البريد الإلكتروني": "fatima.ghamdi@moe.gov.sa",
+        الإسم: "فاطمة محمد علي الغامدي",
+        "رقم الهوية": "1038472910",
         "حالة التوظيف": "دائم",
         "المسمى الوظيفي": "معلم ممارس",
         "مجال التدريس": "علوم طبيعية",
         التخصص: "فيزياء",
       },
       {
-        "اسم المستخدم": "1048294",
-        "الاسم الرباعي": "نورة مسفر حمد الدوسري",
         الجوال: "0567890123",
+        "البريد الإلكتروني": "noura.dosari@moe.gov.sa",
+        الإسم: "نورة مسفر حمد الدوسري",
+        "رقم الهوية": "1074829104",
         "حالة التوظيف": "دائم",
         "المسمى الوظيفي": "معلم",
         "مجال التدريس": "علوم شرعية",
         التخصص: "دراسات إسلامية",
       },
       {
-        "اسم المستخدم": "1048295",
-        "الاسم الرباعي": "هند عبد الرحمن ظافر الشهري",
         الجوال: "0534567890",
+        "البريد الإلكتروني": "hind.shehri@moe.gov.sa",
+        الإسم: "هند عبد الرحمن ظافر الشهري",
+        "رقم الهوية": "1083729105",
         "حالة التوظيف": "عقد",
         "المسمى الوظيفي": "معلم",
         "مجال التدريس": "لغة إنجليزية",
@@ -391,16 +416,17 @@ export const ExcelImporter: React.FC = () => {
 
     // Set practical column widths
     worksheet["!cols"] = [
-      { wch: 16 }, // اسم المستخدم
-      { wch: 30 }, // الاسم الرباعي
       { wch: 16 }, // الجوال
+      { wch: 26 }, // البريد الإلكتروني
+      { wch: 30 }, // الإسم
+      { wch: 18 }, // رقم الهوية
       { wch: 14 }, // حالة التوظيف
       { wch: 16 }, // المسمى الوظيفي
       { wch: 18 }, // مجال التدريس
       { wch: 24 }, // التخصص
     ];
 
-    XLSX.writeFile(workbook, "نموذج_استيراد_منسوبات_ث5.xlsx");
+    XLSX.writeFile(workbook, "نموذج_استيراد_منسوبات_ث5_المعتمد.xlsx");
   };
 
   return (
@@ -447,10 +473,10 @@ export const ExcelImporter: React.FC = () => {
           type="button"
           onClick={handleDownloadSampleTemplate}
           className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-semibold text-xs bg-white text-slate-700 hover:bg-slate-50 active:scale-[0.98] border border-slate-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-1"
-          title="تحميل نموذج إكسل ث5 بـ 7 أعمدة معتمدة"
+          title="تحميل نموذج إكسل ث5 بـ 8 أعمدة معتمدة"
         >
           <Download className="w-4 h-4 text-slate-500" aria-hidden="true" />
-          <span>تحميل نموذج إكسل المعتمد (7 أعمدة)</span>
+          <span>تحميل نموذج إكسل المعتمد (8 أعمدة)</span>
         </button>
 
         {isDragging && (

@@ -248,9 +248,9 @@ export const EditAbsenceModal: React.FC<EditAbsenceModalProps> = ({
                 </div>
                 <div className="flex items-center gap-3 text-xs text-slate-600">
                   <span>
-                    الرقم الوظيفي:{" "}
+                    رقم الهوية:{" "}
                     <strong className="font-mono text-slate-800">
-                      {record.jobNumber || "—"}
+                      {record.nationalId || record.jobNumber || "—"}
                     </strong>
                   </span>
                   {record.specialty && (

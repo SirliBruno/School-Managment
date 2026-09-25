@@ -16,6 +16,8 @@ import {
   RotateCcw,
   Sparkles,
   Pencil,
+  Mail,
+  Fingerprint,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -34,8 +36,9 @@ interface AddTeacherModalProps {
 
 interface FormState {
   fullName: string;
-  username: string;
+  nationalId: string;
   mobile: string;
+  email: string;
   employmentStatus: "دائم" | "عقد";
   jobTitle: string;
   teachingField: string;
@@ -44,8 +47,9 @@ interface FormState {
 
 const INITIAL_STATE: FormState = {
   fullName: "",
-  username: "",
+  nationalId: "",
   mobile: "",
+  email: "",
   employmentStatus: "دائم",
   jobTitle: "معلم",
   teachingField: "",
@@ -78,8 +82,9 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
       if (teacherToEdit) {
         setForm({
           fullName: teacherToEdit.fullName || teacherToEdit.name || "",
-          username: teacherToEdit.username || teacherToEdit.jobNumber || "",
+          nationalId: teacherToEdit.nationalId || teacherToEdit.username || teacherToEdit.jobNumber || "",
           mobile: teacherToEdit.mobile || "",
+          email: teacherToEdit.email || "",
           employmentStatus:
             teacherToEdit.employmentStatus === "عقد" ? "عقد" : "دائم",
           jobTitle: teacherToEdit.jobTitle || "معلم",
@@ -128,22 +133,29 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
 
     const cleanFullName = form.fullName.trim();
     if (!cleanFullName) {
-      newErrors.fullName = "الاسم الرباعي للمعلمة مطلوب.";
+      newErrors.fullName = "اسم المعلمة مطلوب.";
     } else if (cleanFullName.split(/\s+/).length < 2) {
       newErrors.fullName = "يرجى إدخال الاسم كاملاً (الاسم الثنائي أو الرباعي على الأقل).";
     }
 
-    const cleanUsername = form.username.trim();
-    if (!cleanUsername) {
-      newErrors.username = "اسم المستخدم / الرقم الوظيفي مطلوب.";
-    } else if (cleanUsername.length < 3) {
-      newErrors.username = "اسم المستخدم يجب أن يتكون من 3 خانات على الأقل.";
+    const cleanNationalId = form.nationalId.trim();
+    if (!cleanNationalId) {
+      newErrors.nationalId = "رقم الهوية مطلوب.";
+    } else if (cleanNationalId.length < 3) {
+      newErrors.nationalId = "رقم الهوية يجب أن يتكون من 3 خانات على الأقل.";
+    }
+
+    if (form.email.trim()) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(form.email.trim())) {
+        newErrors.email = "يرجى إدخال بريد إلكتروني صحيح.";
+      }
     }
 
     if (form.mobile.trim()) {
       const cleanPhone = form.mobile.trim().replace(/\D/g, "");
-      if (cleanPhone.length < 9 || cleanPhone.length > 12) {
-        newErrors.mobile = "يرجى كتابة رقم جوال سعودي صحيح بصيغة 9665XXXXXXXX.";
+      if (cleanPhone.length < 9 || cleanPhone.length > 13) {
+        newErrors.mobile = "يرجى كتابة رقم جوال سعودي صحيح بصيغة 9665XXXXXXXX أو 05XXXXXXXX.";
       }
     }
 
@@ -158,11 +170,18 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
       ? formatSaudiMobile(form.mobile.trim())
       : undefined;
 
+    const cleanEmail = form.email.trim()
+      ? form.email.trim().toLowerCase()
+      : undefined;
+
     if (isEditMode && teacherToEdit) {
       const result = updateTeacher(teacherToEdit.id, {
         fullName: form.fullName.trim(),
-        username: form.username.trim(),
+        nationalId: form.nationalId.trim(),
+        username: form.nationalId.trim(),
+        jobNumber: form.nationalId.trim(),
         mobile: formattedMobile,
+        email: cleanEmail,
         employmentStatus: form.employmentStatus,
         jobTitle: form.jobTitle.trim() || "معلم",
         teachingField: form.teachingField.trim() || undefined,
@@ -172,7 +191,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
       if (!result.success) {
         setErrors((prev) => ({
           ...prev,
-          username: result.error || "تعذر حفظ تعديلات المعلمة.",
+          nationalId: result.error || "تعذر حفظ تعديلات المعلمة.",
         }));
         return;
       }
@@ -190,19 +209,23 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
     } else {
       const result = addTeacher({
         fullName: form.fullName.trim(),
-        username: form.username.trim(),
+        nationalId: form.nationalId.trim(),
+        username: form.nationalId.trim(),
+        jobNumber: form.nationalId.trim(),
         mobile: formattedMobile,
+        email: cleanEmail,
         employmentStatus: form.employmentStatus,
         jobTitle: form.jobTitle.trim() || "معلم",
         teachingField: form.teachingField.trim() || undefined,
         specialty: form.specialty.trim() || undefined,
         totalAbsences: 0,
+        totalDelayNotices: 0,
       });
 
       if (!result.success) {
         setErrors((prev) => ({
           ...prev,
-          username: result.error || "تعذر حفظ بيانات المعلمة.",
+          nationalId: result.error || "تعذر حفظ بيانات المعلمة.",
         }));
         return;
       }
@@ -350,7 +373,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
             }}
             className="p-5 md:p-6 overflow-y-auto space-y-5 text-xs md:text-sm"
           >
-            {/* Row 1: Full Name & Username */}
+            {/* Row 1: Full Name & National ID */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Field: Full Name */}
               <div className="space-y-1.5">
@@ -358,7 +381,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   htmlFor={`${formId}-fullName`}
                   className="block font-bold text-slate-700"
                 >
-                  الاسم الرباعي <span className="text-rose-500">*</span>
+                  الإسم (اسم المعلمة) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   ref={fullNameInputRef}
@@ -383,38 +406,39 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                 )}
               </div>
 
-              {/* Field: Username / Job ID */}
+              {/* Field: National ID */}
               <div className="space-y-1.5">
                 <label
-                  htmlFor={`${formId}-username`}
-                  className="block font-bold text-slate-700"
+                  htmlFor={`${formId}-nationalId`}
+                  className="block font-bold text-slate-700 flex items-center gap-1"
                 >
-                  اسم المستخدم / الرقم الوظيفي <span className="text-rose-500">*</span>
+                  <Fingerprint className="w-3.5 h-3.5 text-slate-400" />
+                  <span>رقم الهوية الوطنية</span> <span className="text-rose-500">*</span>
                 </label>
                 <input
-                  id={`${formId}-username`}
+                  id={`${formId}-nationalId`}
                   type="text"
                   required
-                  value={form.username}
-                  onChange={(e) => handleChange("username", e.target.value)}
-                  placeholder="مثال: 1048291 أو sarah.otaibi"
+                  value={form.nationalId}
+                  onChange={(e) => handleChange("nationalId", e.target.value)}
+                  placeholder="مثال: 1048291023"
                   className={cn(
                     "w-full px-3.5 py-2.5 rounded-xl border bg-white font-mono focus:outline-none focus:ring-2 transition-all shadow-2xs",
-                    errors.username
+                    errors.nationalId
                       ? "border-rose-400 focus:ring-rose-200"
                       : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
                   )}
                 />
-                {errors.username && (
+                {errors.nationalId && (
                   <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{errors.username}</span>
+                    <span>{errors.nationalId}</span>
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Row 2: Mobile & Employment Status */}
+            {/* Row 2: Mobile & Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Field: Mobile */}
               <div className="space-y-1.5">
@@ -451,7 +475,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   )}
                 />
                 <div className="flex items-center justify-between text-[10px] text-slate-400 px-1 pt-0.5">
-                  <span>الصيغة المعتمدة:</span>
+                  <span>الصيغة:</span>
                   <span className="font-mono font-medium text-teal-700 dir-ltr">
                     9665XXXXXXXX (تحويل تلقائي)
                   </span>
@@ -465,6 +489,43 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                 )}
               </div>
 
+              {/* Field: Email */}
+              <div className="space-y-1.5">
+                <label
+                  htmlFor={`${formId}-email`}
+                  className="block font-bold text-slate-700 flex items-center justify-between"
+                >
+                  <span className="flex items-center gap-1">
+                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                    <span>البريد الإلكتروني</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-normal">(اختياري)</span>
+                </label>
+                <input
+                  id={`${formId}-email`}
+                  type="email"
+                  dir="ltr"
+                  value={form.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  placeholder="teacher@moe.gov.sa"
+                  className={cn(
+                    "w-full px-3.5 py-2.5 rounded-xl border bg-white font-mono text-left focus:outline-none focus:ring-2 transition-all shadow-2xs",
+                    errors.email
+                      ? "border-rose-400 focus:ring-rose-200"
+                      : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                  )}
+                />
+                {errors.email && (
+                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{errors.email}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Row 3: Employment Status & Job Title */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Field: Employment Status (دائم / عقد) */}
               <div className="space-y-1.5">
                 <label className="block font-bold text-slate-700 flex items-center gap-1">
@@ -511,10 +572,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   </button>
                 </div>
               </div>
-            </div>
 
-            {/* Row 3: Job Title & Teaching Field & Specialty */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {/* Field: Job Title */}
               <div className="space-y-1.5">
                 <label
@@ -533,7 +591,10 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:border-[#137a85] focus:ring-[#137a85]/20 transition-all shadow-2xs"
                 />
               </div>
+            </div>
 
+            {/* Row 4: Teaching Field & Specialty */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Field: Teaching Field */}
               <div className="space-y-1.5">
                 <label

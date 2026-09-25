@@ -361,7 +361,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               />
               <span className="flex-1">{item.label}</span>
               {item.id === "archive" && totalArchivedCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-teal-400/20 text-teal-200 text-[11px] font-bold ring-1 ring-teal-300/30">
+                <span className="px-2 py-0.5 rounded-full bg-slate-100/20 text-slate-100 text-[11px] font-bold font-mono ring-1 ring-slate-200/30">
                   {totalArchivedCount}
                 </span>
               )}

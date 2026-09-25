@@ -1,8 +1,9 @@
 export interface Teacher {
   id: string; // Internal UUID
-  username: string; // اسم المستخدم (used as Job Number, must be UNIQUE)
-  fullName: string; // الاسم الرباعي
+  nationalId: string; // رقم الهوية (Saudi National ID, unique identifier)
+  fullName: string; // الإسم
   mobile?: string; // الجوال
+  email?: string; // البريد الإلكتروني
   employmentStatus?: string; // حالة التوظيف (دائم / عقد)
   jobTitle?: string; // المسمى الوظيفي (افتراضي: معلم)
   teachingField?: string; // مجال التدريس
@@ -10,31 +11,45 @@ export interface Teacher {
   totalAbsences: number; // Initialized to 0
   totalDelayNotices?: number; // Total delay/departure notices, default 0
   createdAt?: string; // Timestamp
+  updatedAt?: string; // Timestamp
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
 
   // Backward compatibility alias properties
   name?: string;
+  username?: string;
   jobNumber?: string;
 }
 
 export interface ExcelTeacherRow {
-  "اسم المستخدم"?: string | number;
-  "الاسم الرباعي"?: string;
   الجوال?: string | number;
-  "رقم الجوال"?: string | number;
+  "البريد الإلكتروني"?: string;
+  الإسم?: string;
+  "رقم الهوية"?: string | number;
   "حالة التوظيف"?: string;
   "المسمى الوظيفي"?: string;
   "مجال التدريس"?: string;
   التخصص?: string;
 
-  // Legacy headers support
+  // Legacy & Alternate headers support
   الاسم?: string;
+  "الاسم الرباعي"?: string;
   "اسم المعلمة"?: string;
   Name?: string;
+  "اسم المستخدم"?: string | number;
+  "رقم الجوال"?: string | number;
+  "الهوية"?: string | number;
+  "السجل المدني"?: string | number;
+  "رقم السجل المدني"?: string | number;
   "رقم الوظيفة"?: string | number;
   "الرقم الوظيفي"?: string | number;
   "Job Number"?: string | number;
   "تخصص المعلمة"?: string;
   Specialty?: string;
+  Email?: string;
   [key: string]: unknown;
 }
 
@@ -44,7 +59,8 @@ export interface AbsenceRecord {
   id: string;
   teacherId: string;
   teacherName: string;
-  jobNumber: string;
+  nationalId?: string;
+  jobNumber?: string;
   specialty: string;
   date: string;
   type: AbsenceType;
@@ -52,6 +68,12 @@ export interface AbsenceRecord {
   notes?: string;
   attachmentUrl?: string;
   timestamp: string;
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
 }
 
 export type InquiryStatus = "pending" | "submitted" | "approved" | "rejected" | "expired";
@@ -60,7 +82,8 @@ export interface AbsenceInquiry {
   id: string;
   teacherId: string;
   teacherName: string;
-  jobNumber: string;
+  nationalId?: string;
+  jobNumber?: string;
   specialty?: string;
   mobile?: string;
   absenceDate: string;
@@ -76,6 +99,12 @@ export interface AbsenceInquiry {
   adminNotes?: string;
   submittedAt?: string;
   createdAt: string;
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
 }
 
 // === Stage Statuses & Opinions for Delay Notice (تنبيه عن تأخر / انصراف) ===
@@ -87,6 +116,7 @@ export interface DelayNotice {
   noticeNumber?: string;
   teacherId: string;
   teacherName?: string;
+  nationalId?: string;
   jobNumber?: string;
   specialty?: string;
   createdAt: string;
@@ -136,6 +166,12 @@ export interface DelayNotice {
   teacherResponseSubmittedAt?: string;// وقت إرسال المعلمة للرد إلكترونياً
   teacherIpAddress?: string;          // عنوان IP للمعلمة عند الإرسال للتدقيق
   linkSharedAt?: string;              // وقت مشاركة الرابط أو إرساله للمعلمة
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
 }
 
 // === Archive Types (نظام الأرشيف) ===
@@ -145,15 +181,22 @@ export interface ArchivedTeacher {
   associatedInquiries: AbsenceInquiry[];
   associatedDelayNotices: DelayNotice[];
   archivedAt: string;
+  archiveReason?: string;
 }
 
 export interface ArchivedAbsenceRecord {
   record: AbsenceRecord;
   archivedAt: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
+  linkedInquiry?: AbsenceInquiry;
+  isInquiryOnly?: boolean;
 }
 
 export interface ArchivedDelayNotice {
   notice: DelayNotice;
   archivedAt: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
 }
 

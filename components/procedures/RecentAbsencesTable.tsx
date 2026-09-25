@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Clock,
@@ -66,7 +67,8 @@ const rowVariants = {
 };
 
 export const RecentAbsencesTable: React.FC = () => {
-  const { absenceRecords, teachers, deleteAbsenceRecord, restoreAbsenceRecord } =
+  const router = useRouter();
+  const { absenceRecords, teachers, deleteAbsenceRecord } =
     useTeachers();
   const { showToast } = useToast();
 
@@ -82,27 +84,19 @@ export const RecentAbsencesTable: React.FC = () => {
 
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const confirmDeleteRecord = () => {
+  const confirmDeleteRecord = (reason?: string) => {
     if (recordToDelete) {
       const rec = recordToDelete;
-      const { deletedRecord } = deleteAbsenceRecord(rec.id);
+      deleteAbsenceRecord(rec.id, reason);
       setRecordToDelete(null);
 
       showToast({
-        message: `تم حذف سجل غياب المعلمة (${rec.teacherName}) بتاريخ (${rec.date}).`,
+        message: "تم نقل سجل الغياب إلى الأرشيف الإداري",
         type: "success",
-        action: deletedRecord
-          ? {
-              label: "تراجع",
-              onClick: () => {
-                restoreAbsenceRecord(deletedRecord);
-                showToast({
-                  message: `تم استرجاع سجل غياب المعلمة (${rec.teacherName}) بنجاح.`,
-                  type: "info",
-                });
-              },
-            }
-          : undefined,
+        action: {
+          label: "عرض الأرشيف",
+          onClick: () => router.push("/archive"),
+        },
       });
     }
   };
@@ -116,7 +110,7 @@ export const RecentAbsencesTable: React.FC = () => {
     };
   }, []);
 
-  const recentRecords = absenceRecords.slice(0, 5);
+  const recentRecords = absenceRecords.filter((r) => !r.isArchived).slice(0, 5);
 
   const handleExportPdf = async (record: AbsenceRecord) => {
     if (generatingId) return;
@@ -141,7 +135,8 @@ export const RecentAbsencesTable: React.FC = () => {
     try {
       printAbsencePdf({
         teacherName: record.teacherName,
-        username: record.jobNumber,
+        nationalId: record.nationalId || teacher.nationalId,
+        username: record.nationalId || record.jobNumber,
         specialty: record.specialty,
         jobTitle: teacher.jobTitle || "معلم",
         employmentStatus: teacher.employmentStatus || "دائم",
@@ -295,7 +290,7 @@ export const RecentAbsencesTable: React.FC = () => {
                         <div>
                           <span>{record.teacherName}</span>
                           <span className="block text-[10px] text-slate-400 font-mono">
-                            {record.jobNumber} • {record.specialty}
+                            {record.nationalId || record.jobNumber} • {record.specialty}
                           </span>
                         </div>
                       </div>
@@ -560,18 +555,19 @@ export const RecentAbsencesTable: React.FC = () => {
       onClose={() => setRecordToEdit(null)}
     />
 
-    {/* Confirm Delete Absence Dialog */}
+    {/* Confirm Archive Absence Dialog */}
     <ConfirmDialog
       isOpen={Boolean(recordToDelete)}
-      title="تأكيد حذف سجل الغياب"
+      title="نقل سجل الغياب إلى الأرشيف"
       message={
         recordToDelete
-          ? `هل أنتِ متأكدة من حذف سجل غياب المعلمة "${recordToDelete.teacherName}" بتاريخ ${recordToDelete.date} (${recordToDelete.type})؟ سيتم تحديث رصيد غياب المعلمة تلقائياً مع توفر خيار التراجع الفوري.`
+          ? `المعلمة: "${recordToDelete.teacherName}" (${recordToDelete.date} — ${recordToDelete.type})\nسيتم نقل هذا السجل إلى الأرشيف الإداري وتحديث عداد المعلمة تلقائياً.`
           : ""
       }
-      confirmLabel="نعم، حذف السجل"
+      confirmLabel="نقل إلى الأرشيف"
       cancelLabel="إلغاء"
-      variant="danger"
+      variant="archive"
+      showReasonInput={true}
       onConfirm={confirmDeleteRecord}
       onCancel={() => setRecordToDelete(null)}
     />

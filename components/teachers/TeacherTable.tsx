@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -42,7 +43,8 @@ const rowVariants = {
 type FilterStatus = "all" | "دائم" | "عقد" | "with_absence";
 
 export const TeacherTable: React.FC = () => {
-  const { teachers, deleteTeacher, restoreTeacher, isLoading } = useTeachers();
+  const router = useRouter();
+  const { teachers, deleteTeacher, isLoading } = useTeachers();
   const { showToast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>("all");
@@ -56,11 +58,17 @@ export const TeacherTable: React.FC = () => {
     undefined
   );
 
+  // Active (non-archived) teachers only
+  const activeTeachers = useMemo(
+    () => teachers.filter((t) => !t.isArchived),
+    [teachers]
+  );
+
   // Client-side multi-field search and status filtering
   const filteredTeachers = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
 
-    return teachers.filter((t) => {
+    return activeTeachers.filter((t) => {
       // 1. Status Filter
       if (selectedStatus === "دائم" && t.employmentStatus !== "دائم") {
         return false;
@@ -72,11 +80,12 @@ export const TeacherTable: React.FC = () => {
         return false;
       }
 
-      // 2. Query Search across 6 fields
+      // 2. Query Search across fields
       if (!q) return true;
 
       const nameMatch = (t.fullName || t.name || "").toLowerCase().includes(q);
-      const userMatch = (t.username || t.jobNumber || "").toLowerCase().includes(q);
+      const nationalIdMatch = (t.nationalId || t.username || t.jobNumber || "").toLowerCase().includes(q);
+      const emailMatch = (t.email || "").toLowerCase().includes(q);
       const mobileMatch = (t.mobile || "").toLowerCase().includes(q);
       const specialtyMatch = (t.specialty || "").toLowerCase().includes(q);
       const fieldMatch = (t.teachingField || "").toLowerCase().includes(q);
@@ -84,45 +93,35 @@ export const TeacherTable: React.FC = () => {
 
       return (
         nameMatch ||
-        userMatch ||
+        nationalIdMatch ||
+        emailMatch ||
         mobileMatch ||
         specialtyMatch ||
         fieldMatch ||
         titleMatch
       );
     });
-  }, [teachers, searchQuery, selectedStatus]);
+  }, [activeTeachers, searchQuery, selectedStatus]);
 
-  // Delete execution with Undo support
-  const confirmDelete = () => {
+  // Archive execution with link to /archive
+  const confirmDelete = (reason?: string) => {
     if (teacherToDelete) {
-      const { deletedTeacher, deletedRecords } = deleteTeacher(
-        teacherToDelete.id
-      );
-      const name = teacherToDelete.fullName || teacherToDelete.name;
+      deleteTeacher(teacherToDelete.id, reason);
       setTeacherToDelete(null);
 
       showToast({
-        message: `تم حذف المعلمة (${name}) وجميع سجلاتها بنجاح.`,
+        message: "تم نقل العنصر إلى الأرشيف الإداري",
         type: "success",
-        action: deletedTeacher
-          ? {
-              label: "تراجع",
-              onClick: () => {
-                restoreTeacher(deletedTeacher, deletedRecords);
-                showToast({
-                  message: `تم استرجاع المعلمة (${name}) وسجلاتها بنجاح.`,
-                  type: "info",
-                });
-              },
-            }
-          : undefined,
+        action: {
+          label: "عرض الأرشيف",
+          onClick: () => router.push("/archive"),
+        },
       });
     }
   };
 
-  const permanentCount = teachers.filter((t) => t.employmentStatus === "دائم").length;
-  const contractCount = teachers.filter((t) => t.employmentStatus === "عقد").length;
+  const permanentCount = activeTeachers.filter((t) => t.employmentStatus === "دائم").length;
+  const contractCount = activeTeachers.filter((t) => t.employmentStatus === "عقد").length;
 
   return (
     <div className="space-y-4">
@@ -137,10 +136,10 @@ export const TeacherTable: React.FC = () => {
           <input
             type="text"
             role="searchbox"
-            aria-label="البحث في قائمة المعلمات بالاسم الرباعي أو اسم المستخدم أو الجوال أو التخصص"
+            aria-label="البحث في قائمة المعلمات بالإسم أو رقم الهوية أو الجوال أو التخصص"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="البحث بالاسم الرباعي، اسم المستخدم، الجوال، التخصص..."
+            placeholder="البحث بالإسم، رقم الهوية، التخصص، الجوال..."
             className="w-full pl-8 pr-10 py-2.5 text-xs md:text-sm rounded-xl border border-slate-200 bg-slate-50/60 focus:bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
           />
           {searchQuery && (
@@ -290,7 +289,7 @@ export const TeacherTable: React.FC = () => {
                     #
                   </th>
                   <th scope="col" className="py-3.5 px-4">
-                    اسم المعلمة واسم المستخدم
+                    اسم المعلمة ورقم الهوية
                   </th>
                   <th scope="col" className="py-3.5 px-4">
                     المسمى والتخصص
@@ -330,7 +329,7 @@ export const TeacherTable: React.FC = () => {
                         {index + 1}
                       </td>
 
-                      {/* 2. Full Name & Username */}
+                      {/* 2. Full Name & National ID */}
                       <td className="py-3.5 px-4">
                         <button
                           type="button"
@@ -349,7 +348,7 @@ export const TeacherTable: React.FC = () => {
                               {teacher.fullName || teacher.name}
                             </span>
                             <span className="block text-[11px] text-slate-400 font-mono">
-                              {teacher.username || teacher.jobNumber}
+                              {teacher.nationalId || teacher.username || teacher.jobNumber}
                             </span>
                           </div>
                         </button>
@@ -525,7 +524,7 @@ export const TeacherTable: React.FC = () => {
                             {teacher.fullName || teacher.name}
                           </span>
                           <span className="text-[11px] text-slate-400 font-mono">
-                            {teacher.username || teacher.jobNumber}
+                            {teacher.nationalId || teacher.username || teacher.jobNumber}
                           </span>
                         </div>
                       </button>
@@ -668,18 +667,19 @@ export const TeacherTable: React.FC = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Archive Confirmation Dialog */}
       <ConfirmDialog
         isOpen={Boolean(teacherToDelete)}
-        title="تأكيد حذف المعلمة"
+        title="نقل المعلمة إلى الأرشيف الإداري"
         message={
           teacherToDelete
-            ? `هل أنتِ متأكدة من حذف المعلمة "${teacherToDelete.fullName || teacherToDelete.name}" (اسم المستخدم: ${teacherToDelete.username || teacherToDelete.jobNumber})؟ سيتم حذف جميع سجلات الغياب والمساءلات المرتبطة بها نهائياً، مع توفر خيار التراجع الفوري.`
+            ? `المعلمة: "${teacherToDelete.fullName || teacherToDelete.name}" (${teacherToDelete.username || teacherToDelete.jobNumber})\nسيتم نقل المعلمة وجميع سجلاتها إلى الأرشيف الإداري. يمكنك استعادتها في أي وقت.`
             : ""
         }
-        confirmLabel="نعم، حذف المعلمة"
+        confirmLabel="نقل إلى الأرشيف"
         cancelLabel="إلغاء"
-        variant="danger"
+        variant="archive"
+        showReasonInput={true}
         onConfirm={confirmDelete}
         onCancel={() => setTeacherToDelete(null)}
       />

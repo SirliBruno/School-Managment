@@ -17,25 +17,21 @@ import { AbsenceForm } from "@/components/procedures/AbsenceForm";
 import { RecentAbsencesTable } from "@/components/procedures/RecentAbsencesTable";
 import { InquiriesTable } from "@/components/procedures/InquiriesTable";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
-import { useTeachers } from "@/context/TeacherContext";
+import { useWhatsAppAbsenceStats } from "@/hooks/useWhatsAppAbsenceStats";
 import { cn } from "@/lib/utils";
 
 export default function AbsenceProcedurePage() {
-  const { teachers, absenceRecords, inquiries } = useTeachers();
+  const {
+    totalAbsences,
+    whatsappSent,
+    teachersWithAbsences,
+    availableTeachers,
+    pendingInquiriesCount,
+    submittedInquiriesCount,
+  } = useWhatsAppAbsenceStats();
 
   const [activeTab, setActiveTab] = useState<"whatsapp" | "manual">("whatsapp");
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
-
-  const totalAbsences = absenceRecords.length;
-
-  const teacherIdsWithActivity = new Set<string>();
-  absenceRecords.forEach((a) => { if (a.teacherId) teacherIdsWithActivity.add(a.teacherId); });
-  inquiries.forEach((i) => { if (i.teacherId) teacherIdsWithActivity.add(i.teacherId); });
-  teachers.forEach((t) => { if (t.totalAbsences > 0) teacherIdsWithActivity.add(t.id); });
-  const teachersWithAbsences = teacherIdsWithActivity.size;
-
-  const pendingInquiriesCount = inquiries.filter((i) => i.status === "pending").length;
-  const submittedInquiriesCount = inquiries.filter((i) => i.status === "submitted").length;
 
   return (
     <div className="flex-1 flex flex-col">
@@ -70,7 +66,7 @@ export default function AbsenceProcedurePage() {
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors shadow-2xs"
             >
               <Users className="w-4 h-4 text-[#137a85]" />
-              <span>سجل المعلمات ({teachers.length})</span>
+              <span>سجل المعلمات ({availableTeachers})</span>
             </Link>
           </div>
         </div>
@@ -101,7 +97,7 @@ export default function AbsenceProcedurePage() {
               </p>
               <div className="flex items-baseline gap-2 mt-0.5">
                 <span className="text-xl font-extrabold text-emerald-600">
-                  {inquiries.length}
+                  {whatsappSent}
                 </span>
                 {(pendingInquiriesCount > 0 || submittedInquiriesCount > 0) && (
                   <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md">
@@ -135,7 +131,7 @@ export default function AbsenceProcedurePage() {
                 الكادر التعليمي المتاح
               </p>
               <p className="text-xl font-extrabold text-slate-700 mt-0.5">
-                {teachers.length}
+                {availableTeachers}
               </p>
             </div>
             <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
@@ -158,9 +154,9 @@ export default function AbsenceProcedurePage() {
           >
             <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
             <span>مساءلات الواتساب والمرفقات</span>
-            {inquiries.length > 0 && (
+            {whatsappSent > 0 && (
               <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">
-                {inquiries.length}
+                {whatsappSent}
               </span>
             )}
           </button>

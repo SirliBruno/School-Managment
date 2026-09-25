@@ -13,22 +13,26 @@ export interface DbTeacherRow {
   id: string;
   name: string;
   full_name: string;
-  job_number: string;
-  username: string;
+  national_id?: string;
+  job_number?: string;
+  username?: string;
   mobile: string | null;
+  email?: string | null;
   employment_status: string;
   job_title: string;
   teaching_field: string | null;
   specialty: string | null;
   total_absences: number;
   created_at?: string;
+  updated_at?: string;
 }
 
 export interface DbAbsenceRecordRow {
   id: string;
   teacher_id: string;
   teacher_name: string;
-  job_number: string;
+  national_id?: string | null;
+  job_number?: string;
   specialty: string | null;
   date: string;
   type: AbsenceType;
@@ -44,7 +48,8 @@ export interface DbDelayNoticeRow {
   notice_number: string | null;
   teacher_id: string;
   teacher_name: string;
-  job_number: string;
+  national_id?: string | null;
+  job_number?: string;
   specialty: string | null;
   notice_date: string;
   violation_delay_start: boolean;
@@ -76,7 +81,8 @@ export interface DbAbsenceInquiryRow {
   id: string;
   teacher_id: string;
   teacher_name: string;
-  job_number: string;
+  national_id?: string | null;
+  job_number?: string;
   specialty: string | null;
   mobile: string | null;
   absence_date: string;

@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
@@ -41,7 +42,8 @@ import { cn } from "@/lib/utils";
 type FilterTab = "all" | DelayNoticeStatus;
 
 export default function DelayNoticePage() {
-  const { delayNotices, teachers, deleteDelayNotice, restoreDelayNotice } =
+  const router = useRouter();
+  const { delayNotices, teachers, deleteDelayNotice } =
     useTeachers();
   const { showToast } = useToast();
 
@@ -63,21 +65,26 @@ export default function DelayNoticePage() {
     useState<DelayNotice | null>(null);
   const [noticeToDelete, setNoticeToDelete] = useState<DelayNotice | null>(null);
 
+  const activeDelayNotices = useMemo(
+    () => delayNotices.filter((n) => !n.isArchived),
+    [delayNotices]
+  );
+
   // Statistics
-  const totalCount = delayNotices.length;
-  const pendingTeacherCount = delayNotices.filter(
+  const totalCount = activeDelayNotices.length;
+  const pendingTeacherCount = activeDelayNotices.filter(
     (n) => n.status === "pending_teacher"
   ).length;
-  const pendingDirectorCount = delayNotices.filter(
+  const pendingDirectorCount = activeDelayNotices.filter(
     (n) => n.status === "pending_director"
   ).length;
-  const completedCount = delayNotices.filter(
+  const completedCount = activeDelayNotices.filter(
     (n) => n.status === "completed"
   ).length;
 
   // Filtered and searched list
   const filteredNotices = useMemo(() => {
-    return delayNotices.filter((notice) => {
+    return activeDelayNotices.filter((notice) => {
       // Tab filter
       if (activeTab !== "all" && notice.status !== activeTab) {
         return false;
@@ -101,35 +108,27 @@ export default function DelayNoticePage() {
         d.includes(q)
       );
     });
-  }, [delayNotices, activeTab, searchQuery]);
+  }, [activeDelayNotices, activeTab, searchQuery]);
 
-  // Handle Delete with Undo Toast
-  const handleConfirmDelete = async () => {
+  // Handle Soft-Delete to Archive with Toast Link
+  const handleConfirmDelete = async (reason?: string) => {
     if (!noticeToDelete) return;
     const target = noticeToDelete;
     setNoticeToDelete(null);
 
-    const { deletedNotice } = deleteDelayNotice(target.id);
+    const { deletedNotice } = deleteDelayNotice(target.id, reason);
     if (deletedNotice) {
-      const backup = deletedNotice;
-      const displayNum = backup.noticeNumber || `ت-${backup.id.slice(-4)}`;
       showToast({
-        message: `تم حذف تنبيه التأخر برقم (${displayNum}) للمعلمة (${target.teacherName || "المعلمة"}).`,
+        message: "تم نقل العنصر إلى الأرشيف الإداري",
         type: "success",
         action: {
-          label: "تراجع",
-          onClick: () => {
-            restoreDelayNotice(backup);
-            showToast({
-              message: `تم استرجاع التنبيه برقم (${displayNum}) بنجاح.`,
-              type: "info",
-            });
-          },
+          label: "عرض الأرشيف",
+          onClick: () => router.push("/archive"),
         },
       });
     } else {
       showToast({
-        message: "تعذر حذف التنبيه.",
+        message: "تعذر نقل التنبيه إلى الأرشيف.",
         type: "error",
       });
     }
@@ -841,18 +840,19 @@ export default function DelayNoticePage() {
         onOpenDelete={(n) => setNoticeToDelete(n)}
       />
 
-      {/* 5. Delete Confirm Dialog */}
+      {/* 5. Archive Confirm Dialog */}
       <ConfirmDialog
         isOpen={Boolean(noticeToDelete)}
-        title="تأكيد حذف تنبيه التأخر"
+        title="نقل تنبيه التأخر إلى الأرشيف"
         message={
           noticeToDelete
-            ? `هل أنتِ متأكدة من حذف إشعار التنبيه برقم (${noticeToDelete.noticeNumber || `ت-${noticeToDelete.id.slice(-4)}`}) الصادر بحق المعلمة (${noticeToDelete.teacherName || "المعلمة"})؟ سيتم تحديث رصيد المعلمة تلقائياً مع إمكانية التراجع الفوري.`
+            ? `المعلمة: "${noticeToDelete.teacherName || "المعلمة"}" — تنبيه رقم (${noticeToDelete.noticeNumber || `ت-${noticeToDelete.id.slice(-4)}`})\nسيتم نقل التنبيه إلى الأرشيف الإداري وتحديث عداد المعلمة تلقائياً.`
             : ""
         }
-        confirmLabel="نعم، حذف التنبيه"
+        confirmLabel="نقل إلى الأرشيف"
         cancelLabel="إلغاء"
-        variant="danger"
+        variant="archive"
+        showReasonInput={true}
         onConfirm={handleConfirmDelete}
         onCancel={() => setNoticeToDelete(null)}
       />

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, Trash2, X, AlertCircle } from "lucide-react";
+import { AlertTriangle, Trash2, X, Archive } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface ConfirmDialogProps {
@@ -11,9 +11,11 @@ export interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: "danger" | "warning" | "primary";
+  variant?: "danger" | "warning" | "primary" | "archive";
   isLoading?: boolean;
-  onConfirm: () => void;
+  showReasonInput?: boolean;
+  reasonPlaceholder?: string;
+  onConfirm: (reason?: string) => void;
   onCancel: () => void;
 }
 
@@ -21,14 +23,29 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   isOpen,
   title,
   message,
-  confirmLabel = "حذف نهائياً",
+  confirmLabel,
   cancelLabel = "إلغاء",
   variant = "danger",
   isLoading = false,
+  showReasonInput = false,
+  reasonPlaceholder = "مثال: تم الإدخال بالخطأ / انتهاء العقد...",
   onConfirm,
   onCancel,
 }) => {
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const [includeReason, setIncludeReason] = useState(false);
+  const [reasonText, setReasonText] = useState("");
+
+  const resolvedConfirmLabel =
+    confirmLabel ?? (variant === "archive" ? "نقل إلى الأرشيف" : "حذف نهائياً");
+
+  // Reset reason state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIncludeReason(false);
+      setReasonText("");
+    }
+  }, [isOpen]);
 
   // Close on Escape key
   useEffect(() => {
@@ -41,7 +58,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, isLoading, onCancel]);
 
-  // Focus cancel button or container for safety when opening destructive action
+  // Focus confirm button when opening
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -51,6 +68,14 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleConfirmClick = () => {
+    const cleanReason =
+      showReasonInput && includeReason && reasonText.trim()
+        ? reasonText.trim()
+        : undefined;
+    onConfirm(cleanReason);
+  };
 
   return (
     <AnimatePresence>
@@ -95,6 +120,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             >
               {variant === "danger" ? (
                 <Trash2 className="w-6 h-6" aria-hidden="true" />
+              ) : variant === "archive" ? (
+                <Archive className="w-6 h-6" aria-hidden="true" />
               ) : (
                 <AlertTriangle className="w-6 h-6" aria-hidden="true" />
               )}
@@ -109,7 +136,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               </h3>
               <p
                 id="confirm-dialog-description"
-                className="text-xs text-slate-600 mt-1.5 leading-relaxed"
+                className="text-xs text-slate-600 mt-1.5 leading-relaxed whitespace-pre-line"
               >
                 {message}
               </p>
@@ -128,6 +155,33 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             </button>
           </div>
 
+          {/* Optional Archive Reason Input */}
+          {showReasonInput && (
+            <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 space-y-2.5">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={includeReason}
+                  onChange={(e) => setIncludeReason(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85] cursor-pointer"
+                />
+                <span className="text-xs font-bold text-slate-700">
+                  سبب الأرشفة (اختياري)
+                </span>
+              </label>
+
+              {includeReason && (
+                <textarea
+                  value={reasonText}
+                  onChange={(e) => setReasonText(e.target.value)}
+                  placeholder={reasonPlaceholder}
+                  rows={2}
+                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] resize-none transition-all"
+                />
+              )}
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="pt-2 flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5">
             <button
@@ -143,7 +197,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               ref={confirmButtonRef}
               whileTap={{ scale: 0.96 }}
               type="button"
-              onClick={onConfirm}
+              onClick={handleConfirmClick}
               disabled={isLoading}
               className={cn(
                 "w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60",
@@ -154,10 +208,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   : "bg-[#137a85] hover:bg-teal-700 shadow-teal-700/20"
               )}
             >
+              {variant === "archive" && !isLoading && (
+                <Archive className="w-3.5 h-3.5" />
+              )}
               {isLoading ? (
                 <span>جاري التنفيذ...</span>
               ) : (
-                <span>{confirmLabel}</span>
+                <span>{resolvedConfirmLabel}</span>
               )}
             </motion.button>
           </div>

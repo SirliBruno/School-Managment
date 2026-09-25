@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -62,12 +63,12 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   teacher,
   onClose,
 }) => {
+  const router = useRouter();
   const {
     teachers,
     absenceRecords,
     delayNotices,
     deleteAbsenceRecord,
-    restoreAbsenceRecord,
   } = useTeachers();
   const { showToast } = useToast();
 
@@ -92,27 +93,22 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const confirmDeleteRecord = () => {
+  const confirmDeleteRecord = (reason?: string) => {
     if (recordToDelete) {
       const rec = recordToDelete;
-      const { deletedRecord } = deleteAbsenceRecord(rec.id);
+      deleteAbsenceRecord(rec.id, reason);
       setRecordToDelete(null);
 
       showToast({
-        message: `تم حذف سجل غياب المعلمة (${rec.teacherName}) بتاريخ (${rec.date}).`,
+        message: "تم نقل العنصر إلى الأرشيف الإداري",
         type: "success",
-        action: deletedRecord
-          ? {
-              label: "تراجع",
-              onClick: () => {
-                restoreAbsenceRecord(deletedRecord);
-                showToast({
-                  message: `تم استرجاع سجل غياب المعلمة (${rec.teacherName}) بنجاح.`,
-                  type: "info",
-                });
-              },
-            }
-          : undefined,
+        action: {
+          label: "عرض الأرشيف",
+          onClick: () => {
+            onClose();
+            router.push("/archive");
+          },
+        },
       });
     }
   };
@@ -190,7 +186,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     try {
       printAbsencePdf({
         teacherName: currentTeacher.fullName || currentTeacher.name || "معلمة",
-        username: currentTeacher.username || currentTeacher.jobNumber || "—",
+        nationalId: currentTeacher.nationalId || currentTeacher.username || currentTeacher.jobNumber || "—",
+        username: currentTeacher.nationalId || currentTeacher.username || currentTeacher.jobNumber || "—",
         specialty: currentTeacher.specialty || currentTeacher.teachingField || "عام",
         jobTitle: currentTeacher.jobTitle || "معلم",
         employmentStatus: currentTeacher.employmentStatus || "دائم",
@@ -279,8 +276,14 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 font-medium">
                   <span className="flex items-center gap-1 font-mono">
                     <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                    <span>اسم المستخدم: <strong className="text-slate-800">{currentTeacher.username || currentTeacher.jobNumber}</strong></span>
+                    <span>رقم الهوية: <strong className="text-slate-800">{currentTeacher.nationalId || currentTeacher.username || currentTeacher.jobNumber}</strong></span>
                   </span>
+                  {currentTeacher.email && (
+                    <>
+                      <span className="text-slate-300">•</span>
+                      <span className="font-mono text-slate-700">✉️ {currentTeacher.email}</span>
+                    </>
+                  )}
                   <span className="text-slate-300">•</span>
                   <span className="flex items-center gap-1">
                     <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
@@ -735,18 +738,19 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         onClose={() => setRecordToEdit(null)}
       />
 
-      {/* Confirm Delete Absence Dialog */}
+      {/* Confirm Archive Absence Dialog */}
       <ConfirmDialog
         isOpen={Boolean(recordToDelete)}
-        title="تأكيد حذف سجل الغياب"
+        title="نقل سجل الغياب إلى الأرشيف"
         message={
           recordToDelete
-            ? `هل أنتِ متأكدة من حذف سجل غياب المعلمة "${recordToDelete.teacherName}" بتاريخ ${recordToDelete.date} (${recordToDelete.type})؟ سيتم تحديث رصيد غياب المعلمة تلقائياً مع توفر خيار التراجع الفوري.`
+            ? `المعلمة: "${recordToDelete.teacherName}" (${recordToDelete.date} — ${recordToDelete.type})\nسيتم نقل هذا السجل إلى الأرشيف الإداري وتحديث عداد المعلمة تلقائياً.`
             : ""
         }
-        confirmLabel="نعم، حذف السجل"
+        confirmLabel="نقل إلى الأرشيف"
         cancelLabel="إلغاء"
-        variant="danger"
+        variant="archive"
+        showReasonInput={true}
         onConfirm={confirmDeleteRecord}
         onCancel={() => setRecordToDelete(null)}
       />

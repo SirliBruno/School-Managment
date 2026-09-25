@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useMemo } from "react";
 import { useTeachers } from "@/context/TeacherContext";
@@ -115,9 +115,15 @@ export function useDashboardStats(): DashboardStats {
   const { teachers, absenceRecords, delayNotices, inquiries } = useTeachers();
 
   return useMemo(() => {
-    const safeTeachers: Teacher[] = Array.isArray(teachers) ? teachers : [];
-    const safeAbsences: AbsenceRecord[] = Array.isArray(absenceRecords) ? absenceRecords : [];
-    const safeDelayNotices: DelayNotice[] = Array.isArray(delayNotices) ? delayNotices : [];
+    const safeTeachers: Teacher[] = (
+      Array.isArray(teachers) ? teachers : []
+    ).filter((t) => !t.isArchived);
+    const safeAbsences: AbsenceRecord[] = (
+      Array.isArray(absenceRecords) ? absenceRecords : []
+    ).filter((a) => !a.isArchived);
+    const safeDelayNotices: DelayNotice[] = (
+      Array.isArray(delayNotices) ? delayNotices : []
+    ).filter((d) => !d.isArchived);
     const safeInquiries = Array.isArray(inquiries) ? inquiries : [];
 
     // 1. التاريخ الحالي بتوقيت الرياض
