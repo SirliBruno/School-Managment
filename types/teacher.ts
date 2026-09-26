@@ -191,6 +191,8 @@ export interface DeductionDecision {
   delayHours: number;
   delayMinutes: number;
   deductionDays: number;
+  settledNoticeIds?: string[]; // معرفات تنبيهات التأخر المشمولة بالقرار منعاً للازدواجية
+  remainderMinutes?: number;  // الدقائق المتبقية المرحلة
   notes?: string;
   createdAt: string;
   updatedAt?: string;

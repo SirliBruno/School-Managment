@@ -52,6 +52,8 @@ export interface DeductionFormData {
   decisionNumber?: string;
   decisionDate?: string;
   principalName?: string;
+  settledNoticeIds?: string[];
+  remainderMinutes?: number;
 }
 
 export interface DeductionFormValidation {

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -17,10 +18,17 @@ import {
   MessageCircle,
   Pencil,
   Sparkles,
+  Zap,
+  Clock,
+  ShieldAlert,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { Teacher } from "@/types/teacher";
+import {
+  calculateSchoolDelaySummaries,
+  TeacherDelaySummary,
+} from "@/lib/delayDeductionIntegration";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
 import { AddTeacherModal } from "@/components/teachers/AddTeacherModal";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
@@ -47,12 +55,24 @@ export const TeacherTable: React.FC = () => {
   const router = useRouter();
   const {
     teachers,
+    delayNotices,
+    deductionDecisions,
     deleteTeacher,
     clearTeachers,
     loadOfficialTeachers,
     isLoading,
   } = useTeachers();
   const { showToast } = useToast();
+
+  // Summary map of unexcused delays and deduction statuses
+  const delaySummaryMap = useMemo(() => {
+    const summaries = calculateSchoolDelaySummaries(teachers, delayNotices, deductionDecisions);
+    const map = new Map<string, TeacherDelaySummary>();
+    for (const s of summaries) {
+      map.set(s.teacherId, s);
+    }
+    return map;
+  }, [teachers, delayNotices, deductionDecisions]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<FilterStatus>("all");
   const [teacherToDelete, setTeacherToDelete] = useState<Teacher | null>(null);
@@ -367,6 +387,9 @@ export const TeacherTable: React.FC = () => {
                     الغياب
                   </th>
                   <th scope="col" className="py-3.5 px-4 text-center">
+                    حالة التأخر والحسم
+                  </th>
+                  <th scope="col" className="py-3.5 px-4 text-center">
                     الإجراءات
                   </th>
                 </tr>
@@ -490,7 +513,56 @@ export const TeacherTable: React.FC = () => {
                         </button>
                       </td>
 
-                      {/* 8. Actions */}
+                      {/* 8. Delay Status Badge */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        {(() => {
+                          const summary = delaySummaryMap.get(teacher.id);
+                          const status = summary?.status || "normal";
+                          const hours = summary?.totalUnexcusedHours || 0;
+
+                          if (status === "due_for_deduction") {
+                            return (
+                              <Link
+                                href={`/procedures/deduction-hours?teacherId=${teacher.id}&autoFill=true`}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300 hover:bg-rose-100 transition-all shadow-2xs group/due"
+                                title="مستحقة لقرار حسم فوري (≥ 7 ساعات) — انقري لإصدار القرار الآن"
+                              >
+                                <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
+                                <span className="font-mono">{hours} س</span>
+                                <span className="text-[10px] text-rose-700 font-extrabold flex items-center gap-0.5">
+                                  <Zap className="w-3 h-3 text-rose-600" />
+                                  حسم
+                                </span>
+                              </Link>
+                            );
+                          }
+
+                          if (status === "warning") {
+                            return (
+                              <span
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300"
+                                title="إنذار اقتراب من النصاب (4 إلى 6.9 ساعات)"
+                              >
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                <span className="font-mono">{hours} س</span>
+                                <span className="text-[10px] text-amber-700">(إنذار)</span>
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <span
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                              title="الوضع مستقر (أقل من 4 ساعات)"
+                            >
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                              <span className="font-mono">{hours} س</span>
+                            </span>
+                          );
+                        })()}
+                      </td>
+
+                      {/* 9. Actions */}
                       <td className="py-3.5 px-4 text-center">
                         <div className="flex items-center justify-center gap-1.5">
                           <motion.button
@@ -655,6 +727,45 @@ export const TeacherTable: React.FC = () => {
                         >
                           {teacher.totalAbsences || 0} حالة
                         </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/60">
+                        <span className="text-slate-400">رصيد التأخر وحالة الحسم:</span>
+                        {(() => {
+                          const summary = delaySummaryMap.get(teacher.id);
+                          const status = summary?.status || "normal";
+                          const hours = summary?.totalUnexcusedHours || 0;
+
+                          if (status === "due_for_deduction") {
+                            return (
+                              <Link
+                                href={`/procedures/deduction-hours?teacherId=${teacher.id}&autoFill=true`}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300 shadow-2xs"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-pulse" />
+                                <span>{hours} س</span>
+                                <span className="text-[10px] text-rose-700 font-extrabold flex items-center gap-0.5">
+                                  <Zap className="w-3 h-3 text-rose-600" />
+                                  حسم فوري
+                                </span>
+                              </Link>
+                            );
+                          }
+                          if (status === "warning") {
+                            return (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                <span>{hours} س (إنذار)</span>
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span>{hours} س</span>
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
 
