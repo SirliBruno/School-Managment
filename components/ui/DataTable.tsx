@@ -190,15 +190,147 @@ export function DataTable<T>({
     <div className={cn("bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden", className)}>
       {/* Top Header & Toolbar Area */}
       <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-4">
-        {/* Title & Actions Row */}
-        {(title || actionsSlot || onExportExcel) && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              {title && <h2 className="text-base font-bold text-slate-900 tracking-tight">{title}</h2>}
-              {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+        {/* Toolbar Content */}
+        {title || subtitle ? (
+          <>
+            {/* Title & Actions Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                {title && <h2 className="text-base font-bold text-slate-900 tracking-tight">{title}</h2>}
+                {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap">
+                {onExportExcel && (
+                  <button
+                    type="button"
+                    onClick={onExportExcel}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{exportLabel}</span>
+                  </button>
+                )}
+
+                {/* Column manager toggle */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsColumnManagerOpen((prev) => !prev)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                    title="تخصيص الأعمدة"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+                    <span>الأعمدة</span>
+                  </button>
+
+                  {isColumnManagerOpen && (
+                    <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-3 z-30 space-y-2 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
+                        <span>إظهار الأعمدة</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsColumnManagerOpen(false)}
+                          className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto space-y-1.5 pt-1">
+                        {columns
+                          .filter((c) => c.hideable !== false)
+                          .map((col) => (
+                            <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                              <input
+                                type="checkbox"
+                                checked={visibleColumnIds.has(col.id)}
+                                onChange={() => toggleColumn(col.id)}
+                                className="rounded text-[#137a85] focus:ring-[#137a85]"
+                              />
+                              <span className="truncate">{typeof col.header === "string" ? col.header : col.id}</span>
+                            </label>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {actionsSlot}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Search & Custom Filters Row */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder={searchPlaceholder}
+                  className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setCurrentPage(1);
+                    }}
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                    aria-label="مسح البحث"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {filtersSlot && <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">{filtersSlot}</div>}
+            </div>
+          </>
+        ) : (
+          /* Balanced Single-Row Flex Layout */
+          <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+            {/* Filters on the right in RTL */}
+            {filtersSlot && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 xl:pb-0 shrink-0">
+                {filtersSlot}
+              </div>
+            )}
+
+            {/* Search in the center */}
+            <div className="relative flex-1 min-w-[200px] max-w-lg">
+              <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder={searchPlaceholder}
+                className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setCurrentPage(1);
+                  }}
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                  aria-label="مسح البحث"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Actions on the left in RTL */}
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
               {onExportExcel && (
                 <button
                   type="button"
@@ -257,38 +389,6 @@ export function DataTable<T>({
             </div>
           </div>
         )}
-
-        {/* Search & Custom Filters Row */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder={searchPlaceholder}
-              className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  setCurrentPage(1);
-                }}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
-                aria-label="مسح البحث"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-
-          {filtersSlot && <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">{filtersSlot}</div>}
-        </div>
       </div>
 
       {/* Loading Skeleton State */}

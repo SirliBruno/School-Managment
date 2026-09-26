@@ -21,8 +21,10 @@ import {
   FileEdit,
   Zap,
   ShieldAlert,
+  MessageCircle,
 } from "lucide-react";
 import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision } from "@/types/teacher";
+import { formatSaudiMobileDisplay, normalizeSaudiMobile } from "@/lib/teacherDeduplication";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
@@ -313,7 +315,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
                     <span>التخصص: <strong className="text-slate-800">{currentTeacher.specialty || currentTeacher.teachingField || "عام"}</strong></span>
                   </span>
-                  {currentTeacher.teachingField && (
+                  {currentTeacher.teachingField && currentTeacher.specialty?.trim().toLowerCase() !== currentTeacher.teachingField.trim().toLowerCase() && (
                     <>
                       <span className="text-slate-300">•</span>
                       <span>المجال: <strong className="text-slate-800">{currentTeacher.teachingField}</strong></span>
@@ -322,7 +324,22 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   {currentTeacher.mobile && (
                     <>
                       <span className="text-slate-300">•</span>
-                      <span dir="ltr" className="font-mono text-slate-700">📱 {currentTeacher.mobile}</span>
+                      <span className="flex items-center gap-1.5">
+                        <span dir="ltr" className="font-mono text-slate-800 font-bold">
+                          {formatSaudiMobileDisplay(currentTeacher.mobile)}
+                        </span>
+                        {normalizeSaudiMobile(currentTeacher.mobile) && (
+                          <a
+                            href={`https://wa.me/${normalizeSaudiMobile(currentTeacher.mobile)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors inline-flex items-center justify-center shadow-2xs"
+                            title="مراسلة المعلمة عبر واتساب"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </span>
                     </>
                   )}
                 </div>

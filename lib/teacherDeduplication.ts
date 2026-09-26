@@ -121,6 +121,22 @@ export function isValidSaudiMobile(mobile: string | undefined | null): boolean {
 }
 
 /**
+ * تنسيق رقم الجوال ليظهر بفواصل مقروءة ومرتبة: +966 50 968 3264
+ */
+export function formatSaudiMobileDisplay(raw: string | number | undefined | null): string {
+  if (!raw) return "—";
+  const norm = normalizeSaudiMobile(raw);
+  if (!norm || norm.length !== 12 || !norm.startsWith("9665")) {
+    return String(raw);
+  }
+  const country = "+966";
+  const part1 = norm.slice(3, 5); // e.g. "50"
+  const part2 = norm.slice(5, 8); // e.g. "968"
+  const part3 = norm.slice(8, 12); // e.g. "3264"
+  return `${country} ${part1} ${part2} ${part3}`;
+}
+
+/**
  * Validates whether an email string is formatted properly.
  */
 export function isValidEmail(email: string | undefined | null): boolean {

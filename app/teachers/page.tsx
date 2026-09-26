@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Users, UserCheck, Calendar, GraduationCap } from "lucide-react";
+import { Users, UserCheck, Calendar, GraduationCap, FileSpreadsheet } from "lucide-react";
 import { PageHeader, KpiCard, Card } from "@/components/ui";
 import { ExcelImporter } from "@/components/teachers/ExcelImporter";
 import { TeacherTable } from "@/components/teachers/TeacherTable";
@@ -79,23 +79,25 @@ export default function TeachersPage() {
           />
         </div>
 
-        {/* Section: Import & Tools Banner */}
-        <Card className="p-5 md:p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Section: Compact Horizontal Import & Tools Banner */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#137a85] flex items-center justify-center shrink-0">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
             <div>
-              <h2 className="text-sm md:text-base font-bold text-slate-900">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900">
                 استيراد وتحديث كادر المدرسة
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                يمكنك رفع ملف إكسل يحتوي على بيانات المعلمات وسيتم مطابقتها
-                وحفظها فورياً دون فقدان السجلات السابقة.
+              <p className="text-[11px] text-slate-500">
+                رفع ومطابقة ملفات Excel المعتمدة وحفظها فورياً مع الحفاظ التام على السجلات السابقة
               </p>
             </div>
-
-            {/* Importer Component */}
-            <ExcelImporter />
           </div>
-        </Card>
+
+          {/* Importer Component in Compact Mode */}
+          <ExcelImporter compact={true} />
+        </div>
 
         {/* Section: Data Table */}
         <section className="space-y-3">

@@ -51,7 +51,7 @@ const INITIAL_STATE: FormState = {
   mobile: "",
   email: "",
   employmentStatus: "دائم",
-  jobTitle: "معلم",
+  jobTitle: "معلمة",
   teachingField: "",
   specialty: "",
 };
@@ -87,7 +87,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
           email: teacherToEdit.email || "",
           employmentStatus:
             teacherToEdit.employmentStatus === "عقد" ? "عقد" : "دائم",
-          jobTitle: teacherToEdit.jobTitle || "معلم",
+          jobTitle: teacherToEdit.jobTitle || "معلمة",
           teachingField: teacherToEdit.teachingField || "",
           specialty: teacherToEdit.specialty || "",
         });
@@ -587,7 +587,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
                   type="text"
                   value={form.jobTitle}
                   onChange={(e) => handleChange("jobTitle", e.target.value)}
-                  placeholder="معلم / معلم ممارس"
+                  placeholder="معلمة / معلمة ممارس"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:border-[#137a85] focus:ring-[#137a85]/20 transition-all shadow-2xs"
                 />
               </div>
