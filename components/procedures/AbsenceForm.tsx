@@ -1320,10 +1320,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>متابعة للخطوة التالية</span>
-                <ChevronLeft className="w-4 h-4" />
+                <span className="whitespace-nowrap">متابعة للخطوة التالية</span>
+                <ChevronLeft className="w-4 h-4 shrink-0" />
               </button>
             ) : (
               <>
@@ -1332,14 +1332,14 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   type="button"
                   onClick={handleSaveAndExportPdf}
                   disabled={isSubmitting || isExportingDirect}
-                  className="w-full sm:w-auto min-h-[46px] px-5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="w-full sm:w-auto min-h-[46px] px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isExportingDirect ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-[#137a85]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#137a85] shrink-0" />
                   ) : (
-                    <FileDown className="w-4 h-4 text-[#137a85]" />
+                    <FileDown className="w-4 h-4 text-[#137a85] shrink-0" />
                   )}
-                  <span>{isExportingDirect ? "جاري الحفظ والتصدير..." : "حفظ وتصدير PDF"}</span>
+                  <span className="whitespace-nowrap">{isExportingDirect ? "جاري الحفظ والتصدير..." : "حفظ وتصدير PDF"}</span>
                 </motion.button>
 
                 <motion.button
@@ -1347,10 +1347,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   type="button"
                   onClick={() => handleSubmit()}
                   disabled={isSubmitting || isExportingDirect}
-                  className="w-full sm:w-auto min-h-[46px] px-7 py-2.5 rounded-xl text-sm font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="w-full sm:w-auto min-h-[46px] px-7 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
-                  <Save className="w-4 h-4 text-teal-100" />
-                  <span>{isSubmitting ? "جاري الحفظ..." : "اعتماد وحفظ المساءلة"}</span>
+                  <Save className="w-4 h-4 text-teal-100 shrink-0" />
+                  <span className="whitespace-nowrap">{isSubmitting ? "جاري الحفظ..." : "اعتماد وحفظ المساءلة"}</span>
                 </motion.button>
               </>
             )}

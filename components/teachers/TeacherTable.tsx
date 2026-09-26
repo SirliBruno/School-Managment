@@ -681,28 +681,28 @@ export const TeacherTable: React.FC = () => {
               <button
                 type="button"
                 onClick={handleExportSelectedExcel}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-800/80 hover:bg-teal-700 text-white text-xs font-bold transition-all border border-teal-600/50 cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-teal-800/80 hover:bg-teal-700 text-white text-xs font-bold whitespace-nowrap transition-all border border-teal-600/50 cursor-pointer shadow-2xs"
               >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-teal-300" />
-                <span>تصدير المحدد ({selectedTeacherIds.size})</span>
+                <FileSpreadsheet className="w-3.5 h-3.5 text-teal-300 shrink-0" />
+                <span className="whitespace-nowrap">تصدير المحدد ({selectedTeacherIds.size})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setIsBulkArchiveModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold transition-all border border-rose-500 cursor-pointer shadow-2xs"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold whitespace-nowrap transition-all border border-rose-500 cursor-pointer shadow-2xs"
               >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span>أرشفة المحدد ({selectedTeacherIds.size})</span>
+                <Trash2 className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">أرشفة المحدد ({selectedTeacherIds.size})</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setSelectedTeacherIds(new Set())}
-                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-medium whitespace-nowrap transition-colors cursor-pointer"
               >
-                <X className="w-3.5 h-3.5" />
-                <span>إلغاء التحديد</span>
+                <X className="w-3.5 h-3.5 shrink-0" />
+                <span className="whitespace-nowrap">إلغاء التحديد</span>
               </button>
             </div>
           </motion.div>

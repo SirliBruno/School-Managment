@@ -312,16 +312,16 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           disabled={isLoading}
           aria-busy={isLoading}
           className={cn(
-            "inline-flex items-center gap-2 rounded-xl font-bold bg-[#137a85] text-white hover:bg-teal-700 active:scale-[0.98] shadow-2xs hover:shadow-xs transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]",
+            "inline-flex items-center gap-2 rounded-xl font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 active:scale-[0.98] shadow-2xs hover:shadow-xs transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]",
             compact ? "px-3 py-1.5 text-xs" : "px-4 py-2.5 text-xs md:text-sm"
           )}
         >
           {isLoading ? (
-            <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+            <Loader2 className="w-4 h-4 animate-spin shrink-0" aria-hidden="true" />
           ) : (
-            <UploadCloud className="w-4 h-4 text-teal-100" aria-hidden="true" />
+            <UploadCloud className="w-4 h-4 text-teal-100 shrink-0" aria-hidden="true" />
           )}
-          <span>{isLoading ? "جاري قراءة الملف..." : "استيراد Excel"}</span>
+          <span className="whitespace-nowrap">{isLoading ? "جاري قراءة الملف..." : "استيراد Excel"}</span>
         </button>
 
         {/* Download Empty Template Button (Stage 4 - Required) */}
@@ -329,13 +329,13 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           type="button"
           onClick={() => downloadEmptyExcelTemplate()}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl font-semibold bg-white text-slate-700 hover:bg-teal-50/50 hover:text-[#137a85] hover:border-teal-300 active:scale-[0.98] border border-slate-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
+            "inline-flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap bg-white text-slate-700 hover:bg-teal-50/50 hover:text-[#137a85] hover:border-teal-300 active:scale-[0.98] border border-slate-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
             compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-xs"
           )}
           title="تحميل قالب فارغ يحتوي على الأعمدة الثمانية المعتمدة"
         >
-          <FileDown className="w-3.5 h-3.5 text-[#137a85]" aria-hidden="true" />
-          <span>تحميل القالب الفارغ</span>
+          <FileDown className="w-3.5 h-3.5 text-[#137a85] shrink-0" aria-hidden="true" />
+          <span className="whitespace-nowrap">تحميل القالب الفارغ</span>
         </button>
 
         {/* Download Sample Template Helper Button */}
@@ -343,13 +343,13 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           type="button"
           onClick={() => downloadSampleExcelTemplate()}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl font-semibold bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-[0.98] border border-slate-200/80 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
+            "inline-flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-[0.98] border border-slate-200/80 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
             compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-xs"
           )}
           title="تحميل نموذج معبأ ببيانات تجريبية للاسترشاد"
         >
-          <Download className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
-          <span>نموذج بأمثلة</span>
+          <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
+          <span className="whitespace-nowrap">نموذج بأمثلة</span>
         </button>
 
         {/* Quick Undo Indicator Banner (Stage 5) */}

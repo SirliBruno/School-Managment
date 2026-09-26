@@ -235,15 +235,15 @@ export const AppHeader: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40"
               aria-expanded={isQuickActionsOpen}
               aria-label="إجراء إداري جديد"
             >
-              <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span className="hidden sm:inline">إجراء جديد</span>
+              <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
+              <span className="hidden sm:inline whitespace-nowrap">إجراء جديد</span>
               <ChevronDown
                 className={cn(
-                  "w-3.5 h-3.5 transition-transform duration-200 opacity-80",
+                  "w-3.5 h-3.5 shrink-0 transition-transform duration-200 opacity-80",
                   isQuickActionsOpen && "rotate-180"
                 )}
               />
@@ -379,10 +379,10 @@ export const AppHeader: React.FC = () => {
                       setIsUserMenuOpen(false);
                       setIsProfileModalOpen(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium whitespace-nowrap text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors cursor-pointer"
                   >
-                    <KeyRound className="w-4 h-4 text-teal-600" />
-                    <span>تعديل كلمة المرور والبيانات</span>
+                    <KeyRound className="w-4 h-4 text-teal-600 shrink-0" />
+                    <span className="whitespace-nowrap">تعديل كلمة المرور والبيانات</span>
                   </button>
 
                   <div className="my-1 border-t border-slate-100" />
@@ -393,10 +393,10 @@ export const AppHeader: React.FC = () => {
                       setIsUserMenuOpen(false);
                       logout();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium whitespace-nowrap text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>تسجيل الخروج</span>
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span className="whitespace-nowrap">تسجيل الخروج</span>
                   </button>
                 </motion.div>
               )}

@@ -260,15 +260,15 @@ export const RecentAbsencesTable: React.FC = () => {
               type="button"
               onClick={() => handleExportPdf(row)}
               disabled={isExporting}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200 transition-all cursor-pointer shadow-2xs disabled:opacity-60"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200 transition-all cursor-pointer shadow-2xs disabled:opacity-60"
               title="تصدير استمارة المساءلة الرسمية PDF"
             >
               {isExporting ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin shrink-0" />
               ) : (
-                <FileDown className="w-3.5 h-3.5" />
+                <FileDown className="w-3.5 h-3.5 shrink-0" />
               )}
-              <span className="hidden sm:inline">استمارة PDF</span>
+              <span className="hidden sm:inline whitespace-nowrap">استمارة PDF</span>
             </button>
 
             <ActionMenu items={menuItems} align="left" />

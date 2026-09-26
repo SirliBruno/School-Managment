@@ -357,7 +357,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 aria-current={isCurrentRoute ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "relative flex items-center rounded-xl text-sm font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
+                  "relative flex items-center rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                   collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                   isCurrentRoute
                     ? "bg-teal-50 text-[#0f666e] font-extrabold border-r-2 border-r-[#137a85] border-teal-200/90 shadow-2xs"
@@ -371,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
-                <div className="relative">
+                <div className="relative shrink-0">
                   <Icon
                     className={cn(
                       "w-5 h-5 shrink-0 transition-colors",
@@ -383,9 +383,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-slate-400 rounded-full ring-2 ring-white" />
                   )}
                 </div>
-                {!collapsed && <span className="flex-1">{item.label}</span>}
+                {!collapsed && <span className="flex-1 whitespace-nowrap truncate">{item.label}</span>}
                 {!collapsed && item.id === "archive" && totalArchivedCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold font-mono border border-slate-200">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold font-mono border border-slate-200 shrink-0">
                     {totalArchivedCount}
                   </span>
                 )}
@@ -406,11 +406,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             <Link
               href="/procedures/list"
-              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-[#137a85] text-xs font-bold transition-all border border-slate-200/90 shadow-2xs flex items-center justify-center gap-2 group"
+              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-[#137a85] text-xs font-bold transition-all border border-slate-200/90 shadow-2xs flex items-center justify-center gap-2 group whitespace-nowrap"
               title="الانتقال إلى قائمة الإجراءات والدعم الإداري"
             >
-              <HelpCircle className="w-4 h-4 text-[#137a85] group-hover:scale-110 transition-transform" />
-              <span>الدعم الفني والمساعدة</span>
+              <HelpCircle className="w-4 h-4 text-[#137a85] shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="whitespace-nowrap">الدعم الفني والمساعدة</span>
             </Link>
           </div>
         )}

@@ -252,29 +252,29 @@ export default function ReportsCenterPage() {
             type="button"
             onClick={() => setActiveTab("builder")}
             className={cn(
-              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
               activeTab === "builder"
                 ? "bg-white text-[#137a85] shadow-xs"
                 : "text-slate-600 hover:text-slate-900"
             )}
           >
-            <Layers className="w-4 h-4" />
-            <span>منشئ التقارير</span>
+            <Layers className="w-4 h-4 shrink-0" />
+            <span className="whitespace-nowrap">منشئ التقارير</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("history")}
             className={cn(
-              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
               activeTab === "history"
                 ? "bg-white text-[#137a85] shadow-xs"
                 : "text-slate-600 hover:text-slate-900"
             )}
           >
-            <History className="w-4 h-4" />
-            <span>سجل التقارير السابقة</span>
+            <History className="w-4 h-4 shrink-0" />
+            <span className="whitespace-nowrap">سجل التقارير السابقة</span>
             {historyItems.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-teal-100 text-[#137a85] text-[10px] flex items-center justify-center font-mono font-bold">
+              <span className="w-5 h-5 rounded-full bg-teal-100 text-[#137a85] text-[10px] flex items-center justify-center font-mono font-bold shrink-0">
                 {historyItems.length}
               </span>
             )}
@@ -632,7 +632,7 @@ export default function ReportsCenterPage() {
                       status: "all",
                     })
                   }
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap text-slate-600 hover:bg-slate-100 transition-colors"
                 >
                   إعادة تعيين الفلاتر
                 </button>
@@ -641,10 +641,10 @@ export default function ReportsCenterPage() {
                   type="button"
                   onClick={handleProceedToPreview}
                   disabled={isGenerating}
-                  className="px-6 py-2.5 rounded-xl bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-black transition-all shadow-2xs hover:shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-black whitespace-nowrap transition-all shadow-2xs hover:shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <Eye className="w-4 h-4" />
-                  <span>معاينة التقرير ومتابعة التصدير</span>
+                  <Eye className="w-4 h-4 shrink-0" />
+                  <span className="whitespace-nowrap">معاينة التقرير ومتابعة التصدير</span>
                 </button>
               </div>
 
@@ -694,17 +694,17 @@ export default function ReportsCenterPage() {
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                    className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold whitespace-nowrap transition-colors cursor-pointer"
                   >
                     تعديل الفلاتر
                   </button>
                   <button
                     type="button"
                     onClick={handlePrintPdf}
-                    className="px-5 py-2.5 rounded-xl bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-black shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+                    className="px-5 py-2.5 rounded-xl bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-black whitespace-nowrap shadow-xs flex items-center gap-2 transition-all cursor-pointer"
                   >
-                    <Printer className="w-4 h-4" />
-                    <span>تصدير وطباعة PDF الرسمي</span>
+                    <Printer className="w-4 h-4 shrink-0" />
+                    <span className="whitespace-nowrap">تصدير وطباعة PDF الرسمي</span>
                   </button>
                 </div>
               </div>

@@ -205,10 +205,10 @@ export function DataTable<T>({
                   <button
                     type="button"
                     onClick={onExportExcel}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{exportLabel}</span>
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span className="whitespace-nowrap">{exportLabel}</span>
                   </button>
                 )}
 
@@ -217,11 +217,11 @@ export function DataTable<T>({
                   <button
                     type="button"
                     onClick={() => setIsColumnManagerOpen((prev) => !prev)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                     title="تخصيص الأعمدة"
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-                    <span>الأعمدة</span>
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                    <span className="whitespace-nowrap">الأعمدة</span>
                   </button>
 
                   {isColumnManagerOpen && (
@@ -335,10 +335,10 @@ export function DataTable<T>({
                 <button
                   type="button"
                   onClick={onExportExcel}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{exportLabel}</span>
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span className="whitespace-nowrap">{exportLabel}</span>
                 </button>
               )}
 
@@ -347,11 +347,11 @@ export function DataTable<T>({
                 <button
                   type="button"
                   onClick={() => setIsColumnManagerOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                   title="تخصيص الأعمدة"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
-                  <span>الأعمدة</span>
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <span className="whitespace-nowrap">الأعمدة</span>
                 </button>
 
                 {isColumnManagerOpen && (

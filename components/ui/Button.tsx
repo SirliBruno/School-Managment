@@ -75,7 +75,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || isLoading}
         className={cn(
-          "group inline-flex items-center justify-center font-bold transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50",
+          "group inline-flex items-center justify-center font-bold whitespace-nowrap transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50",
           sizeClasses[size],
           variantClasses[variant],
           className
@@ -87,7 +87,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ) : leadIcon ? (
           <span className="shrink-0 transition-transform duration-200 ease-out group-hover:scale-110">{leadIcon}</span>
         ) : null}
-        {children && <span>{children}</span>}
+        {children && <span className="whitespace-nowrap truncate">{children}</span>}
         {rightIcon && !isLoading && (
           <span className="shrink-0 transition-transform duration-200 ease-out group-hover:scale-110">{rightIcon}</span>
         )}
