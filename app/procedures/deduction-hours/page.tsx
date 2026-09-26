@@ -18,7 +18,6 @@ import {
   Building2,
   ShieldAlert,
   ChevronDown,
-  Eye,
   FileCheck,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
@@ -251,11 +250,9 @@ export default function DeductionHoursPage() {
           </div>
         </div>
 
-        {/* Form and Live Preview Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Left Column: Input Form (7 cols on lg) */}
-          <div className="lg:col-span-7 space-y-6">
-            <Card className="p-6 border-slate-200/80 shadow-sm space-y-6">
+        {/* Input Form */}
+        <div className="max-w-4xl mx-auto w-full space-y-6">
+          <Card className="p-6 border-slate-200/80 shadow-sm space-y-6">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-2.5">
                   <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-100 text-teal-700 flex items-center justify-center font-bold">
@@ -589,129 +586,6 @@ export default function DeductionHoursPage() {
                 </Button>
               </div>
             </Card>
-          </div>
-
-          {/* Right Column: Live Official Form 19 Preview Card (5 cols on lg) */}
-          <div className="lg:col-span-5 sticky top-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-teal-700" />
-                <h3 className="text-sm font-bold text-slate-800">
-                  معاينة مباشرة للنموذج المعتمد (نموذج 19)
-                </h3>
-              </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handlePrintPdf}
-                className="text-teal-700 hover:text-teal-800 hover:bg-teal-50 text-xs px-2.5 h-8 font-bold"
-              >
-                <Printer className="w-3.5 h-3.5 ml-1.5" />
-                طباعة الآن
-              </Button>
-            </div>
-
-            {/* Official Scanned Paper Replica Card */}
-            <div className="bg-white rounded-xl border-2 border-teal-700/80 shadow-md p-5 text-slate-900 font-sans text-xs leading-relaxed space-y-4 select-none">
-              {/* Header Box */}
-              <div className="flex justify-between items-start border-b-2 border-teal-700 pb-3">
-                <div className="space-y-0.5 text-3xs font-semibold text-slate-700">
-                  <div>المملكة العربية السعودية</div>
-                  <div>وزارة التعليم</div>
-                  <div>الإدارة العامة للتعليم بمكة المكرمة</div>
-                  <div className="font-bold text-teal-800">{schoolName}</div>
-                </div>
-                <div className="text-center px-2">
-                  <div className="font-extrabold text-teal-800 text-sm">وزارة التعليم</div>
-                  <div className="text-3xs text-slate-400">Ministry of Education</div>
-                </div>
-                <div className="space-y-0.5 text-3xs text-left font-mono">
-                  <div>القرار: {decisionNumber}</div>
-                  <div>التاريخ: {decisionDate}</div>
-                </div>
-              </div>
-
-              {/* Title Section */}
-              <div className="text-center space-y-1">
-                <div className="text-sm font-extrabold text-teal-800">
-                  نموذج رقم ( ١٩ )
-                </div>
-                <div className="bg-teal-50 border border-teal-700/60 rounded px-2 py-1 flex justify-between text-3xs font-bold text-teal-900">
-                  <span>اسم النموذج: قرار حسم مجموع ساعات تأخر وخروج مبكر</span>
-                  <span>الرمز: ( و.م.ع.ن - ٠٢ - ٠٣ )</span>
-                </div>
-              </div>
-
-              {/* Civil ID & School */}
-              <div className="border border-teal-700 rounded overflow-hidden divide-y divide-teal-700">
-                <div className="flex">
-                  <div className="bg-teal-50 font-bold text-teal-900 px-3 py-1 w-24 border-l border-teal-700 text-center">
-                    المدرسة
-                  </div>
-                  <div className="px-3 py-1 font-semibold flex-1 text-slate-800 truncate">
-                    {schoolName}
-                  </div>
-                </div>
-                <div className="flex">
-                  <div className="bg-teal-50 font-bold text-teal-900 px-3 py-1 w-24 border-l border-teal-700 text-center">
-                    السجل المدني
-                  </div>
-                  <div className="px-3 py-1 font-mono font-bold text-slate-900 flex-1">
-                    {selectedTeacher?.nationalId || "—"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Teacher Info Grid Table */}
-              <div className="border border-teal-700 rounded overflow-hidden text-center text-3xs">
-                <div className="grid grid-cols-4 bg-teal-50 border-b border-teal-700 font-bold text-teal-900 py-1">
-                  <div className="border-l border-teal-700">الاسم</div>
-                  <div className="border-l border-teal-700">التخصص</div>
-                  <div className="border-l border-teal-700">المرتبة</div>
-                  <div>العمل الحالي</div>
-                </div>
-                <div className="grid grid-cols-4 py-1.5 font-semibold text-slate-800 items-center">
-                  <div className="border-l border-teal-700 font-bold text-teal-800 px-1 truncate">
-                    {selectedTeacher?.fullName || "—"}
-                  </div>
-                  <div className="border-l border-teal-700 px-1 truncate">
-                    {selectedTeacher?.specialty || selectedTeacher?.teachingField || "عام"}
-                  </div>
-                  <div className="border-l border-teal-700 px-1 truncate">{rank}</div>
-                  <div className="px-1 truncate">{currentAction}</div>
-                </div>
-              </div>
-
-              {/* Legal Text */}
-              <div className="text-3xs text-justify leading-relaxed bg-slate-50/60 p-2.5 rounded border border-slate-200">
-                <p>
-                  إن قائدة المدرسة: <strong className="text-teal-900">{principalName}</strong> بناءً على صلاحياتها، وبناءً على المادة (<strong>٢١</strong>) من نظام الخدمة المدنية، وقرار معالي الوزير رقم <strong>١/١١٣٩</strong> وتاريخ <strong>١٤٢١/٣/١٧هـ</strong>، ولبلوغ ساعات التأخر عن الدوام والخروج المبكر (<strong className="text-rose-600 font-bold">{calculation.totalHours}</strong>) ساعة، وحيث إن عذرها غير مقبول وبمقتضى النظام.
-                </p>
-                <div className="font-extrabold text-teal-900 mt-2">يُقرر ما يلي:</div>
-                <div className="space-y-1 mt-1 text-slate-800">
-                  <div>
-                    [١] حسم مدة الغياب الموضحة بعاليه وعددها (<strong className="text-rose-600 font-bold text-xs">{calculation.deductionDays}</strong>) يوماً من راتبها.
-                  </div>
-                  <div>
-                    [٢] على إدارة شؤون الموظفات [تنفيذ الأنظمة] تنفيذ إجراء الحسم.
-                  </div>
-                </div>
-              </div>
-
-              {/* Signatures & Stamp Replica */}
-              <div className="flex justify-between items-end pt-2 text-3xs">
-                <div className="space-y-1">
-                  <div className="font-bold text-teal-900">الرئيس المباشر</div>
-                  <div>الاسم: {principalName}</div>
-                  <div>التوقيع: ................................</div>
-                  <div>التاريخ: {decisionDate}</div>
-                </div>
-                <div className="w-16 h-16 rounded-full border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-300 font-bold text-4xs text-center p-1">
-                  الختم الرسمي للمدرسة
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* Bottom Section: Recent Recorded Deduction Decisions */}
