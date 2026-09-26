@@ -333,26 +333,26 @@ export default function DashboardPage() {
         actions={
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Quick Action Triggers in Header */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               <Link
                 href="/procedures/absence"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all cursor-pointer"
+                className="group inline-flex items-center gap-1.5 h-8.5 px-3 rounded-xl text-xs font-bold text-white bg-gradient-to-b from-[#15828e] to-[#0f666f] border border-[#0d5961] shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.22)] hover:from-[#18919e] hover:to-[#116e78] active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 transition-transform duration-200 group-hover:scale-110" />
                 <span>رصد غياب</span>
               </Link>
               <Link
                 href="/procedures/delay-notice"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/80 transition-all cursor-pointer"
+                className="group inline-flex items-center gap-1.5 h-8.5 px-3 rounded-xl text-xs font-bold bg-amber-50 text-amber-900 hover:bg-amber-100/80 border border-amber-200/90 shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <Clock className="w-3.5 h-3.5 text-amber-600 transition-transform duration-200 group-hover:scale-110" />
                 <span>رصد تأخر</span>
               </Link>
               <Link
                 href="/procedures/deduction-hours"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200/80 transition-all cursor-pointer"
+                className="group inline-flex items-center gap-1.5 h-8.5 px-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-900 hover:bg-rose-100/80 border border-rose-200/90 shadow-2xs active:scale-[0.98] transition-all cursor-pointer"
               >
-                <Zap className="w-3.5 h-3.5 text-rose-600" />
+                <Zap className="w-3.5 h-3.5 text-rose-600 transition-transform duration-200 group-hover:scale-110" />
                 <span>قرار حسم</span>
               </Link>
             </div>

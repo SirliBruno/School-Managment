@@ -276,23 +276,34 @@ export default function ProceduresListPage() {
         badge="سجل الإدارة المدرسية"
         actions={
           <div className="flex flex-wrap items-center gap-2.5">
-            <Link href="/procedures/deduction-hours">
-              <Button variant="primary" size="sm" className="font-bold shadow-sm">
-                <Plus className="w-4 h-4 ml-1.5" />
-                قرار حسم ساعات (نموذج 19)
-              </Button>
+            <Link
+              href="/procedures/deduction-hours"
+              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-b from-[#15828e] to-[#0f666f] border border-[#0d5961] shadow-[0_1px_3px_rgba(0,0,0,0.1),inset_0_1px_0.5px_rgba(255,255,255,0.22)] hover:from-[#18919e] hover:to-[#116e78] hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            >
+              <span className="w-6 h-6 rounded-lg bg-white/20 text-white flex items-center justify-center shrink-0 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.3)] transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-white/30">
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              </span>
+              <span>قرار حسم ساعات (نموذج 19)</span>
             </Link>
-            <Link href="/procedures/absence">
-              <Button variant="outline" size="sm" className="font-bold">
-                <FileText className="w-4 h-4 ml-1.5 text-teal-700" />
-                مساءلة غياب (نموذج 20)
-              </Button>
+
+            <Link
+              href="/procedures/absence"
+              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-white border border-slate-200/90 shadow-2xs hover:bg-teal-50/50 hover:border-teal-200 hover:text-teal-900 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            >
+              <span className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-100 text-[#137a85] flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-teal-100/80">
+                <FileText className="w-3.5 h-3.5 stroke-[2.2]" />
+              </span>
+              <span>مساءلة غياب (نموذج 20)</span>
             </Link>
-            <Link href="/procedures/delay-notice">
-              <Button variant="outline" size="sm" className="font-bold">
-                <Clock className="w-4 h-4 ml-1.5 text-amber-600" />
-                إشعار تأخر / انصراف
-              </Button>
+
+            <Link
+              href="/procedures/delay-notice"
+              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-white border border-slate-200/90 shadow-2xs hover:bg-amber-50/50 hover:border-amber-200 hover:text-amber-900 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            >
+              <span className="w-6 h-6 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-amber-100/80">
+                <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
+              </span>
+              <span>إشعار تأخر / انصراف</span>
             </Link>
           </div>
         }
