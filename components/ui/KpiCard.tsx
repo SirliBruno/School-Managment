@@ -16,6 +16,7 @@ export type KpiVariant =
 export interface KpiCardProps {
   title: string;
   value: string | number;
+  unit?: string;
   subtitle?: React.ReactNode;
   badge?: React.ReactNode;
   variant?: KpiVariant | string;
@@ -75,6 +76,7 @@ const variantStyles: Record<
 export const KpiCard: React.FC<KpiCardProps> = ({
   title,
   value,
+  unit,
   subtitle,
   badge,
   variant = "teal",
@@ -92,32 +94,60 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   return (
     <div
       className={cn(
-        "bg-white p-4 lg:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between gap-3 transition-all duration-200 hover:shadow-sm hover:border-slate-300",
+        "bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col justify-between transition-all duration-200 hover:shadow-sm hover:border-slate-300",
         className
       )}
+      dir="rtl"
     >
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-slate-500 truncate">{title}</p>
-        <div className="flex items-baseline gap-2 mt-1">
-          <p className={cn("text-xl lg:text-2xl font-extrabold font-mono", finalValueColor)}>
+      {/* Card Header: Title & Icon */}
+      <div className="flex items-center justify-between gap-3 mb-2.5">
+        <span className="text-xs font-semibold text-slate-500 truncate block">
+          {title}
+        </span>
+        <div
+          className={cn(
+            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs",
+            finalIconBg,
+            finalIconColor
+          )}
+          aria-hidden="true"
+        >
+          {icon}
+        </div>
+      </div>
+
+      {/* Main Metric Value & Unit */}
+      <div>
+        <div className="flex items-baseline gap-1.5 flex-wrap">
+          <span
+            className={cn(
+              "text-2xl sm:text-3xl font-black font-mono tracking-tight",
+              finalValueColor
+            )}
+          >
             {value}
-          </p>
+          </span>
+          {unit && (
+            <span className="text-xs font-bold text-slate-500">
+              {unit}
+            </span>
+          )}
           {badge && (
-            <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
+            <span className="ms-auto text-[10px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">
               {badge}
             </span>
           )}
-          {subtitle && <div className="shrink-0">{subtitle}</div>}
         </div>
-      </div>
-      <div
-        className={cn(
-          "w-10 h-10 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center shrink-0 shadow-2xs",
-          finalIconBg,
-          finalIconColor
+
+        {/* Subtitle / Contextual Status */}
+        {subtitle && (
+          <div
+            className="mt-2.5 pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium truncate"
+            dir="rtl"
+          >
+            {subtitle}
+          </div>
         )}
-      >
-        {icon}
       </div>
     </div>
   );

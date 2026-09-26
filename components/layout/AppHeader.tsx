@@ -22,6 +22,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Building2,
+  Bell,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -175,49 +176,68 @@ export const AppHeader: React.FC = () => {
           )}
         </div>
 
-        {/* Left Section (End in RTL): Sync Pill, Quick Actions, Profile */}
+        {/* Left Section (End in RTL): Status Badge, Notification Bell, Quick Actions, Profile */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Cloud Sync Status Indicator */}
-          <div className="flex items-center">
-            {isCloudConnected ? (
-              <div
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium"
-                title="متصل بقاعدة البيانات السحابية لحظياً"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px]">سحابي ولحظي</span>
-              </div>
-            ) : (
-              <div
-                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium"
-                title="يعمل بالحفظ المحلي حالياً"
-              >
-                <span className="w-2 h-2 rounded-full bg-amber-500" />
-                <span className="text-[11px]">حفظ محلي</span>
-              </div>
-            )}
-
-            {/* Pending Sync Trigger Button */}
-            {pendingSyncCount > 0 && (
-              <button
-                type="button"
-                onClick={() => flushSyncQueue()}
-                className="ms-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 border border-amber-300 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                title="مزامنة التغييرات المعلقة"
-              >
-                <RotateCcw className="w-3 h-3 animate-spin" />
-                <span>{pendingSyncCount} معلق</span>
-              </button>
-            )}
+          {/* Cloud Sync Status Badge with Glowing Dot */}
+          <div
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-200/90 shadow-2xs select-none"
+            title={
+              isCloudConnected
+                ? "متصل بقاعدة البيانات السحابية لحظياً (Supabase)"
+                : "حفظ محلي (انقطاع مؤقت)"
+            }
+          >
+            <span className="relative flex h-2 w-2">
+              {isCloudConnected && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              )}
+              <span
+                className={cn(
+                  "relative inline-flex rounded-full h-2 w-2",
+                  isCloudConnected ? "bg-emerald-500" : "bg-amber-500"
+                )}
+              />
+            </span>
+            <span className="text-[11px] font-medium text-slate-600">
+              {isCloudConnected ? "سحابي ولحظي" : "حفظ محلي"}
+            </span>
           </div>
 
-          {/* Quick Actions Dropdown */}
+          {/* Notification Bell with Badge */}
+          <button
+            type="button"
+            onClick={() => {
+              if (pendingSyncCount > 0) {
+                flushSyncQueue();
+              }
+            }}
+            className={cn(
+              "relative p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#137a85]",
+              pendingSyncCount > 0 && "text-slate-700"
+            )}
+            title={
+              pendingSyncCount > 0
+                ? `${pendingSyncCount} إجراءات معلقة قيد المزامنة (انقري للمزامنة الفورية)`
+                : "لا توجد تنبيهات معلقة"
+            }
+            aria-label="تنبيهات المزامنة السحابية"
+          >
+            <Bell className="w-5 h-5" />
+            {pendingSyncCount > 0 && (
+              <span className="absolute top-1 left-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-2xs animate-pulse ring-2 ring-white">
+                {pendingSyncCount}
+              </span>
+            )}
+          </button>
+
+          {/* Quick Actions Primary CTA */}
           <div className="relative" ref={quickActionsRef}>
-            <Button
-              variant="primary"
-              size="sm"
+            <button
+              type="button"
               onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
-              className="gap-1.5 px-2.5 sm:px-3 text-xs shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40"
+              aria-expanded={isQuickActionsOpen}
+              aria-label="إجراء إداري جديد"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span className="hidden sm:inline">إجراء جديد</span>
@@ -227,7 +247,7 @@ export const AppHeader: React.FC = () => {
                   isQuickActionsOpen && "rotate-180"
                 )}
               />
-            </Button>
+            </button>
 
             <AnimatePresence>
               {isQuickActionsOpen && (

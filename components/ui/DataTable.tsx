@@ -200,27 +200,27 @@ export function DataTable<T>({
 
             <div className="flex items-center gap-2 flex-wrap">
               {onExportExcel && (
-                <Button
-                  variant="outline"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={onExportExcel}
-                  leftIcon={<FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
                 >
-                  {exportLabel}
-                </Button>
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{exportLabel}</span>
+                </button>
               )}
 
               {/* Column manager toggle */}
               <div className="relative">
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
+                  type="button"
                   onClick={() => setIsColumnManagerOpen((prev) => !prev)}
-                  leftIcon={<SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
                   title="تخصيص الأعمدة"
                 >
-                  الأعمدة
-                </Button>
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500" />
+                  <span>الأعمدة</span>
+                </button>
 
                 {isColumnManagerOpen && (
                   <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-3 z-30 space-y-2 text-xs">

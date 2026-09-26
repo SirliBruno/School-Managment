@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Archive,
   RotateCcw,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -247,16 +248,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     aria-controls={`sub-menu-${item.id}`}
                     title={collapsed ? item.label : undefined}
                     className={cn(
-                      "w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
+                      "w-full flex items-center rounded-xl text-sm font-bold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                       collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5",
                       isOpen
-                        ? "bg-slate-100/90 text-slate-900"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-slate-100/90 text-slate-950 font-bold"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
                     )}
                   >
                     <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
                       <Icon
-                        className="w-5 h-5 text-slate-500 group-hover:text-slate-700 transition-colors shrink-0"
+                        className={cn(
+                          "w-5 h-5 transition-colors shrink-0",
+                          isOpen ? "text-[#137a85]" : "text-slate-500 group-hover:text-slate-800"
+                        )}
                         aria-hidden="true"
                       />
                       {!collapsed && (
@@ -295,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-                        className="overflow-hidden pe-7 ps-2 py-1 space-y-1 border-s-2 border-slate-200 ms-3"
+                        className="overflow-hidden pe-7 ps-2 py-1 space-y-1 border-s-2 border-slate-300 ms-3"
                       >
                         {item.children?.map((subItem) => {
                           const isSubActive =
@@ -309,10 +313,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               onClick={() => setIsMobileOpen(false)}
                               aria-current={isSubActive ? "page" : undefined}
                               className={cn(
-                                "relative block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
+                                "relative block px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                                 isSubActive
-                                  ? "bg-teal-50/90 text-[#137a85] font-bold border border-teal-200/80 shadow-2xs"
-                                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                  ? "bg-teal-50 text-[#0f666e] font-extrabold border-r-2 border-r-[#137a85] border-teal-200/90 shadow-2xs"
+                                  : "text-slate-600 hover:text-slate-950 hover:bg-slate-100/80 font-medium"
                               )}
                             >
                               <div className="flex items-center justify-between">
@@ -356,11 +360,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 aria-current={isCurrentRoute ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "relative flex items-center rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
+                  "relative flex items-center rounded-xl text-sm font-bold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                   collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                   isCurrentRoute
-                    ? "bg-teal-50/90 text-[#137a85] font-bold border border-teal-200/80 shadow-2xs"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                    ? "bg-teal-50 text-[#0f666e] font-extrabold border-r-2 border-r-[#137a85] border-teal-200/90 shadow-2xs"
+                    : "text-slate-700 hover:text-slate-950 hover:bg-slate-50 font-bold"
                 )}
               >
                 {isCurrentRoute && (
@@ -374,7 +378,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <Icon
                     className={cn(
                       "w-5 h-5 shrink-0 transition-colors",
-                      isCurrentRoute ? "text-[#137a85]" : "text-slate-500"
+                      isCurrentRoute ? "text-[#137a85]" : "text-slate-500 group-hover:text-slate-800"
                     )}
                     aria-hidden="true"
                   />
@@ -498,28 +502,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Footer Branding & Developer Credit */}
+        {/* Footer Branding & Official Technical Support */}
         {!collapsed && (
-          <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 text-center">
-            <p className="text-[11px] text-slate-500 font-medium">
-              نظام الإدارة المدرسية • الإصدار 1.0
-            </p>
-            <div className="mt-2 pt-2 border-t border-slate-200/60 flex flex-col items-center gap-1">
-              <span className="text-[10px] text-slate-500 font-medium flex items-center justify-center gap-1">
-                <span>تطوير:</span>
-                <span className="font-bold text-slate-800">محمد هارون</span>
-              </span>
-              <a
-                href="https://wa.me/966557013720"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-[10px] font-semibold transition-colors border border-slate-200 shadow-2xs group mt-0.5"
-                title="تواصل مع المطور عبر الواتساب"
-              >
-                <MessageCircle className="w-3 h-3 text-emerald-600 group-hover:scale-110 transition-transform" />
-                <span dir="ltr" className="font-mono">0557013720</span>
-              </a>
+          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-center space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
+              <span>نظام الإدارة المدرسية</span>
+              <span className="font-mono text-[10px] bg-slate-200/60 px-1.5 py-0.2 rounded text-slate-700">v2.4</span>
             </div>
+
+            <Link
+              href="/procedures/list"
+              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-[#137a85] text-xs font-bold transition-all border border-slate-200/90 shadow-2xs flex items-center justify-center gap-2 group"
+              title="الانتقال إلى قائمة الإجراءات والدعم الإداري"
+            >
+              <HelpCircle className="w-4 h-4 text-[#137a85] group-hover:scale-110 transition-transform" />
+              <span>الدعم الفني والمساعدة</span>
+            </Link>
           </div>
         )}
       </div>

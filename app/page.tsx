@@ -485,12 +485,12 @@ export default function DashboardPage() {
     <div className="flex-1 flex flex-col min-h-screen bg-slate-50/60 pb-16">
       {/* Main Container */}
       <div className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
-        {/* Section 1: Hero Welcome & Quick Administrative Command */}
-        <section className="bg-gradient-to-l from-[#137a85] to-[#0f666f] rounded-3xl p-5 sm:p-7 text-white shadow-sm relative overflow-hidden">
+        {/* Section 1: Hero Welcome & Quick Administrative Command Cards */}
+        <section className="bg-gradient-to-l from-[#0e5058] via-[#10626b] to-[#137a85] rounded-3xl p-5 sm:p-7 text-white shadow-sm relative overflow-hidden">
           <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            <div className="space-y-2 max-w-2xl">
+          <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+            <div className="space-y-2.5 max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-teal-100 text-xs font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span>مؤشر الانضباط المدرسي اليوم: {todayPulse.disciplineRate}%</span>
@@ -505,42 +505,50 @@ export default function DashboardPage() {
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
                 مركز القيادة والمتابعة الإدارية
               </h1>
-              <p className="text-xs sm:text-sm text-teal-100/90 leading-relaxed">
+              <p className="text-xs sm:text-sm text-teal-100/90 leading-relaxed max-w-xl">
                 متابعة لحظية للدوام، رصد الغياب والتأخر، إصدار المساءلات الرسمية، ومراقبة استحقاقات الحسم المالي آلياً وفق اللائحة التعليمية المعتمدة.
               </p>
             </div>
 
-            {/* Direct Procedure Triggers */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-              <Link href="/procedures/absence">
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="bg-white text-teal-900 hover:bg-teal-50 border-white shadow-sm font-bold"
-                >
-                  <Plus className="w-4 h-4 text-teal-700 stroke-[2.5]" />
-                  <span>رصد غياب</span>
-                </Button>
+            {/* Quick Action Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 xl:w-[480px] shrink-0">
+              <Link
+                href="/procedures/absence"
+                className="group p-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/25 backdrop-blur-sm transition-all duration-200 flex items-center gap-3 shadow-2xs hover:shadow-sm hover:-translate-y-0.5"
+              >
+                <div className="w-9 h-9 rounded-xl bg-white/15 text-teal-100 group-hover:bg-white group-hover:text-[#137a85] flex items-center justify-center shrink-0 transition-colors shadow-2xs">
+                  <Plus className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-white block truncate">رصد غياب</span>
+                  <span className="text-[10px] text-teal-200/80 block truncate">مساءلة أو عذر فوري</span>
+                </div>
               </Link>
-              <Link href="/procedures/delay-notice">
-                <Button
-                  variant="warning"
-                  size="md"
-                  className="bg-amber-400 text-slate-950 hover:bg-amber-300 border-amber-400 shadow-sm font-bold"
-                >
+
+              <Link
+                href="/procedures/delay-notice"
+                className="group p-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/25 backdrop-blur-sm transition-all duration-200 flex items-center gap-3 shadow-2xs hover:shadow-sm hover:-translate-y-0.5"
+              >
+                <div className="w-9 h-9 rounded-xl bg-white/15 text-amber-200 group-hover:bg-amber-400 group-hover:text-slate-900 flex items-center justify-center shrink-0 transition-colors shadow-2xs">
                   <Clock className="w-4 h-4 stroke-[2.5]" />
-                  <span>إشعار تأخر</span>
-                </Button>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-white block truncate">إشعار تأخر</span>
+                  <span className="text-[10px] text-teal-200/80 block truncate">صباحي أو انصراف</span>
+                </div>
               </Link>
-              <Link href="/procedures/deduction-hours">
-                <Button
-                  variant="danger"
-                  size="md"
-                  className="bg-rose-600 text-white hover:bg-rose-700 border-rose-600 shadow-sm font-bold"
-                >
+
+              <Link
+                href="/procedures/deduction-hours"
+                className="group p-3 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 hover:border-white/25 backdrop-blur-sm transition-all duration-200 flex items-center gap-3 shadow-2xs hover:shadow-sm hover:-translate-y-0.5"
+              >
+                <div className="w-9 h-9 rounded-xl bg-white/15 text-rose-200 group-hover:bg-rose-500 group-hover:text-white flex items-center justify-center shrink-0 transition-colors shadow-2xs">
                   <ShieldAlert className="w-4 h-4 stroke-[2.5]" />
-                  <span>قرار حسم</span>
-                </Button>
+                </div>
+                <div className="min-w-0">
+                  <span className="text-xs font-bold text-white block truncate">قرار حسم</span>
+                  <span className="text-[10px] text-teal-200/80 block truncate">بلوغ نصاب 7 ساعات</span>
+                </div>
               </Link>
             </div>
           </div>
@@ -582,17 +590,39 @@ export default function DashboardPage() {
         <section aria-label="مؤشرات الانضباط اليومي" className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
           <KpiCard
             title="غيابات اليوم"
-            value={`${todayPulse.todayAbsences} معلمة`}
-            subtitle={todayPulse.todayAbsences === 0 ? "انضباط كلي اليوم ✨" : "حالات غياب مسجلة"}
+            value={todayPulse.todayAbsences}
+            unit={todayPulse.todayAbsences === 1 ? "معلمة" : todayPulse.todayAbsences === 2 ? "معلمتان" : todayPulse.todayAbsences <= 10 ? "معلمات" : "معلمة"}
+            subtitle={
+              todayPulse.todayAbsences === 0 ? (
+                <span className="text-emerald-700 font-bold flex items-center gap-1">
+                  <span>انضباط كلي مسجل اليوم</span>
+                  <span>✨</span>
+                </span>
+              ) : (
+                <span className="text-rose-600 font-bold">
+                  {todayPulse.todayAbsences} حالات غياب مرصودة
+                </span>
+              )
+            }
             icon={<Users className="w-5 h-5" />}
-            iconBgColor={todayPulse.todayAbsences > 0 ? "bg-rose-50" : "bg-slate-50"}
-            iconColor={todayPulse.todayAbsences > 0 ? "text-rose-600" : "text-slate-400"}
+            iconBgColor={todayPulse.todayAbsences > 0 ? "bg-rose-50" : "bg-teal-50"}
+            iconColor={todayPulse.todayAbsences > 0 ? "text-rose-600" : "text-[#137a85]"}
+            valueColor={todayPulse.todayAbsences > 0 ? "text-rose-700" : "text-slate-900"}
           />
 
           <KpiCard
             title="تأخر وخروج اليوم"
-            value={`${todayPulse.todayDelays} حالة`}
-            subtitle={todayPulse.todayDelays === 0 ? "لا يوجد تأخر مرصود" : "إشعارات مسجلة اليوم"}
+            value={todayPulse.todayDelays}
+            unit={todayPulse.todayDelays === 1 ? "حالة" : todayPulse.todayDelays === 2 ? "حالتان" : "حالات"}
+            subtitle={
+              todayPulse.todayDelays === 0 ? (
+                <span className="text-slate-400">لا يوجد تأخر مرصود</span>
+              ) : (
+                <span className="text-amber-600 font-bold">
+                  {todayPulse.todayDelays} إشعارات مسجلة اليوم
+                </span>
+              )
+            }
             icon={<Clock className="w-5 h-5" />}
             iconBgColor={todayPulse.todayDelays > 0 ? "bg-amber-50" : "bg-slate-50"}
             iconColor={todayPulse.todayDelays > 0 ? "text-amber-600" : "text-slate-400"}
@@ -600,17 +630,32 @@ export default function DashboardPage() {
 
           <KpiCard
             title="استحقاق الحسم المالي"
-            value={`${todayPulse.teachersDueCount} معلمات`}
-            subtitle={`إجمالي: ${todayPulse.totalUnexcusedHours} ساعة تأخر`}
+            value={todayPulse.teachersDueCount}
+            unit={todayPulse.teachersDueCount === 1 ? "معلمة" : todayPulse.teachersDueCount === 2 ? "معلمتان" : "معلمات"}
+            subtitle={
+              <span className="text-slate-600 font-medium" dir="rtl">
+                إجمالي: <strong className="font-mono font-bold text-slate-800">{todayPulse.totalUnexcusedHours}</strong> ساعة تأخير
+              </span>
+            }
             icon={<ShieldAlert className="w-5 h-5" />}
             iconBgColor={todayPulse.teachersDueCount > 0 ? "bg-rose-50" : "bg-emerald-50"}
             iconColor={todayPulse.teachersDueCount > 0 ? "text-rose-600" : "text-emerald-600"}
+            valueColor={todayPulse.teachersDueCount > 0 ? "text-rose-700" : "text-slate-900"}
           />
 
           <KpiCard
             title="معاملات بانتظار الاعتماد"
-            value={`${todayPulse.totalPendingMatters} إجراء`}
-            subtitle="مساءلات بانتظار الإفادة أو التوجيه"
+            value={todayPulse.totalPendingMatters}
+            unit={todayPulse.totalPendingMatters === 1 ? "إجراء" : todayPulse.totalPendingMatters === 2 ? "إجراءان" : "إجراءات"}
+            subtitle={
+              todayPulse.totalPendingMatters > 0 ? (
+                <span className="text-amber-700 font-bold">
+                  مساءلات بانتظار الإفادة أو التوجيه
+                </span>
+              ) : (
+                <span className="text-slate-400">كافة الإجراءات معتمدة ✓</span>
+              )
+            }
             icon={<Activity className="w-5 h-5" />}
             iconBgColor={todayPulse.totalPendingMatters > 0 ? "bg-teal-50" : "bg-slate-50"}
             iconColor={todayPulse.totalPendingMatters > 0 ? "text-teal-700" : "text-slate-400"}
@@ -697,17 +742,17 @@ export default function DashboardPage() {
                 exportLabel="تصدير السجلات Excel"
                 mobileCardRenderer={renderMobileAbsenceCard}
                 filtersSlot={
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                  <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
                     {(["all", "اضطراري", "مرضي", "مرافق", "أخرى"] as const).map((t) => (
                       <button
                         key={t}
                         type="button"
                         onClick={() => setSelectedTypeFilter(t)}
                         className={cn(
-                          "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
+                          "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 border",
                           selectedTypeFilter === t
-                            ? "bg-[#137a85] text-white shadow-2xs font-bold"
-                            : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80"
+                            ? "bg-[#137a85] text-white border-[#137a85] shadow-2xs font-extrabold"
+                            : "bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border-slate-200/80"
                         )}
                       >
                         {t === "all" ? "الكل" : t}
@@ -717,16 +762,16 @@ export default function DashboardPage() {
                 }
                 actionsSlot={
                   <Link href="/procedures/absence">
-                    <Button variant="primary" size="sm" className="gap-1.5 text-xs">
+                    <Button variant="primary" size="sm" className="gap-1.5 text-xs font-bold shadow-2xs">
                       <Plus className="w-3.5 h-3.5" />
                       <span>مساءلة جديدة</span>
                     </Button>
                   </Link>
                 }
                 emptyTitle="لا توجد مساءلات مسجلة"
-                emptyDescription="لم يتم تسجيل أي حالات غياب تطابق خيارات التصفية الحالية."
+                emptyDescription="لم يتم تسجيل أي حالات غياب تطابق خيارات التصفية الحالية. يمكنك البدء بإصدار إجراء مساءلة جديد للمعلمة."
                 emptyAction={{
-                  label: "إصدار مساءلة جديدة",
+                  label: "أضف مساءلة جديدة",
                   onClick: () => router.push("/procedures/absence"),
                 }}
               />
