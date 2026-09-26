@@ -102,7 +102,12 @@ interface TeacherContextType {
     id: string,
     archiveReason?: string
   ) => { deletedTeacher?: Teacher; deletedRecords: AbsenceRecord[] };
-  restoreTeacher: (teacher: Teacher, associatedRecords?: AbsenceRecord[]) => void;
+  restoreTeacher: (
+    teacher: Teacher,
+    associatedRecords?: AbsenceRecord[],
+    associatedDelayNotices?: DelayNotice[],
+    associatedDeductions?: DeductionDecision[]
+  ) => void;
   clearTeachers: () => void;
   loadOfficialTeachers: () => number;
   updateAbsences: (id: string, count: number) => void;
@@ -2169,7 +2174,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // 6.b Restore Teacher (Undo Support)
   const restoreTeacher = useCallback(
-    (teacher: Teacher, associatedRecords: AbsenceRecord[] = []) => {
+    (
+      teacher: Teacher,
+      associatedRecords: AbsenceRecord[] = [],
+      associatedDelayNotices: DelayNotice[] = [],
+      associatedDeductions: DeductionDecision[] = []
+    ) => {
       const cleanTeacher: Teacher = {
         ...teacher,
         isArchived: false,
@@ -2196,10 +2206,41 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       }
 
+      if (associatedDelayNotices.length > 0) {
+        const cleanNotices = associatedDelayNotices.map((d) => ({
+          ...d,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        }));
+        setDelayNotices((prev) => {
+          const existingIds = new Set(prev.map((d) => d.id));
+          const toAdd = cleanNotices.filter((d) => !existingIds.has(d.id));
+          return [...toAdd, ...prev];
+        });
+      }
+
+      if (associatedDeductions.length > 0) {
+        const cleanDeductions = associatedDeductions.map((d) => ({
+          ...d,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        }));
+        setDeductionDecisions((prev) => {
+          const existingIds = new Set(prev.map((d) => d.id));
+          const toAdd = cleanDeductions.filter((d) => !existingIds.has(d.id));
+          return [...toAdd, ...prev];
+        });
+      }
+
       // Also remove from archive lists if Undo is pressed
       setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacher.id));
       setArchivedAbsences((prev) => prev.filter((a) => a.record.teacherId !== teacher.id));
       setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.teacherId !== teacher.id));
+      setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.teacherId !== teacher.id));
 
       if (isSupabaseConfigured() && supabase) {
         supabase

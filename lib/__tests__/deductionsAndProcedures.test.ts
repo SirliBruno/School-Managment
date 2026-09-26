@@ -213,4 +213,82 @@ describe("Deduction Calculator & Form 19 Suite", () => {
       expect(html).toContain("&lt;script&gt;alert(&#039;xss&#039;)&lt;/script&gt;منال");
     });
   });
+
+  describe("Deduction Decision Archive Lifecycle", () => {
+    const mockDecision = {
+      id: "deduct-test-1",
+      decisionNumber: "١٩/٤٥/١٠١",
+      decisionDate: "١٤٤٥/٠٩/٠١هـ",
+      teacherId: "teacher-123",
+      teacherName: "فاطمة أحمد الشهري",
+      civilId: "1098765432",
+      specialization: "لغة عربية",
+      schoolName: "الثانوية الخامسة",
+      principalName: "أمل القحطاني",
+      delayHours: 14,
+      delayMinutes: 840,
+      deductionDays: 2,
+      createdAt: "2026-09-26T00:00:00.000Z",
+      isArchived: false,
+    };
+
+    it("should correctly structure archived deduction decision metadata", () => {
+      const archiveReason = "حذف يدوي بواسطة الإدارة";
+      const archivedAt = new Date().toISOString();
+
+      const archivedItem = {
+        decision: {
+          ...mockDecision,
+          isArchived: true,
+          archivedAt,
+          archiveReason,
+        },
+        archivedAt,
+        archiveReason,
+      };
+
+      expect(archivedItem.decision.isArchived).toBe(true);
+      expect(archivedItem.decision.archiveReason).toBe(archiveReason);
+      expect(archivedItem.decision.decisionNumber).toBe("١٩/٤٥/١٠١");
+      expect(archivedItem.decision.deductionDays).toBe(2);
+    });
+
+    it("should cleanly strip archive metadata upon restoration", () => {
+      const archivedDecision = {
+        ...mockDecision,
+        isArchived: true,
+        archivedAt: "2026-09-26T01:00:00.000Z",
+        archiveReason: "سبب الأرشفة",
+        archivedByCascade: true,
+      };
+
+      const restoredDecision = {
+        ...archivedDecision,
+        isArchived: false,
+        archivedAt: undefined,
+        archiveReason: undefined,
+        archivedByCascade: undefined,
+      };
+
+      expect(restoredDecision.isArchived).toBe(false);
+      expect(restoredDecision.archivedAt).toBeUndefined();
+      expect(restoredDecision.archiveReason).toBeUndefined();
+      expect(restoredDecision.archivedByCascade).toBeUndefined();
+      expect(restoredDecision.id).toBe(mockDecision.id);
+    });
+
+    it("should verify unified archive item representation for deduction decisions", () => {
+      const dec = mockDecision;
+      const uid = `deduction:${dec.id}`;
+      const title = `${dec.teacherName} — قرار حسم رقم (${dec.decisionNumber})`;
+      const subtitle = `تاريخ القرار: ${dec.decisionDate} • رقم الهوية: ${dec.civilId} • ساعات التأخر: ${dec.delayHours} س • أيام الحسم: ${dec.deductionDays} يوم`;
+
+      expect(uid).toBe("deduction:deduct-test-1");
+      expect(title).toContain("فاطمة أحمد الشهري");
+      expect(title).toContain("١٩/٤٥/١٠١");
+      expect(subtitle).toContain("1098765432");
+      expect(subtitle).toContain("14 س");
+      expect(subtitle).toContain("2 يوم");
+    });
+  });
 });

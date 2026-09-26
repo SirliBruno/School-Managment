@@ -18,6 +18,7 @@ import {
   Square,
   Info,
   Layers,
+  FileCheck,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -25,8 +26,8 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-type ArchiveTab = "all" | "teachers" | "absences" | "delays";
-type ArchiveEntityType = "teacher" | "absence" | "delay";
+type ArchiveTab = "all" | "teachers" | "absences" | "delays" | "deductions";
+type ArchiveEntityType = "teacher" | "absence" | "delay" | "deduction";
 
 interface UnifiedArchiveItem {
   uid: string; // `${type}:${entityId}`
@@ -65,6 +66,7 @@ export default function ArchivePage() {
     archivedTeachers,
     archivedAbsences,
     archivedDelayNotices,
+    archivedDeductionDecisions,
     restoreFromArchive,
     permanentDeleteFromArchive,
   } = useTeachers();
@@ -99,6 +101,16 @@ export default function ArchivePage() {
       const cascadedDelays = archivedDelayNotices.filter(
         (d) => d.notice.teacherId === t.id
       ).length;
+      const cascadedDeductions = archivedDeductionDecisions.filter(
+        (d) => d.decision.teacherId === t.id
+      ).length;
+      const totalCascaded = cascadedAbs + cascadedDelays + cascadedDeductions;
+
+      const subCounts = [
+        cascadedAbs > 0 ? `${cascadedAbs} سجل غياب` : "",
+        cascadedDelays > 0 ? `${cascadedDelays} تنبيه تأخر` : "",
+        cascadedDeductions > 0 ? `${cascadedDeductions} قرار حسم` : "",
+      ].filter(Boolean);
 
       items.push({
         uid: `teacher:${t.id}`,
@@ -107,13 +119,13 @@ export default function ArchivePage() {
         title: teacherName,
         subtitle: `رقم الهوية: ${idDisplay} • التخصص: ${spec} • الحالة: ${emp}`,
         details:
-          cascadedAbs + cascadedDelays > 0
-            ? `مرتبط بها في الأرشيف: ${cascadedAbs} سجل غياب و ${cascadedDelays} تنبيه تأخر`
+          totalCascaded > 0
+            ? `مرتبط بها في الأرشيف: ${subCounts.join(" و ")}`
             : "لا توجد سجلات فرعية مرتبطة",
         archivedAt: at.archivedAt || t.archivedAt || new Date().toISOString(),
         archiveReason: at.archiveReason || t.archiveReason,
         archivedByCascade: false,
-        cascadedCount: cascadedAbs + cascadedDelays,
+        cascadedCount: totalCascaded,
       });
     }
 
@@ -159,11 +171,28 @@ export default function ArchivePage() {
       });
     }
 
+    for (const add of archivedDeductionDecisions) {
+      const dec = add.decision;
+      const isCascade = Boolean(add.archivedByCascade || dec.archivedByCascade);
+
+      items.push({
+        uid: `deduction:${dec.id}`,
+        type: "deduction",
+        entityId: dec.id,
+        title: `${dec.teacherName || "معلمة"} — قرار حسم رقم (${dec.decisionNumber || "—"})`,
+        subtitle: `تاريخ القرار: ${dec.decisionDate || "—"} • رقم الهوية: ${dec.civilId || "—"} • ساعات التأخر: ${dec.delayHours} س • أيام الحسم: ${dec.deductionDays} يوم`,
+        details: dec.notes ? `الملاحظات: ${dec.notes}` : `قرار حسم ساعات معتمد بالمدرسة (نموذج 19) استناداً للمادة 21`,
+        archivedAt: add.archivedAt || dec.archivedAt || new Date().toISOString(),
+        archiveReason: add.archiveReason || dec.archiveReason,
+        archivedByCascade: isCascade,
+      });
+    }
+
     return items.sort(
       (a, b) =>
         new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime()
     );
-  }, [archivedTeachers, archivedAbsences, archivedDelayNotices]);
+  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions]);
 
   // Filter by activeTab and searchQuery
   const filteredItems = useMemo(() => {
@@ -172,6 +201,7 @@ export default function ArchivePage() {
       if (activeTab === "teachers" && item.type !== "teacher") return false;
       if (activeTab === "absences" && item.type !== "absence") return false;
       if (activeTab === "delays" && item.type !== "delay") return false;
+      if (activeTab === "deductions" && item.type !== "deduction") return false;
 
       if (!q) return true;
       return (
@@ -332,8 +362,8 @@ export default function ArchivePage() {
 
       {/* Main Body */}
       <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto pb-28">
-        {/* 3 KPI Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* 4 KPI Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div onClick={() => setActiveTab("teachers")} className="cursor-pointer">
             <KpiCard
               title="المعلمات المؤرشفة"
@@ -363,12 +393,22 @@ export default function ArchivePage() {
               className={activeTab === "delays" ? "ring-2 ring-amber-600" : ""}
             />
           </div>
+
+          <div onClick={() => setActiveTab("deductions")} className="cursor-pointer">
+            <KpiCard
+              title="قرارات الحسم المؤرشفة"
+              value={archivedDeductionDecisions.length}
+              variant="rose"
+              icon={<FileCheck className="w-5 h-5" />}
+              className={activeTab === "deductions" ? "ring-2 ring-rose-600" : ""}
+            />
+          </div>
         </div>
 
           {/* Filter Tabs + Search + Select All Controls */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-              {/* 4 Horizontal Scrollable Tabs */}
+              {/* 5 Horizontal Scrollable Tabs */}
               <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
                 <button
                   type="button"
@@ -435,6 +475,23 @@ export default function ArchivePage() {
                   <span>تنبيهات التأخر</span>
                   <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-mono">
                     {archivedDelayNotices.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("deductions")}
+                  className={cn(
+                    "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
+                    activeTab === "deductions"
+                      ? "bg-white text-rose-700 shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <FileCheck className="w-3.5 h-3.5" />
+                  <span>قرارات الحسم</span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-mono">
+                    {archivedDeductionDecisions.length}
                   </span>
                 </button>
               </div>
@@ -511,11 +568,18 @@ export default function ArchivePage() {
                           iconBg: "bg-blue-50 text-blue-600 border-blue-100",
                           Icon: FileText,
                         }
-                      : {
+                      : item.type === "delay"
+                      ? {
                           label: "تنبيه تأخر",
                           bg: "bg-amber-50 text-amber-800 border-amber-200",
                           iconBg: "bg-amber-50 text-amber-600 border-amber-100",
                           Icon: Clock,
+                        }
+                      : {
+                          label: "قرار حسم ساعات",
+                          bg: "bg-rose-50 text-rose-700 border-rose-200",
+                          iconBg: "bg-rose-50 text-rose-600 border-rose-100",
+                          Icon: FileCheck,
                         };
 
                   const TypeIcon = badgeConfig.Icon;
