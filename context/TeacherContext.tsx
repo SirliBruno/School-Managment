@@ -19,6 +19,8 @@ import {
   ArchivedTeacher,
   ArchivedAbsenceRecord,
   ArchivedDelayNotice,
+  DeductionDecision,
+  ArchivedDeductionDecision,
   ExcelTeacherRow,
   TeacherImportPlan,
   TeacherImportResult,
@@ -64,19 +66,21 @@ interface TeacherContextType {
   absenceRecords: AbsenceRecord[];
   inquiries: AbsenceInquiry[];
   delayNotices: DelayNotice[];
+  deductionDecisions: DeductionDecision[];
   // === Archive System (نظام الأرشيف) ===
   archivedTeachers: ArchivedTeacher[];
   archivedAbsences: ArchivedAbsenceRecord[];
   archivedDelayNotices: ArchivedDelayNotice[];
+  archivedDeductionDecisions: ArchivedDeductionDecision[];
   restoreFromArchive: (
-    type: "teacher" | "absence" | "delay",
+    type: "teacher" | "absence" | "delay" | "deduction",
     id: string
   ) => { success: boolean; error?: string; message?: string };
   permanentDeleteFromArchive: (
-    type: "teacher" | "absence" | "delay",
+    type: "teacher" | "absence" | "delay" | "deduction",
     id: string
   ) => boolean;
-  clearArchive: (type?: "teacher" | "absence" | "delay") => void;
+  clearArchive: (type?: "teacher" | "absence" | "delay" | "deduction") => void;
   isLoading: boolean;
   isCloudConnected: boolean;
   pendingSyncCount: number;
@@ -167,15 +171,26 @@ interface TeacherContextType {
     teacherSignatureDate?: string,
     teacherIpAddress?: string
   ) => Promise<{ success: boolean; notice?: DelayNotice; error?: string }>;
+  // === Deduction Decisions (قرار حسم مجموع ساعات - نموذج 19) ===
+  createDeductionDecision: (
+    data: Omit<DeductionDecision, "id" | "createdAt">
+  ) => { success: boolean; decision?: DeductionDecision; error?: string };
+  deleteDeductionDecision: (
+    id: string,
+    archiveReason?: string
+  ) => { deletedDecision?: DeductionDecision };
+  restoreDeductionDecision: (decision: DeductionDecision) => void;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
 const ABSENCES_STORAGE_KEY = "school_admin_absences_v1";
 const INQUIRIES_STORAGE_KEY = "school_admin_inquiries_v1";
 const DELAY_NOTICES_STORAGE_KEY = "school_admin_delay_notices_v1";
+const DEDUCTION_DECISIONS_STORAGE_KEY = "school_admin_deductions_v1";
 const ARCHIVED_TEACHERS_STORAGE_KEY = "school_admin_archived_teachers_v1";
 const ARCHIVED_ABSENCES_STORAGE_KEY = "school_admin_archived_absences_v1";
 const ARCHIVED_DELAYS_STORAGE_KEY = "school_admin_archived_delays_v1";
+const ARCHIVED_DEDUCTIONS_STORAGE_KEY = "school_admin_archived_deductions_v1";
 const PENDING_SYNC_STORAGE_KEY = "school_admin_pending_sync_v1";
 
 export interface PendingSyncOperation {
@@ -552,10 +567,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [absenceRecords, setAbsenceRecords] = useState<AbsenceRecord[]>([]);
   const [inquiries, setInquiries] = useState<AbsenceInquiry[]>([]);
   const [delayNotices, setDelayNotices] = useState<DelayNotice[]>([]);
+  const [deductionDecisions, setDeductionDecisions] = useState<DeductionDecision[]>([]);
   // Archive States
   const [archivedTeachers, setArchivedTeachers] = useState<ArchivedTeacher[]>([]);
   const [archivedAbsences, setArchivedAbsences] = useState<ArchivedAbsenceRecord[]>([]);
   const [archivedDelayNotices, setArchivedDelayNotices] = useState<ArchivedDelayNotice[]>([]);
+  const [archivedDeductionDecisions, setArchivedDeductionDecisions] = useState<ArchivedDeductionDecision[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
@@ -647,9 +664,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         let localAbsences: AbsenceRecord[] = [];
         let localInquiries: AbsenceInquiry[] = [];
         let localDelayNotices: DelayNotice[] = [];
+        let localDeductions: DeductionDecision[] = [];
         let parsedArchTeachers: ArchivedTeacher[] = [];
         let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
         let parsedArchDelays: ArchivedDelayNotice[] = [];
+        let parsedArchDeductions: ArchivedDeductionDecision[] = [];
 
         // One-time total wipe per explicit user instruction
         const WIPE_FLAG_KEY = "school_admin_wipe_all_teachers_2026";
@@ -662,6 +681,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
             localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
             localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
+            localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, "[]");
           }
           isCleared = localStorage.getItem("school_admin_teachers_cleared_v1") === "true";
 
@@ -726,6 +746,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
 
+          const storedDeductions = localStorage.getItem(DEDUCTION_DECISIONS_STORAGE_KEY);
+          if (storedDeductions) {
+            try {
+              const parsed = JSON.parse(storedDeductions);
+              if (Array.isArray(parsed)) {
+                localDeductions = parsed;
+              }
+            } catch {}
+          }
+
         // Load Archives from LocalStorage with cascade auto-migration
         const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
         if (storedArchTeachers) {
@@ -748,10 +778,19 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             if (Array.isArray(parsed)) parsedArchDelays = parsed;
           } catch {}
         }
+        const storedArchDeductions = localStorage.getItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY);
+        if (storedArchDeductions) {
+          try {
+            const parsed = JSON.parse(storedArchDeductions);
+            if (Array.isArray(parsed)) parsedArchDeductions = parsed;
+          } catch {}
+        }
 
-        // Migrate any associatedRecords / associatedDelayNotices from archivedTeachers into archivedAbsences / archivedDelayNotices if not already present
+        // Migrate any associatedRecords / associatedDelayNotices / associatedDeductions from archivedTeachers into child archive arrays if not already present
         const archAbsIds = new Set(parsedArchAbsences.map((a) => a.record.id));
         const archDelayIds = new Set(parsedArchDelays.map((d) => d.notice.id));
+        const archDeductIds = new Set(parsedArchDeductions.map((d) => d.decision.id));
+
         for (const archTeacher of parsedArchTeachers) {
           if (Array.isArray(archTeacher.associatedRecords)) {
             for (const rec of archTeacher.associatedRecords) {
@@ -791,11 +830,31 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             }
           }
+          if (Array.isArray(archTeacher.associatedDeductionDecisions)) {
+            for (const dec of archTeacher.associatedDeductionDecisions) {
+              if (dec && dec.id && !archDeductIds.has(dec.id)) {
+                archDeductIds.add(dec.id);
+                parsedArchDeductions.push({
+                  decision: {
+                    ...dec,
+                    isArchived: true,
+                    archivedAt: archTeacher.archivedAt,
+                    archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                    archivedByCascade: true,
+                  },
+                  archivedAt: archTeacher.archivedAt,
+                  archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                  archivedByCascade: true,
+                });
+              }
+            }
+          }
         }
 
         setArchivedTeachers(parsedArchTeachers);
         setArchivedAbsences(parsedArchAbsences);
         setArchivedDelayNotices(parsedArchDelays);
+        setArchivedDeductionDecisions(parsedArchDeductions);
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
@@ -879,9 +938,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       setAbsenceRecords(localAbsences);
       setInquiries(localInquiries);
       setDelayNotices(localDelayNotices);
+      setDeductionDecisions(localDeductions);
       setArchivedTeachers(parsedArchTeachers);
       setArchivedAbsences(parsedArchAbsences);
       setArchivedDelayNotices(parsedArchDelays);
+      setArchivedDeductionDecisions(parsedArchDeductions);
 
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
@@ -1266,6 +1327,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [delayNotices, isLoading]);
 
+  useEffect(() => {
+    if (!isMountedRef.current || isLoading) return;
+    try {
+      localStorage.setItem(
+        DEDUCTION_DECISIONS_STORAGE_KEY,
+        JSON.stringify(deductionDecisions)
+      );
+    } catch (error) {
+      console.error("فشل حفظ قرارات الحسم محلياً:", error);
+    }
+  }, [deductionDecisions, isLoading]);
+
   // Persist Archives to localStorage
   useEffect(() => {
     if (!isMountedRef.current || isLoading) return;
@@ -1282,10 +1355,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         ARCHIVED_DELAYS_STORAGE_KEY,
         JSON.stringify(archivedDelayNotices)
       );
+      localStorage.setItem(
+        ARCHIVED_DEDUCTIONS_STORAGE_KEY,
+        JSON.stringify(archivedDeductionDecisions)
+      );
     } catch (error) {
       console.error("فشل حفظ بيانات الأرشيف محلياً:", error);
     }
-  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, isLoading]);
+  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, isLoading]);
 
   // Handle Online / Offline network status changes
   useEffect(() => {
@@ -1960,6 +2037,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     const targetRecords = absenceRecords.filter((a) => a.teacherId === id);
     const targetInquiries = inquiries.filter((inq) => inq.teacherId === id);
     const targetDelayNotices = delayNotices.filter((dn) => dn.teacherId === id);
+    const targetDeductions = deductionDecisions.filter((d) => d.teacherId === id);
 
     const deletedTeacher: Teacher | undefined = targetTeacher
       ? {
@@ -1986,10 +2064,19 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       archivedByCascade: true,
     }));
 
+    const deletedDeductions: DeductionDecision[] = targetDeductions.map((d) => ({
+      ...d,
+      isArchived: true,
+      archivedAt: now,
+      archiveReason: cascadeReason,
+      archivedByCascade: true,
+    }));
+
     setTeachers((prev) => prev.filter((t) => t.id !== id));
     setAbsenceRecords((prev) => prev.filter((a) => a.teacherId !== id));
     setInquiries((prev) => prev.filter((inq) => inq.teacherId !== id));
     setDelayNotices((prev) => prev.filter((dn) => dn.teacherId !== id));
+    setDeductionDecisions((prev) => prev.filter((d) => d.teacherId !== id));
 
     if (deletedTeacher) {
       const archivedItem: ArchivedTeacher = {
@@ -1997,6 +2084,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         associatedRecords: deletedRecords,
         associatedInquiries: targetInquiries,
         associatedDelayNotices: deletedDelayNotices,
+        associatedDeductionDecisions: deletedDeductions,
         archivedAt: now,
         archiveReason: cleanReason,
       };
@@ -2034,6 +2122,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     }
 
+    // Cascade archive all associated deduction decisions with archivedByCascade = true
+    if (deletedDeductions.length > 0) {
+      setArchivedDeductionDecisions((prev) => {
+        const deletedIds = new Set(deletedDeductions.map((d) => d.id));
+        const cascadedItems: ArchivedDeductionDecision[] = deletedDeductions.map((d) => ({
+          decision: d,
+          archivedAt: now,
+          archiveReason: cascadeReason,
+          archivedByCascade: true,
+        }));
+        return [...cascadedItems, ...prev.filter((a) => !deletedIds.has(a.decision.id))];
+      });
+    }
+
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("absence_records")
@@ -2063,7 +2165,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     return { deletedTeacher, deletedRecords };
-  }, [teachers, absenceRecords, inquiries, delayNotices]);
+  }, [teachers, absenceRecords, inquiries, delayNotices, deductionDecisions]);
 
   // 6.b Restore Teacher (Undo Support)
   const restoreTeacher = useCallback(
@@ -2130,12 +2232,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     setAbsenceRecords([]);
     setDelayNotices([]);
     setInquiries([]);
+    setDeductionDecisions([]);
 
     try {
       localStorage.setItem(TEACHERS_STORAGE_KEY, "[]");
       localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
       localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
       localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
+      localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, "[]");
       localStorage.setItem("school_admin_teachers_cleared_v1", "true");
     } catch (e) {
       console.error("فشل حفظ حالة الإفراغ في التخزين المحلي:", e);
@@ -3333,7 +3437,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // === Archive Management Methods ===
   const restoreFromArchive = useCallback(
     (
-      type: "teacher" | "absence" | "delay",
+      type: "teacher" | "absence" | "delay" | "deduction",
       id: string
     ): { success: boolean; error?: string; message?: string } => {
       if (type === "teacher") {
@@ -3441,12 +3545,42 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }
 
+        // Restore remaining cascaded deduction decisions
+        const remainingCascadedDeductions = archivedDeductionDecisions
+          .filter(
+            (d) =>
+              d.decision.teacherId === id &&
+              (d.archivedByCascade ||
+                d.decision.archivedByCascade ||
+                Math.abs(
+                  new Date(d.archivedAt).getTime() -
+                    new Date(found.archivedAt).getTime()
+                ) <= 2000)
+          )
+          .map((d) => ({
+            ...d.decision,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            archivedByCascade: undefined,
+          }));
+
+        if (remainingCascadedDeductions.length > 0) {
+          setDeductionDecisions((prev) => {
+            const existingIds = new Set(prev.map((d) => d.id));
+            const toAdd = remainingCascadedDeductions.filter((d) => !existingIds.has(d.id));
+            return [...toAdd, ...prev];
+          });
+        }
+
         // Remove teacher and her cascaded records from Archive
         const restoredAbsIds = new Set(remainingCascadedAbsences.map((r) => r.id));
         const restoredDelayIds = new Set(remainingCascadedDelays.map((d) => d.id));
+        const restoredDeductIds = new Set(remainingCascadedDeductions.map((d) => d.id));
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
         setArchivedAbsences((prev) => prev.filter((a) => !restoredAbsIds.has(a.record.id)));
         setArchivedDelayNotices((prev) => prev.filter((d) => !restoredDelayIds.has(d.notice.id)));
+        setArchivedDeductionDecisions((prev) => prev.filter((d) => !restoredDeductIds.has(d.decision.id)));
 
         return {
           success: true,
@@ -3595,22 +3729,76 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               ? "تم استعادة تنبيه التأخر مع استعادة المعلمة المرتبطة به"
               : "تم استعادة تنبيه التأخر بنجاح",
         };
+      } else if (type === "deduction") {
+        const found = archivedDeductionDecisions.find((a) => a.decision.id === id);
+        if (!found) {
+          return { success: false, error: "قرار الحسم غير موجود في الأرشيف." };
+        }
+
+        const teacherId = found.decision.teacherId;
+        const activeTeacher = teachers.find((t) => t.id === teacherId);
+        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+
+        if (!activeTeacher && !archivedTeacher) {
+          return {
+            success: false,
+            error: "لا يمكن استعادة قرار الحسم لأن المعلمة المرتبطة به محذوفة نهائياً",
+          };
+        }
+
+        const cleanDecision: DeductionDecision = {
+          ...found.decision,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        };
+
+        if (!activeTeacher && archivedTeacher) {
+          const restoredTeacher: Teacher = {
+            ...archivedTeacher.teacher,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            totalAbsences: 0,
+            totalDelayNotices: 0,
+          };
+          setTeachers((prev) =>
+            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+          );
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+        }
+
+        setDeductionDecisions((prev) =>
+          prev.some((d) => d.id === id) ? prev : [cleanDecision, ...prev]
+        );
+
+        setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.id !== id));
+        return {
+          success: true,
+          message:
+            !activeTeacher && archivedTeacher
+              ? "تم استعادة قرار الحسم مع استعادة المعلمة المرتبطة به"
+              : "تم استعادة قرار الحسم بنجاح",
+        };
       }
 
       return { success: false, error: "نوع العنصر غير معروف." };
     },
-    [teachers, absenceRecords, delayNotices, archivedTeachers, archivedAbsences, archivedDelayNotices]
+    [teachers, absenceRecords, delayNotices, deductionDecisions, archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions]
   );
 
   const permanentDeleteFromArchive = useCallback(
-    (type: "teacher" | "absence" | "delay", id: string): boolean => {
+    (type: "teacher" | "absence" | "delay" | "deduction", id: string): boolean => {
       if (type === "teacher") {
         // Edge Case 4: Permanently deleting a teacher removes all her associated records (active or archived)
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
         setArchivedAbsences((prev) => prev.filter((a) => a.record.teacherId !== id));
         setArchivedDelayNotices((prev) => prev.filter((d) => d.notice.teacherId !== id));
+        setArchivedDeductionDecisions((prev) => prev.filter((d) => d.decision.teacherId !== id));
         setAbsenceRecords((prev) => prev.filter((r) => r.teacherId !== id));
         setDelayNotices((prev) => prev.filter((d) => d.teacherId !== id));
+        setDeductionDecisions((prev) => prev.filter((d) => d.teacherId !== id));
         setInquiries((prev) => prev.filter((i) => i.teacherId !== id));
         return true;
       } else if (type === "absence") {
@@ -3635,6 +3823,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           }))
         );
         return true;
+      } else if (type === "deduction") {
+        setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.id !== id));
+        setArchivedTeachers((prev) =>
+          prev.map((at) => ({
+            ...at,
+            associatedDeductionDecisions: (at.associatedDeductionDecisions || []).filter(
+              (d) => d.id !== id
+            ),
+          }))
+        );
+        return true;
       }
       return false;
     },
@@ -3642,10 +3841,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const clearArchive = useCallback(
-    (type?: "teacher" | "absence" | "delay") => {
+    (type?: "teacher" | "absence" | "delay" | "deduction") => {
       if (!type || type === "teacher") setArchivedTeachers([]);
       if (!type || type === "absence") setArchivedAbsences([]);
       if (!type || type === "delay") setArchivedDelayNotices([]);
+      if (!type || type === "deduction") setArchivedDeductionDecisions([]);
     },
     []
   );
@@ -3723,15 +3923,121 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
+  // 23. Deduction Decisions (قرار حسم مجموع ساعات - نموذج 19)
+  const createDeductionDecision = useCallback(
+    (
+      data: Omit<DeductionDecision, "id" | "createdAt">
+    ): { success: boolean; decision?: DeductionDecision; error?: string } => {
+      try {
+        const id = `deduct-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const newDecision: DeductionDecision = {
+          ...data,
+          id,
+          createdAt: new Date().toISOString(),
+          isArchived: false,
+        };
+
+        setDeductionDecisions((prev) => {
+          const next = [newDecision, ...prev];
+          try {
+            localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch (e) {
+            console.warn("فشل حفظ قرار الحسم في التخزين المحلي:", e);
+          }
+          return next;
+        });
+
+        return { success: true, decision: newDecision };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "حدث خطأ غير متوقع",
+        };
+      }
+    },
+    []
+  );
+
+  const deleteDeductionDecision = useCallback(
+    (id: string, archiveReason?: string): { deletedDecision?: DeductionDecision } => {
+      const decisionToDelete = deductionDecisions.find((d) => d.id === id);
+      if (!decisionToDelete) return {};
+
+      const now = new Date().toISOString();
+      const reason = archiveReason || "حذف يدوي بواسطة الإدارة";
+
+      const archivedItem: ArchivedDeductionDecision = {
+        decision: {
+          ...decisionToDelete,
+          isArchived: true,
+          archivedAt: now,
+          archiveReason: reason,
+        },
+        archivedAt: now,
+        archiveReason: reason,
+      };
+
+      setDeductionDecisions((prev) => {
+        const next = prev.filter((d) => d.id !== id);
+        try {
+          localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setArchivedDeductionDecisions((prev) => {
+        const next = [archivedItem, ...prev.filter((d) => d.decision.id !== id)];
+        try {
+          localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      return { deletedDecision: decisionToDelete };
+    },
+    [deductionDecisions]
+  );
+
+  const restoreDeductionDecision = useCallback((decision: DeductionDecision) => {
+    const restored: DeductionDecision = {
+      ...decision,
+      isArchived: false,
+      archivedAt: undefined,
+      archiveReason: undefined,
+      archivedByCascade: undefined,
+    };
+
+    setDeductionDecisions((prev) => {
+      const exists = prev.some((d) => d.id === restored.id);
+      const next = exists
+        ? prev.map((d) => (d.id === restored.id ? restored : d))
+        : [restored, ...prev];
+      try {
+        localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    setArchivedDeductionDecisions((prev) => {
+      const next = prev.filter((d) => d.decision.id !== decision.id);
+      try {
+        localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
   const contextValue = useMemo<TeacherContextType>(
     () => ({
       teachers,
       absenceRecords,
       inquiries,
       delayNotices,
+      deductionDecisions,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
+      archivedDeductionDecisions,
       restoreFromArchive,
       permanentDeleteFromArchive,
       clearArchive,
@@ -3767,6 +4073,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreDelayNotice,
       markDelayNoticeLinkShared,
       submitTeacherResponseByToken,
+      createDeductionDecision,
+      deleteDeductionDecision,
+      restoreDeductionDecision,
       pendingSyncCount,
       flushSyncQueue,
     }),
@@ -3775,9 +4084,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       absenceRecords,
       inquiries,
       delayNotices,
+      deductionDecisions,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
+      archivedDeductionDecisions,
       restoreFromArchive,
       permanentDeleteFromArchive,
       clearArchive,
@@ -3815,6 +4126,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreDelayNotice,
       markDelayNoticeLinkShared,
       submitTeacherResponseByToken,
+      createDeductionDecision,
+      deleteDeductionDecision,
+      restoreDeductionDecision,
     ]
   );
 

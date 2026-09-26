@@ -174,12 +174,41 @@ export interface DelayNotice {
   archivedByCascade?: boolean;
 }
 
+// === Deduction Decision Types (نموذج رقم 19 - قرار حسم مجموع ساعات تأخر وخروج مبكر) ===
+export interface DeductionDecision {
+  id: string;
+  decisionNumber: string;
+  decisionDate: string;
+  teacherId: string;
+  teacherName: string;
+  civilId: string;
+  specialization: string;
+  rank?: string;
+  jobNumber?: string;
+  currentAction?: string;
+  schoolName: string;
+  principalName: string;
+  delayHours: number;
+  delayMinutes: number;
+  deductionDays: number;
+  notes?: string;
+  createdAt: string;
+  updatedAt?: string;
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
+}
+
 // === Archive Types (نظام الأرشيف) ===
 export interface ArchivedTeacher {
   teacher: Teacher;
   associatedRecords: AbsenceRecord[];
   associatedInquiries: AbsenceInquiry[];
   associatedDelayNotices: DelayNotice[];
+  associatedDeductionDecisions?: DeductionDecision[];
   archivedAt: string;
   archiveReason?: string;
 }
@@ -195,6 +224,13 @@ export interface ArchivedAbsenceRecord {
 
 export interface ArchivedDelayNotice {
   notice: DelayNotice;
+  archivedAt: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
+}
+
+export interface ArchivedDeductionDecision {
+  decision: DeductionDecision;
   archivedAt: string;
   archiveReason?: string;
   archivedByCascade?: boolean;

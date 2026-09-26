@@ -19,13 +19,14 @@ import {
   ShieldCheck,
   FileEdit,
 } from "lucide-react";
-import { Teacher, AbsenceRecord, AbsenceType, DelayNotice } from "@/types/teacher";
+import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
+import { printDeductionDecisionPdf } from "@/lib/printDeductionDecisionPdfService";
 import { cn } from "@/lib/utils";
 
 interface TeacherProfileModalProps {
@@ -68,6 +69,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     teachers,
     absenceRecords,
     delayNotices,
+    deductionDecisions,
     deleteAbsenceRecord,
   } = useTeachers();
   const { showToast } = useToast();
@@ -79,7 +81,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   }, [teachers, teacher]);
 
   const [activeHistoryTab, setActiveHistoryTab] = useState<
-    "absences" | "delays"
+    "absences" | "delays" | "deductions"
   >("absences");
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
@@ -150,6 +152,19 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
       (notice) => notice.teacherId === currentTeacher.id
     );
   }, [delayNotices, currentTeacher]);
+
+  // Filter deduction decisions strictly by immutable teacherId
+  const teacherDeductions = useMemo(() => {
+    if (!currentTeacher) return [];
+    return deductionDecisions.filter(
+      (dec) => dec.teacherId === currentTeacher.id && !dec.isArchived
+    );
+  }, [deductionDecisions, currentTeacher]);
+
+  const totalDeductionDays = useMemo(
+    () => teacherDeductions.reduce((acc, curr) => acc + (curr.deductionDays || 0), 0),
+    [teacherDeductions]
+  );
 
   // Calculate breakdown counters
   const sickLeavesCount = useMemo(
@@ -472,7 +487,21 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     )}
                   >
                     <Clock className="w-3.5 h-3.5" />
-                    <span>تنبيهات التأخر والانصراف ({teacherDelayNotices.length})</span>
+                    <span>تنبيهات التأخر ({teacherDelayNotices.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("deductions")}
+                    className={cn(
+                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      activeHistoryTab === "deductions"
+                        ? "bg-rose-600 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>قرارات حسم الساعات ({teacherDeductions.length})</span>
                   </button>
                 </div>
 
@@ -704,6 +733,85 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                 </tr>
                               );
                             })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 3: Deductions (نموذج 19) */}
+              {activeHistoryTab === "deductions" && (
+                <div>
+                  {teacherDeductions.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                        <FileCheck className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                        لا توجد أي قرارات حسم ساعات صادرة
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        لم يصدر بحق المعلمة أي قرار حسم لساعات التأخر أو الخروج المبكر حتى الآن.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-right text-xs">
+                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                              <th scope="col" className="py-3 px-4">رقم القرار</th>
+                              <th scope="col" className="py-3 px-4">تاريخ القرار</th>
+                              <th scope="col" className="py-3 px-4">ساعات التأخر</th>
+                              <th scope="col" className="py-3 px-4">أيام الحسم</th>
+                              <th scope="col" className="py-3 px-4 text-center">القرار الرسمي (نموذج 19)</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {teacherDeductions.map((dec) => (
+                              <tr key={dec.id} className="hover:bg-slate-50/60 transition-colors">
+                                <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                                  {dec.decisionNumber}
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-600">{dec.decisionDate}</td>
+                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800">
+                                  {dec.delayHours} س
+                                </td>
+                                <td className="py-3.5 px-4">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                    {dec.deductionDays} يوم
+                                  </span>
+                                </td>
+                                <td className="py-3.5 px-4 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      printDeductionDecisionPdf({
+                                        teacherName: dec.teacherName,
+                                        civilId: dec.civilId,
+                                        specialization: dec.specialization,
+                                        rank: dec.rank,
+                                        jobNumber: dec.jobNumber,
+                                        currentAction: dec.currentAction,
+                                        schoolName: dec.schoolName,
+                                        principalName: dec.principalName,
+                                        delayHours: dec.delayHours,
+                                        deductionDays: dec.deductionDays,
+                                        decisionNumber: dec.decisionNumber,
+                                        decisionDate: dec.decisionDate,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                                    title="طباعة قرار الحسم الرسمي (نموذج 19)"
+                                  >
+                                    <FileDown className="w-3.5 h-3.5" />
+                                    <span>طباعة نموذج 19</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
