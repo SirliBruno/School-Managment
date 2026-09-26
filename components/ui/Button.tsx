@@ -9,6 +9,7 @@ export interface ButtonProps
   variant?:
     | "primary"
     | "secondary"
+    | "success"
     | "emerald"
     | "outline"
     | "ghost"
@@ -40,7 +41,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const sizeClasses = {
-      sm: "h-8.5 px-3 text-xs rounded-xl gap-1.5",
+      sm: "h-[34px] px-3 text-xs rounded-xl gap-1.5",
       md: "h-10 px-4 text-xs sm:text-sm rounded-xl gap-2",
       lg: "h-12 px-6 text-sm sm:text-base rounded-xl gap-2.5",
     };
@@ -48,20 +49,22 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variantClasses = {
       primary:
         "bg-gradient-to-b from-[#15828e] to-[#0f666f] hover:from-[#18919e] hover:to-[#116e78] text-white border border-[#0d5961] shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.22)] active:scale-[0.98]",
+      secondary:
+        "bg-slate-100 hover:bg-slate-200/90 text-slate-800 border border-slate-200 shadow-2xs active:scale-[0.98]",
+      success:
+        "bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white border border-emerald-800 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
       emerald:
         "bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white border border-emerald-800 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
-      secondary:
-        "bg-slate-100 hover:bg-slate-200/80 text-slate-800 border border-slate-200/80 shadow-2xs active:scale-[0.98]",
-      outline:
-        "bg-white hover:bg-teal-50/50 text-[#137a85] border border-teal-200 hover:border-teal-300 shadow-2xs active:scale-[0.98]",
-      ghost:
-        "bg-transparent hover:bg-slate-100/80 text-slate-600 hover:text-slate-900 active:scale-[0.98]",
-      danger:
-        "bg-gradient-to-b from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white border border-rose-800 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
-      "outline-danger":
-        "bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 shadow-2xs active:scale-[0.98]",
       warning:
         "bg-gradient-to-b from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white border border-amber-700 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
+      danger:
+        "bg-gradient-to-b from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white border border-rose-800 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
+      ghost:
+        "bg-transparent hover:bg-slate-100/90 text-slate-600 hover:text-slate-900 active:scale-[0.98]",
+      outline:
+        "bg-white hover:bg-teal-50/60 text-[#137a85] border border-teal-200 hover:border-teal-300 shadow-2xs active:scale-[0.98]",
+      "outline-danger":
+        "bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 shadow-2xs active:scale-[0.98]",
     };
 
     const leadIcon = leftIcon || icon;

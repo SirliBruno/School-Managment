@@ -1,0 +1,395 @@
+"use client";
+
+import React, { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  Menu,
+  ChevronDown,
+  Calendar,
+  Cloud,
+  CloudOff,
+  RotateCcw,
+  Plus,
+  User,
+  LogOut,
+  KeyRound,
+  ShieldCheck,
+  Clock,
+  FileText,
+  UserPlus,
+  Scale,
+  PanelRightClose,
+  PanelRightOpen,
+  Building2,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
+import { useTeachers } from "@/context/TeacherContext";
+import { useSidebar } from "@/context/SidebarContext";
+import { Button } from "@/components/ui/Button";
+import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
+import { cn } from "@/lib/utils";
+
+export const AppHeader: React.FC = () => {
+  const router = useRouter();
+  const { user, logout } = useAuth();
+  const {
+    isCloudConnected,
+    pendingSyncCount,
+    flushSyncQueue,
+  } = useTeachers();
+  const {
+    isCollapsed,
+    toggleCollapsed,
+    toggleMobileOpen,
+  } = useSidebar();
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const quickActionsRef = useRef<HTMLDivElement>(null);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsUserMenuOpen(false);
+      }
+      if (
+        quickActionsRef.current &&
+        !quickActionsRef.current.contains(event.target as Node)
+      ) {
+        setIsQuickActionsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Formatted Dates (Hijri & Gregorian)
+  const [dates, setDates] = useState<{ hijri: string; gregorian: string }>({
+    hijri: "",
+    gregorian: "",
+  });
+
+  useEffect(() => {
+    try {
+      const now = new Date();
+      // Hijri formatter
+      const hijriFormatter = new Intl.DateTimeFormat(
+        "ar-SA-u-ca-islamic-umalqura",
+        {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }
+      );
+      // Gregorian formatter
+      const gregorianFormatter = new Intl.DateTimeFormat("ar-SA", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+
+      setDates({
+        hijri: hijriFormatter.format(now),
+        gregorian: gregorianFormatter.format(now),
+      });
+    } catch {
+      // Fallback
+      setDates({
+        hijri: "التقويم الهجري",
+        gregorian: new Date().toLocaleDateString("ar-SA"),
+      });
+    }
+  }, []);
+
+  return (
+    <>
+      <header
+        className="sticky top-0 z-30 w-full h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-2xs px-3 sm:px-6 flex items-center justify-between transition-all"
+        dir="rtl"
+      >
+        {/* Right Section (Start in RTL): Sidebar toggle, School title, Date */}
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          {/* Mobile Menu Hamburger */}
+          <button
+            type="button"
+            onClick={toggleMobileOpen}
+            className="lg:hidden p-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+            aria-label="فتح القائمة الرئيسية"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          {/* Desktop Sidebar Collapse Toggle */}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            className="hidden lg:flex p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+            title={isCollapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"}
+            aria-label={isCollapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"}
+          >
+            {isCollapsed ? (
+              <PanelRightOpen className="w-5 h-5 text-teal-700" />
+            ) : (
+              <PanelRightClose className="w-5 h-5 text-slate-600" />
+            )}
+          </button>
+
+          {/* School Badge & Platform Identity */}
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#137a85] shrink-0 shadow-2xs">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-slate-900 truncate">
+                  الثانوية الخامسة مسارات
+                </span>
+                <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-teal-50 text-[#137a85] text-[10px] font-bold border border-teal-200/60">
+                  الإدارة المدرسية
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 truncate hidden md:block">
+                الإدارة العامة للتعليم بمنطقة مكة المكرمة
+              </p>
+            </div>
+          </div>
+
+          {/* Live Date Pill (Hijri + Gregorian) */}
+          {dates.hijri && (
+            <div className="hidden xl:flex items-center gap-2 ps-3 border-s border-slate-200 text-xs text-slate-600 font-medium">
+              <Calendar className="w-4 h-4 text-teal-600 shrink-0" />
+              <span>{dates.hijri}</span>
+              <span className="text-slate-300">|</span>
+              <span className="text-slate-500 text-[11px]">{dates.gregorian} م</span>
+            </div>
+          )}
+        </div>
+
+        {/* Left Section (End in RTL): Sync Pill, Quick Actions, Profile */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Cloud Sync Status Indicator */}
+          <div className="flex items-center">
+            {isCloudConnected ? (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium"
+                title="متصل بقاعدة البيانات السحابية لحظياً"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[11px]">سحابي ولحظي</span>
+              </div>
+            ) : (
+              <div
+                className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium"
+                title="يعمل بالحفظ المحلي حالياً"
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                <span className="text-[11px]">حفظ محلي</span>
+              </div>
+            )}
+
+            {/* Pending Sync Trigger Button */}
+            {pendingSyncCount > 0 && (
+              <button
+                type="button"
+                onClick={() => flushSyncQueue()}
+                className="ms-1.5 px-2 py-0.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 border border-amber-300 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                title="مزامنة التغييرات المعلقة"
+              >
+                <RotateCcw className="w-3 h-3 animate-spin" />
+                <span>{pendingSyncCount} معلق</span>
+              </button>
+            )}
+          </div>
+
+          {/* Quick Actions Dropdown */}
+          <div className="relative" ref={quickActionsRef}>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
+              className="gap-1.5 px-2.5 sm:px-3 text-xs shadow-2xs"
+            >
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span className="hidden sm:inline">إجراء جديد</span>
+              <ChevronDown
+                className={cn(
+                  "w-3.5 h-3.5 transition-transform duration-200 opacity-80",
+                  isQuickActionsOpen && "rotate-180"
+                )}
+              />
+            </Button>
+
+            <AnimatePresence>
+              {isQuickActionsOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-slate-200 p-1.5 z-50 text-right"
+                >
+                  <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 border-b border-slate-100 mb-1">
+                    إجراءات إدارية سريعة
+                  </div>
+
+                  <Link
+                    href="/procedures/absence"
+                    onClick={() => setIsQuickActionsOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-100/60 text-[#137a85] flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate">مساءلة غياب</p>
+                      <p className="text-[10px] text-slate-400 font-normal">
+                        تسجيل غياب وإرسال رابط
+                      </p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/procedures/delay-notice"
+                    onClick={() => setIsQuickActionsOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-100/60 text-amber-700 flex items-center justify-center shrink-0">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate">تنبيه على تأخر</p>
+                      <p className="text-[10px] text-slate-400 font-normal">
+                        تسجيل تأخر صباحي أو انصراف
+                      </p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/procedures/deduction-hours"
+                    onClick={() => setIsQuickActionsOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-rose-100/60 text-rose-700 flex items-center justify-center shrink-0">
+                      <Scale className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate">قرار حسم ساعات</p>
+                      <p className="text-[10px] text-slate-400 font-normal">
+                        احتساب وإصدار قرار نظامي
+                      </p>
+                    </div>
+                  </Link>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  <Link
+                    href="/teachers"
+                    onClick={() => setIsQuickActionsOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                      <UserPlus className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate">إضافة معلمة جديدة</p>
+                      <p className="text-[10px] text-slate-400 font-normal">
+                        تحديث سجل الهيئة التعليمية
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* User Profile Avatar & Menu */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              type="button"
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+              aria-label="قائمة الملف الشخصي"
+              aria-expanded={isUserMenuOpen}
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#137a85] to-[#15828e] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                {user?.fullName?.charAt(0) || "و"}
+              </div>
+              <div className="hidden md:block text-right">
+                <span className="font-bold text-xs text-slate-800 block truncate max-w-[120px]">
+                  {user?.fullName || "وكيلة الشؤون التعليمية"}
+                </span>
+                <span className="text-[10px] text-teal-700 font-medium block">
+                  صلاحيات الإدارة
+                </span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
+            </button>
+
+            <AnimatePresence>
+              {isUserMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute left-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-slate-200 p-1.5 z-50 text-right"
+                >
+                  <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                    <p className="text-xs font-bold text-slate-800 truncate">
+                      {user?.fullName || "وكيلة الشؤون التعليمية"}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      @{user?.username || "admin"}
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setIsProfileModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4 text-teal-600" />
+                    <span>تعديل كلمة المرور والبيانات</span>
+                  </button>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>تسجيل الخروج</span>
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </header>
+
+      {/* Admin Profile Modal */}
+      <AdminProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
+    </>
+  );
+};

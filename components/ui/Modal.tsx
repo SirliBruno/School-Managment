@@ -62,7 +62,7 @@ export const Modal: React.FC<ModalProps> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -70,27 +70,32 @@ export const Modal: React.FC<ModalProps> = ({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
             aria-hidden="true"
           />
 
-          {/* Dialog Container */}
+          {/* Dialog / Bottom Sheet Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.98 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
             role="dialog"
             aria-modal="true"
             className={cn(
-              "relative bg-white rounded-2xl shadow-2xl border border-slate-200/90 w-full overflow-hidden z-10 my-auto",
+              "relative bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200/90 w-full overflow-hidden z-10 sm:my-auto max-sm:max-h-[92vh] flex flex-col",
               maxWidthClasses[maxWidth],
               className
             )}
           >
+            {/* Mobile Drag Indicator */}
+            <div className="sm:hidden pt-2.5 pb-1 flex justify-center bg-slate-50/70">
+              <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
+            </div>
+
             {/* Header */}
             {title && (
-              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/50 shrink-0">
                 <div className="min-w-0">
                   <h3 className="text-base font-bold text-slate-900">{title}</h3>
                   {description && (
@@ -117,7 +122,7 @@ export const Modal: React.FC<ModalProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/60 flex items-center justify-end gap-2.5">
+              <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/60 flex items-center justify-end gap-2.5 shrink-0">
                 {footer}
               </div>
             )}

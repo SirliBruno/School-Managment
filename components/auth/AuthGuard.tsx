@@ -4,6 +4,8 @@ import React, { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "@/components/Sidebar";
+import { SidebarProvider } from "@/context/SidebarContext";
+import { AppHeader } from "@/components/layout/AppHeader";
 
 export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -50,14 +52,19 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
 
   // التخطيط الكامل للمنصة الإدارية المحمية
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen">
-      {/* القائمة الجانبية على اليمين */}
-      <Sidebar />
+    <SidebarProvider>
+      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
+        {/* القائمة الجانبية على اليمين */}
+        <Sidebar />
 
-      {/* منطقة المحتوى الإداري على اليسار */}
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50">
-        {children}
-      </main>
-    </div>
+        {/* منطقة المحتوى الإداري على اليسار */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <AppHeader />
+          <main className="flex-1 min-w-0">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 };

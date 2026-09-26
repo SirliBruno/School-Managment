@@ -3,29 +3,21 @@
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronLeft,
   Clock,
   Plus,
   Users,
-  Search,
-  Filter,
-  FileDown,
   Eye,
   Pencil,
   Trash2,
   FileEdit,
   ShieldCheck,
-  AlertTriangle,
-  CheckCircle2,
   Calendar,
   LogIn,
   LogOut,
   DoorOpen,
-  ArrowRight,
-  RotateCcw,
   Share2,
+  FileDown,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -37,25 +29,29 @@ import { DelayNoticeDetailsModal } from "@/components/procedures/DelayNoticeDeta
 import { ShareDelayNoticeModal } from "@/components/procedures/ShareDelayNoticeModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
-import { PageHeader, KpiCard, Button } from "@/components/ui";
+import {
+  PageHeader,
+  KpiCard,
+  Button,
+  DataTable,
+  ColumnDef,
+  ActionMenu,
+  ActionMenuItem,
+} from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 type FilterTab = "all" | DelayNoticeStatus;
 
 export default function DelayNoticePage() {
   const router = useRouter();
-  const { delayNotices, teachers, deleteDelayNotice } =
-    useTeachers();
+  const { delayNotices, teachers, deleteDelayNotice } = useTeachers();
   const { showToast } = useToast();
 
-  // Search and Filter states
-  const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
 
   // Modals state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [noticeToEdit, setNoticeToEdit] = useState<DelayNotice | null>(null);
-
   const [selectedNoticeForDetails, setSelectedNoticeForDetails] =
     useState<DelayNotice | null>(null);
   const [selectedNoticeForShare, setSelectedNoticeForShare] =
@@ -83,33 +79,11 @@ export default function DelayNoticePage() {
     (n) => n.status === "completed"
   ).length;
 
-  // Filtered and searched list
+  // Filtered list by activeTab
   const filteredNotices = useMemo(() => {
-    return activeDelayNotices.filter((notice) => {
-      // Tab filter
-      if (activeTab !== "all" && notice.status !== activeTab) {
-        return false;
-      }
-
-      // Search query
-      const q = searchQuery.trim().toLowerCase();
-      if (!q) return true;
-
-      const name = (notice.teacherName || "").toLowerCase();
-      const job = (notice.jobNumber || "").toLowerCase();
-      const num = (notice.noticeNumber || notice.id).toLowerCase();
-      const spec = (notice.specialty || "").toLowerCase();
-      const d = notice.noticeDate || notice.date || "";
-
-      return (
-        name.includes(q) ||
-        job.includes(q) ||
-        num.includes(q) ||
-        spec.includes(q) ||
-        d.includes(q)
-      );
-    });
-  }, [activeDelayNotices, activeTab, searchQuery]);
+    if (activeTab === "all") return activeDelayNotices;
+    return activeDelayNotices.filter((n) => n.status === activeTab);
+  }, [activeDelayNotices, activeTab]);
 
   // Handle Soft-Delete to Archive with Toast Link
   const handleConfirmDelete = async (reason?: string) => {
@@ -120,7 +94,7 @@ export default function DelayNoticePage() {
     const { deletedNotice } = deleteDelayNotice(target.id, reason);
     if (deletedNotice) {
       showToast({
-        message: "تم نقل العنصر إلى الأرشيف الإداري",
+        message: "تم نقل العنصر إلى الأرشيف الإداري بنجاح",
         type: "success",
         action: {
           label: "عرض الأرشيف",
@@ -138,14 +112,369 @@ export default function DelayNoticePage() {
   const handleQuickPrint = (notice: DelayNotice) => {
     try {
       printDelayNoticePdf(notice);
+      showToast({
+        message: "تم تجهيز نموذج التنبيه الرسمي للطباعة.",
+        type: "success",
+      });
     } catch (err) {
       console.error("فشل طباعة التنبيه:", err);
       showToast({ message: "حدث خطأ أثناء إعداد الـ PDF.", type: "error" });
     }
   };
 
+  // Export to Excel
+  const handleExportExcel = () => {
+    import("xlsx").then((xlsx) => {
+      const dataToExport = filteredNotices.map((n, i) => ({
+        "م": i + 1,
+        "رقم التنبيه": n.noticeNumber || `ت-${n.id.slice(-4)}`,
+        "تاريخ التنبيه": n.noticeDate || n.date,
+        "اسم المعلمة": n.teacherName,
+        "السجل المدني": n.jobNumber || "—",
+        "التخصص": n.specialty || "عام",
+        "تأخر بداية الدوام": n.violationDelayStart ? `${n.delayStartTime || "نعم"}` : "لا",
+        "عدم تواجد أثناء الدوام": n.violationAbsentDuring ? `${n.absentFromTime} - ${n.absentToTime}` : "لا",
+        "انصراف مبكر": n.violationEarlyDeparture ? `${n.earlyDepartureTime || "نعم"}` : "لا",
+        "المدة المحتسبة": n.calculatedDuration || "—",
+        "حالة التنبيه":
+          n.status === "completed"
+            ? "مكتمل"
+            : n.status === "pending_director"
+            ? "بانتظار قرار المديرة"
+            : "بانتظار إفادة المعلمة",
+      }));
+
+      const ws = xlsx.utils.json_to_sheet(dataToExport);
+      const wb = xlsx.utils.book_new();
+      xlsx.utils.book_append_sheet(wb, ws, "تنبيهات التأخر");
+      xlsx.writeFile(wb, `تنبيهات_التأخر_${new Date().toISOString().split("T")[0]}.xlsx`);
+      showToast({ message: "تم تصدير ملف الإكسل بنجاح", type: "success" });
+    }).catch(() => {
+      showToast({ message: "تعذر تصدير الملف حالياً", type: "error" });
+    });
+  };
+
+  // DataTable Columns
+  const columns: ColumnDef<DelayNotice>[] = [
+    {
+      id: "noticeNumber",
+      header: "رقم وتاريخ التنبيه",
+      sortable: true,
+      cell: ({ row }) => (
+        <div className="whitespace-nowrap">
+          <span className="font-mono font-bold text-[#137a85] text-xs block">
+            {row.noticeNumber || `ت-${row.id.slice(-4)}`}
+          </span>
+          <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
+            <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+            <span className="font-mono">{row.noticeDate || row.date}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "teacherName",
+      header: "المعلمة",
+      sortable: true,
+      cell: ({ row }) => (
+        <div>
+          <span className="font-bold text-slate-900 text-xs block">
+            {row.teacherName}
+          </span>
+          <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
+            <span className="font-mono">{row.jobNumber}</span>
+            <span>•</span>
+            <span>{row.specialty || "عام"}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "violations",
+      header: "المخالفات الموثقة",
+      cell: ({ row }) => (
+        <div className="flex flex-wrap items-center gap-1.5 max-w-sm">
+          {row.violationDelayStart && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
+              <LogIn className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>تأخر بداية الدوام</span>
+            </span>
+          )}
+          {row.violationAbsentDuring && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
+              <Clock className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>عدم تواجد</span>
+            </span>
+          )}
+          {row.violationEarlyDeparture && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
+              <LogOut className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>انصراف مبكر</span>
+            </span>
+          )}
+          {row.violationLeftSchool && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
+              <DoorOpen className="w-3 h-3 text-amber-600 shrink-0" />
+              <span>خروج دون إذن</span>
+            </span>
+          )}
+          {row.calculatedDuration && (
+            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-mono font-bold">
+              {row.calculatedDuration}
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "status",
+      header: "الحالة والمرحلة",
+      align: "center",
+      sortable: true,
+      cell: ({ row }) => {
+        if (row.status === "completed") {
+          return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>مكتمل ومعتمد</span>
+            </span>
+          );
+        }
+        if (row.status === "pending_director") {
+          return (
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 animate-pulse">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+              <span>بانتظار قرار المديرة</span>
+            </span>
+          );
+        }
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+            <FileEdit className="w-3.5 h-3.5 text-sky-600" />
+            <span>بانتظار إفادة المعلمة</span>
+          </span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "الإجراءات",
+      align: "center",
+      cell: ({ row }) => {
+        const menuItems: ActionMenuItem[] = [
+          {
+            id: "details",
+            label: "عرض المراحل والتفاصيل",
+            icon: Eye,
+            onClick: () => setSelectedNoticeForDetails(row),
+          },
+          {
+            id: "print",
+            label: "طباعة النموذج الرسمي (PDF)",
+            icon: FileDown,
+            onClick: () => handleQuickPrint(row),
+          },
+          {
+            id: "share",
+            label: "مشاركة الرابط والواتساب",
+            icon: Share2,
+            onClick: () => setSelectedNoticeForShare(row),
+          },
+        ];
+
+        if (row.status === "pending_teacher") {
+          menuItems.push({
+            id: "response",
+            label: "تسجيل إفادة المعلمة",
+            icon: FileEdit,
+            onClick: () => setSelectedNoticeForResponse(row),
+          });
+          menuItems.push({
+            id: "edit",
+            label: "تعديل بيانات التنبيه",
+            icon: Pencil,
+            onClick: () => {
+              setNoticeToEdit(row);
+              setIsCreateModalOpen(true);
+            },
+          });
+        }
+
+        if (row.status === "pending_director") {
+          menuItems.push({
+            id: "decision",
+            label: "اتخاذ قرار المديرة",
+            icon: ShieldCheck,
+            onClick: () => setSelectedNoticeForDecision(row),
+          });
+        }
+
+        menuItems.push({
+          id: "delete",
+          label: "نقل إلى الأرشيف الإداري",
+          icon: Trash2,
+          variant: "danger",
+          onClick: () => setNoticeToDelete(row),
+        });
+
+        return (
+          <div className="flex items-center justify-center gap-1.5">
+            {row.status === "pending_teacher" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSelectedNoticeForResponse(row)}
+                className="text-[11px] h-7 px-2 border-sky-200 text-sky-700 bg-sky-50 hover:bg-sky-100"
+              >
+                <span>الإفادة</span>
+              </Button>
+            )}
+
+            {row.status === "pending_director" && (
+              <Button
+                size="sm"
+                variant="warning"
+                onClick={() => setSelectedNoticeForDecision(row)}
+                className="text-[11px] h-7 px-2"
+              >
+                <span>القرار</span>
+              </Button>
+            )}
+
+            <ActionMenu items={menuItems} align="left" />
+          </div>
+        );
+      },
+    },
+  ];
+
+  // Mobile Card Renderer
+  const renderMobileNoticeCard = (notice: DelayNotice) => {
+    return (
+      <div className="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-2xs space-y-3">
+        <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+          <div>
+            <span className="font-mono font-bold text-[#137a85] text-xs block">
+              {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
+            </span>
+            <h4 className="font-bold text-slate-900 text-xs sm:text-sm mt-0.5">
+              {notice.teacherName}
+            </h4>
+            <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
+              <span>{notice.specialty || "عام"}</span>
+              <span>•</span>
+              <span className="font-mono">{notice.noticeDate || notice.date}</span>
+            </div>
+          </div>
+
+          <div>
+            {notice.status === "completed" ? (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                مكتمل
+              </span>
+            ) : notice.status === "pending_director" ? (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                قرار المديرة
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                إفادة المعلمة
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Violations tags */}
+        <div className="flex flex-wrap gap-1 text-xs">
+          {notice.violationDelayStart && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px]">
+              تأخر بداية
+            </span>
+          )}
+          {notice.violationAbsentDuring && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px]">
+              عدم تواجد
+            </span>
+          )}
+          {notice.violationEarlyDeparture && (
+            <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px]">
+              انصراف مبكر
+            </span>
+          )}
+          {notice.calculatedDuration && (
+            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-mono font-bold">
+              {notice.calculatedDuration}
+            </span>
+          )}
+        </div>
+
+        {/* Action Row */}
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+          <div className="flex items-center gap-1.5">
+            {notice.status === "pending_teacher" && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setSelectedNoticeForResponse(notice)}
+                className="text-xs py-1 h-8"
+              >
+                <span>تسجيل الإفادة</span>
+              </Button>
+            )}
+
+            {notice.status === "pending_director" && (
+              <Button
+                size="sm"
+                variant="warning"
+                onClick={() => setSelectedNoticeForDecision(notice)}
+                className="text-xs py-1 h-8"
+              >
+                <span>اتخاذ القرار</span>
+              </Button>
+            )}
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleQuickPrint(notice)}
+              className="text-xs py-1 h-8"
+            >
+              <FileDown className="w-3.5 h-3.5" />
+              <span>PDF</span>
+            </Button>
+          </div>
+
+          <ActionMenu
+            items={[
+              {
+                id: "details",
+                label: "عرض المراحل والتفاصيل",
+                icon: Eye,
+                onClick: () => setSelectedNoticeForDetails(notice),
+              },
+              {
+                id: "share",
+                label: "مشاركة الرابط والواتساب",
+                icon: Share2,
+                onClick: () => setSelectedNoticeForShare(notice),
+              },
+              {
+                id: "delete",
+                label: "نقل إلى الأرشيف",
+                icon: Trash2,
+                variant: "danger",
+                onClick: () => setNoticeToDelete(notice),
+              },
+            ]}
+            align="left"
+          />
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col min-h-screen bg-slate-50/60 pb-16">
       {/* Top Header */}
       <PageHeader
         breadcrumbs={[
@@ -170,7 +499,7 @@ export default function DelayNoticePage() {
 
             <Link
               href="/teachers"
-              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors shadow-2xs"
+              className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white text-slate-700 hover:bg-slate-50 border border-slate-200 transition-colors shadow-2xs"
             >
               <Users className="w-4 h-4 text-[#137a85]" />
               <span>سجل المعلمات ({teachers.length})</span>
@@ -180,9 +509,9 @@ export default function DelayNoticePage() {
       />
 
       {/* Main Content Body */}
-      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto">
+      <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
         {/* KPI Mini-Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
           <KpiCard
             title="إجمالي تنبيهات التأخر"
             value={totalCount}
@@ -200,546 +529,102 @@ export default function DelayNoticePage() {
             value={pendingDirectorCount}
             variant="amber"
             icon={<ShieldCheck className="w-5 h-5" />}
-            badge={pendingDirectorCount > 0 ? "يتطلب اعتماد" : undefined}
           />
           <KpiCard
-            title="إجراءات مكتملة ومعتمدة"
+            title="تنبيهات مكتملة"
             value={completedCount}
             variant="emerald"
-            icon={<CheckCircle2 className="w-5 h-5" />}
+            icon={<ShieldCheck className="w-5 h-5" />}
           />
         </div>
 
-        {/* Workflow Guide Banner */}
-        <div className="bg-linear-to-r from-teal-50 via-emerald-50/40 to-slate-50 p-4 rounded-2xl border border-teal-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs">
-          <div className="space-y-1">
-            <span className="font-bold text-[#137a85] block text-sm">
-              المسار الإداري المعتمد لنموذج (و.م.ع.ن - ٠٢ - ٠٢):
-            </span>
-            <p className="text-slate-600 leading-relaxed">
-              1. الوكيلة تُسجل المخالفة وتحدد وقتها ⬅️ 2. المعلمة تُقدم إفادتها ومبررها ⬅️ 3. المديرة تصدر قرارها (قبول العذر أو الحسم) ثم طباعة النموذج الرسمي A4.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
+        {/* Smart DataTable */}
+        <DataTable<DelayNotice>
+          data={filteredNotices}
+          columns={columns}
+          keyExtractor={(item) => item.id}
+          searchPlaceholder="البحث برقم التنبيه، اسم المعلمة، أو السجل..."
+          searchFilterKeys={["noticeNumber", "teacherName", "jobNumber", "specialty", "noticeDate", "date"]}
+          defaultPageSize={10}
+          onExportExcel={handleExportExcel}
+          exportLabel="تصدير التنبيهات Excel"
+          mobileCardRenderer={renderMobileNoticeCard}
+          filtersSlot={
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                type="button"
+                onClick={() => setActiveTab("all")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
+                  activeTab === "all"
+                    ? "bg-[#137a85] text-white shadow-2xs font-bold"
+                    : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80"
+                )}
+              >
+                الكل ({totalCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("pending_teacher")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
+                  activeTab === "pending_teacher"
+                    ? "bg-sky-600 text-white shadow-2xs font-bold"
+                    : "bg-sky-50 text-sky-800 hover:bg-sky-100/80 border border-sky-200/60"
+                )}
+              >
+                إفادة المعلمة ({pendingTeacherCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("pending_director")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
+                  activeTab === "pending_director"
+                    ? "bg-amber-600 text-white shadow-2xs font-bold"
+                    : "bg-amber-50 text-amber-800 hover:bg-amber-100/80 border border-amber-200/60"
+                )}
+              >
+                قرار المديرة ({pendingDirectorCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("completed")}
+                className={cn(
+                  "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
+                  activeTab === "completed"
+                    ? "bg-emerald-600 text-white shadow-2xs font-bold"
+                    : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100/80 border border-emerald-200/60"
+                )}
+              >
+                مكتمل ({completedCount})
+              </button>
+            </div>
+          }
+          actionsSlot={
+            <Button
+              variant="primary"
+              size="sm"
+              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => {
+                setNoticeToEdit(null);
+                setIsCreateModalOpen(true);
+              }}
+              className="text-xs"
+            >
+              إصدار تنبيه جديد
+            </Button>
+          }
+          emptyTitle="لا توجد تنبيهات مسجلة"
+          emptyDescription="لم يتم العثور على أي تنبيهات تأخر تطابق خيارات التصفية الحالية."
+          emptyAction={{
+            label: "إصدار تنبيه جديد",
+            onClick: () => {
               setNoticeToEdit(null);
               setIsCreateModalOpen(true);
-            }}
-            className="self-start md:self-center shrink-0 px-3.5 py-2 rounded-xl bg-[#137a85] text-white font-bold hover:bg-teal-700 transition-colors shadow-2xs cursor-pointer"
-          >
-            بدء إجراء جديد
-          </button>
-        </div>
-
-        {/* Filters and Search Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Status Tabs */}
-          <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1 border border-slate-200/80 overflow-x-auto custom-scrollbar">
-            <button
-              type="button"
-              onClick={() => setActiveTab("all")}
-              className={cn(
-                "py-1.5 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer",
-                activeTab === "all"
-                  ? "bg-white text-slate-900 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              الكل ({totalCount})
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("pending_teacher")}
-              className={cn(
-                "py-1.5 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5",
-                activeTab === "pending_teacher"
-                  ? "bg-white text-sky-700 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <span>بانتظار المعلمة</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-sky-100 text-sky-800 text-[10px]">
-                {pendingTeacherCount}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("pending_director")}
-              className={cn(
-                "py-1.5 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5",
-                activeTab === "pending_director"
-                  ? "bg-white text-amber-700 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <span>بانتظار المديرة</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px]">
-                {pendingDirectorCount}
-              </span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveTab("completed")}
-              className={cn(
-                "py-1.5 px-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5",
-                activeTab === "completed"
-                  ? "bg-white text-emerald-700 shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <span>مكتمل</span>
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">
-                {completedCount}
-              </span>
-            </button>
-          </div>
-
-          {/* Search Input */}
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث باسم المعلمة أو رقم التنبيه..."
-              className="w-full pl-3 pr-9 py-2 rounded-xl border border-slate-200 text-xs bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs"
-            />
-          </div>
-        </div>
-
-        {/* Notices Table / Cards */}
-        {filteredNotices.length === 0 ? (
-          <div className="p-12 rounded-3xl bg-white border border-slate-200 text-center space-y-3 shadow-xs">
-            <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
-              <Clock className="w-7 h-7" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-800">
-              {searchQuery || activeTab !== "all"
-                ? "لم يتم العثور على تنبيهات مطابقة للبحث أو التصفية"
-                : "لا توجد تنبيهات تأخر مسجلة حتى الآن"}
-            </h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
-              {searchQuery || activeTab !== "all"
-                ? "جربي تعديل كلمة البحث أو اختيار تصنيف آخر لعرض السجلات."
-                : "يمكنك إصدار أول تنبيه تأخر رسمي للمعلمة بضغطة زر وتوثيق النموذج كاملاً."}
-            </p>
-            {searchQuery || activeTab !== "all" ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearchQuery("");
-                  setActiveTab("all");
-                }}
-                className="mt-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-[#137a85] hover:bg-teal-50 transition-colors"
-              >
-                <span>إعادة ضبط التصفية</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setNoticeToEdit(null);
-                  setIsCreateModalOpen(true);
-                }}
-                className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 transition-colors shadow-2xs"
-              >
-                <Plus className="w-4 h-4" />
-                <span>إصدار أول تنبيه</span>
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {/* Desktop Table View */}
-            <div className="hidden md:block bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-2xs">
-              <div className="overflow-x-auto">
-                <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-                    <tr>
-                      <th scope="col" className="py-3.5 px-4">رقم وتاريخ التنبيه</th>
-                      <th scope="col" className="py-3.5 px-4">المعلمة</th>
-                      <th scope="col" className="py-3.5 px-4">نوع المخالفة الموثقة</th>
-                      <th scope="col" className="py-3.5 px-4">الحالة والمرحلة</th>
-                      <th scope="col" className="py-3.5 px-4 text-center">الإجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredNotices.map((notice) => {
-                      return (
-                        <tr
-                          key={notice.id}
-                          className="hover:bg-slate-50/70 transition-colors duration-150"
-                        >
-                          {/* Number and Date */}
-                          <td className="py-3 px-4 whitespace-nowrap">
-                            <div className="font-mono font-bold text-[#137a85] text-xs">
-                              {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
-                            </div>
-                            <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
-                              <Calendar className="w-3 h-3" />
-                              <span className="font-mono">{notice.noticeDate || notice.date}</span>
-                            </div>
-                          </td>
-
-                          {/* Teacher info */}
-                          <td className="py-3 px-4">
-                            <div className="font-bold text-slate-900 text-xs">
-                              {notice.teacherName}
-                            </div>
-                            <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
-                              <span className="font-mono">{notice.jobNumber}</span>
-                              <span>•</span>
-                              <span>{notice.specialty || "عام"}</span>
-                            </div>
-                          </td>
-
-                          {/* Violations tags */}
-                          <td className="py-3 px-4">
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              {notice.violationDelayStart && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
-                                  <LogIn className="w-3 h-3 text-amber-600" />
-                                  <span>
-                                    تأخر من بداية الدوام ({notice.delayStartFromTime ? `${notice.delayStartFromTime} - ` : ""}{notice.delayStartTime || "—"})
-                                  </span>
-                                  {notice.calculatedDuration && (
-                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
-                                      {notice.calculatedDuration}
-                                    </span>
-                                  )}
-                                </span>
-                              )}
-                              {notice.violationAbsentDuring && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
-                                  <Clock className="w-3 h-3 text-amber-600" />
-                                  <span>عدم تواجد أثناء الدوام ({notice.absentFromTime} - {notice.absentToTime})</span>
-                                  {notice.calculatedDuration && (
-                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
-                                      {notice.calculatedDuration}
-                                    </span>
-                                  )}
-                                </span>
-                              )}
-                              {notice.violationEarlyDeparture && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
-                                  <LogOut className="w-3 h-3 text-amber-600" />
-                                  <span>
-                                    انصراف مبكر قبل نهاية الدوام ({notice.earlyDepartureFromTime ? `${notice.earlyDepartureFromTime} - ` : ""}{notice.earlyDepartureTime || "—"})
-                                  </span>
-                                  {notice.calculatedDuration && (
-                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
-                                      {notice.calculatedDuration}
-                                    </span>
-                                  )}
-                                </span>
-                              )}
-                              {notice.violationLeftSchool && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-semibold">
-                                  <DoorOpen className="w-3 h-3 text-amber-600" />
-                                  <span>
-                                    انصراف من غير المدرسة {notice.leftSchoolFromTime && notice.leftSchoolToTime ? `(${notice.leftSchoolFromTime} - ${notice.leftSchoolToTime})` : ""}
-                                  </span>
-                                  {notice.calculatedDuration && (
-                                    <span className="bg-amber-200/60 px-1 rounded text-[9px] text-amber-900">
-                                      {notice.calculatedDuration}
-                                    </span>
-                                  )}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Status Badge */}
-                          <td className="py-3 px-4 whitespace-nowrap">
-                            {notice.status === "pending_teacher" && (
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
-                                  <span>مرحلة ٢: بانتظار إفادة المعلمة</span>
-                                </span>
-                                {notice.linkSharedAt && (
-                                  <span
-                                    title="تمت مشاركة رابط الإفادة مع المعلمة"
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm"
-                                  >
-                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                    <span>تم إرسال الرابط</span>
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            {notice.status === "pending_director" && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
-                                <span>مرحلة ٣: بانتظار قرار المديرة</span>
-                              </span>
-                            )}
-                            {notice.status === "completed" && (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>
-                                  {notice.directorOpinion === "accepted"
-                                    ? "مكتمل (قبول العذر)"
-                                    : "مكتمل (تقرر الحسم)"}
-                                </span>
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-3 px-4 whitespace-nowrap text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              {/* Details button */}
-                              <button
-                                type="button"
-                                onClick={() => setSelectedNoticeForDetails(notice)}
-                                aria-label="عرض المراحل والتفاصيل"
-                                className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                                title="عرض المراحل والتفاصيل"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                              </button>
-
-                              {/* Share with Teacher Button */}
-                              {notice.status === "pending_teacher" && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedNoticeForShare(notice)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition-all cursor-pointer shadow-sm"
-                                  title="مشاركة الرابط وإرساله عبر الواتساب"
-                                >
-                                  <Share2 className="w-3.5 h-3.5" />
-                                  <span>مشاركة</span>
-                                </button>
-                              )}
-
-                              {/* Smart Stage CTA Button */}
-                              {notice.status === "pending_teacher" && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedNoticeForResponse(notice)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-600 hover:text-white border border-sky-200 transition-all cursor-pointer"
-                                  title="تسجيل إفادة المعلمة يدوياً"
-                                >
-                                  <FileEdit className="w-3.5 h-3.5" />
-                                  <span>الإفادة</span>
-                                </button>
-                              )}
-
-                              {notice.status === "pending_director" && (
-                                <button
-                                  type="button"
-                                  onClick={() => setSelectedNoticeForDecision(notice)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
-                                  title="اتخاذ قرار المديرة"
-                                >
-                                  <ShieldCheck className="w-3.5 h-3.5" />
-                                  <span>القرار</span>
-                                </button>
-                              )}
-
-                              {/* PDF Print Button */}
-                              <button
-                                type="button"
-                                onClick={() => handleQuickPrint(notice)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200 transition-all cursor-pointer"
-                                title="طباعة النموذج الرسمي A4 (PDF)"
-                              >
-                                <FileDown className="w-3.5 h-3.5" />
-                                <span>PDF</span>
-                              </button>
-
-                              {/* Edit button (only if stage 1) */}
-                              {notice.status === "pending_teacher" && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setNoticeToEdit(notice);
-                                    setIsCreateModalOpen(true);
-                                  }}
-                                  aria-label={`تعديل بيانات تنبيه ${notice.teacherName}`}
-                                  className="p-1.5 rounded-lg text-amber-700 hover:bg-amber-50 border border-amber-200 transition-colors cursor-pointer"
-                                  title="تعديل بيانات التنبيه"
-                                >
-                                  <Pencil className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-
-                              {/* Delete button */}
-                              <button
-                                type="button"
-                                onClick={() => setNoticeToDelete(notice)}
-                                aria-label={`حذف تنبيه ${notice.teacherName}`}
-                                className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                                title="حذف التنبيه"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Mobile Card View */}
-            <div className="md:hidden space-y-3">
-              {filteredNotices.map((notice) => {
-                return (
-                  <div
-                    key={notice.id}
-                    className="bg-white rounded-2xl p-4 border border-slate-200 shadow-2xs space-y-3"
-                  >
-                    <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                      <div>
-                        <span className="font-mono text-xs font-bold text-[#137a85] block">
-                          {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
-                        </span>
-                        <h4 className="font-bold text-sm text-slate-900 mt-0.5">
-                          {notice.teacherName}
-                        </h4>
-                        <span className="text-[11px] text-slate-400 font-mono">
-                          {notice.jobNumber} • {notice.specialty || "عام"}
-                        </span>
-                      </div>
-
-                      <div className="text-left">
-                        <span className="text-[11px] font-mono text-slate-500 block">
-                          {notice.noticeDate || notice.date}
-                        </span>
-                        <div className="mt-1">
-                          {notice.status === "pending_teacher" && (
-                            <div className="flex items-center gap-1 flex-wrap justify-end">
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
-                                <span>مرحلة ٢: إفادة المعلمة</span>
-                              </span>
-                              {notice.linkSharedAt && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-sm">
-                                  <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                                  <span>أُرسل الرابط</span>
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {notice.status === "pending_director" && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-600 animate-pulse" />
-                              <span>مرحلة ٣: قرار المديرة</span>
-                            </span>
-                          )}
-                          {notice.status === "completed" && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                              <span>معتمد ✓</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Violations */}
-                    <div className="flex flex-wrap gap-1">
-                      {notice.violationDelayStart && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
-                          <span>تأخر من بداية الدوام ({notice.delayStartFromTime ? `${notice.delayStartFromTime} - ` : ""}{notice.delayStartTime})</span>
-                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
-                        </span>
-                      )}
-                      {notice.violationAbsentDuring && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
-                          <span>عدم تواجد أثناء الدوام ({notice.absentFromTime} - {notice.absentToTime})</span>
-                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
-                        </span>
-                      )}
-                      {notice.violationEarlyDeparture && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
-                          <span>انصراف مبكر قبل نهاية الدوام ({notice.earlyDepartureFromTime ? `${notice.earlyDepartureFromTime} - ` : ""}{notice.earlyDepartureTime})</span>
-                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
-                        </span>
-                      )}
-                      {notice.violationLeftSchool && (
-                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
-                          <span>انصراف من غير المدرسة {notice.leftSchoolFromTime && notice.leftSchoolToTime ? `(${notice.leftSchoolFromTime} - ${notice.leftSchoolToTime})` : ""}</span>
-                          {notice.calculatedDuration && <span className="font-bold">({notice.calculatedDuration})</span>}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedNoticeForDetails(notice)}
-                        className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>التفاصيل</span>
-                      </button>
-
-                      {notice.status === "pending_teacher" && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedNoticeForShare(notice)}
-                          className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
-                        >
-                          <Share2 className="w-3.5 h-3.5" />
-                          <span>مشاركة</span>
-                        </button>
-                      )}
-
-                      {notice.status === "pending_teacher" && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedNoticeForResponse(notice)}
-                          className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-colors flex items-center justify-center gap-1 cursor-pointer"
-                        >
-                          <FileEdit className="w-3.5 h-3.5" />
-                          <span>الإفادة</span>
-                        </button>
-                      )}
-
-                      {notice.status === "pending_director" && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedNoticeForDecision(notice)}
-                          className="flex-1 min-w-[70px] py-1.5 rounded-xl text-xs font-bold bg-amber-600 text-white hover:bg-amber-700 transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
-                        >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>القرار</span>
-                        </button>
-                      )}
-
-                      <button
-                        type="button"
-                        onClick={() => handleQuickPrint(notice)}
-                        className="py-1.5 px-2.5 rounded-xl text-xs font-bold bg-teal-50 text-[#137a85] border border-teal-200 hover:bg-[#137a85] hover:text-white transition-all flex items-center justify-center gap-1 cursor-pointer"
-                      >
-                        <FileDown className="w-3.5 h-3.5" />
-                        <span>PDF</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setNoticeToDelete(notice)}
-                        className="p-1.5 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+            },
+          }}
+        />
       </main>
 
       {/* 1. Modal: Create / Edit Delay Notice (Stage 1) */}
@@ -788,7 +673,7 @@ export default function DelayNoticePage() {
         onOpenDelete={(n) => setNoticeToDelete(n)}
       />
 
-      {/* 5. Archive Confirm Dialog */}
+      {/* 6. Archive Confirm Dialog */}
       <ConfirmDialog
         isOpen={Boolean(noticeToDelete)}
         title="نقل تنبيه التأخر إلى الأرشيف"
