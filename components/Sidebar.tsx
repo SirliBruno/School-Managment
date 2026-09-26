@@ -174,38 +174,38 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const collapsed = isCollapsed && !isDrawer;
 
     return (
-      <div className="flex flex-col h-full bg-[#137a85] text-white select-none">
-        {/* Top Header / Profile Section */}
+      <div className="flex flex-col h-full bg-white text-slate-800 select-none">
+        {/* Top Header / Brand Section */}
         <div
           className={cn(
-            "py-5 border-b border-teal-600/50 flex items-center transition-all",
+            "py-5 border-b border-slate-100 flex items-center transition-all",
             collapsed ? "px-3 justify-center" : "px-5 justify-between"
           )}
         >
           <Link
             href="/"
             onClick={() => setIsMobileOpen(false)}
-            className="flex items-center gap-3 hover:opacity-95 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 rounded-xl p-1 group"
+            className="flex items-center gap-3 hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40 rounded-xl p-1 group"
             aria-label="الانتقال إلى لوحة التحكم الرئيسية"
             title={collapsed ? "نظام الإدارة المدرسية" : undefined}
           >
             <motion.div
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="relative p-2.5 rounded-xl bg-white/10 text-white flex items-center justify-center shadow-inner group-hover:bg-white/15 transition-colors shrink-0"
+              className="relative p-2.5 rounded-xl bg-teal-50 text-[#137a85] border border-teal-100 flex items-center justify-center shadow-2xs group-hover:bg-teal-100/60 transition-colors shrink-0"
             >
               <Users className="w-5 h-5" aria-hidden="true" />
               <span
-                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-[#137a85] animate-pulse"
+                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"
                 aria-hidden="true"
               />
             </motion.div>
             {!collapsed && (
               <div className="min-w-0">
-                <span className="font-bold text-base tracking-wide text-white block truncate">
+                <span className="font-bold text-base tracking-tight text-slate-900 block truncate">
                   نظام الإدارة المدرسية
                 </span>
-                <span className="text-[11px] text-teal-100 font-medium block truncate">
+                <span className="text-[11px] text-slate-500 font-medium block truncate">
                   بوابة وكيلة الشؤون التعليمية
                 </span>
               </div>
@@ -217,7 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={() => setIsMobileOpen(false)}
-              className="p-2 rounded-lg text-teal-100 hover:text-white hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] cursor-pointer"
               aria-label="إغلاق القائمة الجانبية"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -247,16 +247,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     aria-controls={`sub-menu-${item.id}`}
                     title={collapsed ? item.label : undefined}
                     className={cn(
-                      "w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+                      "w-full flex items-center rounded-xl text-sm font-semibold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                       collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5",
                       isOpen
-                        ? "bg-black/15 text-white shadow-sm"
-                        : "text-teal-50 hover:bg-white/10 hover:text-white"
+                        ? "bg-slate-100/90 text-slate-900"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
                     <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
                       <Icon
-                        className="w-5 h-5 text-teal-100 group-hover:text-white transition-colors shrink-0"
+                        className="w-5 h-5 text-slate-500 group-hover:text-slate-700 transition-colors shrink-0"
                         aria-hidden="true"
                       />
                       {!collapsed && (
@@ -264,7 +264,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <span>{item.label}</span>
                           {item.id === "admin-procedures" &&
                             (pendingDirectorDelayCount > 0 || pendingAbsencesCount > 0) && (
-                              <span className="w-2 h-2 rounded-full bg-rose-400 ring-2 ring-[#137a85] animate-pulse shrink-0" />
+                              <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse shrink-0" />
                             )}
                         </div>
                       )}
@@ -277,7 +277,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className="shrink-0"
                       >
                         <ChevronDown
-                          className="w-4 h-4 text-teal-200 group-hover:text-white"
+                          className="w-4 h-4 text-slate-400 group-hover:text-slate-600"
                           aria-hidden="true"
                         />
                       </motion.div>
@@ -295,7 +295,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-                        className="overflow-hidden pe-7 ps-2 py-1 space-y-1 border-s-2 border-teal-400/40 ms-3"
+                        className="overflow-hidden pe-7 ps-2 py-1 space-y-1 border-s-2 border-slate-200 ms-3"
                       >
                         {item.children?.map((subItem) => {
                           const isSubActive =
@@ -309,22 +309,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
                               onClick={() => setIsMobileOpen(false)}
                               aria-current={isSubActive ? "page" : undefined}
                               className={cn(
-                                "relative block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+                                "relative block px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                                 isSubActive
-                                  ? "bg-[#0b535b] text-white font-bold shadow-sm ring-1 ring-white/20"
-                                  : "text-teal-100 hover:text-white hover:bg-white/10"
+                                  ? "bg-teal-50/90 text-[#137a85] font-bold border border-teal-200/80 shadow-2xs"
+                                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                               )}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-1.5">
                                   <span>{subItem.label}</span>
                                   {subItem.id === "delay-warning" && pendingDirectorDelayCount > 0 && (
-                                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold ring-1 ring-white/30 animate-pulse">
+                                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-2xs animate-pulse">
                                       {pendingDirectorDelayCount}
                                     </span>
                                   )}
                                   {subItem.id === "absence-inquiry" && pendingAbsencesCount > 0 && (
-                                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold ring-1 ring-white/30">
+                                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold shadow-2xs">
                                       {pendingAbsencesCount}
                                     </span>
                                   )}
@@ -332,7 +332,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                 {isSubActive && (
                                   <motion.span
                                     layoutId="active-sub-dot"
-                                    className="w-1.5 h-1.5 rounded-full bg-teal-200"
+                                    className="w-1.5 h-1.5 rounded-full bg-[#137a85]"
                                     aria-hidden="true"
                                   />
                                 )}
@@ -356,32 +356,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 aria-current={isCurrentRoute ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  "relative flex items-center rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+                  "relative flex items-center rounded-xl text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                   collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                   isCurrentRoute
-                    ? "bg-[#0b535b] text-white font-bold shadow-sm ring-1 ring-white/20"
-                    : "text-teal-50 hover:text-white hover:bg-white/10"
+                    ? "bg-teal-50/90 text-[#137a85] font-bold border border-teal-200/80 shadow-2xs"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                 )}
               >
                 {isCurrentRoute && (
                   <motion.div
                     layoutId="active-nav-indicator"
-                    className="absolute end-0 top-1.5 bottom-1.5 w-1 bg-teal-300 rounded-l-full"
+                    className="absolute end-0 top-1.5 bottom-1.5 w-1 bg-[#137a85] rounded-l-full"
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
                 <div className="relative">
                   <Icon
-                    className="w-5 h-5 text-teal-100 shrink-0"
+                    className={cn(
+                      "w-5 h-5 shrink-0 transition-colors",
+                      isCurrentRoute ? "text-[#137a85]" : "text-slate-500"
+                    )}
                     aria-hidden="true"
                   />
                   {collapsed && item.id === "archive" && totalArchivedCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-slate-300 rounded-full ring-2 ring-[#137a85]" />
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-slate-400 rounded-full ring-2 ring-white" />
                   )}
                 </div>
                 {!collapsed && <span className="flex-1">{item.label}</span>}
                 {!collapsed && item.id === "archive" && totalArchivedCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100/20 text-slate-100 text-[11px] font-bold font-mono ring-1 ring-slate-200/30">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold font-mono border border-slate-200">
                     {totalArchivedCount}
                   </span>
                 )}
@@ -392,20 +395,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Vice Principal Account & Actions Card */}
         {collapsed ? (
-          <div className="p-2 flex flex-col items-center gap-2 border-t border-teal-600/40">
+          <div className="p-2 flex flex-col items-center gap-2 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setIsProfileModalOpen(true)}
-              className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
               title={user?.fullName || "وكيلة الشؤون التعليمية"}
               aria-label="تعديل بيانات الحساب"
             >
-              <KeyRound className="w-4 h-4 text-teal-200" />
+              <KeyRound className="w-4 h-4 text-slate-600" />
             </button>
             <button
               type="button"
               onClick={() => logout()}
-              className="w-9 h-9 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 flex items-center justify-center text-rose-200 hover:text-white transition-colors cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 flex items-center justify-center text-rose-600 transition-colors cursor-pointer border border-rose-200/60"
               title="تسجيل الخروج"
               aria-label="تسجيل الخروج"
             >
@@ -413,37 +416,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
         ) : (
-          <div className="p-3 mx-2.5 mb-2 rounded-2xl bg-black/20 border border-white/10 backdrop-blur-sm">
+          <div className="p-3 mx-2.5 mb-2 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-2xs">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-300/30 flex items-center justify-center text-teal-200 shrink-0">
+                <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#137a85] shrink-0">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-white truncate">
+                  <p className="text-xs font-bold text-slate-900 truncate">
                     {user?.fullName || "وكيلة الشؤون التعليمية"}
                   </p>
-                  <p className="text-[10px] text-teal-200/80 font-mono truncate" dir="ltr">
+                  <p className="text-[10px] text-slate-500 font-mono truncate" dir="ltr">
                     @{user?.username || "wakila"}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-white/10">
+            <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-slate-200/60">
               <button
                 type="button"
                 onClick={() => setIsProfileModalOpen(true)}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-medium text-white transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
                 aria-label="إعدادات الحساب — تعديل اسم المستخدم وكلمة المرور"
               >
-                <KeyRound className="w-3.5 h-3.5 text-teal-200" aria-hidden="true" />
+                <KeyRound className="w-3.5 h-3.5 text-[#137a85]" aria-hidden="true" />
                 <span>إعدادات الحساب</span>
               </button>
               <button
                 type="button"
                 onClick={() => logout()}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-[11px] font-medium text-rose-200 hover:text-white transition-colors cursor-pointer"
+                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-[11px] font-medium text-rose-700 border border-rose-200 transition-colors cursor-pointer"
                 aria-label="تسجيل الخروج من المنصة"
               >
                 <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
@@ -456,26 +459,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Cloud Connectivity & Realtime Sync Status */}
         {collapsed ? (
           <div
-            className="py-2.5 flex justify-center border-t border-teal-600/30"
+            className="py-2.5 flex justify-center border-t border-slate-100"
             title={isCloudConnected ? "متصل سحابياً" : "حفظ محلي"}
           >
             <span
               className={cn(
                 "w-2.5 h-2.5 rounded-full",
-                isCloudConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                isCloudConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
               )}
             />
           </div>
         ) : (
-          <div className="mx-3.5 mb-2.5 p-2 rounded-xl bg-black/20 border border-teal-500/30 flex items-center justify-between text-[11px]">
+          <div className="mx-2.5 mb-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-[11px]">
             <div className="flex items-center gap-1.5">
               <span
                 className={cn(
-                  "w-2 h-2 rounded-full",
-                  isCloudConnected ? "bg-emerald-400 animate-pulse" : "bg-amber-400"
+                  "w-2 h-2 rounded-full shrink-0",
+                  isCloudConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
                 )}
               />
-              <span className="font-medium text-teal-100 text-[10px]">
+              <span className="font-medium text-slate-600 text-[10px]">
                 {isCloudConnected ? "سحابي ولحظي (Supabase)" : "حفظ محلي (انقطاع مؤقت)"}
               </span>
             </div>
@@ -483,37 +486,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 type="button"
                 onClick={() => flushSyncQueue()}
-                className="text-[10px] bg-amber-400/20 text-amber-200 hover:text-white px-2 py-0.5 rounded border border-amber-400/40 flex items-center gap-1 cursor-pointer"
+                className="text-[10px] bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1 cursor-pointer font-bold"
                 title="مزامنة التغييرات المعلقة مع السحابة"
               >
                 <span>{pendingSyncCount} معلق</span>
                 <RotateCcw className="w-2.5 h-2.5" />
               </button>
             ) : (
-              <span className="text-[10px] text-teal-200/80">متزامن ✓</span>
+              <span className="text-[10px] text-emerald-600 font-bold">متزامن ✓</span>
             )}
           </div>
         )}
 
         {/* Footer Branding & Developer Credit */}
         {!collapsed && (
-          <div className="p-3.5 border-t border-teal-600/40 bg-black/15 text-center">
-            <p className="text-[11px] text-teal-100 font-medium">
+          <div className="p-3.5 border-t border-slate-100 bg-slate-50/60 text-center">
+            <p className="text-[11px] text-slate-500 font-medium">
               نظام الإدارة المدرسية • الإصدار 1.0
             </p>
-            <div className="mt-2 pt-2 border-t border-teal-600/30 flex flex-col items-center gap-1">
-              <span className="text-[10px] text-teal-200/80 font-medium flex items-center justify-center gap-1">
+            <div className="mt-2 pt-2 border-t border-slate-200/60 flex flex-col items-center gap-1">
+              <span className="text-[10px] text-slate-500 font-medium flex items-center justify-center gap-1">
                 <span>تطوير:</span>
-                <span className="font-bold text-white">محمد هارون</span>
+                <span className="font-bold text-slate-800">محمد هارون</span>
               </span>
               <a
                 href="https://wa.me/966557013720"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-teal-800/60 hover:bg-teal-700/80 text-teal-100 hover:text-white text-[10px] font-semibold transition-colors border border-teal-500/30 group mt-0.5"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-[10px] font-semibold transition-colors border border-slate-200 shadow-2xs group mt-0.5"
                 title="تواصل مع المطور عبر الواتساب"
               >
-                <MessageCircle className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <MessageCircle className="w-3 h-3 text-emerald-600 group-hover:scale-110 transition-transform" />
                 <span dir="ltr" className="font-mono">0557013720</span>
               </a>
             </div>
@@ -528,7 +531,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Desktop Persistent Sidebar (Right side in RTL) */}
       <aside
         className={cn(
-          "hidden lg:block h-screen sticky top-0 shrink-0 shadow-lg border-l border-teal-800/40 z-30 bg-[#137a85] self-start transition-all duration-300",
+          "hidden lg:block h-screen sticky top-0 shrink-0 shadow-xs border-l border-slate-200/80 z-30 bg-white self-start transition-all duration-300",
           isCollapsed ? "w-20" : "w-64",
           className
         )}
