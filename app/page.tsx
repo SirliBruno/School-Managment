@@ -126,6 +126,7 @@ export default function DashboardPage() {
   const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(
     null
   );
+  const [activeTab, setActiveTab] = useState<"records" | "analytics">("records");
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -379,161 +380,185 @@ export default function DashboardPage() {
       </AnimatePresence>
 
       {/* Main Content Body */}
-      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl w-full mx-auto">
-        {/* Section 1: Executive Pulse Bar (شريط النبض الإداري اليومي) */}
+      <main className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
+        {/* Section 1: Executive Welcome & Daily Pulse (الموجز الإداري اليومي) */}
         <section aria-labelledby="pulse-heading" className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5 text-teal-700" />
-              <h2 id="pulse-heading" className="text-base font-bold text-slate-800">
-                شريط النبض الإداري اليومي
-              </h2>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center font-bold text-xs shrink-0">
+                <Activity className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 id="pulse-heading" className="text-sm sm:text-base font-bold text-slate-800 leading-tight">
+                  الموجز الإداري ونبض الدوام اليومي
+                </h2>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  مؤشرات الانضباط وحالة الكادر التعليمي لحظياً
+                </span>
+              </div>
             </div>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              رصد حي للدوام ومؤشرات الانضباط
-            </span>
+
+            {/* Quick Actions Buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Link
+                href="/procedures/absence"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 shadow-xs transition-all"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>رصد غياب</span>
+              </Link>
+              <Link
+                href="/procedures/delay-notice"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200/80 transition-all"
+              >
+                <Clock className="w-3.5 h-3.5 text-amber-600" />
+                <span>رصد تأخر</span>
+              </Link>
+              <Link
+                href="/procedures/deduction-hours"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200/80 transition-all"
+              >
+                <Zap className="w-3.5 h-3.5 text-rose-600" />
+                <span>قرار حسم</span>
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3.5">
-            {/* Today Absences */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-              <span className="text-xs text-slate-500 font-medium">غياب اليوم</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span
-                  className={cn(
-                    "text-2xl font-mono font-black",
-                    todayPulse.todayAbsences > 0 ? "text-rose-600" : "text-slate-800"
-                  )}
-                >
-                  {todayPulse.todayAbsences}
+          {/* 4 Compact KPIs Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* KPI 1: Today's Absences */}
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div>
+                <span className="text-xs text-slate-500 font-medium block">غياب اليوم</span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span
+                    className={cn(
+                      "text-xl sm:text-2xl font-black",
+                      todayPulse.todayAbsences > 0 ? "text-rose-600" : "text-slate-800"
+                    )}
+                  >
+                    {todayPulse.todayAbsences}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">معلمة</span>
+                </div>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  {todayPulse.todayAbsences === 0 ? "انضباط كامل اليوم ✨" : "مسجلة اليوم"}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">معلمة</span>
+              </div>
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                todayPulse.todayAbsences > 0 ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-400"
+              )}>
+                <Users className="w-5 h-5" />
               </div>
             </div>
 
-            {/* Today Delays */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-              <span className="text-xs text-slate-500 font-medium">تأخر وانصراف اليوم</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span
-                  className={cn(
-                    "text-2xl font-mono font-black",
-                    todayPulse.todayDelays > 0 ? "text-amber-600" : "text-slate-800"
-                  )}
-                >
-                  {todayPulse.todayDelays}
+            {/* KPI 2: Today's Delays */}
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div>
+                <span className="text-xs text-slate-500 font-medium block">تأخر وانصراف اليوم</span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span
+                    className={cn(
+                      "text-xl sm:text-2xl font-black",
+                      todayPulse.todayDelays > 0 ? "text-amber-600" : "text-slate-800"
+                    )}
+                  >
+                    {todayPulse.todayDelays}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">حالة</span>
+                </div>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  {todayPulse.todayDelays === 0 ? "لا يوجد تأخر مرصود" : "تنبيهات مسجلة"}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">حالة</span>
+              </div>
+              <div className={cn(
+                "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                todayPulse.todayDelays > 0 ? "bg-amber-50 text-amber-600" : "bg-slate-50 text-slate-400"
+              )}>
+                <Clock className="w-5 h-5" />
               </div>
             </div>
 
-            {/* Discipline Rate */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-              <span className="text-xs text-slate-500 font-medium">مؤشر الانضباط العام</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span className="text-2xl font-mono font-black text-emerald-600">
-                  {todayPulse.disciplineRate}%
+            {/* KPI 3: Discipline Rate */}
+            <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+              <div>
+                <span className="text-xs text-slate-500 font-medium block">مؤشر الانضباط العام</span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span className="text-xl sm:text-2xl font-black text-emerald-600">
+                    {todayPulse.disciplineRate}%
+                  </span>
+                  <span className="text-xs text-emerald-700 font-bold">
+                    {todayPulse.disciplineRate >= 95 ? "ممتاز" : "مستقر"}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  نسبة حضور الكادر
                 </span>
-                <span className="text-xs text-emerald-700 font-bold">
-                  {todayPulse.disciplineRate >= 95 ? "ممتاز" : "مستقر"}
-                </span>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-5 h-5" />
               </div>
             </div>
 
-            {/* Pending Administrative Matters */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
-              <span className="text-xs text-slate-500 font-medium">معاملات بانتظار الإجراء</span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span
-                  className={cn(
-                    "text-2xl font-mono font-black",
-                    todayPulse.totalPendingMatters > 0 ? "text-amber-600" : "text-slate-800"
-                  )}
-                >
-                  {todayPulse.totalPendingMatters}
-                </span>
-                <span className="text-xs text-slate-400 font-semibold">معاملة</span>
-              </div>
-            </div>
-
-            {/* Due for Deduction Counter */}
+            {/* KPI 4: Deduction Due / Pending */}
             <div
               className={cn(
-                "p-4 rounded-2xl border shadow-xs flex flex-col justify-between transition-all",
+                "p-3.5 sm:p-4 rounded-2xl border shadow-xs flex items-center justify-between transition-colors",
                 todayPulse.teachersDueCount > 0
-                  ? "bg-rose-50/80 border-rose-200 text-rose-950"
+                  ? "bg-rose-50/90 border-rose-300"
                   : "bg-white border-slate-200/80"
               )}
             >
-              <span
-                className={cn(
-                  "text-xs font-bold",
+              <div>
+                <span className={cn(
+                  "text-xs font-bold block",
                   todayPulse.teachersDueCount > 0 ? "text-rose-800" : "text-slate-500"
+                )}>
+                  حسم الساعات (≥7س)
+                </span>
+                <div className="flex items-baseline gap-1 mt-1">
+                  <span
+                    className={cn(
+                      "text-xl sm:text-2xl font-black",
+                      todayPulse.teachersDueCount > 0 ? "text-rose-700" : "text-slate-800"
+                    )}
+                  >
+                    {todayPulse.teachersDueCount}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium">مستحقة</span>
+                </div>
+                <span className="text-[10px] text-slate-400 block mt-0.5">
+                  {todayPulse.teachersDueCount > 0 ? "يستوجب إصدار قرار 🚨" : "لا يوجد حسم مستحق"}
+                </span>
+              </div>
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                  todayPulse.teachersDueCount > 0
+                    ? "bg-rose-600 text-white shadow-xs animate-pulse"
+                    : "bg-slate-50 text-slate-400"
                 )}
               >
-                استحقاق حسم فوري (≥ 7س)
-              </span>
-              <div className="flex items-baseline justify-between mt-2">
-                <span
-                  className={cn(
-                    "text-2xl font-mono font-black",
-                    todayPulse.teachersDueCount > 0 ? "text-rose-700" : "text-slate-800"
-                  )}
-                >
-                  {todayPulse.teachersDueCount}
-                </span>
-                <span className="text-xs text-rose-700 font-bold">
-                  {todayPulse.teachersDueCount > 0 ? "مستحقة 🚨" : "لا يوجد"}
-                </span>
+                <Zap className="w-5 h-5" />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Section 2: Action Required Radar (رادار الإجراءات والتدخلات العاجلة) */}
-        <section aria-labelledby="radar-heading" className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-5 h-5 text-rose-600" />
-              <h2 id="radar-heading" className="text-base font-bold text-slate-900">
-                رادار المهام والإجراءات المستحقة
-              </h2>
-              {proactiveAlerts.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-extrabold bg-rose-100 text-rose-800 border border-rose-200">
-                  {proactiveAlerts.length} إجراء عاجل
-                </span>
-              )}
-            </div>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              رصد استباقي يمنع فوات المهل وتراكم ساعات الحسم
-            </span>
-          </div>
-
-          {proactiveAlerts.length === 0 ? (
-            <div className="p-6 rounded-2xl bg-white border border-emerald-200/80 flex items-center justify-between gap-4 shadow-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800">
-                    كافة الإجراءات الإدارية والمدد في وضع سليم ومستقر
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    لا توجد معلمات بلغن نصاب الحسم (7 ساعات)، ولا توجد مساءلات متجاوزة لمهلة الـ 48 ساعة.
-                  </p>
-                </div>
+        {/* Section 2: Proactive Radar Alert Banner (يظهر كشريط رشيق عند الاستقرار أو كبطاقة عند وجود تنبيهات) */}
+        {proactiveAlerts.length > 0 ? (
+          <section aria-labelledby="radar-heading" className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
+                <h3 id="radar-heading" className="text-xs sm:text-sm font-bold text-slate-800">
+                  تنبيهات الرادار الإداري المستعجلة ({proactiveAlerts.length})
+                </h3>
               </div>
-              <Link
-                href="/procedures/deduction-hours"
-                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors"
-              >
-                <span>سجل الحسم</span>
-                <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-              </Link>
             </div>
-          ) : (
-            <div className="space-y-2.5">
+
+            <div className="space-y-2">
               {proactiveAlerts.map((alert) => {
                 const isCritical = alert.severity === "critical";
                 const isWarning = alert.severity === "warning";
@@ -541,202 +566,218 @@ export default function DashboardPage() {
                 return (
                   <motion.div
                     key={alert.id}
-                    initial={{ opacity: 0, y: 6 }}
+                    initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={cn(
-                      "p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition-all",
+                      "p-3 sm:p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs transition-all",
                       isCritical
-                        ? "bg-gradient-to-r from-rose-50/90 via-red-50/60 to-white border-rose-200"
+                        ? "bg-rose-50/90 border-rose-200"
                         : isWarning
-                        ? "bg-gradient-to-r from-amber-50/80 via-orange-50/50 to-white border-amber-200"
-                        : "bg-gradient-to-r from-sky-50/80 via-blue-50/50 to-white border-sky-200"
+                        ? "bg-amber-50/80 border-amber-200"
+                        : "bg-sky-50/80 border-sky-200"
                     )}
                   >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-start gap-2.5">
                       <div
                         className={cn(
-                          "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5",
+                          "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
                           isCritical
-                            ? "bg-rose-600 text-white shadow-xs"
+                            ? "bg-rose-600 text-white"
                             : isWarning
                             ? "bg-amber-500 text-white"
                             : "bg-sky-500 text-white"
                         )}
                       >
                         {alert.type === "due_for_deduction" ? (
-                          <Zap className="w-4 h-4" />
+                          <Zap className="w-3.5 h-3.5" />
                         ) : alert.type === "expired_inquiry" ? (
-                          <Clock className="w-4 h-4" />
-                        ) : alert.type === "pending_director" ? (
-                          <FileCheck className="w-4 h-4" />
+                          <Clock className="w-3.5 h-3.5" />
                         ) : (
-                          <AlertTriangle className="w-4 h-4" />
+                          <AlertTriangle className="w-3.5 h-3.5" />
                         )}
                       </div>
 
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                          <h4 className="text-xs font-bold text-slate-900">
                             {alert.title}
                           </h4>
                           {isCritical && (
-                            <span className="px-2 py-0.2 rounded-full text-2xs font-extrabold bg-rose-600 text-white animate-pulse">
-                              عاجل
+                            <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-600 text-white">
+                              مستحق الآن
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">
+                        <p className="text-[11px] text-slate-600 leading-relaxed">
                           {alert.description}
                         </p>
                       </div>
                     </div>
 
-                    <div className="sm:self-center shrink-0 pt-1 sm:pt-0">
+                    <div className="sm:self-center shrink-0">
                       <Link href={alert.actionUrl}>
-                        <motion.span
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.97 }}
+                        <button
+                          type="button"
                           className={cn(
-                            "inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer w-full sm:w-auto",
+                            "inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-2xs transition-all cursor-pointer w-full sm:w-auto",
                             isCritical
-                              ? "bg-rose-600 text-white hover:bg-rose-700 shadow-rose-200"
+                              ? "bg-rose-600 text-white hover:bg-rose-700"
                               : isWarning
-                              ? "bg-amber-600 text-white hover:bg-amber-700 shadow-amber-200"
-                              : "bg-sky-600 text-white hover:bg-sky-700 shadow-sky-200"
+                              ? "bg-amber-600 text-white hover:bg-amber-700"
+                              : "bg-sky-600 text-white hover:bg-sky-700"
                           )}
                         >
                           <span>{alert.actionLabel}</span>
-                          <ArrowRight className="w-3.5 h-3.5 rotate-180" />
-                        </motion.span>
+                          <ArrowRight className="w-3 h-3 rotate-180" />
+                        </button>
                       </Link>
                     </div>
                   </motion.div>
                 );
               })}
             </div>
-          )}
-        </section>
-
-        {/* Section 3: Instant 1-Click Launchpad (شريط العمليات السريعة للوكيلة) */}
-        <section aria-labelledby="launchpad-heading" className="space-y-3">
-          <div className="flex items-center justify-between">
+          </section>
+        ) : (
+          <div className="px-4 py-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200/70 flex items-center justify-between gap-3 text-xs text-emerald-900 shadow-2xs">
             <div className="flex items-center gap-2">
-              <Zap className="w-5 h-5 text-teal-700" />
-              <h2 id="launchpad-heading" className="text-base font-bold text-slate-800">
-                منصة العمليات والإجراءات السريعة
-              </h2>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span className="font-semibold text-[11px] sm:text-xs">
+                الوضع الإداري العام سليم ومنتظم — لا توجد معلمات بلغن نصاب الحسم (7س) ولا توجد مهلات منتهية اليوم.
+              </span>
             </div>
-            <span className="text-xs text-slate-400 font-medium hidden sm:inline">
-              وصول مباشر بنقرة واحدة لكافة النماذج المعتمدة
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <Link href="/procedures/absence" className="group">
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-teal-500 hover:shadow-md transition-all flex flex-col items-center text-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 group-hover:bg-teal-600 group-hover:text-white transition-colors flex items-center justify-center">
-                  <Plus className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    رصد غياب اليوم
-                  </span>
-                  <span className="text-2xs text-slate-400">إصدار ومساءلة (نموذج 20)</span>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/procedures/delay-notice" className="group">
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-teal-500 hover:shadow-md transition-all flex flex-col items-center text-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors flex items-center justify-center">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    رصد تأخر / انصراف
-                  </span>
-                  <span className="text-2xs text-slate-400">تنبيه تأخر (و.م.ع.ن-02-02)</span>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/procedures/deduction-hours" className="group">
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-rose-500 hover:shadow-md transition-all flex flex-col items-center text-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 group-hover:bg-rose-600 group-hover:text-white transition-colors flex items-center justify-center">
-                  <Zap className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    إصدار قرار حسم
-                  </span>
-                  <span className="text-2xs text-slate-400">مجموع الساعات (نموذج 19)</span>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/teachers" className="group">
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-teal-500 hover:shadow-md transition-all flex flex-col items-center text-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 group-hover:bg-teal-600 group-hover:text-white transition-colors flex items-center justify-center">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    كشف وسجل المعلمات
-                  </span>
-                  <span className="text-2xs text-slate-400">ملف 360° والكادر المدرسي</span>
-                </div>
-              </div>
-            </Link>
-
-            <Link href="/procedures/list" className="group">
-              <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs hover:border-teal-500 hover:shadow-md transition-all flex flex-col items-center text-center gap-2">
-                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 group-hover:bg-slate-800 group-hover:text-white transition-colors flex items-center justify-center">
-                  <ClipboardList className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-slate-800 block">
-                    سجل الإجراءات الموحد
-                  </span>
-                  <span className="text-2xs text-slate-400">أرشيف كافة القرارات الصادرة</span>
-                </div>
-              </div>
+            <Link
+              href="/procedures/list"
+              className="text-[11px] font-bold text-teal-700 hover:text-teal-900 hover:underline shrink-0"
+            >
+              سجل الإجراءات الشامل ←
             </Link>
           </div>
-        </section>
+        )}
 
-        {/* Section 4: Analytics & Visualizations */}
-        <section aria-labelledby="analytics-heading" className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 id="analytics-heading" className="text-base font-bold text-slate-800">
-                التحليلات البيانية لحالات الغياب والتأخر
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                متابعة اتجاهات الغياب وتوزيع أسبابه ومقارنة التخصصات
-              </p>
-            </div>
-          </div>
+        {/* Section 3: Navigation Quick Links Bar (شريط مختصر يربط بأهم الأقسام بدون بطاقات ضخمة) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold text-slate-600">
+          <span className="text-slate-400 text-[11px] font-medium shrink-0 ml-1">وصول مباشر:</span>
+          <Link
+            href="/procedures/absence"
+            className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 hover:border-teal-500 hover:text-teal-700 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <FileText className="w-3.5 h-3.5 text-teal-600" />
+            <span>مساءلة الغياب (نموذج 20)</span>
+          </Link>
+          <Link
+            href="/procedures/delay-notice"
+            className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 hover:border-amber-500 hover:text-amber-700 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <Clock className="w-3.5 h-3.5 text-amber-600" />
+            <span>تنبيه التأخر (و.م.ع.ن - 02 - 02)</span>
+          </Link>
+          <Link
+            href="/procedures/deduction-hours"
+            className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 hover:border-rose-500 hover:text-rose-700 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <Zap className="w-3.5 h-3.5 text-rose-600" />
+            <span>قرار حسم الساعات (نموذج 19)</span>
+          </Link>
+          <Link
+            href="/teachers"
+            className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 hover:border-teal-500 hover:text-teal-700 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <Users className="w-3.5 h-3.5 text-slate-600" />
+            <span>سجل المعلمات والكادر</span>
+          </Link>
+          <Link
+            href="/procedures/list"
+            className="px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 hover:border-slate-400 hover:text-slate-900 transition-colors shadow-2xs shrink-0 flex items-center gap-1.5"
+          >
+            <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
+            <span>سجل العمليات الموحد</span>
+          </Link>
+        </div>
 
-          <AbsenceCharts />
-        </section>
-
-        {/* Section 5: Recent Activity & Absence Procedures Table */}
-        <section className="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-          {/* Section Header */}
-          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-slate-900">
-                  سجل المساءلات والإجراءات الإدارية الحديثة
-                </h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
-                  محدث لحظياً
+        {/* Section 4: Workspace Tabs (سجل الإجراءات والعمليات مقابل التحليلات) */}
+        <div className="space-y-4 pt-1">
+          {/* Tab Switcher */}
+          <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setActiveTab("records")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer",
+                  activeTab === "records"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                <ClipboardList className="w-3.5 h-3.5 text-teal-600" />
+                <span>سجل المساءلات والعمليات الحديثة</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-100 text-slate-600">
+                  {absenceRecords.filter((r) => !r.isArchived).length}
                 </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
-                عرض مباشر لآخر المساءلات المسجلة مع إمكانية تصدير استمارة مساءلة الغياب الرسمية
-              </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("analytics")}
+                className={cn(
+                  "flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer",
+                  activeTab === "analytics"
+                    ? "bg-white text-slate-900 shadow-xs"
+                    : "text-slate-500 hover:text-slate-800"
+                )}
+              >
+                <TrendingUp className="w-3.5 h-3.5 text-indigo-600" />
+                <span>التحليلات والرسوم البيانية</span>
+              </button>
             </div>
+
+            <div className="hidden sm:flex items-center gap-2">
+              <Link
+                href="/procedures/list"
+                className="text-xs text-slate-400 hover:text-teal-700 transition-colors font-medium flex items-center gap-1"
+              >
+                <span>فتح السجل الإداري الشامل</span>
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Tab Content: Analytics */}
+          {activeTab === "analytics" && (
+            <motion.section
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              aria-labelledby="analytics-heading"
+              className="space-y-3"
+            >
+              <AbsenceCharts />
+            </motion.section>
+          )}
+
+          {/* Tab Content: Recent Activity Table */}
+          {activeTab === "records" && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <section className="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
+                {/* Section Header */}
+                <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/40">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                        أحدث إجراءات ومساءلات الغياب
+                      </h3>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                        محدث لحظياً
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      إدارة مباشرة لآخر المساءلات مع إمكانية تصدير استمارة المساءلة الرسمية (نموذج 20) بنقرة واحدة
+                    </p>
+                  </div>
 
             <div className="flex items-center gap-2">
               <Link href="/procedures/absence">
@@ -1121,7 +1162,10 @@ export default function DashboardPage() {
             </Link>
           </div>
         </section>
-      </main>
+      </motion.div>
+    )}
+  </div>
+</main>
 
       {/* Teacher Profile Modal */}
       {selectedTeacherForProfile && (
