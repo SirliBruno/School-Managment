@@ -1,0 +1,838 @@
+"use client";
+
+import React, { useState, useMemo, useEffect } from "react";
+import {
+  FileText,
+  Calendar,
+  Filter,
+  Printer,
+  Eye,
+  RotateCcw,
+  CheckCircle2,
+  Clock,
+  User,
+  School,
+  AlertTriangle,
+  History,
+  Layers,
+  ChevronLeft,
+  Search,
+  Sparkles,
+  Download,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useTeachers } from "@/context/TeacherContext";
+import { useAuth } from "@/context/AuthContext";
+import { ReportType, ReportFilterOptions, ReportHistoryItem } from "@/types/report";
+import { generateReportData, ReportGeneratedData } from "@/lib/reportsEngine";
+import { printReportPdf } from "@/lib/reportPdfService";
+import { getSaudiToday } from "@/lib/timeUtils";
+import { cn } from "@/lib/utils";
+
+interface ReportCardDef {
+  type: ReportType;
+  title: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge: string;
+  accentColor: string;
+}
+
+const REPORT_CARDS: ReportCardDef[] = [
+  {
+    type: "absence_summary",
+    title: "حصر الغياب الرسمي",
+    description: "حصر شامل لغياب المعلمات خلال فترة محددة أو شهر معين مع تصنيف الأعذار والملاحظات الإدارية.",
+    icon: Calendar,
+    badge: "شهري / فترات",
+    accentColor: "border-teal-500 text-teal-600 bg-teal-50",
+  },
+  {
+    type: "delay_departure_summary",
+    title: "حصر التأخر والانصراف المبكر",
+    description: "رصد دقائق التأخر الصباحي والخروج المبكر، وتتبع حالات اعتماد الأعذار وقرارات المديرة.",
+    icon: Clock,
+    badge: "دقائق وساعات",
+    accentColor: "border-amber-500 text-amber-600 bg-amber-50",
+  },
+  {
+    type: "deduction_decisions_summary",
+    title: "حصر قرارات الحسم",
+    description: "سجل قرارات الحسم الإدارية (نموذج 19) الناتجة عن بلوغ نصاب التأخر، وحصر الأيام والدقائق المرحلة.",
+    icon: AlertTriangle,
+    badge: "قرارات وزارية",
+    accentColor: "border-rose-500 text-rose-600 bg-rose-50",
+  },
+  {
+    type: "teacher_detailed_record",
+    title: "سجل معلمة تفصيلي",
+    description: "سجل إداري تراكمي شامل لمعلمة محددة يجمع كل الغيابات، التأخرات، وقرارات الحسم منذ بداية العام.",
+    icon: User,
+    badge: "ملف إداري فردي",
+    accentColor: "border-indigo-500 text-indigo-600 bg-indigo-50",
+  },
+  {
+    type: "school_comprehensive",
+    title: "التقرير الشامل للمدرسة",
+    description: "تقرير إداري شامل لمديرة المدرسة يجمع المؤشرات العامة لجميع المعلمات ومستوى الانضباط.",
+    icon: School,
+    badge: "تقرير القائدة",
+    accentColor: "border-emerald-500 text-emerald-600 bg-emerald-50",
+  },
+  {
+    type: "custom_period",
+    title: "تقرير فترة زمنية مخصص",
+    description: "استخراج حصر مخصص يحدده المستخدم بتاريخ بداية ونهاية مع تصفيات دقيقة حسب التخصص وحالة العمل.",
+    icon: Layers,
+    badge: "مخصص ومرن",
+    accentColor: "border-sky-500 text-sky-600 bg-sky-50",
+  },
+];
+
+const LOCAL_STORAGE_HISTORY_KEY = "admin_school_report_history_v1";
+
+export default function ReportsCenterPage() {
+  const { user } = useAuth();
+  const {
+    teachers,
+    absenceRecords,
+    delayNotices,
+    deductionDecisions,
+    isLoading: isDataLoading,
+  } = useTeachers();
+
+  const [activeTab, setActiveTab] = useState<"builder" | "history">("builder");
+  const [selectedType, setSelectedType] = useState<ReportType>("absence_summary");
+  const [step, setStep] = useState<1 | 2 | 3>(1); // 1: Select Type, 2: Filters, 3: Preview & Print
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+
+  // Filters State
+  const [filters, setFilters] = useState<ReportFilterOptions>({
+    month: "all",
+    year: "2026",
+    startDate: "",
+    endDate: "",
+    teacherId: "all",
+    specialty: "all",
+    employmentStatus: "all",
+    status: "all",
+  });
+
+  // Report History State
+  const [historyItems, setHistoryItems] = useState<ReportHistoryItem[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_HISTORY_KEY);
+      if (stored) {
+        setHistoryItems(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error("Failed to read report history:", e);
+    }
+  }, []);
+
+  const saveToHistory = (item: ReportHistoryItem) => {
+    setHistoryItems((prev) => {
+      const updated = [item, ...prev].slice(0, 30); // keep last 30
+      try {
+        localStorage.setItem(LOCAL_STORAGE_HISTORY_KEY, JSON.stringify(updated));
+      } catch (err) {
+        console.error("Failed to persist report history:", err);
+      }
+      return updated;
+    });
+  };
+
+  // Specialties list
+  const specialties = useMemo(() => {
+    const set = new Set<string>();
+    teachers.forEach((t) => {
+      if (t.specialty) set.add(t.specialty);
+    });
+    return Array.from(set);
+  }, [teachers]);
+
+  // Selected report title
+  const currentCard = useMemo(() => {
+    return REPORT_CARDS.find((c) => c.type === selectedType) || REPORT_CARDS[0];
+  }, [selectedType]);
+
+  // Generated Report Data
+  const reportData = useMemo<ReportGeneratedData | null>(() => {
+    if (step < 2) return null;
+    return generateReportData(
+      selectedType,
+      filters,
+      teachers,
+      absenceRecords,
+      delayNotices,
+      deductionDecisions,
+      user?.fullName || "وكيلة الشؤون التعليمية"
+    );
+  }, [
+    selectedType,
+    filters,
+    teachers,
+    absenceRecords,
+    delayNotices,
+    deductionDecisions,
+    user?.fullName,
+    step,
+  ]);
+
+  const handleStartBuilder = (type: ReportType) => {
+    setSelectedType(type);
+    if (type === "teacher_detailed_record" && filters.teacherId === "all" && teachers.length > 0) {
+      setFilters((prev) => ({ ...prev, teacherId: teachers[0].id }));
+    }
+    setStep(2);
+  };
+
+  const handleProceedToPreview = () => {
+    setIsGenerating(true);
+    setGenerationProgress(20);
+
+    const timer1 = setTimeout(() => setGenerationProgress(65), 150);
+    const timer2 = setTimeout(() => {
+      setGenerationProgress(100);
+      setIsGenerating(false);
+      setStep(3);
+
+      // Record in history
+      if (reportData) {
+        saveToHistory({
+          id: `rep_${Date.now()}`,
+          reportType: selectedType,
+          reportTitle: reportData.payload.reportTitle,
+          createdByName: user?.fullName || "وكيلة الشؤون التعليمية",
+          createdAt: new Date().toISOString(),
+          filters: { ...filters },
+          retentionPeriod: "عام دراسي كامل",
+          summaryStats: reportData.summaryHighlights.reduce((acc, curr) => {
+            acc[curr.label] = curr.value;
+            return acc;
+          }, {} as Record<string, string | number>),
+        });
+      }
+    }, 380);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  };
+
+  const handlePrintPdf = () => {
+    if (!reportData) return;
+    printReportPdf(reportData.payload);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50/60 p-4 md:p-8 space-y-6 max-w-7xl mx-auto" dir="rtl">
+      {/* Top Banner Header */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#137a85] text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>نظام الحصر والتوثيق الحكومي الموحد</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+            مركز التقارير والحصر الإداري
+          </h1>
+          <p className="text-sm text-slate-600 max-w-2xl">
+            إنشاء وطباعة التقارير الرسمية المعتمدة لبيانات الغياب، تنبيهات التأخر، وقرارات الحسم بصيغة PDF فورية للرفع والأرشفة المدرسية.
+          </p>
+        </div>
+
+        {/* Tab Toggle */}
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 self-start md:self-auto">
+          <button
+            type="button"
+            onClick={() => setActiveTab("builder")}
+            className={cn(
+              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              activeTab === "builder"
+                ? "bg-white text-[#137a85] shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
+            )}
+          >
+            <Layers className="w-4 h-4" />
+            <span>منشئ التقارير</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={cn(
+              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer",
+              activeTab === "history"
+                ? "bg-white text-[#137a85] shadow-xs"
+                : "text-slate-600 hover:text-slate-900"
+            )}
+          >
+            <History className="w-4 h-4" />
+            <span>سجل التقارير السابقة</span>
+            {historyItems.length > 0 && (
+              <span className="w-5 h-5 rounded-full bg-teal-100 text-[#137a85] text-[10px] flex items-center justify-center font-mono font-bold">
+                {historyItems.length}
+              </span>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      {activeTab === "history" ? (
+        /* History View */
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-4">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">سجل التقارير المستخرجة</h2>
+              <p className="text-xs text-slate-500">
+                قائمة بالتقارير والحصريات التي تم إنشاؤها مؤخراً مع إمكانية إعادة التوليد والطباعة
+              </p>
+            </div>
+            {historyItems.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (confirm("هل تريد مسح سجل التقارير السابقة؟")) {
+                    localStorage.removeItem(LOCAL_STORAGE_HISTORY_KEY);
+                    setHistoryItems([]);
+                  }
+                }}
+                className="text-xs text-rose-600 hover:text-rose-700 font-bold px-3 py-1.5 rounded-lg border border-rose-200 hover:bg-rose-50 transition-colors"
+              >
+                مسح السجل
+              </button>
+            )}
+          </div>
+
+          {historyItems.length === 0 ? (
+            <div className="text-center py-12 text-slate-500 space-y-3">
+              <History className="w-12 h-12 text-slate-300 mx-auto" />
+              <p className="font-bold text-sm">لا توجد تقارير سابقة محفوظة حتى الآن</p>
+              <p className="text-xs text-slate-400">
+                عند إنشاء أي تقرير من منشئ التقارير، سيتم توثيقه تلقائياً هنا للرجوع إليه.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {historyItems.map((item) => (
+                <div
+                  key={item.id}
+                  className="py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 hover:bg-slate-50/70 p-2 rounded-xl transition-colors"
+                >
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-slate-900 text-sm">{item.reportTitle}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+                        {item.retentionPeriod}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-slate-500">
+                      <span>أنشأه: {item.createdByName}</span>
+                      <span>الوقت: {new Date(item.createdAt).toLocaleString("ar-SA")}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedType(item.reportType);
+                      setFilters(item.filters);
+                      setStep(3);
+                      setActiveTab("builder");
+                    }}
+                    className="self-start md:self-auto px-3.5 py-1.5 rounded-lg bg-teal-50 hover:bg-teal-100 text-[#137a85] text-xs font-bold border border-teal-200 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>إعادة فتح ومعاينة</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Report Builder Flow */
+        <div className="space-y-6">
+          {/* Step Indicator */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs">
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className={cn(
+                  "p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer",
+                  step === 1
+                    ? "bg-[#137a85] text-white border-[#137a85] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                )}
+              >
+                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">1</span>
+                <span>اختيار نوع التقرير</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => selectedType && setStep(2)}
+                className={cn(
+                  "p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer",
+                  step === 2
+                    ? "bg-[#137a85] text-white border-[#137a85] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                )}
+              >
+                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">2</span>
+                <span>تحديد الفلاتر والفترة</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={step < 2}
+                onClick={() => handleProceedToPreview()}
+                className={cn(
+                  "p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer",
+                  step === 3
+                    ? "bg-[#137a85] text-white border-[#137a85] shadow-xs"
+                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                )}
+              >
+                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">3</span>
+                <span>المعاينة وتصدير PDF</span>
+              </button>
+            </div>
+          </div>
+
+          {/* STEP 1: Select Report Type */}
+          {step === 1 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {REPORT_CARDS.map((card) => {
+                const IconComponent = card.icon;
+                const isSelected = selectedType === card.type;
+
+                return (
+                  <div
+                    key={card.type}
+                    onClick={() => handleStartBuilder(card.type)}
+                    className={cn(
+                      "bg-white border rounded-2xl p-5 shadow-2xs transition-all cursor-pointer flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5",
+                      isSelected
+                        ? "border-[#137a85] ring-2 ring-[#137a85]/20 bg-teal-50/20"
+                        : "border-slate-200/90 hover:border-slate-300"
+                    )}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className={cn("p-2.5 rounded-xl border", card.accentColor)}>
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                          {card.badge}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 mb-1">{card.title}</h3>
+                        <p className="text-xs text-slate-600 leading-relaxed">{card.description}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-xs text-slate-500 font-medium">جاهز للتوليد الفوري</span>
+                      <button
+                        type="button"
+                        className="px-3 py-1.5 rounded-lg bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <span>إنشاء التقرير</span>
+                        <ChevronLeft className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* STEP 2: Configure Filters */}
+          {step === 2 && (
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+                <div>
+                  <div className="text-xs text-[#137a85] font-bold">الخطوة الثانية: خيارات التقرير</div>
+                  <h2 className="text-xl font-black text-slate-900">{currentCard.title}</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-xs text-slate-500 hover:text-slate-800 font-medium flex items-center gap-1 self-start sm:self-auto"
+                >
+                  <ChevronLeft className="w-4 h-4 rotate-180" />
+                  <span>تغيير نوع التقرير</span>
+                </button>
+              </div>
+
+              {/* Filters Form */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-bold text-slate-700">
+                {/* Specific Teacher (for teacher_detailed_record or others) */}
+                {(selectedType === "teacher_detailed_record" ||
+                  selectedType === "absence_summary" ||
+                  selectedType === "delay_departure_summary" ||
+                  selectedType === "deduction_decisions_summary") && (
+                  <div className="space-y-1.5">
+                    <label className="text-slate-700">
+                      {selectedType === "teacher_detailed_record" ? "المعلمة المعنية (إلزامي)" : "تحديد معلمة معينة"}
+                    </label>
+                    <select
+                      value={filters.teacherId}
+                      onChange={(e) => setFilters({ ...filters, teacherId: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                    >
+                      {selectedType !== "teacher_detailed_record" && (
+                        <option value="all">جميع المعلمات (حصر عام)</option>
+                      )}
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.fullName} — {t.specialty || "عام"}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Period Mode */}
+                <div className="space-y-1.5">
+                  <label className="text-slate-700">الشهر (ميلادي)</label>
+                  <select
+                    value={filters.month}
+                    onChange={(e) => setFilters({ ...filters, month: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                  >
+                    <option value="all">كامل العام الدراسي</option>
+                    <option value="01">يناير (01)</option>
+                    <option value="02">فبراير (02)</option>
+                    <option value="03">مارس (03)</option>
+                    <option value="04">أبريل (04)</option>
+                    <option value="05">مايو (05)</option>
+                    <option value="06">يونيو (06)</option>
+                    <option value="07">يوليو (07)</option>
+                    <option value="08">أغسطس (08)</option>
+                    <option value="09">سبتمبر (09)</option>
+                    <option value="10">أكتوبر (10)</option>
+                    <option value="11">نوفمبر (11)</option>
+                    <option value="12">ديسمبر (12)</option>
+                  </select>
+                </div>
+
+                {/* Year */}
+                <div className="space-y-1.5">
+                  <label className="text-slate-700">السنة</label>
+                  <select
+                    value={filters.year}
+                    onChange={(e) => setFilters({ ...filters, year: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                  >
+                    <option value="all">جميع السنوات</option>
+                    <option value="2026">2026 م</option>
+                    <option value="2025">2025 م</option>
+                    <option value="2024">2024 م</option>
+                  </select>
+                </div>
+
+                {/* Start Date */}
+                <div className="space-y-1.5">
+                  <label className="text-slate-700">من تاريخ (اختياري)</label>
+                  <input
+                    type="date"
+                    value={filters.startDate || ""}
+                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                  />
+                </div>
+
+                {/* End Date */}
+                <div className="space-y-1.5">
+                  <label className="text-slate-700">إلى تاريخ (اختياري)</label>
+                  <input
+                    type="date"
+                    value={filters.endDate || ""}
+                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                  />
+                </div>
+
+                {/* Specialty Filter */}
+                {selectedType !== "teacher_detailed_record" && (
+                  <div className="space-y-1.5">
+                    <label className="text-slate-700">التخصص الدراسي</label>
+                    <select
+                      value={filters.specialty}
+                      onChange={(e) => setFilters({ ...filters, specialty: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                    >
+                      <option value="all">جميع التخصصات</option>
+                      {specialties.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Employment Status */}
+                {selectedType !== "teacher_detailed_record" && (
+                  <div className="space-y-1.5">
+                    <label className="text-slate-700">حالة التوظيف</label>
+                    <select
+                      value={filters.employmentStatus}
+                      onChange={(e) => setFilters({ ...filters, employmentStatus: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                    >
+                      <option value="all">جميع الحالات</option>
+                      <option value="دائم">دائم / رسمي</option>
+                      <option value="عقد">عقد</option>
+                    </select>
+                  </div>
+                )}
+
+                {/* Status for delay notice */}
+                {selectedType === "delay_departure_summary" && (
+                  <div className="space-y-1.5">
+                    <label className="text-slate-700">حالة التنبيه</label>
+                    <select
+                      value={filters.status}
+                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                    >
+                      <option value="all">جميع الحالات</option>
+                      <option value="completed">مكتمل وموثق</option>
+                      <option value="pending_director">بانتظار قرار المديرة</option>
+                      <option value="pending_teacher">بانتظار رد المعلمة</option>
+                    </select>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFilters({
+                      month: "all",
+                      year: "2026",
+                      startDate: "",
+                      endDate: "",
+                      teacherId: selectedType === "teacher_detailed_record" ? teachers[0]?.id : "all",
+                      specialty: "all",
+                      employmentStatus: "all",
+                      status: "all",
+                    })
+                  }
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                >
+                  إعادة تعيين الفلاتر
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleProceedToPreview}
+                  disabled={isGenerating}
+                  className="px-6 py-2.5 rounded-xl bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-black transition-all shadow-2xs hover:shadow-xs flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>معاينة التقرير ومتابعة التصدير</span>
+                </button>
+              </div>
+
+              {/* Progress bar during generation */}
+              {isGenerating && (
+                <div className="space-y-1 pt-2">
+                  <div className="flex justify-between text-[11px] text-slate-500 font-bold">
+                    <span>جاري معالجة وتجميع بيانات التقرير...</span>
+                    <span>{generationProgress}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-[#137a85] h-2 rounded-full transition-all duration-200"
+                      style={{ width: `${generationProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* STEP 3: Preview & Print */}
+          {step === 3 && reportData && (
+            <div className="space-y-6">
+              {/* Control Bar */}
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-700 transition-colors cursor-pointer"
+                    title="العودة لتعديل الفلاتر"
+                  >
+                    <ChevronLeft className="w-4 h-4 rotate-180" />
+                  </button>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      {reportData.payload.reportTitle}
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      {reportData.rawRowsCount} سجل مطابق • رمز النموذج: {reportData.payload.reportCode}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    className="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+                  >
+                    تعديل الفلاتر
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handlePrintPdf}
+                    className="px-5 py-2.5 rounded-xl bg-[#137a85] hover:bg-[#0f646d] text-white text-xs font-black shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>تصدير وطباعة PDF الرسمي</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview Container (Simulating Official A4) */}
+              <div className="bg-white border border-slate-300 rounded-2xl p-6 md:p-10 shadow-md max-w-5xl mx-auto overflow-x-auto space-y-6">
+                {/* Official Header */}
+                <div className="border-b-2 border-[#0f766e] pb-3 flex justify-between items-center text-xs">
+                  <div className="font-bold space-y-0.5 text-slate-800">
+                    <div>المملكة العربية السعودية</div>
+                    <div>وزارة التعليم</div>
+                    <div>الإدارة العامة للتعليم بمنطقة مكة المكرمة</div>
+                    <div>{reportData.payload.schoolName}</div>
+                  </div>
+                  <div className="text-center font-bold text-slate-700">
+                    <div className="text-sm font-black text-[#0f766e]">وزارة التعليم</div>
+                    <div className="text-[10px] text-slate-500">Ministry of Education</div>
+                  </div>
+                  <div className="text-left font-bold text-slate-600 space-y-0.5" dir="ltr">
+                    <div>تاريخ الإصدار: {reportData.payload.dateFormatted}</div>
+                    <div>الفترة: {reportData.payload.periodText}</div>
+                    <div>وثيقة إدارية رسمية</div>
+                  </div>
+                </div>
+
+                {/* Title Banner */}
+                <div className="bg-teal-50 border border-teal-600 rounded-lg p-2.5 flex justify-between items-center">
+                  <span className="font-black text-teal-900 text-sm">
+                    {reportData.payload.reportTitle}
+                  </span>
+                  <span className="font-mono text-xs font-bold text-teal-700" dir="ltr">
+                    {reportData.payload.reportCode}
+                  </span>
+                </div>
+
+                {/* Teacher Profile if exists */}
+                {reportData.payload.teacherDetailsCard && (
+                  <div className="bg-slate-50 border border-slate-300 rounded-xl p-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-slate-500 block">اسم المعلمة:</span>
+                      <strong className="text-slate-900">{reportData.payload.teacherDetailsCard.name}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">رقم الهوية:</span>
+                      <strong className="text-slate-900">{reportData.payload.teacherDetailsCard.nationalId}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">التخصص:</span>
+                      <strong className="text-slate-900">{reportData.payload.teacherDetailsCard.specialty}</strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block">المسمى الوظيفي:</span>
+                      <strong className="text-slate-900">{reportData.payload.teacherDetailsCard.jobTitle}</strong>
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary Cards */}
+                {reportData.payload.summaryCards.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {reportData.payload.summaryCards.map((card, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-slate-50 border border-slate-200 border-t-2 border-t-[#0f766e] rounded-lg p-3 text-center"
+                      >
+                        <div className="text-base font-black text-[#0f766e]">{card.value}</div>
+                        <div className="text-[11px] text-slate-600 font-bold mt-0.5">{card.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Data Table */}
+                <div className="border border-[#0f766e] rounded-lg overflow-hidden">
+                  <table className="w-full text-xs text-center border-collapse">
+                    <thead>
+                      <tr className="bg-[#0f766e] text-white font-bold">
+                        {reportData.payload.tableHeaders.map((head, i) => (
+                          <th key={i} className="p-2 border border-teal-600">
+                            {head}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      {reportData.payload.tableRows.length === 0 ? (
+                        <tr>
+                          <td
+                            colSpan={reportData.payload.tableHeaders.length}
+                            className="p-8 text-center text-slate-500 font-medium"
+                          >
+                            لا توجد بيانات مطابقة لمعايير البحث في هذه الفترة.
+                          </td>
+                        </tr>
+                      ) : (
+                        reportData.payload.tableRows.map((row, rowIdx) => (
+                          <tr key={rowIdx} className="hover:bg-teal-50/30">
+                            {row.map((cell, cellIdx) => (
+                              <td key={cellIdx} className="p-2 border border-slate-200 text-slate-800">
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Official Signatures */}
+                <div className="pt-6 border-t border-slate-200 flex justify-between items-end text-xs text-center">
+                  <div className="space-y-6">
+                    <span className="font-bold text-[#0f766e] block">وكيلة الشؤون التعليمية والمدرسية</span>
+                    <span className="font-bold text-slate-800 block">{reportData.payload.creatorName}</span>
+                  </div>
+                  <div className="w-24 h-24 border border-dashed border-slate-300 rounded-full flex items-center justify-center text-[10px] text-slate-400">
+                    الختم الإداري
+                  </div>
+                  <div className="space-y-6">
+                    <span className="font-bold text-[#0f766e] block">مديرة المدرسة / القائدة</span>
+                    <span className="font-bold text-slate-800 block">{reportData.payload.principalName}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

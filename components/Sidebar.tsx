@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Archive,
   HelpCircle,
+  FileBarChart,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -84,6 +85,13 @@ export const NAV_ITEMS: NavItem[] = [
         href: "/procedures/list",
       },
     ],
+  },
+  {
+    id: "reports",
+    label: "مركز التقارير والحصر",
+    icon: FileBarChart,
+    href: "/reports",
+    hasChildren: false,
   },
   {
     id: "archive",
