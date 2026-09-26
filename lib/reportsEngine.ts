@@ -7,6 +7,12 @@ import {
 import { ReportType, ReportFilterOptions } from "@/types/report";
 import { PdfReportPayload } from "@/lib/reportPdfService";
 import { getSaudiToday } from "@/lib/timeUtils";
+import {
+  getTeacherDelaySummary,
+  calculateNoticeDurationMinutes,
+  getAllSettledNoticeIds,
+} from "@/lib/delayDeductionIntegration";
+import { MINUTES_PER_WORK_DAY, MINUTES_PER_HOUR } from "@/lib/deductionCalculator";
 
 export interface ReportGeneratedData {
   payload: PdfReportPayload;
@@ -57,9 +63,15 @@ export function generateReportData(
   const schoolName = "الثانوية الخامسة مسارات";
   const principalName = "منى محمد الغامدي";
 
-  // Filter teachers map
+  // استبعاد المعلمات والسجلات المؤرشفة لضمان دقة البيانات 100%
+  const activeTeachers = teachers.filter((t) => !t.isArchived);
+  const activeAbsences = absenceRecords.filter((a) => !a.isArchived);
+  const activeDelays = delayNotices.filter((d) => !d.isArchived);
+  const activeDeductions = deductionDecisions.filter((dd) => !dd.isArchived);
+
+  // الخريطة المرجعية للمعلمات النشطات
   const teachersMap = new Map<string, Teacher>();
-  teachers.forEach((t) => teachersMap.set(t.id, t));
+  activeTeachers.forEach((t) => teachersMap.set(t.id, t));
 
   // Determine period text
   let periodText = "كامل السجلات المتاحة";
@@ -71,7 +83,7 @@ export function generateReportData(
 
   // 1. تقرير حصر الغياب الشهري / خلال فترة
   if (reportType === "absence_summary" || reportType === "custom_period") {
-    let filteredAbsences = absenceRecords.filter((rec) => {
+    const filteredAbsences = activeAbsences.filter((rec) => {
       if (
         !filterByDateRange(
           rec.date,
@@ -103,11 +115,10 @@ export function generateReportData(
       return true;
     });
 
-    // Counts
     const totalAbsenceDays = filteredAbsences.length;
     const uniqueTeachersCount = new Set(filteredAbsences.map((a) => a.teacherId)).size;
 
-    // Most common absence type
+    // الأكثر تكراراً
     const typeCounts: Record<string, number> = {};
     filteredAbsences.forEach((a) => {
       const type = a.type || "غير محدد";
@@ -124,8 +135,8 @@ export function generateReportData(
     });
 
     const summaryCards = [
-      { label: "إجمالي أيام الغياب", value: `${totalAbsenceDays} يوم` },
-      { label: "عدد المعلمات المتغيبات", value: `${uniqueTeachersCount} معلمة` },
+      { label: "إجمالي الغيابات", value: `${totalAbsenceDays} يوم` },
+      { label: "عدد المعلمات", value: `${uniqueTeachersCount} معلمة` },
       { label: "أكثر أنواع الغياب", value: topType },
     ];
 
@@ -133,28 +144,31 @@ export function generateReportData(
       "#",
       "اسم المعلمة",
       "التخصص",
-      "التاريخ",
+      "عدد أيام الغياب",
       "نوع الغياب",
-      "سبب الغياب",
-      "ملاحظات الإدارة",
+      "التواريخ",
+      "حالة العذر",
+      "الملاحظات",
     ];
 
     const tableRows = filteredAbsences.map((rec, idx) => {
       const t = teachersMap.get(rec.teacherId);
+      const excuseState = rec.reason ? "عذر مقدم" : "غياب غير مبرر";
       return [
         idx + 1,
         rec.teacherName || t?.fullName || "غير محدد",
         t?.specialty || rec.specialty || "عام",
-        rec.date,
+        1,
         rec.type || "مرضي",
-        rec.reason || "—",
-        rec.notes || "—",
+        rec.date,
+        excuseState,
+        rec.notes || rec.reason || "—",
       ];
     });
 
     return {
       payload: {
-        reportTitle: "تقرير حصر غياب المعلمات الرسمي",
+        reportTitle: "تقرير حصر غياب المعلمات خلال فترة",
         reportCode: "تق-غ-٠١",
         schoolName,
         principalName,
@@ -167,25 +181,26 @@ export function generateReportData(
       },
       rawRowsCount: filteredAbsences.length,
       summaryHighlights: [
-        { label: "إجمالي الغياب", value: totalAbsenceDays },
-        { label: "المعلمات", value: uniqueTeachersCount },
+        { label: "إجمالي الغيابات", value: totalAbsenceDays },
+        { label: "عدد المعلمات", value: uniqueTeachersCount },
+        { label: "النوع الشائع", value: topType },
       ],
     };
   }
 
-  // 2. تقرير سجل معلمة تفصيلي
+  // 2. سجل المعلمة التفصيلي
   if (reportType === "teacher_detailed_record") {
     const selectedTeacherId = filters.teacherId;
     const teacher =
-      teachers.find((t) => t.id === selectedTeacherId) || teachers[0];
+      activeTeachers.find((t) => t.id === selectedTeacherId) || activeTeachers[0];
 
-    const teacherAbsences = absenceRecords.filter(
+    const teacherAbsences = activeAbsences.filter(
       (a) => a.teacherId === teacher?.id
     );
-    const teacherDelays = delayNotices.filter(
+    const teacherDelays = activeDelays.filter(
       (d) => d.teacherId === teacher?.id
     );
-    const teacherDeductions = deductionDecisions.filter(
+    const teacherDeductions = activeDeductions.filter(
       (dd) => dd.teacherId === teacher?.id
     );
 
@@ -204,55 +219,73 @@ export function generateReportData(
         label: "إجمالي دقائق التأخر",
         value: `${totalMinutes} دقيقة (${(totalMinutes / 60).toFixed(1)} س)`,
       },
-      { label: "قرارات الحسم", value: `${teacherDeductions.length} قرار` },
-      { label: "أيام الحسم المعتمدة", value: `${totalDeductionDays} يوم` },
+      { label: "إجمالي أيام الحسم", value: `${totalDeductionDays} يوم` },
     ];
 
-    const tableHeaders = ["#", "البيان / الإجراء", "التاريخ", "التفاصيل والنوع", "الحالة / القرار"];
+    const tableHeaders = [
+      "#",
+      "القسم الإداري",
+      "التاريخ",
+      "البيان والتفاصيل",
+      "المرفقات / المدة",
+      "حالة الاعتماد / القرار",
+    ];
 
     const combinedRows: (string | number)[][] = [];
 
+    // قسم الغياب
     teacherAbsences.forEach((a, idx) => {
       combinedRows.push([
         idx + 1,
-        "غياب",
+        "الغياب",
         a.date,
         `${a.type}: ${a.reason || "بدون عذر"}`,
-        a.notes || "مسجل",
+        a.attachmentUrl ? "مرفق تقرير معتمد" : "لا يوجد مرفق",
+        a.notes ? `معتمد (${a.notes})` : "مسجل في المنظومة",
       ]);
     });
 
+    // قسم التأخر
     teacherDelays.forEach((d, idx) => {
+      let violationDesc = [];
+      if (d.violationDelayStart) violationDesc.push("تأخر صباحي");
+      if (d.violationEarlyDeparture) violationDesc.push("خروج مبكر");
+      if (d.violationAbsentDuring) violationDesc.push("خروج أثناء الدوام");
+      if (d.violationLeftSchool) violationDesc.push("انصراف من غير المدرسة");
+
       const decisionStr =
         d.directorOpinion === "accepted"
           ? "عذر مقبول"
           : d.directorOpinion === "rejected_with_deduction"
           ? "مرفوض - يحسم"
-          : "قيد المتابعة";
+          : "بانتظار قرار المديرة";
 
       combinedRows.push([
         teacherAbsences.length + idx + 1,
-        "تأخر / انصراف",
+        "التأخر والانصراف",
         d.noticeDate || d.createdAt?.slice(0, 10) || "—",
-        `${d.calculatedMinutes || 0} دقيقة (${d.calculatedDuration || "—"})`,
+        violationDesc.join(" + ") || "تأخر رسمي",
+        `${d.calculatedMinutes || 0} دقيقة`,
         decisionStr,
       ]);
     });
 
+    // قسم الحسم
     teacherDeductions.forEach((dd, idx) => {
       combinedRows.push([
         teacherAbsences.length + teacherDelays.length + idx + 1,
-        `قرار حسم (#${dd.decisionNumber})`,
+        "قرارات الحسم",
         dd.decisionDate,
-        `حسم ${dd.deductionDays} يوم مقابل تأخر ${dd.delayHours} س`,
-        "معتمد إدارياً",
+        `قرار رقم #${dd.decisionNumber} (تأخر ${dd.delayHours} س)`,
+        `مرحل: ${dd.remainderMinutes || 0} د`,
+        `حسم ${dd.deductionDays} يوم معتمد`,
       ]);
     });
 
     return {
       payload: {
-        reportTitle: `سجل الحصر الإداري للمعلمة: ${teacher?.fullName || ""}`,
-        reportCode: "تق-معلم-٠٤",
+        reportTitle: `سجل معلمة تفصيلي: ${teacher?.fullName || ""}`,
+        reportCode: "تق-معلمة-٠٤",
         schoolName,
         principalName,
         creatorName,
@@ -270,104 +303,123 @@ export function generateReportData(
       },
       rawRowsCount: combinedRows.length,
       summaryHighlights: [
-        { label: "الغيابات", value: teacherAbsences.length },
-        { label: "الدقائق", value: totalMinutes },
+        { label: "إجمالي الغياب", value: teacherAbsences.length },
+        { label: "دقائق التأخر", value: totalMinutes },
         { label: "أيام الحسم", value: totalDeductionDays },
       ],
     };
   }
 
-  // 3. تقرير حصر التأخر والانصراف المبكر
+  // 3. تقرير حصر التأخر والانصراف المبكر (Summary Report for Teachers)
   if (reportType === "delay_departure_summary") {
-    const filteredDelays = delayNotices.filter((notice) => {
-      const noticeDate = notice.noticeDate || notice.createdAt?.slice(0, 10);
-      if (
-        !filterByDateRange(
-          noticeDate,
-          filters.startDate,
-          filters.endDate,
-          filters.month,
-          filters.year
-        )
-      ) {
-        return false;
-      }
+    // حساب ملخصات التأخر الدقيقة لكل معلمة بالاعتماد على محرك الحسم والتكامل
+    const teachersSummaryList = activeTeachers
+      .filter((t) => {
+        if (filters.teacherId && filters.teacherId !== "all" && t.id !== filters.teacherId) {
+          return false;
+        }
+        if (filters.specialty && filters.specialty !== "all" && t.specialty !== filters.specialty) {
+          return false;
+        }
+        if (
+          filters.employmentStatus &&
+          filters.employmentStatus !== "all" &&
+          t.employmentStatus !== filters.employmentStatus
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .map((t) => {
+        // فحص التنبيهات المرتبطة بالفترة الزمنية المحددة
+        const tNotices = activeDelays.filter((n) => {
+          if (n.teacherId !== t.id) return false;
+          const noticeDate = n.noticeDate || n.createdAt?.slice(0, 10);
+          if (
+            !filterByDateRange(
+              noticeDate,
+              filters.startDate,
+              filters.endDate,
+              filters.month,
+              filters.year
+            )
+          ) {
+            return false;
+          }
+          if (filters.status && filters.status !== "all" && n.status !== filters.status) {
+            return false;
+          }
+          return true;
+        });
 
-      if (filters.teacherId && filters.teacherId !== "all" && notice.teacherId !== filters.teacherId) {
-        return false;
-      }
+        // الحصول على الملخص المالي والحسم الرسمي المتوافق مع محرك 420 دقيقة
+        const summary = getTeacherDelaySummary(t, tNotices, activeDeductions);
 
-      if (filters.status && filters.status !== "all" && notice.status !== filters.status) {
-        return false;
-      }
+        const totalMins = tNotices.reduce(
+          (acc, c) => acc + calculateNoticeDurationMinutes(c),
+          0
+        );
+        const totalHours = Math.round((totalMins / MINUTES_PER_HOUR) * 10) / 10;
+        const reachedDeduction = summary.status === "due_for_deduction";
 
-      return true;
-    });
+        let colorGrade = "طبيعي (Normal)";
+        if (summary.status === "due_for_deduction") {
+          colorGrade = "حرج (Critical)";
+        } else if (summary.status === "warning") {
+          colorGrade = "تحذير (Warning)";
+        }
 
-    const totalMinutes = filteredDelays.reduce(
-      (acc, curr) => acc + (curr.calculatedMinutes || 0),
-      0
-    );
-    const uniqueTeachers = new Set(filteredDelays.map((d) => d.teacherId)).size;
-    const completedCount = filteredDelays.filter(
-      (d) => d.status === "completed"
-    ).length;
+        return {
+          teacher: t,
+          noticesCount: tNotices.length,
+          totalMinutes: totalMins,
+          totalHours,
+          unsettledMinutes: summary.totalUnexcusedMinutes,
+          reachedDeduction,
+          statusLabel: colorGrade,
+          statusCode: summary.status,
+        };
+      })
+      .filter((row) => row.noticesCount > 0); // إظهار المعلمات اللاتي لديهن تأخر فقط
+
+    const totalDelays = teachersSummaryList.reduce((acc, c) => acc + c.noticesCount, 0);
+    const sumAllMinutes = teachersSummaryList.reduce((acc, c) => acc + c.totalMinutes, 0);
+    const criticalCount = teachersSummaryList.filter((r) => r.statusCode === "due_for_deduction").length;
+    const warningCount = teachersSummaryList.filter((r) => r.statusCode === "warning").length;
 
     const summaryCards = [
-      { label: "إجمالي التنبيهات", value: `${filteredDelays.length} تنبيه` },
+      { label: "المعلمات المتأخرات", value: `${teachersSummaryList.length} معلمة` },
+      { label: "إجمالي التنبيهات", value: `${totalDelays} تنبيه` },
       {
-        label: "إجمالي الدقائق",
-        value: `${totalMinutes} د (${(totalMinutes / 60).toFixed(1)} ساعة)`,
+        label: "إجمالي الساعات",
+        value: `${(sumAllMinutes / 60).toFixed(1)} س (${sumAllMinutes} د)`,
       },
-      { label: "المعلمات المسجلات", value: `${uniqueTeachers} معلمة` },
-      { label: "تنبيهات مكتملة", value: `${completedCount} تنبيه` },
+      { label: "حالات بلغت الحسم (حرجة)", value: `${criticalCount} حالة` },
     ];
 
     const tableHeaders = [
       "#",
       "اسم المعلمة",
-      "التاريخ",
-      "نوع المخالفة",
-      "المدة المحتسبة",
-      "حالة الإجراء",
-      "قرار المديرة",
+      "عدد التنبيهات",
+      "إجمالي الدقائق",
+      "إجمالي الساعات",
+      "حالة الرصيد والتسوية",
+      "هل وصلت للحسم؟",
     ];
 
-    const tableRows = filteredDelays.map((notice, idx) => {
-      const t = teachersMap.get(notice.teacherId);
-      let violationDesc = [];
-      if (notice.violationDelayStart) violationDesc.push("تأخر صباحي");
-      if (notice.violationEarlyDeparture) violationDesc.push("خروج مبكر");
-      if (notice.violationAbsentDuring) violationDesc.push("خروج أثناء الدوام");
-      if (notice.violationLeftSchool) violationDesc.push("انصراف من غير المدرسة");
-
-      const decisionStr =
-        notice.directorOpinion === "accepted"
-          ? "عذر مقبول"
-          : notice.directorOpinion === "rejected_with_deduction"
-          ? "مرفوض - يحسم"
-          : "بانتظار القرار";
-
-      const statusMap: Record<string, string> = {
-        pending_teacher: "بانتظار رد المعلمة",
-        pending_director: "بانتظار قرار المديرة",
-        completed: "مكتمل وموثق",
-      };
-
-      return [
-        idx + 1,
-        notice.teacherName || t?.fullName || "—",
-        notice.noticeDate || notice.createdAt?.slice(0, 10) || "—",
-        violationDesc.join(" + ") || "تأخر رسمي",
-        `${notice.calculatedMinutes || 0} دقيقة`,
-        statusMap[notice.status] || notice.status,
-        decisionStr,
-      ];
-    });
+    const tableRows = teachersSummaryList.map((row, idx) => [
+      idx + 1,
+      row.teacher.fullName,
+      row.noticesCount,
+      `${row.totalMinutes} دقيقة`,
+      `${row.totalHours} ساعة`,
+      row.statusLabel,
+      row.reachedDeduction ? "نعم (تجاوزت 420 دقيقة)" : "لا",
+    ]);
 
     return {
       payload: {
-        reportTitle: "تقرير حصر التأخر والانصراف المبكر",
+        reportTitle: "تقرير التأخر والانصراف المبكر (ملخص الأرصدة والحسم)",
         reportCode: "تق-تأخر-٠٢",
         schoolName,
         principalName,
@@ -378,17 +430,18 @@ export function generateReportData(
         tableHeaders,
         tableRows,
       },
-      rawRowsCount: filteredDelays.length,
+      rawRowsCount: teachersSummaryList.length,
       summaryHighlights: [
-        { label: "التنبيهات", value: filteredDelays.length },
-        { label: "إجمالي الساعات", value: (totalMinutes / 60).toFixed(1) },
+        { label: "المعلمات", value: teachersSummaryList.length },
+        { label: "التنبيهات", value: totalDelays },
+        { label: "حالات الحسم", value: criticalCount },
       ],
     };
   }
 
-  // 4. تقرير قرارات الحسم
+  // 4. تقرير قرارات الحسم (Deduction Decisions Report)
   if (reportType === "deduction_decisions_summary") {
-    const filteredDecisions = deductionDecisions.filter((dec) => {
+    const filteredDecisions = activeDeductions.filter((dec) => {
       if (
         !filterByDateRange(
           dec.decisionDate,
@@ -426,28 +479,35 @@ export function generateReportData(
     const tableHeaders = [
       "#",
       "رقم القرار",
-      "تاريخ القرار",
+      "التاريخ",
       "اسم المعلمة",
-      "رقم السجل المدني",
-      "ساعات التأخر",
+      "الهوية",
+      "سبب القرار",
+      "إجمالي دقائق التأخر",
       "أيام الحسم",
-      "الدقائق المتبقية",
+      "الدقائق المرحلة",
+      "حالة القرار",
     ];
 
-    const tableRows = filteredDecisions.map((dec, idx) => [
-      idx + 1,
-      dec.decisionNumber || `ق-${idx + 1}`,
-      dec.decisionDate,
-      dec.teacherName,
-      dec.civilId || "—",
-      `${dec.delayHours} س`,
-      `${dec.deductionDays} يوم`,
-      `${dec.remainderMinutes || 0} د`,
-    ]);
+    const tableRows = filteredDecisions.map((dec, idx) => {
+      const totalMins = (dec.delayHours || 0) * 60 + (dec.delayMinutes || 0);
+      return [
+        idx + 1,
+        dec.decisionNumber || `ق-${idx + 1}`,
+        dec.decisionDate,
+        dec.teacherName,
+        dec.civilId || "—",
+        "بلوغ نصاب ساعات التأخر (المادة 21)",
+        `${totalMins} د (${dec.delayHours} س)`,
+        `${dec.deductionDays} يوم`,
+        `${dec.remainderMinutes || 0} د`,
+        "معتمد رسمياً",
+      ];
+    });
 
     return {
       payload: {
-        reportTitle: "سجل حصر قرارات حسم ساعات التأخر",
+        reportTitle: "تقرير قرارات الحسم الرسمية (نموذج رقم 19)",
         reportCode: "تق-حسم-٠٣",
         schoolName,
         principalName,
@@ -460,34 +520,34 @@ export function generateReportData(
       },
       rawRowsCount: filteredDecisions.length,
       summaryHighlights: [
-        { label: "القرارات", value: filteredDecisions.length },
+        { label: "إجمالي القرارات", value: filteredDecisions.length },
         { label: "أيام الحسم", value: totalDays },
       ],
     };
   }
 
   // 5. التقرير الشامل للمدرسة (School Administrative Summary)
-  const totalAbsences = absenceRecords.length;
-  const totalDelays = delayNotices.length;
-  const totalDeductions = deductionDecisions.length;
-  const totalDeductionDays = deductionDecisions.reduce(
+  const totalAbsences = activeAbsences.length;
+  const totalDelays = activeDelays.length;
+  const totalDeductions = activeDeductions.length;
+  const totalDeductionDays = activeDeductions.reduce(
     (acc, c) => acc + (c.deductionDays || 0),
     0
   );
-  const totalDelayMinutes = delayNotices.reduce(
+  const totalDelayMinutes = activeDelays.reduce(
     (acc, c) => acc + (c.calculatedMinutes || 0),
     0
   );
 
   const summaryCards = [
-    { label: "هيئة التدريس", value: `${teachers.length} معلمة` },
-    { label: "إجمالي الغيابات", value: `${totalAbsences} حالة` },
+    { label: "عدد المعلمات", value: `${activeTeachers.length} معلمة` },
+    { label: "إجمالي الغياب", value: `${totalAbsences} يوم` },
     {
       label: "إجمالي التأخر",
       value: `${(totalDelayMinutes / 60).toFixed(1)} ساعة`,
     },
     {
-      label: "قرارات الحسم",
+      label: "إجمالي قرارات الحسم",
       value: `${totalDeductions} قرار (${totalDeductionDays} يوم)`,
     },
   ];
@@ -500,17 +560,17 @@ export function generateReportData(
     "تنبيهات التأخر",
     "دقائق التأخر",
     "قرارات الحسم",
-    "الحالة العامة",
+    "الحالة العامة ومستوى الانضباط",
   ];
 
-  const tableRows = teachers.map((teacher, idx) => {
-    const tAbsences = absenceRecords.filter((a) => a.teacherId === teacher.id).length;
-    const tDelays = delayNotices.filter((d) => d.teacherId === teacher.id);
+  const tableRows = activeTeachers.map((teacher, idx) => {
+    const tAbsences = activeAbsences.filter((a) => a.teacherId === teacher.id).length;
+    const tDelays = activeDelays.filter((d) => d.teacherId === teacher.id);
     const tDelayMinutes = tDelays.reduce(
       (acc, c) => acc + (c.calculatedMinutes || 0),
       0
     );
-    const tDeductions = deductionDecisions.filter(
+    const tDeductions = activeDeductions.filter(
       (dd) => dd.teacherId === teacher.id
     ).length;
 
@@ -535,7 +595,7 @@ export function generateReportData(
 
   return {
     payload: {
-      reportTitle: "التقرير الإداري الشامل لسجلات المدرسة",
+      reportTitle: "التقرير الإداري الشامل للمدرسة (School Summary)",
       reportCode: "تق-شامل-٠٥",
       schoolName,
       principalName,
@@ -546,9 +606,9 @@ export function generateReportData(
       tableHeaders,
       tableRows,
     },
-    rawRowsCount: teachers.length,
+    rawRowsCount: activeTeachers.length,
     summaryHighlights: [
-      { label: "المعلمات", value: teachers.length },
+      { label: "المعلمات", value: activeTeachers.length },
       { label: "الغيابات", value: totalAbsences },
       { label: "قرارات الحسم", value: totalDeductions },
     ],
