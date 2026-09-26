@@ -10,22 +10,16 @@ import {
   ChevronDown,
   X,
   LayoutDashboard,
-  LogOut,
-  KeyRound,
-  ShieldCheck,
   MessageCircle,
   Archive,
-  RotateCcw,
   HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/context/AuthContext";
 import { useTeachers } from "@/context/TeacherContext";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useSwipe } from "@/hooks/useSwipe";
 import { useSidebar } from "@/context/SidebarContext";
-import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 
 export interface SubNavItem {
   id: string;
@@ -105,18 +99,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className,
 }) => {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
   const stats = useDashboardStats();
   const {
     archivedTeachers,
     archivedAbsences,
     archivedDelayNotices,
-    isCloudConnected,
-    pendingSyncCount,
-    flushSyncQueue,
   } = useTeachers();
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const pendingDirectorDelayCount = stats.pendingDelayNotices;
   const pendingAbsencesCount = Math.max(0, stats.pendingProcedures - stats.pendingDelayNotices);
@@ -397,110 +386,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           })}
         </nav>
 
-        {/* Vice Principal Account & Actions Card */}
-        {collapsed ? (
-          <div className="p-2 flex flex-col items-center gap-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setIsProfileModalOpen(true)}
-              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-700 transition-colors cursor-pointer"
-              title={user?.fullName || "وكيلة الشؤون التعليمية"}
-              aria-label="تعديل بيانات الحساب"
-            >
-              <KeyRound className="w-4 h-4 text-slate-600" />
-            </button>
-            <button
-              type="button"
-              onClick={() => logout()}
-              className="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 flex items-center justify-center text-rose-600 transition-colors cursor-pointer border border-rose-200/60"
-              title="تسجيل الخروج"
-              aria-label="تسجيل الخروج"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div className="p-3 mx-2.5 mb-2 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-2xs">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 flex items-center justify-center text-[#137a85] shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-slate-900 truncate">
-                    {user?.fullName || "وكيلة الشؤون التعليمية"}
-                  </p>
-                  <p className="text-[10px] text-slate-500 font-mono truncate" dir="ltr">
-                    @{user?.username || "wakila"}
-                  </p>
-                </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-slate-200/60">
-              <button
-                type="button"
-                onClick={() => setIsProfileModalOpen(true)}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-white hover:bg-slate-100 text-[11px] font-medium text-slate-700 border border-slate-200 transition-colors cursor-pointer shadow-2xs"
-                aria-label="إعدادات الحساب — تعديل اسم المستخدم وكلمة المرور"
-              >
-                <KeyRound className="w-3.5 h-3.5 text-[#137a85]" aria-hidden="true" />
-                <span>إعدادات الحساب</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => logout()}
-                className="flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-[11px] font-medium text-rose-700 border border-rose-200 transition-colors cursor-pointer"
-                aria-label="تسجيل الخروج من المنصة"
-              >
-                <LogOut className="w-3.5 h-3.5" aria-hidden="true" />
-                <span>تسجيل خروج</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Cloud Connectivity & Realtime Sync Status */}
-        {collapsed ? (
-          <div
-            className="py-2.5 flex justify-center border-t border-slate-100"
-            title={isCloudConnected ? "متصل سحابياً" : "حفظ محلي"}
-          >
-            <span
-              className={cn(
-                "w-2.5 h-2.5 rounded-full",
-                isCloudConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-              )}
-            />
-          </div>
-        ) : (
-          <div className="mx-2.5 mb-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between text-[11px]">
-            <div className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "w-2 h-2 rounded-full shrink-0",
-                  isCloudConnected ? "bg-emerald-500 animate-pulse" : "bg-amber-500"
-                )}
-              />
-              <span className="font-medium text-slate-600 text-[10px]">
-                {isCloudConnected ? "سحابي ولحظي (Supabase)" : "حفظ محلي (انقطاع مؤقت)"}
-              </span>
-            </div>
-            {pendingSyncCount > 0 ? (
-              <button
-                type="button"
-                onClick={() => flushSyncQueue()}
-                className="text-[10px] bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-0.5 rounded border border-amber-200 flex items-center gap-1 cursor-pointer font-bold"
-                title="مزامنة التغييرات المعلقة مع السحابة"
-              >
-                <span>{pendingSyncCount} معلق</span>
-                <RotateCcw className="w-2.5 h-2.5" />
-              </button>
-            ) : (
-              <span className="text-[10px] text-emerald-600 font-bold">متزامن ✓</span>
-            )}
-          </div>
-        )}
 
         {/* Footer Branding & Official Technical Support */}
         {!collapsed && (
@@ -573,11 +459,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </AnimatePresence>
 
-      {/* نافذة تعديل بيانات حساب الوكيلة */}
-      <AdminProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-      />
     </>
   );
 };
