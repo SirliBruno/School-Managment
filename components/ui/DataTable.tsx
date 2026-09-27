@@ -225,33 +225,40 @@ export function DataTable<T>({
                   </button>
 
                   {isColumnManagerOpen && (
-                    <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-3 z-30 space-y-2 text-xs">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
-                        <span>إظهار الأعمدة</span>
-                        <button
-                          type="button"
-                          onClick={() => setIsColumnManagerOpen(false)}
-                          className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsColumnManagerOpen(false)}
+                        aria-hidden="true"
+                      />
+                      <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-2xl p-3 z-50 space-y-2 text-xs">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
+                          <span>إظهار الأعمدة</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsColumnManagerOpen(false)}
+                            className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="max-h-48 overflow-y-auto space-y-1.5 pt-1">
+                          {columns
+                            .filter((c) => c.hideable !== false)
+                            .map((col) => (
+                              <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={visibleColumnIds.has(col.id)}
+                                  onChange={() => toggleColumn(col.id)}
+                                  className="rounded text-[#137a85] focus:ring-[#137a85]"
+                                />
+                                <span className="truncate">{typeof col.header === "string" ? col.header : col.id}</span>
+                              </label>
+                            ))}
+                        </div>
                       </div>
-                      <div className="max-h-48 overflow-y-auto space-y-1.5 pt-1">
-                        {columns
-                          .filter((c) => c.hideable !== false)
-                          .map((col) => (
-                            <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
-                              <input
-                                type="checkbox"
-                                checked={visibleColumnIds.has(col.id)}
-                                onChange={() => toggleColumn(col.id)}
-                                className="rounded text-[#137a85] focus:ring-[#137a85]"
-                              />
-                              <span className="truncate">{typeof col.header === "string" ? col.header : col.id}</span>
-                            </label>
-                          ))}
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
 
@@ -355,33 +362,40 @@ export function DataTable<T>({
                 </button>
 
                 {isColumnManagerOpen && (
-                  <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-xl p-3 z-30 space-y-2 text-xs">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
-                      <span>إظهار الأعمدة</span>
-                      <button
-                        type="button"
-                        onClick={() => setIsColumnManagerOpen(false)}
-                        className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsColumnManagerOpen(false)}
+                      aria-hidden="true"
+                    />
+                    <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-2xl p-3 z-50 space-y-2 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
+                        <span>إظهار الأعمدة</span>
+                        <button
+                          type="button"
+                          onClick={() => setIsColumnManagerOpen(false)}
+                          className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <div className="max-h-48 overflow-y-auto space-y-1.5 pt-1">
+                        {columns
+                          .filter((c) => c.hideable !== false)
+                          .map((col) => (
+                            <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                              <input
+                                type="checkbox"
+                                checked={visibleColumnIds.has(col.id)}
+                                onChange={() => toggleColumn(col.id)}
+                                className="rounded text-[#137a85] focus:ring-[#137a85]"
+                              />
+                              <span className="truncate">{typeof col.header === "string" ? col.header : col.id}</span>
+                            </label>
+                          ))}
+                      </div>
                     </div>
-                    <div className="max-h-48 overflow-y-auto space-y-1.5 pt-1">
-                      {columns
-                        .filter((c) => c.hideable !== false)
-                        .map((col) => (
-                          <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
-                            <input
-                              type="checkbox"
-                              checked={visibleColumnIds.has(col.id)}
-                              onChange={() => toggleColumn(col.id)}
-                              className="rounded text-[#137a85] focus:ring-[#137a85]"
-                            />
-                            <span className="truncate">{typeof col.header === "string" ? col.header : col.id}</span>
-                          </label>
-                        ))}
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
 
