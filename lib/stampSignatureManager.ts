@@ -224,7 +224,7 @@ export function renderOfficialApprovalFooterHtml(options: OfficialApprovalFooter
     <div style="font-size: 9.5pt; font-weight: 800; color: #0f766e; margin-bottom: 3px;">${officialTitle}</div>
     <div style="font-size: 9.5pt; font-weight: 800; color: #0f172a;">${officialName}</div>
     <div style="min-height: 48px; margin: 4px 0; display: flex; align-items: center; justify-content: center;">
-      ${signatureElementHtml}
+      <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt; letter-spacing: 1px;">...............................</div>
     </div>
     <div style="font-size: 8pt; color: #64748b;">التاريخ: ${dateStr} م</div>
   </div>
@@ -242,7 +242,7 @@ export function renderOfficialApprovalFooterHtml(options: OfficialApprovalFooter
     <div style="font-size: 9.5pt; font-weight: 800; color: #0f766e; margin-bottom: 3px;">${secondaryTitle}</div>
     <div style="font-size: 9.5pt; font-weight: 800; color: #0f172a;">${secondaryName}</div>
     <div style="min-height: 48px; margin: 4px 0; display: flex; align-items: center; justify-content: center;">
-      <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt; letter-spacing: 1px;">...............................</div>
+      ${signatureElementHtml}
     </div>
     <div style="font-size: 8pt; color: #64748b;">اعتماد المنشأة: ${schoolName}</div>
   </div>
