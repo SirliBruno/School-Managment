@@ -349,6 +349,27 @@ export const mapDelayToDbRow = (
   archived_by_cascade: Boolean(dn.archivedByCascade),
 });
 
+export const mapInquiryToDbRow = (
+  inq: AbsenceInquiry
+): Record<string, unknown> => ({
+  id: inq.id,
+  teacher_id: inq.teacherId,
+  teacher_name: inq.teacherName,
+  job_number: inq.jobNumber || inq.nationalId || inq.teacherId || "1000000000",
+  specialty: inq.specialty || null,
+  mobile: inq.mobile || null,
+  absence_date: inq.absenceDate,
+  token: inq.token || `inq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+  status: inq.status || "pending",
+  expires_at: inq.expiresAt || new Date(Date.now() + 172800000).toISOString(),
+  absence_type: inq.absenceType || null,
+  teacher_reason: inq.teacherReason || null,
+  attachment_url: inq.attachmentUrl || null,
+  admin_notes: inq.adminNotes || null,
+  submitted_at: inq.submittedAt || null,
+  created_at: inq.createdAt || new Date().toISOString(),
+});
+
 export const mapDbDeductionToDecision = (
   d: DbDeductionDecisionRow
 ): DeductionDecision => ({
@@ -1351,7 +1372,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             }
 
             // C. Process Inquiries
-            if (!inqErr && dbInquiries && dbInquiries.length > 0) {
+            let cleanInquiriesList: AbsenceInquiry[] = localInquiries;
+            if (!inqErr && dbInquiries) {
               const mappedInquiries: AbsenceInquiry[] = (dbInquiries as unknown as DbAbsenceInquiryRow[]).map(
                 (inq: DbAbsenceInquiryRow) => {
                   const meta = parseInquiryMeta(inq.admin_notes);
@@ -1379,15 +1401,34 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                     adminNotes: meta.adminNotes,
                     submittedAt: inq.submitted_at || undefined,
                     createdAt: inq.created_at,
-                    isArchived: Boolean(inq.is_archived),
+                    isArchived: false,
                   };
                 }
               );
 
-              setInquiries(mappedInquiries);
+              // Sync up any local inquiries missing from Supabase
+              const cloudInqIds = new Set(mappedInquiries.map((i) => i.id));
+              const missingInquiries = localInquiries.filter((loc) => loc.id && !cloudInqIds.has(loc.id));
+              if (missingInquiries.length > 0) {
+                supabase
+                  .from("absence_inquiries")
+                  .insert(missingInquiries.map(mapInquiryToDbRow))
+                  .then(({ error }) => {
+                    if (error) console.warn("Failed to sync local inquiries to cloud:", error);
+                  });
+              }
+
+              const inqMap = new Map<string, AbsenceInquiry>();
+              for (const loc of localInquiries) {
+                if (loc.id) inqMap.set(loc.id, loc);
+              }
+              for (const cl of mappedInquiries) {
+                if (cl.id) inqMap.set(cl.id, cl);
+              }
+              cleanInquiriesList = Array.from(inqMap.values());
 
               // Reconcile approved inquiries with absences
-              for (const inq of mappedInquiries) {
+              for (const inq of cleanInquiriesList) {
                 if (inq.status === "approved" && inq.absenceDate && !inq.isArchived) {
                   const exists = cleanAbsencesList.some(
                     (a) => a.teacherId === inq.teacherId && a.date === inq.absenceDate
@@ -1411,6 +1452,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
               }
             }
+
+            setInquiries(cleanInquiriesList);
 
             // D. Process Delay Notices
             let cleanDelaysList: DelayNotice[] = localDelayNotices;
@@ -1669,6 +1712,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             try {
               localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(updatedActiveTeachers));
               localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(activeAbsences));
+              localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(cleanInquiriesList));
               localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(activeDelays));
               localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(activePermissions));
               localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(activeDeductions));
