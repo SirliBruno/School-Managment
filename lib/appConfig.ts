@@ -3,6 +3,8 @@
  * تضمن عدم وجود أي Hardcoded Domain، وجاهزية النظام للانتقال لأي دومين رسمي مخصص
  */
 
+import { MOE_LOGO_BASE64 } from "./moeLogo";
+
 /**
  * استخراج النطاق الأساسي للنظام (Base URL) وفق الترتيب التالي:
  * 1. متغير البيئة NEXT_PUBLIC_APP_URL (الرسمي المخصص)
@@ -72,3 +74,44 @@ export function getDelayNoticePublicUrl(shareToken: string): string {
   const cleanToken = encodeURIComponent(shareToken.trim());
   return `${baseUrl}/teacher-response/${cleanToken}`;
 }
+
+/**
+ * الإعدادات الرسمية الموحدة للمدرسة (School Configuration Setup)
+ * توفر المصدر الموحد للترويسات، النماذج، والتقارير الإدارية
+ */
+export interface SchoolConfiguration {
+  schoolName: string;
+  educationalAdministration: string;
+  educationalStage: string;
+  academicYear: string;
+  semester: string;
+  contact: {
+    phone: string;
+    email: string;
+    city: string;
+    region: string;
+  };
+  principalTitle: string;
+  vicePrincipalName: string;
+  vicePrincipalRole: string;
+  officialLogoBase64: string;
+}
+
+export const SCHOOL_CONFIG: SchoolConfiguration = {
+  schoolName: "الثانوية الخامسة مسارات",
+  educationalAdministration: "الإدارة العامة للتعليم بمنطقة الرياض",
+  educationalStage: "المرحلة الثانوية (نظام المسارات)",
+  academicYear: "1446-1447هـ",
+  semester: "الفصل الدراسي الأول",
+  contact: {
+    phone: "011-4770000",
+    email: "secondary5@moe.gov.sa",
+    city: "الرياض",
+    region: "منطقة الرياض",
+  },
+  principalTitle: "مديرة المدرسة",
+  vicePrincipalName: "أحلام صالح الضبيبي",
+  vicePrincipalRole: "وكيلة المدرسة",
+  officialLogoBase64: MOE_LOGO_BASE64,
+};
+

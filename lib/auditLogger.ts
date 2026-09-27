@@ -114,3 +114,5 @@ export function clearLocalAuditLogs(): void {
     localStorage.removeItem(AUDIT_LOGS_STORAGE_KEY);
   } catch {}
 }
+
+export const getAuditLogs = getLocalAuditLogs;
