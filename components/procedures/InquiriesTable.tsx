@@ -25,6 +25,7 @@ import {
   generateInquiryMessage,
   getWhatsAppDirectUrl,
 } from "@/lib/whatsapp";
+import { getInquiryPublicUrl } from "@/lib/appConfig";
 import {
   DataTable,
   ColumnDef,
@@ -81,13 +82,11 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
 
   // Copy Link Helper
   const handleCopyLink = async (inq: AbsenceInquiry) => {
-    const origin =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "https://school-absence.gov.sa";
     const isMulti = Boolean(inq.absenceEndDate && inq.absenceEndDate !== inq.absenceDate);
-    const queryParam = isMulti ? `?end=${inq.absenceEndDate}&days=${inq.daysCount || 2}` : "";
-    const link = `${origin}/inquiry/${inq.token}${queryParam}`;
+    const link = getInquiryPublicUrl(inq.token, {
+      endDate: isMulti ? inq.absenceEndDate : undefined,
+      daysCount: inq.daysCount,
+    });
     const msg = generateInquiryMessage(
       inq.teacherName,
       inq.absenceDate,
@@ -109,13 +108,11 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
 
   // Resend WhatsApp Helper
   const handleResendWhatsApp = (inq: AbsenceInquiry) => {
-    const origin =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : "https://school-absence.gov.sa";
     const isMulti = Boolean(inq.absenceEndDate && inq.absenceEndDate !== inq.absenceDate);
-    const queryParam = isMulti ? `?end=${inq.absenceEndDate}&days=${inq.daysCount || 2}` : "";
-    const link = `${origin}/inquiry/${inq.token}${queryParam}`;
+    const link = getInquiryPublicUrl(inq.token, {
+      endDate: isMulti ? inq.absenceEndDate : undefined,
+      daysCount: inq.daysCount,
+    });
     const msg = generateInquiryMessage(
       inq.teacherName,
       inq.absenceDate,

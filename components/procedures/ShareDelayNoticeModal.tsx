@@ -24,6 +24,7 @@ import {
   generateDelayNoticeWhatsAppMessage,
   getWhatsAppDirectUrl,
 } from "@/lib/whatsapp";
+import { getDelayNoticePublicUrl } from "@/lib/appConfig";
 import { cn } from "@/lib/utils";
 
 interface ShareDelayNoticeModalProps {
@@ -55,9 +56,8 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
   // Compute public full URL
   const [publicUrl, setPublicUrl] = useState("");
   useEffect(() => {
-    if (typeof window !== "undefined" && notice?.shareToken) {
-      const origin = window.location.origin;
-      setPublicUrl(`${origin}/teacher-response/${notice.shareToken}`);
+    if (notice?.shareToken) {
+      setPublicUrl(getDelayNoticePublicUrl(notice.shareToken));
     } else {
       setPublicUrl("");
     }

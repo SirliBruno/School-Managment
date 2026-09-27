@@ -24,6 +24,7 @@ import {
   getWhatsAppDirectUrl,
   normalizeSaudiMobileInput,
 } from "@/lib/whatsapp";
+import { getInquiryPublicUrl } from "@/lib/appConfig";
 import { cn } from "@/lib/utils";
 import {
   getSaudiToday,
@@ -94,14 +95,6 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
     return manualMobile.trim() || selectedTeacher?.mobile || "";
   };
 
-  // Base URL for inquiry link
-  const getBaseOrigin = (): string => {
-    if (typeof window !== "undefined") {
-      return window.location.origin;
-    }
-    return "https://school-absence.gov.sa";
-  };
-
   // Validation
   const validate = (): boolean => {
     if (!selectedTeacherId || !selectedTeacher) {
@@ -168,8 +161,10 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         return;
       }
 
-      const queryParam = isMulti ? `?end=${absenceEndDate}&days=${calculatedDays}` : "";
-      const inquiryLink = `${getBaseOrigin()}/inquiry/${res.inquiry.token}${queryParam}`;
+      const inquiryLink = getInquiryPublicUrl(res.inquiry.token, {
+        endDate: isMulti ? absenceEndDate : undefined,
+        daysCount: isMulti ? calculatedDays : 1,
+      });
       const message = generateInquiryMessage(
         selectedTeacher.fullName || selectedTeacher.name || "معلمة",
         absenceDate,
@@ -217,8 +212,10 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         return;
       }
 
-      const queryParam = isMulti ? `?end=${absenceEndDate}&days=${calculatedDays}` : "";
-      const inquiryLink = `${getBaseOrigin()}/inquiry/${res.inquiry.token}${queryParam}`;
+      const inquiryLink = getInquiryPublicUrl(res.inquiry.token, {
+        endDate: isMulti ? absenceEndDate : undefined,
+        daysCount: isMulti ? calculatedDays : 1,
+      });
       const message = generateInquiryMessage(
         selectedTeacher.fullName || selectedTeacher.name || "معلمة",
         absenceDate,
