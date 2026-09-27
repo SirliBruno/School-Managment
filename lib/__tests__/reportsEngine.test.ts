@@ -204,7 +204,8 @@ describe("Administrative Reports Engine QA Suite", () => {
     expect(report.payload.teacherDetailsCard?.name).toBe("سارة أحمد");
     expect(report.payload.summaryCards[0].value).toBe("2 يوم"); // only active absences
     expect(report.payload.summaryCards[1].value).toContain("420 دقيقة"); // only active delays
-    expect(report.payload.summaryCards[2].value).toBe("1 يوم"); // 1 deduction day
+    expect(report.payload.summaryCards[2].value).toContain("0 استئذان"); // permissions count
+    expect(report.payload.summaryCards[3].value).toBe("1 يوم"); // 1 deduction day
   });
 
   it("4. handles date range filtering accurately", () => {

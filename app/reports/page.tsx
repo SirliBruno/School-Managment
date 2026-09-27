@@ -74,7 +74,7 @@ const REPORT_CARDS: ReportCardDef[] = [
   {
     type: "teacher_detailed_record",
     title: "سجل معلمة تفصيلي",
-    description: "سجل إداري تراكمي شامل لمعلمة محددة يجمع كل الغيابات، التأخرات، وقرارات الحسم منذ بداية العام.",
+    description: "سجل إداري تراكمي شامل لمعلمة محددة يجمع كل الغيابات، التأخرات، الاستئذان، وقرارات الحسم منذ بداية العام.",
     icon: User,
     badge: "ملف إداري فردي",
     accentColor: "border-indigo-500 text-indigo-600 bg-indigo-50",

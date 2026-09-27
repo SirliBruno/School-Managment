@@ -203,12 +203,19 @@ export function generateReportData(
     const teacherDelays = activeDelays.filter(
       (d) => d.teacherId === teacher?.id
     );
+    const teacherPermissions = activePermissions.filter(
+      (p) => p.teacherId === teacher?.id
+    );
     const teacherDeductions = activeDeductions.filter(
       (dd) => dd.teacherId === teacher?.id
     );
 
     const totalMinutes = teacherDelays.reduce(
       (acc, curr) => acc + (curr.calculatedMinutes || 0),
+      0
+    );
+    const totalPermissionMinutes = teacherPermissions.reduce(
+      (acc, curr) => acc + (curr.durationMinutes || 0),
       0
     );
     const totalDeductionDays = teacherDeductions.reduce(
@@ -221,6 +228,10 @@ export function generateReportData(
       {
         label: "إجمالي دقائق التأخر",
         value: `${totalMinutes} دقيقة (${(totalMinutes / 60).toFixed(1)} س)`,
+      },
+      {
+        label: "سجلات الاستئذان",
+        value: `${teacherPermissions.length} استئذان (${(totalPermissionMinutes / 60).toFixed(1)} س)`,
       },
       { label: "إجمالي أيام الحسم", value: `${totalDeductionDays} يوم` },
     ];
@@ -273,10 +284,25 @@ export function generateReportData(
       ]);
     });
 
+    // قسم الاستئذان
+    teacherPermissions.forEach((p, idx) => {
+      const timeRange = p.exitTime && p.returnTime ? ` (${p.exitTime} - ${p.returnTime})` : "";
+      const reasonText = p.reason ? `: ${p.reason}` : "";
+
+      combinedRows.push([
+        teacherAbsences.length + teacherDelays.length + idx + 1,
+        "الاستئذان الرسمي",
+        p.permissionDate,
+        `استئذان${timeRange}${reasonText}`,
+        `${p.durationMinutes || 0} دقيقة`,
+        p.notes ? `معتمد (${p.notes})` : "معتمد وموثق",
+      ]);
+    });
+
     // قسم الحسم
     teacherDeductions.forEach((dd, idx) => {
       combinedRows.push([
-        teacherAbsences.length + teacherDelays.length + idx + 1,
+        teacherAbsences.length + teacherDelays.length + teacherPermissions.length + idx + 1,
         "قرارات الحسم",
         dd.decisionDate,
         `قرار رقم #${dd.decisionNumber} (تأخر ${dd.delayHours} س)`,
@@ -308,6 +334,7 @@ export function generateReportData(
       summaryHighlights: [
         { label: "إجمالي الغياب", value: teacherAbsences.length },
         { label: "دقائق التأخر", value: totalMinutes },
+        { label: "سجلات الاستئذان", value: teacherPermissions.length },
         { label: "أيام الحسم", value: totalDeductionDays },
       ],
     };
