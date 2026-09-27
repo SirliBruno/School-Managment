@@ -165,7 +165,7 @@ ${schoolTableHtml}
   <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
     <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${principalName}</strong></div>
     <div style="flex: 1; text-align: center;">التوقيع : ........................</div>
-    <div style="flex: 0.8; text-align: left">التاريخ : ${dateDMY} م</div>
+    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
   </div>
 </div>
 
@@ -183,7 +183,7 @@ ${schoolTableHtml}
   <div class="sig">
     <div style="width:40%;text-align:right">اسم الموظفة : <strong>${name}</strong></div>
     <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ${dateDMY} م</div>
+    <div style="width:28%;text-align:left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
   </div>
 </div>
 

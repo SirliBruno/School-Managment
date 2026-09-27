@@ -131,7 +131,7 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       reportCode: "REP-OFFICIAL-01",
       schoolName: "الثانوية الخامسة مسارات",
       creatorName: "أحلام صالح الضبيبي",
-      principalName: "منى محمد الغامدي",
+      principalName: "فاطمة فلاتة",
       dateFormatted: "1447/03/15 هـ",
       summaryCards: [{ label: "إجمالي السجلات", value: 10 }],
       tableHeaders: ["الاسم", "الغياب"],

@@ -113,7 +113,7 @@ export const SCHOOL_CONFIG: SchoolConfiguration = {
   principalTitle: "مديرة المدرسة",
   principalName: "فاطمة فلاتة",
   vicePrincipalName: "أحلام صالح الضبيبي",
-  vicePrincipalRole: "وكيلة الشؤون التعليمية",
+  vicePrincipalRole: "وكيلة المدرسة",
   officialLogoBase64: MOE_LOGO_BASE64,
 };
 

@@ -213,7 +213,7 @@ ${schoolTableHtml}
       <span>${sigHtml}</span>
     </div>
     ${showStamp ? `<div style="width: 55px; text-align: center;">${stampHtml}</div>` : ""}
-    <div style="flex: 0.8; text-align: left">التاريخ : ${dateFormatted} م</div>
+    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ${hijriYear} هـ</div>
   </div>
 </div>
 
@@ -231,7 +231,7 @@ ${schoolTableHtml}
   <div class="sig">
     <div style="width:40%;text-align:right">اسم الموظفة : <strong>${teacherName}</strong></div>
     <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ${teacherSigDate} م</div>
+    <div style="width:28%;text-align:left">التاريخ : ${notice.teacherSignatureDate ? teacherSigDate + " م" : `..../ ..../ ${hijriYear} هـ`}</div>
   </div>
   ${
     notice.teacherResponseSubmittedAt

@@ -78,12 +78,12 @@ describe("Administrative User Identity & Dynamic Admin Profile Audit", () => {
         action: "update",
         entityType: "system_settings",
         entityId: "cfg-1",
-        userName: "منى محمد الغامدي",
+        userName: "فاطمة فلاتة",
         userRole: "مديرة المدرسة",
         details: "تحديث الإعدادات العامة",
       });
 
-      expect(customLog.userName).toBe("منى محمد الغامدي");
+      expect(customLog.userName).toBe("فاطمة فلاتة");
       expect(customLog.userRole).toBe("مديرة المدرسة");
     });
   });
@@ -108,7 +108,7 @@ describe("Administrative User Identity & Dynamic Admin Profile Audit", () => {
         reportTitle: "تقرير الغياب الشامل",
         reportCode: "REP-ABS-01",
         schoolName: "الثانوية الخامسة مسارات",
-        principalName: "منى محمد الغامدي",
+        principalName: "فاطمة فلاتة",
         creatorName: "أحلام صالح الضبيبي",
         dateFormatted: "2026-09-27",
         tableHeaders: ["م", "المعلمة", "التاريخ"],

@@ -144,7 +144,7 @@ describe("Administrative Reports Engine QA Suite", () => {
       civilId: "1011111111",
       specialization: "رياضيات",
       schoolName: "الثانوية الخامسة مسارات",
-      principalName: "منى محمد الغامدي",
+      principalName: "فاطمة فلاتة",
       delayHours: 7,
       delayMinutes: 0,
       deductionDays: 1,

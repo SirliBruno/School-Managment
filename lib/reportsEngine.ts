@@ -63,7 +63,7 @@ export function generateReportData(
 ): ReportGeneratedData {
   const saudiToday = getSaudiToday();
   const schoolName = "الثانوية الخامسة مسارات";
-  const principalName = "منى محمد الغامدي";
+  const principalName = "فاطمة فلاتة";
 
   // استبعاد المعلمات والسجلات المؤرشفة لضمان دقة البيانات 100%
   const activeTeachers = teachers.filter((t) => !t.isArchived);

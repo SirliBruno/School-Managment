@@ -114,7 +114,7 @@ export const formatAuthErrorMessage = (err: unknown): string => {
 
 export const DEFAULT_ADMIN_NAME = "أحلام صالح الضبيبي";
 export const DEFAULT_ADMIN_ROLE = "vice_principal";
-export const DEFAULT_ADMIN_ROLE_LABEL = "وكيلة الشؤون التعليمية";
+export const DEFAULT_ADMIN_ROLE_LABEL = "وكيلة المدرسة";
 export const DEFAULT_PRINCIPAL_NAME = "فاطمة فلاتة";
 export const DEFAULT_ADMIN_SCHOOL = "الثانوية الخامسة مسارات";
 
