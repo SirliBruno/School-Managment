@@ -1,14 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
-  Settings,
-  ChevronDown,
-  X,
   LayoutDashboard,
   Archive,
   HelpCircle,
@@ -18,8 +15,8 @@ import {
   DoorOpen,
   ShieldAlert,
   ListTodo,
-  CheckCircle2,
   GraduationCap,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -33,11 +30,11 @@ import {
   DEFAULT_ADMIN_ROLE_LABEL,
 } from "@/context/AuthContext";
 
-export interface SubNavItem {
+export interface NavItem {
   id: string;
   label: string;
+  icon: LucideIcon;
   href: string;
-  icon?: LucideIcon;
   badgeCount?: number;
   badgeVariant?: "rose" | "amber" | "teal" | "slate";
 }
@@ -48,25 +45,11 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-export interface NavItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  href?: string;
-  hasChildren?: boolean;
-  children?: SubNavItem[];
-  badgeCount?: number;
-}
-
 export interface SidebarProps {
-  activeSubItemHref?: string;
   className?: string;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  activeSubItemHref,
-  className,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const pathname = usePathname();
   const { user } = useAuth();
   const stats = useDashboardStats();
@@ -74,7 +57,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     archivedTeachers,
     archivedAbsences,
     archivedDelayNotices,
-    inquiries,
   } = useTeachers();
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
 
@@ -84,11 +66,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     (archivedTeachers?.length || 0) +
     (archivedAbsences?.length || 0) +
     (archivedDelayNotices?.length || 0);
-
-  // Accordion state - "admin-procedures" expanded by default
-  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
-    "admin-procedures": true,
-  });
 
   // Swipe-to-close for RTL (swiping to the right edge closes drawer)
   const swipeHandlers = useSwipe(
@@ -124,100 +101,88 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isMobileOpen, setIsMobileOpen]);
 
-  const toggleMenu = (menuId: string) => {
-    setOpenMenus((prev) => ({
-      ...prev,
-      [menuId]: !prev[menuId],
-    }));
-  };
-
+  // Clean, modern 4-tier navigation layout as requested
   const navGroups: NavGroup[] = [
     {
-      id: "general",
-      title: "الرئيسية والكادر",
+      id: "main",
       items: [
         {
           id: "dashboard",
-          label: "مركز القيادة والتحكم",
+          label: "الرئيسية (مركز القيادة)",
           icon: LayoutDashboard,
           href: "/",
-          hasChildren: false,
-        },
-        {
-          id: "teachers",
-          label: "سجل المعلمات",
-          icon: Users,
-          href: "/teachers",
-          hasChildren: false,
-        },
-      ],
-    },
-    {
-      id: "procedures",
-      title: "الإجراءات والعمليات",
-      items: [
-        {
-          id: "admin-procedures",
-          label: "الإجراءات الإدارية",
-          icon: Settings,
-          hasChildren: true,
-          children: [
-            {
-              id: "absence-inquiry",
-              label: "مساءلة غياب",
-              href: "/procedures/absence",
-              icon: FileText,
-              badgeCount: pendingAbsencesCount,
-              badgeVariant: "amber",
-            },
-            {
-              id: "delay-warning",
-              label: "تنبيه على تأخر",
-              href: "/procedures/delay-notice",
-              icon: Clock,
-              badgeCount: pendingDirectorDelayCount,
-              badgeVariant: "rose",
-            },
-            {
-              id: "permissions",
-              label: "استئذان الموظفين",
-              href: "/procedures/permissions",
-              icon: DoorOpen,
-            },
-            {
-              id: "deduction-hours",
-              label: "قرار حسم مجموع ساعات",
-              href: "/procedures/deduction-hours",
-              icon: ShieldAlert,
-            },
-            {
-              id: "procedures-list",
-              label: "سجل الإجراءات الشامل",
-              href: "/procedures/list",
-              icon: ListTodo,
-            },
-          ],
         },
       ],
     },
     {
       id: "records",
-      title: "التقارير والأرشيف",
+      title: "السجلات اليومية",
+      items: [
+        {
+          id: "teachers",
+          label: "سجل المعلمات",
+          icon: Users,
+          href: "/teachers",
+        },
+        {
+          id: "absence-inquiry",
+          label: "الغياب والمساءلات",
+          icon: FileText,
+          href: "/procedures/absence",
+          badgeCount: pendingAbsencesCount,
+          badgeVariant: "amber",
+        },
+        {
+          id: "permissions",
+          label: "استئذان الموظفين",
+          icon: DoorOpen,
+          href: "/procedures/permissions",
+        },
+      ],
+    },
+    {
+      id: "procedures",
+      title: "الإجراءات والقرارات",
+      items: [
+        {
+          id: "delay-warning",
+          label: "التأخر والانصراف",
+          icon: Clock,
+          href: "/procedures/delay-notice",
+          badgeCount: pendingDirectorDelayCount,
+          badgeVariant: "rose",
+        },
+        {
+          id: "deduction-hours",
+          label: "قرارات الحسم المالي",
+          icon: ShieldAlert,
+          href: "/procedures/deduction-hours",
+        },
+        {
+          id: "procedures-list",
+          label: "سجل الإجراءات الشامل",
+          icon: ListTodo,
+          href: "/procedures/list",
+        },
+      ],
+    },
+    {
+      id: "management",
+      title: "الإدارة والتوثيق",
       items: [
         {
           id: "reports",
-          label: "مركز التقارير والحصر",
+          label: "التقارير والحصر",
           icon: FileBarChart,
           href: "/reports",
-          hasChildren: false,
         },
         {
           id: "archive",
           label: "الأرشيف الإداري",
           icon: Archive,
           href: "/archive",
-          hasChildren: false,
           badgeCount: totalArchivedCount,
+          badgeVariant: "slate",
         },
       ],
     },
@@ -245,7 +210,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <motion.div
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.96 }}
-              className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-[#137a85] to-[#0d5961] text-white flex items-center justify-center shadow-sm shadow-[#137a85]/20 shrink-0"
+              className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-[#137a85] to-[#0d5961] text-white flex items-center justify-center shadow-xs shrink-0"
             >
               <GraduationCap className="w-5 h-5 stroke-[2.2]" aria-hidden="true" />
               <span
@@ -280,156 +245,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Groups List */}
         <nav
-          className="flex-1 px-3 py-3 space-y-4 overflow-y-auto custom-scrollbar"
+          className="flex-1 px-3 py-3 space-y-3.5 overflow-y-auto custom-scrollbar"
           aria-label="قائمة التصفح الرئيسية"
         >
           {navGroups.map((group) => (
             <div key={group.id} className="space-y-1">
               {!collapsed && group.title && (
-                <div className="px-3 pt-1 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                <div className="px-3 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                   {group.title}
                 </div>
               )}
 
               {group.items.map((item) => {
                 const Icon = item.icon;
-                const isAccordion = Boolean(item.hasChildren && item.children?.length);
-                const isOpen = Boolean(openMenus[item.id]);
                 const isCurrentRoute = pathname === item.href;
 
-                if (isAccordion) {
-                  const hasPendingInAccordion =
-                    pendingDirectorDelayCount > 0 || pendingAbsencesCount > 0;
-
-                  return (
-                    <div key={item.id} className="space-y-1">
-                      {/* Accordion Trigger */}
-                      <button
-                        type="button"
-                        onClick={() => toggleMenu(item.id)}
-                        aria-expanded={isOpen}
-                        aria-controls={`sub-menu-${item.id}`}
-                        title={collapsed ? item.label : undefined}
-                        className={cn(
-                          "w-full flex items-center rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40 select-none",
-                          collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5",
-                          isOpen
-                            ? "bg-slate-100/80 text-slate-900"
-                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
-                        )}
-                      >
-                        <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
-                          <Icon
-                            className={cn(
-                              "w-5 h-5 transition-colors shrink-0 stroke-[2]",
-                              isOpen ? "text-[#137a85]" : "text-slate-400 group-hover:text-slate-700"
-                            )}
-                            aria-hidden="true"
-                          />
-                          {!collapsed && (
-                            <div className="flex items-center gap-2">
-                              <span>{item.label}</span>
-                              {hasPendingInAccordion && (
-                                <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse shrink-0" />
-                              )}
-                            </div>
-                          )}
-                        </div>
-
-                        {!collapsed && (
-                          <motion.div
-                            animate={{ rotate: isOpen ? 180 : 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="shrink-0"
-                          >
-                            <ChevronDown
-                              className="w-4 h-4 text-slate-400 group-hover:text-slate-600"
-                              aria-hidden="true"
-                            />
-                          </motion.div>
-                        )}
-                      </button>
-
-                      {/* Accordion Submenu Items */}
-                      <AnimatePresence initial={false}>
-                        {isOpen && !collapsed && (
-                          <motion.div
-                            id={`sub-menu-${item.id}`}
-                            role="region"
-                            aria-label={`عناصر فرعية لقسم ${item.label}`}
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="overflow-hidden pe-3 ps-2 py-1 space-y-1 border-r-2 border-slate-200 ms-3 mr-3"
-                          >
-                            {item.children?.map((subItem) => {
-                              const isSubActive =
-                                pathname === subItem.href ||
-                                activeSubItemHref === subItem.href;
-                              const SubIcon = subItem.icon;
-
-                              return (
-                                <Link
-                                  key={subItem.id}
-                                  href={subItem.href}
-                                  onClick={() => setIsMobileOpen(false)}
-                                  aria-current={isSubActive ? "page" : undefined}
-                                  className={cn(
-                                    "group/sub relative flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
-                                    isSubActive
-                                      ? "bg-teal-50 text-[#0c5961] font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
-                                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-semibold"
-                                  )}
-                                >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    {SubIcon && (
-                                      <SubIcon
-                                        className={cn(
-                                          "w-3.5 h-3.5 shrink-0 stroke-[2.2] transition-colors",
-                                          isSubActive ? "text-[#137a85]" : "text-slate-400 group-hover/sub:text-slate-700"
-                                        )}
-                                      />
-                                    )}
-                                    <span className="truncate">{subItem.label}</span>
-                                  </div>
-
-                                  <div className="flex items-center gap-1.5 shrink-0">
-                                    {subItem.badgeCount !== undefined && subItem.badgeCount > 0 && (
-                                      <span
-                                        className={cn(
-                                          "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold shadow-2xs",
-                                          subItem.badgeVariant === "rose" && "bg-rose-500 text-white animate-pulse",
-                                          subItem.badgeVariant === "amber" && "bg-amber-500 text-white",
-                                          (!subItem.badgeVariant || subItem.badgeVariant === "teal") && "bg-teal-600 text-white"
-                                        )}
-                                      >
-                                        {subItem.badgeCount}
-                                      </span>
-                                    )}
-                                    {isSubActive && (
-                                      <motion.span
-                                        layoutId="active-sub-indicator"
-                                        className="w-1.5 h-1.5 rounded-full bg-[#137a85]"
-                                        aria-hidden="true"
-                                      />
-                                    )}
-                                  </div>
-                                </Link>
-                              );
-                            })}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                }
-
-                // Standard Single Link Item (Dashboard, Teachers, Reports, Archive)
                 return (
                   <Link
                     key={item.id}
-                    href={item.href || "#"}
+                    href={item.href}
                     onClick={() => setIsMobileOpen(false)}
                     aria-current={isCurrentRoute ? "page" : undefined}
                     title={collapsed ? item.label : undefined}
@@ -437,7 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       "relative flex items-center rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                       collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                       isCurrentRoute
-                        ? "bg-teal-50 text-[#0c5961] font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
+                        ? "bg-teal-50/90 text-[#0c5961] font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
                         : "text-slate-700 hover:text-slate-950 hover:bg-slate-50 font-bold"
                     )}
                   >
@@ -450,7 +284,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         aria-hidden="true"
                       />
                       {collapsed && item.badgeCount !== undefined && item.badgeCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-teal-600 rounded-full ring-2 ring-white" />
+                        <span
+                          className={cn(
+                            "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white",
+                            item.badgeVariant === "rose" && "bg-rose-500 animate-pulse",
+                            item.badgeVariant === "amber" && "bg-amber-500",
+                            (!item.badgeVariant || item.badgeVariant === "slate") && "bg-slate-400"
+                          )}
+                        />
                       )}
                     </div>
 
@@ -459,7 +300,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     )}
 
                     {!collapsed && item.badgeCount !== undefined && item.badgeCount > 0 && (
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-mono font-bold border border-slate-200 shrink-0">
+                      <span
+                        className={cn(
+                          "px-2 py-0.5 rounded-full text-[11px] font-mono font-bold shrink-0",
+                          item.badgeVariant === "rose" && "bg-rose-100 text-rose-800 border border-rose-200 animate-pulse",
+                          item.badgeVariant === "amber" && "bg-amber-100 text-amber-800 border border-amber-200",
+                          (!item.badgeVariant || item.badgeVariant === "slate") && "bg-slate-100 text-slate-600 border border-slate-200"
+                        )}
+                      >
                         {item.badgeCount}
                       </span>
                     )}

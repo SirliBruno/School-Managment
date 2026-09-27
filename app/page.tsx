@@ -10,11 +10,9 @@ import {
   Search,
   Plus,
   Calendar,
-  FileDown,
   Loader2,
   CheckCircle2,
   AlertCircle,
-  X,
   Eye,
   FileText,
   Pencil,
@@ -26,26 +24,19 @@ import {
   Activity,
   Sparkles,
   Building2,
-  Filter,
   DoorOpen,
   ListTodo,
-  FileSpreadsheet,
-  ArrowRight,
+  FileBarChart,
   ArrowLeft,
   ChevronDown,
   Check,
-  RefreshCw,
-  Send,
-  Bell,
-  ArrowUpRight,
   Zap,
-  FileBarChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth, DEFAULT_ADMIN_NAME, DEFAULT_ADMIN_ROLE_LABEL } from "@/context/AuthContext";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
-import { AbsenceRecord, AbsenceType, Teacher, EmployeePermission, DelayNotice } from "@/types/teacher";
+import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
 import {
   Button,
@@ -54,13 +45,10 @@ import {
   ColumnDef,
   ActionMenu,
   ActionMenuItem,
-  KpiCard,
 } from "@/components/ui";
-import { SmartRadarSection } from "@/components/analytics/SmartRadarSection";
 import {
   generateSchoolProactiveAlerts,
   getSchoolRadarKPIs,
-  calculateSchoolDelaySummaries,
 } from "@/lib/delayDeductionIntegration";
 import { getSaudiToday } from "@/lib/timeUtils";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
@@ -154,7 +142,7 @@ export default function DashboardPage() {
   const [isQuickActionsDropdownOpen, setIsQuickActionsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const [activeTab, setActiveTab] = useState<"records" | "timeline" | "analytics">("records");
+  const [activeTab, setActiveTab] = useState<"records" | "analytics">("records");
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<"all" | AbsenceType>("all");
 
   // Today in Saudi format (YYYY-MM-DD)
@@ -229,6 +217,7 @@ export default function DashboardPage() {
       todayAbsences: todayAbs,
       todayDelays: todayDel,
       disciplineRate,
+      pendingInquiriesCount,
       totalPendingMatters,
       teachersDueCount: radarKpis.teachersDueCount,
       totalUnexcusedHours: radarKpis.totalUnexcusedHours,
@@ -269,7 +258,7 @@ export default function DashboardPage() {
         items.push({
           id: `pending-delay-${dn.id}`,
           title: dn.teacherName || "معلمة",
-          subtitle: `إشعار تأخر بتاريخ (${dn.noticeDate || dn.date}) بانتظار اعتماد الإدارة`,
+          subtitle: `إشعار تأخر بتاريخ (${dn.noticeDate || dn.date}) بانتظار توقيع الإدارة`,
           badgeText: "اعتماد مطلوب",
           actionLabel: "مراجعة واعتماد",
           actionUrl: "/procedures/delay-notice",
@@ -299,8 +288,8 @@ export default function DashboardPage() {
         items.push({
           id: `pending-inq-${inq.id}`,
           title: inq.teacherName || "معلمة",
-          subtitle: `مساءلة غياب أُرسلت عبر الواتساب وبانتظار تقديم الإفادة`,
-          badgeText: "بانتظار الرد",
+          subtitle: "مساءلة غياب أُرسلت عبر الواتساب وبانتظار تقديم الإفادة",
+          badgeText: "بانتظار الإفادة",
           actionLabel: "متابعة المساءلة",
           actionUrl: "/procedures/absence",
           teacherName: inq.teacherName || "معلمة",
@@ -371,7 +360,7 @@ export default function DashboardPage() {
     return items;
   }, [absenceRecords, permissions, todayDateStr]);
 
-  // Unified Activity Timeline (top 15 recent actions across platform)
+  // Unified Activity Timeline (top 8 recent operations)
   const timelineActivities = useMemo<TimelineActivity[]>(() => {
     const list: TimelineActivity[] = [];
 
@@ -382,7 +371,7 @@ export default function DashboardPage() {
         list.push({
           id: `t-abs-${r.id}`,
           type: "absence",
-          title: `مساءلة غياب (${r.type})`,
+          title: `تم إنشاء مساءلة غياب (${r.type})`,
           teacherName: r.teacherName,
           specialty: r.specialty,
           date: r.date,
@@ -400,7 +389,7 @@ export default function DashboardPage() {
         list.push({
           id: `t-del-${d.id}`,
           type: "delay",
-          title: "إشعار تأخر / انصراف",
+          title: "تم توثيق إشعار تأخر / انصراف",
           teacherName: d.teacherName || "معلمة",
           date: d.noticeDate || d.date || todayDateStr,
           badgeLabel: d.status === "completed" ? "معتمد" : "قيد الإجراء",
@@ -416,7 +405,7 @@ export default function DashboardPage() {
         list.push({
           id: `t-perm-${p.id}`,
           type: "permission",
-          title: `استئذان رسمي (${p.durationMinutes} دقيقة)`,
+          title: `تم اعتماد استئذان رسمي (${p.durationMinutes} دقيقة)`,
           teacherName: p.teacherName || "معلمة",
           date: p.permissionDate || todayDateStr,
           badgeLabel: "استئذان",
@@ -432,7 +421,7 @@ export default function DashboardPage() {
         list.push({
           id: `t-inq-${i.id}`,
           type: "inquiry",
-          title: "مساءلة غياب عبر الواتساب",
+          title: "تم إرسال مساءلة غياب عبر الواتساب",
           teacherName: i.teacherName || "معلمة",
           date: i.createdAt ? new Date(i.createdAt).toISOString().split("T")[0] : todayDateStr,
           badgeLabel: i.status === "submitted" || i.status === "approved" ? "تمت الإفادة" : i.status === "expired" ? "منتهية" : "بانتظار الرد",
@@ -443,7 +432,7 @@ export default function DashboardPage() {
 
     // Sort by date descending
     list.sort((a, b) => b.date.localeCompare(a.date));
-    return list.slice(0, 12);
+    return list.slice(0, 6);
   }, [absenceRecords, delayNotices, permissions, inquiries, todayDateStr]);
 
   const confirmDeleteRecord = (reason?: string) => {
@@ -558,7 +547,7 @@ export default function DashboardPage() {
       sortable: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/70 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+          <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200/70 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
             {row.teacherName.charAt(0)}
           </div>
           <div className="min-w-0">
@@ -596,7 +585,7 @@ export default function DashboardPage() {
         return (
           <span
             className={cn(
-              "inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border",
+              "inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold border",
               style.bg,
               style.text,
               style.border
@@ -662,7 +651,7 @@ export default function DashboardPage() {
       <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-teal-50 border border-teal-200 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
               {item.teacherName.charAt(0)}
             </div>
             <div className="min-w-0">
@@ -741,70 +730,75 @@ export default function DashboardPage() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-slate-50/70 pb-16">
       {/* Main Container */}
-      <div className="flex-1 p-3.5 sm:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto">
-        {/* Section 1: Smart Administrative Welcome Header */}
-        <header className="relative bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs overflow-hidden">
-          <div className="absolute top-0 left-0 w-80 h-80 bg-gradient-to-br from-teal-50/60 to-transparent rounded-full blur-2xl pointer-events-none" />
+      <div className="flex-1 p-3.5 sm:p-6 lg:p-7 space-y-5 max-w-7xl w-full mx-auto">
+        {/* Section 1: Compact, Elegant Welcome Header */}
+        <header className="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-xs overflow-hidden">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* User Greeting & Realtime Smart Summary */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-500 font-medium">السلام عليكم،</span>
+                <span className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                  أ. {adminDisplayName}
+                </span>
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold border border-slate-200/80">
+                  {adminRoleTitle} • الثانوية الخامسة مسارات
+                </span>
+              </div>
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
-            {/* Left/Main Column: Title & Dynamic Executive Summary Pills */}
-            <div className="space-y-2.5 max-w-2xl">
+              {/* Dynamic Daily Summary Pills */}
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-[#0c535b] font-bold shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>السلام عليكم، أ. {adminDisplayName}</span>
-                  <span className="text-teal-400">|</span>
-                  <span className="text-teal-700">{adminRoleTitle}</span>
-                </div>
+                <span className="text-slate-500 font-medium">لديكِ اليوم:</span>
 
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/80 text-slate-700 font-semibold">
-                  <Building2 className="w-3.5 h-3.5 text-teal-600" />
-                  <span>الثانوية الخامسة مسارات</span>
-                  <span className="text-slate-300">|</span>
-                  <span className="font-mono text-slate-600" dir="ltr">{todayDateStr}</span>
-                </div>
-              </div>
-
-              <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-                  مركز القيادة والمتابعة الإدارية
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">
-                  متابعة يومية استباقية للدوام، رصد فوري للغياب والتأخر، إصدار المساءلات الرسمية، ومراقبة استحقاقات الحسم المالي وفق اللائحة التعليمية المعتمدة.
-                </p>
-              </div>
-
-              {/* Dynamic Executive Status Badges */}
-              <div className="flex flex-wrap items-center gap-2 pt-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>الانضباط اليوم: {todayPulse.disciplineRate}%</span>
-                </div>
-
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-teal-50 border border-teal-200 text-teal-800 text-xs font-bold">
-                  <Users className="w-3.5 h-3.5 text-teal-600" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-700 font-semibold border border-slate-200/90 shadow-2xs">
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      todayPulse.pendingInquiriesCount > 0 ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                    )}
+                  />
                   <span>
-                    {todayPulse.todayAbsences === 0
-                      ? "انضباط كلي مسجل اليوم ✨"
-                      : `${todayPulse.todayAbsences} غيابات اليوم`}
+                    <strong className="font-bold text-slate-900">{todayPulse.pendingInquiriesCount}</strong> مساءلة تنتظر التوجيه
                   </span>
-                </div>
+                </span>
 
-                {todayPulse.totalPendingMatters > 0 && (
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold animate-pulse">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                    <span>{todayPulse.totalPendingMatters} معاملات بانتظار التوجيه</span>
-                  </div>
-                )}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-700 font-semibold border border-slate-200/90 shadow-2xs">
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      todayPulse.teachersDueCount > 0 ? "bg-rose-500 animate-pulse" : "bg-emerald-500"
+                    )}
+                  />
+                  <span>
+                    <strong className="font-bold text-slate-900">{todayPulse.teachersDueCount}</strong> حالات حسم
+                  </span>
+                </span>
+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-50 text-slate-700 font-semibold border border-slate-200/90 shadow-2xs">
+                  <span
+                    className={cn(
+                      "w-2 h-2 rounded-full",
+                      todayPulse.todayAbsences > 0 ? "bg-rose-500" : "bg-emerald-500"
+                    )}
+                  />
+                  <span>
+                    <strong className="font-bold text-slate-900">{todayPulse.todayAbsences}</strong> غياب اليوم
+                  </span>
+                </span>
+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 font-bold border border-emerald-200/90 shadow-2xs">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>الانضباط: {todayPulse.disciplineRate}%</span>
+                </span>
               </div>
             </div>
 
-            {/* Right Column: Primary Quick Action with Dropdown */}
-            <div className="flex items-center gap-2.5 shrink-0 relative" ref={dropdownRef}>
+            {/* Primary Action Button with Animated Dropdown */}
+            <div className="relative shrink-0" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsQuickActionsDropdownOpen((prev) => !prev)}
-                className="inline-flex flex-row items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-b from-[#137a85] to-[#0c5961] hover:from-[#158894] hover:to-[#0f666f] text-white text-xs sm:text-sm font-extrabold shadow-sm hover:shadow-md transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]"
+                className="inline-flex flex-row items-center justify-center gap-2.5 px-4.5 py-2.5 rounded-xl bg-gradient-to-b from-[#137a85] to-[#0c5961] hover:from-[#158894] hover:to-[#0f666f] text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-[0.98]"
                 aria-expanded={isQuickActionsDropdownOpen}
                 aria-haspopup="menu"
               >
@@ -827,7 +821,7 @@ export default function DashboardPage() {
                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                     transition={{ duration: 0.15 }}
                     role="menu"
-                    className="absolute left-0 top-full mt-2 w-56 rounded-2xl bg-white border border-slate-200 shadow-xl p-2 z-40 space-y-1 text-right text-xs"
+                    className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-xl p-2 z-40 space-y-1 text-right text-xs"
                   >
                     <button
                       type="button"
@@ -836,10 +830,15 @@ export default function DashboardPage() {
                         setIsQuickActionsDropdownOpen(false);
                         router.push("/procedures/absence");
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-800 hover:bg-teal-50 hover:text-teal-900 font-bold transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-slate-800 hover:bg-teal-50 hover:text-teal-950 font-bold transition-colors cursor-pointer group"
                     >
-                      <FileText className="w-4 h-4 text-[#137a85]" />
-                      <span>مساءلة غياب جديدة</span>
+                      <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#137a85] group-hover:bg-[#137a85] group-hover:text-white flex items-center justify-center transition-colors">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block truncate">تسجيل غياب ومساءلة</span>
+                        <span className="text-[10px] text-slate-400 font-normal block truncate">إصدار نموذج مساءلة رسمي</span>
+                      </div>
                     </button>
 
                     <button
@@ -849,10 +848,15 @@ export default function DashboardPage() {
                         setIsQuickActionsDropdownOpen(false);
                         setIsCreatePermissionOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-800 hover:bg-teal-50 hover:text-teal-900 font-bold transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-slate-800 hover:bg-blue-50 hover:text-blue-950 font-bold transition-colors cursor-pointer group"
                     >
-                      <DoorOpen className="w-4 h-4 text-blue-600" />
-                      <span>تسجيل استئذان موظفة</span>
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition-colors">
+                        <DoorOpen className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block truncate">تسجيل استئذان</span>
+                        <span className="text-[10px] text-slate-400 font-normal block truncate">توثيق خروج مؤقت واحتساب الرصيد</span>
+                      </div>
                     </button>
 
                     <button
@@ -862,10 +866,33 @@ export default function DashboardPage() {
                         setIsQuickActionsDropdownOpen(false);
                         setIsCreateDelayNoticeOpen(true);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-800 hover:bg-teal-50 hover:text-teal-900 font-bold transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-slate-800 hover:bg-amber-50 hover:text-amber-950 font-bold transition-colors cursor-pointer group"
                     >
-                      <Clock className="w-4 h-4 text-amber-600" />
-                      <span>تنبيه تأخر أو انصراف</span>
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center transition-colors">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block truncate">تنبيه تأخر</span>
+                        <span className="text-[10px] text-slate-400 font-normal block truncate">إشعار تأخر صباحي أو انصراف</span>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() => {
+                        setIsQuickActionsDropdownOpen(false);
+                        router.push("/procedures/deduction-hours");
+                      }}
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-slate-800 hover:bg-rose-50 hover:text-rose-950 font-bold transition-colors cursor-pointer group"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white flex items-center justify-center transition-colors">
+                        <ShieldAlert className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block truncate">قرار حسم</span>
+                        <span className="text-[10px] text-slate-400 font-normal block truncate">حسم لمن بلغت 7 ساعات</span>
+                      </div>
                     </button>
 
                     <div className="h-px bg-slate-100 my-1" />
@@ -877,10 +904,15 @@ export default function DashboardPage() {
                         setIsQuickActionsDropdownOpen(false);
                         router.push("/reports");
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-slate-800 hover:bg-slate-100 font-bold transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2.5 p-2.5 rounded-xl text-slate-800 hover:bg-purple-50 hover:text-purple-950 font-bold transition-colors cursor-pointer group"
                     >
-                      <FileBarChart className="w-4 h-4 text-purple-600" />
-                      <span>مركز التقارير والحصر</span>
+                      <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center transition-colors">
+                        <FileBarChart className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <span className="block truncate">إنشاء تقرير</span>
+                        <span className="text-[10px] text-slate-400 font-normal block truncate">حصر إداري وطباعة مجمعة</span>
+                      </div>
                     </button>
                   </motion.div>
                 )}
@@ -889,196 +921,219 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Section 2: 4 Core Quick Actions Hub */}
-        <section aria-label="الإجراءات السريعة" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-          {/* Card 1: تسجيل غياب */}
-          <Link
-            href="/procedures/absence"
-            className="group relative p-4 rounded-2xl bg-white hover:bg-teal-50/40 border border-slate-200/90 hover:border-teal-300 transition-all duration-200 shadow-2xs hover:shadow-sm flex items-start gap-3.5"
-          >
-            <div className="w-11 h-11 rounded-xl bg-teal-50 group-hover:bg-[#137a85] text-[#137a85] group-hover:text-white flex items-center justify-center shrink-0 border border-teal-200/80 transition-colors shadow-2xs">
-              <FileText className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-900 group-hover:text-[#0c535b] transition-colors truncate">
-                  تسجيل غياب ومساءلة
-                </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200 shrink-0">
-                  فوري
+        {/* Section 2: Reorganized Quick Actions (Hierarchical: Daily vs Admin Tools) */}
+        <section aria-label="الإجراءات السريعة" className="space-y-2">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+            {/* Daily Actions (Most Used) - 6 cols */}
+            <div className="lg:col-span-6 space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  الإجراءات اليومية (الأكثر استخداماً)
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">
-                إصدار استمارة مساءلة رسمية فورية أو إثبات عذر
-              </p>
-            </div>
-          </Link>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {/* Card 1: تسجيل غياب */}
+                <Link
+                  href="/procedures/absence"
+                  className="group relative p-3.5 rounded-2xl bg-white hover:bg-teal-50/30 border border-slate-200/90 hover:border-teal-300 transition-all duration-150 shadow-2xs hover:shadow-xs flex items-center gap-3 cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#137a85] group-hover:bg-[#137a85] group-hover:text-white flex items-center justify-center shrink-0 border border-teal-200/80 transition-colors shadow-2xs">
+                    <FileText className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-[#0c535b] block truncate">
+                      تسجيل غياب ومساءلة
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      رصد غياب أو إثبات عذر
+                    </span>
+                  </div>
+                </Link>
 
-          {/* Card 2: تسجيل استئذان (Direct Modal Trigger) */}
-          <button
-            type="button"
-            onClick={() => setIsCreatePermissionOpen(true)}
-            className="group relative p-4 rounded-2xl bg-white hover:bg-blue-50/40 border border-slate-200/90 hover:border-blue-300 transition-all duration-200 shadow-2xs hover:shadow-sm flex items-start gap-3.5 text-right cursor-pointer"
-          >
-            <div className="w-11 h-11 rounded-xl bg-blue-50 group-hover:bg-blue-600 text-blue-600 group-hover:text-white flex items-center justify-center shrink-0 border border-blue-200/80 transition-colors shadow-2xs">
-              <DoorOpen className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-900 group-hover:text-blue-900 transition-colors truncate">
-                  تسجيل استئذان موظفة
-                </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-                  معتمد
-                </span>
+                {/* Card 2: تسجيل استئذان (Modal) */}
+                <button
+                  type="button"
+                  onClick={() => setIsCreatePermissionOpen(true)}
+                  className="group relative p-3.5 rounded-2xl bg-white hover:bg-blue-50/30 border border-slate-200/90 hover:border-blue-300 transition-all duration-150 shadow-2xs hover:shadow-xs flex items-center gap-3 text-right cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center shrink-0 border border-blue-200/80 transition-colors shadow-2xs">
+                    <DoorOpen className="w-5 h-5 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-900 block truncate">
+                      تسجيل استئذان موظفة
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      توثيق خروج مؤقت
+                    </span>
+                  </div>
+                </button>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">
-                توثيق خروج مؤقت واحتساب الدقائق ضمن الرصيد
-              </p>
             </div>
-          </button>
 
-          {/* Card 3: تنبيه تأخر (Direct Modal Trigger) */}
-          <button
-            type="button"
-            onClick={() => setIsCreateDelayNoticeOpen(true)}
-            className="group relative p-4 rounded-2xl bg-white hover:bg-amber-50/40 border border-slate-200/90 hover:border-amber-300 transition-all duration-200 shadow-2xs hover:shadow-sm flex items-start gap-3.5 text-right cursor-pointer"
-          >
-            <div className="w-11 h-11 rounded-xl bg-amber-50 group-hover:bg-amber-500 text-amber-600 group-hover:text-white flex items-center justify-center shrink-0 border border-amber-200/80 transition-colors shadow-2xs">
-              <Clock className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-900 group-hover:text-amber-900 transition-colors truncate">
-                  تنبيه على تأخر
-                </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 shrink-0">
-                  تراكمي
+            {/* Administrative Tools - 6 cols */}
+            <div className="lg:col-span-6 space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  أدوات الإدارة والمتابعة
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">
-                إشعار تأخر صباحي أو انصراف ومراقبة ساعات الحسم
-              </p>
-            </div>
-          </button>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {/* Card 3: تنبيه تأخر (Modal) */}
+                <button
+                  type="button"
+                  onClick={() => setIsCreateDelayNoticeOpen(true)}
+                  className="group relative p-3 rounded-2xl bg-white hover:bg-amber-50/30 border border-slate-200/90 hover:border-amber-300 transition-all duration-150 shadow-2xs hover:shadow-xs flex items-center gap-2.5 text-right cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-500 group-hover:text-white flex items-center justify-center shrink-0 border border-amber-200/80 transition-colors shadow-2xs">
+                    <Clock className="w-4 h-4 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-amber-900 block truncate">
+                      تنبيه تأخر
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      صباحي / انصراف
+                    </span>
+                  </div>
+                </button>
 
-          {/* Card 4: إنشاء تقرير */}
-          <Link
-            href="/reports"
-            className="group relative p-4 rounded-2xl bg-white hover:bg-purple-50/40 border border-slate-200/90 hover:border-purple-300 transition-all duration-200 shadow-2xs hover:shadow-sm flex items-start gap-3.5"
-          >
-            <div className="w-11 h-11 rounded-xl bg-purple-50 group-hover:bg-purple-600 text-purple-600 group-hover:text-white flex items-center justify-center shrink-0 border border-purple-200/80 transition-colors shadow-2xs">
-              <FileBarChart className="w-5 h-5 stroke-[2.2]" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-1">
-                <span className="text-xs font-bold text-slate-900 group-hover:text-purple-900 transition-colors truncate">
-                  مركز التقارير والحصر
-                </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                  شامل
-                </span>
+                {/* Card 4: قرار حسم */}
+                <Link
+                  href="/procedures/deduction-hours"
+                  className="group relative p-3 rounded-2xl bg-white hover:bg-rose-50/30 border border-slate-200/90 hover:border-rose-300 transition-all duration-150 shadow-2xs hover:shadow-xs flex items-center gap-2.5 cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white flex items-center justify-center shrink-0 border border-rose-200/80 transition-colors shadow-2xs">
+                    <ShieldAlert className="w-4 h-4 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-rose-900 block truncate">
+                      قرار حسم
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      نصاب 7 ساعات
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Card 5: التقارير والحصر */}
+                <Link
+                  href="/reports"
+                  className="group relative p-3 rounded-2xl bg-white hover:bg-purple-50/30 border border-slate-200/90 hover:border-purple-300 transition-all duration-150 shadow-2xs hover:shadow-xs flex items-center gap-2.5 cursor-pointer"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white flex items-center justify-center shrink-0 border border-purple-200/80 transition-colors shadow-2xs">
+                    <FileBarChart className="w-4 h-4 stroke-[2.2]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-purple-900 block truncate">
+                      التقارير والحصر
+                    </span>
+                    <span className="text-[10px] text-slate-400 block truncate">
+                      تصدير وإحصاء
+                    </span>
+                  </div>
+                </Link>
               </div>
-              <p className="text-[11px] text-slate-500 mt-1 leading-snug line-clamp-2">
-                تصدير وطباعة الحصر اليومي والتراكمي لجميع العمليات
-              </p>
             </div>
-          </Link>
+          </div>
         </section>
 
-        {/* Section 3: 4 Refined Executive KPI Cards */}
-        <section aria-label="مؤشرات الانضباط اليومي" className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-          <KpiCard
-            title="غيابات اليوم"
-            value={todayPulse.todayAbsences}
-            unit={todayPulse.todayAbsences === 1 ? "معلمة" : todayPulse.todayAbsences === 2 ? "معلمتان" : todayPulse.todayAbsences <= 10 ? "معلمات" : "معلمة"}
-            subtitle={
-              todayPulse.todayAbsences === 0 ? (
-                <span className="text-emerald-700 font-bold flex items-center gap-1">
-                  <span>انضباط كلي مسجل اليوم</span>
-                  <span>✨</span>
-                </span>
-              ) : (
-                <span className="text-rose-600 font-bold">
-                  {todayPulse.todayAbsences} حالات غياب مرصودة
-                </span>
-              )
-            }
-            icon={<Users className="w-5 h-5" />}
-            iconBgColor={todayPulse.todayAbsences > 0 ? "bg-rose-50" : "bg-teal-50"}
-            iconColor={todayPulse.todayAbsences > 0 ? "text-rose-600" : "text-[#137a85]"}
-            valueColor={todayPulse.todayAbsences > 0 ? "text-rose-700" : "text-slate-900"}
-          />
-
-          <KpiCard
-            title="تأخر وخروج اليوم"
-            value={todayPulse.todayDelays}
-            unit={todayPulse.todayDelays === 1 ? "حالة" : todayPulse.todayDelays === 2 ? "حالتان" : "حالات"}
-            subtitle={
-              todayPulse.todayDelays === 0 ? (
-                <span className="text-slate-400 font-medium">لا يوجد تأخر مرصود اليوم</span>
-              ) : (
-                <span className="text-amber-600 font-bold">
-                  {todayPulse.todayDelays} إشعارات مسجلة اليوم
-                </span>
-              )
-            }
-            icon={<Clock className="w-5 h-5" />}
-            iconBgColor={todayPulse.todayDelays > 0 ? "bg-amber-50" : "bg-slate-50"}
-            iconColor={todayPulse.todayDelays > 0 ? "text-amber-600" : "text-slate-400"}
-          />
-
-          <KpiCard
-            title="استحقاق الحسم المالي"
-            value={todayPulse.teachersDueCount}
-            unit={todayPulse.teachersDueCount === 1 ? "معلمة" : todayPulse.teachersDueCount === 2 ? "معلمتان" : "معلمات"}
-            subtitle={
-              <span className="text-slate-600 font-medium" dir="rtl">
-                إجمالي: <strong className="font-mono font-bold text-slate-800">{todayPulse.totalUnexcusedHours}</strong> ساعة تأخير
+        {/* Section 3: High-Impact KPI Cards (Large, Bold Numbers) */}
+        <section aria-label="مؤشرات الانضباط اليومي" className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* KPI 1 */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600">غيابات اليوم</span>
+              <div className="w-8 h-8 rounded-lg bg-teal-50 text-[#137a85] flex items-center justify-center">
+                <Users className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {todayPulse.todayAbsences}
               </span>
-            }
-            icon={<ShieldAlert className="w-5 h-5" />}
-            iconBgColor={todayPulse.teachersDueCount > 0 ? "bg-rose-50" : "bg-emerald-50"}
-            iconColor={todayPulse.teachersDueCount > 0 ? "text-rose-600" : "text-emerald-600"}
-            valueColor={todayPulse.teachersDueCount > 0 ? "text-rose-700" : "text-slate-900"}
-          />
+              <span className="text-xs font-medium text-slate-400">معلمة</span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate">
+              {todayPulse.todayAbsences === 0 ? "انضباط كلي مسجل اليوم ✨" : `${todayPulse.todayAbsences} حالات مرصودة`}
+            </p>
+          </div>
 
-          <KpiCard
-            title="معاملات بانتظار الاعتماد"
-            value={todayPulse.totalPendingMatters}
-            unit={todayPulse.totalPendingMatters === 1 ? "إجراء" : todayPulse.totalPendingMatters === 2 ? "إجراءان" : "إجراءات"}
-            subtitle={
-              todayPulse.totalPendingMatters > 0 ? (
-                <span className="text-amber-700 font-bold">
-                  مساءلات بانتظار الإفادة أو التوجيه
-                </span>
-              ) : (
-                <span className="text-slate-400 font-medium">كافة الإجراءات معتمدة ✓</span>
-              )
-            }
-            icon={<Activity className="w-5 h-5" />}
-            iconBgColor={todayPulse.totalPendingMatters > 0 ? "bg-teal-50" : "bg-slate-50"}
-            iconColor={todayPulse.totalPendingMatters > 0 ? "text-teal-700" : "text-slate-400"}
-          />
+          {/* KPI 2 */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600">تأخر وخروج اليوم</span>
+              <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <Clock className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {todayPulse.todayDelays}
+              </span>
+              <span className="text-xs font-medium text-slate-400">حالة</span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate">
+              {todayPulse.todayDelays === 0 ? "لا توجد حالات جديدة" : `${todayPulse.todayDelays} إشعارات مسجلة`}
+            </p>
+          </div>
+
+          {/* KPI 3 */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600">استحقاق الحسم المالي</span>
+              <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                <ShieldAlert className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {todayPulse.teachersDueCount}
+              </span>
+              <span className="text-xs font-medium text-slate-400">معلمة</span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate" dir="rtl">
+              إجمالي: <strong className="font-mono text-slate-800">{todayPulse.totalUnexcusedHours}</strong> س غير مسوّغة
+            </p>
+          </div>
+
+          {/* KPI 4 */}
+          <div className="p-4 rounded-2xl bg-white border border-slate-200/80 shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-600">معاملات بانتظار الاعتماد</span>
+              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Activity className="w-4 h-4" />
+              </div>
+            </div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                {todayPulse.totalPendingMatters}
+              </span>
+              <span className="text-xs font-medium text-slate-400">معاملة</span>
+            </div>
+            <p className="text-[11px] text-slate-500 truncate">
+              {todayPulse.totalPendingMatters === 0 ? "كافة الإجراءات مكتملة ✓" : "بانتظار الإفادة والتوجيه"}
+            </p>
+          </div>
         </section>
 
-        {/* Section 4: Daily Command Center Radar (الرادار الإداري اليومي - 3 مسارات) */}
-        <section aria-label="الرادار الإداري ومركز المتابعة اليومية" className="space-y-3.5">
+        {/* Section 4: Daily Administrative Radar (الرادار الإداري اليومي - مركز القرار الفوري) */}
+        <section aria-label="الرادار الإداري اليومي" className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-[#137a85]" />
               <h2 className="text-base sm:text-lg font-black text-slate-900">
-                الرادار الإداري ومركز المتابعة اليومية
+                الرادار الإداري اليومي
               </h2>
             </div>
             <span className="text-xs text-slate-500 font-medium">
-              توجيه وإجراءات مباشرة للدوام
+              مركز القرار والمتابعة الفورية
             </span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
             {/* Stream 1: 🔴 يحتاج إجراء الآن */}
-            <div className="bg-white rounded-3xl border border-rose-200/80 p-4 sm:p-5 shadow-2xs space-y-3">
+            <div className="bg-white rounded-2xl border border-rose-200/80 p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-rose-100">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
@@ -1092,19 +1147,19 @@ export default function DashboardPage() {
               </div>
 
               {immediateActionItems.length === 0 ? (
-                <div className="py-8 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
-                    <CheckCircle2 className="w-5 h-5" />
+                <div className="py-7 text-center space-y-1.5">
+                  <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200">
+                    <CheckCircle2 className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">لا توجد حالات حرجة معلقة</p>
-                  <p className="text-[11px] text-slate-400">كافة نصابات الحسم والتنبيهات معالجة بالكامل</p>
+                  <p className="text-xs font-bold text-slate-800">لا توجد إجراءات معلقة حالياً</p>
+                  <p className="text-[11px] text-slate-400">ممتاز، جميع الحالات تحت السيطرة والانضباط مكتمل.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-0.5">
+                <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar pr-0.5">
                   {immediateActionItems.map((item) => (
                     <div
                       key={item.id}
-                      className="p-3 rounded-2xl bg-rose-50/50 border border-rose-200/90 space-y-2"
+                      className="p-3 rounded-xl bg-rose-50/50 border border-rose-200/90 space-y-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -1137,12 +1192,12 @@ export default function DashboardPage() {
             </div>
 
             {/* Stream 2: 🟡 يحتاج متابعة */}
-            <div className="bg-white rounded-3xl border border-amber-200/80 p-4 sm:p-5 shadow-2xs space-y-3">
+            <div className="bg-white rounded-2xl border border-amber-200/80 p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-amber-100">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
                   <h3 className="text-xs sm:text-sm font-bold text-amber-950">
-                    يحتاج متابعة وتوجيه
+                    يحتاج متابعة
                   </h3>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-mono font-bold">
@@ -1151,19 +1206,19 @@ export default function DashboardPage() {
               </div>
 
               {pendingFollowUpItems.length === 0 ? (
-                <div className="py-8 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
-                    <Check className="w-5 h-5" />
+                <div className="py-7 text-center space-y-1.5">
+                  <div className="w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
+                    <Check className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">لا توجد معاملات قيد الانتظار</p>
-                  <p className="text-[11px] text-slate-400">جميع إفادات المعلمات مستلمة</p>
+                  <p className="text-xs font-bold text-slate-800">لا توجد مساءلات معلقة</p>
+                  <p className="text-[11px] text-slate-400">جميع إفادات وتبريرات المعلمات مستوفاة.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-0.5">
+                <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar pr-0.5">
                   {pendingFollowUpItems.map((item) => (
                     <div
                       key={item.id}
-                      className="p-3 rounded-2xl bg-amber-50/50 border border-amber-200/90 space-y-2"
+                      className="p-3 rounded-xl bg-amber-50/50 border border-amber-200/90 space-y-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -1196,7 +1251,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Stream 3: 🟢 مكتمل اليوم */}
-            <div className="bg-white rounded-3xl border border-emerald-200/80 p-4 sm:p-5 shadow-2xs space-y-3">
+            <div className="bg-white rounded-2xl border border-emerald-200/80 p-4 shadow-2xs space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-emerald-100">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
@@ -1210,19 +1265,19 @@ export default function DashboardPage() {
               </div>
 
               {completedTodayItems.length === 0 ? (
-                <div className="py-8 text-center space-y-2">
-                  <div className="w-10 h-10 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
-                    <Calendar className="w-5 h-5" />
+                <div className="py-7 text-center space-y-1.5">
+                  <div className="w-9 h-9 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-200">
+                    <Calendar className="w-4 h-4" />
                   </div>
-                  <p className="text-xs font-bold text-slate-700">لم تُسجل إجراءات مكتملة لتاريخ اليوم بعد</p>
-                  <p className="text-[11px] text-slate-400">العمليات الموثقة خلال اليوم ستظهر هنا تباعاً</p>
+                  <p className="text-xs font-bold text-slate-800">لا توجد عمليات مسجلة لتاريخ اليوم</p>
+                  <p className="text-[11px] text-slate-400">العمليات المنجزة اليوم ستظهر هنا تلقائياً.</p>
                 </div>
               ) : (
-                <div className="space-y-2.5 max-h-80 overflow-y-auto custom-scrollbar pr-0.5">
+                <div className="space-y-2.5 max-h-72 overflow-y-auto custom-scrollbar pr-0.5">
                   {completedTodayItems.map((item) => (
                     <div
                       key={item.id}
-                      className="p-3 rounded-2xl bg-emerald-50/40 border border-emerald-200/90 space-y-2"
+                      className="p-3 rounded-xl bg-emerald-50/40 border border-emerald-200/90 space-y-2"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
@@ -1266,14 +1321,91 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Section 5: Operations Hub (DataTable, Activity Timeline, Analytics) */}
-        <section className="space-y-4">
+        {/* Section 5: Activity Timeline (آخر العمليات) */}
+        <section aria-label="آخر العمليات والأنشطة" className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">آخر العمليات</h3>
+              <p className="text-xs text-slate-500 mt-0.5">تسلسل زمني لآخر الأنشطة والإجراءات المنفذة</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("records")}
+              className="text-xs font-bold text-[#137a85] hover:text-[#0c5961] hover:underline cursor-pointer"
+            >
+              عرض جميع العمليات ←
+            </button>
+          </div>
+
+          {timelineActivities.length === 0 ? (
+            <div className="py-8 text-center text-slate-400 text-xs">
+              لا توجد أنشطة مسجلة حتى الآن.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {timelineActivities.map((act) => (
+                <div
+                  key={act.id}
+                  className="py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50/60 px-2 rounded-xl transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0">
+                      {act.teacherName.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-900 truncate">
+                          {act.teacherName}
+                        </span>
+                        <span
+                          className={cn(
+                            "px-2 py-0.2 rounded text-[10px] font-bold border shrink-0",
+                            act.badgeVariant === "rose" && "bg-rose-50 text-rose-700 border-rose-200",
+                            act.badgeVariant === "blue" && "bg-blue-50 text-blue-700 border-blue-200",
+                            act.badgeVariant === "teal" && "bg-teal-50 text-teal-700 border-teal-200",
+                            act.badgeVariant === "amber" && "bg-amber-50 text-amber-800 border-amber-200",
+                            act.badgeVariant === "emerald" && "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          )}
+                        >
+                          {act.badgeLabel}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                        {act.title} {act.details ? `• ${act.details}` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <span className="text-[11px] font-mono text-slate-500" dir="ltr">
+                      {act.date}
+                    </span>
+                    {act.rawAbsence && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleExportPdf(act.rawAbsence!)}
+                        className="text-xs py-1 h-7 inline-flex flex-row items-center gap-1 whitespace-nowrap"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+                        <span>طباعة</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Section 6: Comprehensive Records Hub (DataTable & Analytics) */}
+        <section className="space-y-3 pt-1">
           <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
             <button
               type="button"
               onClick={() => setActiveTab("records")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0",
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0",
                 activeTab === "records"
                   ? "bg-[#137a85] text-white shadow-2xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -1293,23 +1425,9 @@ export default function DashboardPage() {
 
             <button
               type="button"
-              onClick={() => setActiveTab("timeline")}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0",
-                activeTab === "timeline"
-                  ? "bg-[#137a85] text-white shadow-2xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-              )}
-            >
-              <Activity className="w-4 h-4" />
-              <span>الخط الزمني للعمليات الأخيرة</span>
-            </button>
-
-            <button
-              type="button"
               onClick={() => setActiveTab("analytics")}
               className={cn(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0",
+                "flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0",
                 activeTab === "analytics"
                   ? "bg-[#137a85] text-white shadow-2xs"
                   : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -1376,81 +1494,7 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          {/* Tab 2: Activity Timeline */}
-          {activeTab === "timeline" && (
-            <Card variant="default" className="p-5 sm:p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">سجل الأحداث والعمليات الإدارية</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">تسلسل زمني لآخر الإجراءات المنفذة عبر النظام</p>
-                </div>
-                <span className="text-xs text-slate-400 font-medium">آخر {timelineActivities.length} عمليات</span>
-              </div>
-
-              {timelineActivities.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 text-xs">
-                  لا توجد عمليات مسجلة حتى الآن.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {timelineActivities.map((act) => (
-                    <div
-                      key={act.id}
-                      className="p-3.5 rounded-2xl bg-slate-50/70 hover:bg-slate-100/70 border border-slate-200/80 transition-colors flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
-                          {act.teacherName.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-900 truncate">
-                              {act.teacherName}
-                            </span>
-                            <span
-                              className={cn(
-                                "px-2 py-0.5 rounded-md text-[10px] font-bold border",
-                                act.badgeVariant === "rose" && "bg-rose-50 text-rose-700 border-rose-200",
-                                act.badgeVariant === "blue" && "bg-blue-50 text-blue-700 border-blue-200",
-                                act.badgeVariant === "teal" && "bg-teal-50 text-teal-700 border-teal-200",
-                                act.badgeVariant === "amber" && "bg-amber-50 text-amber-800 border-amber-200",
-                                act.badgeVariant === "emerald" && "bg-emerald-50 text-emerald-800 border-emerald-200"
-                              )}
-                            >
-                              {act.badgeLabel}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                            {act.title} {act.details ? `• ${act.details}` : ""}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-left text-xs font-mono text-slate-500">
-                          <span dir="ltr">{act.date}</span>
-                        </div>
-
-                        {act.rawAbsence && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleExportPdf(act.rawAbsence!)}
-                            className="text-xs py-1 h-7 inline-flex flex-row items-center gap-1.5 whitespace-nowrap"
-                          >
-                            <FileText className="w-3.5 h-3.5 text-teal-700 shrink-0" />
-                            <span>طباعة</span>
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Card>
-          )}
-
-          {/* Tab 3: Analytics Charts */}
+          {/* Tab 2: Analytics Charts */}
           {activeTab === "analytics" && (
             <Card variant="default" className="p-4 sm:p-6">
               <AbsenceCharts />
