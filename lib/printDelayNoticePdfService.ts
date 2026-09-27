@@ -207,12 +207,8 @@ ${schoolTableHtml}
   </div>
 
   <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${DEFAULT_ADMIN_NAME}</strong></div>
-    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
-      <span>التوقيع :</span>
-      <span>${sigHtml}</span>
-    </div>
-    ${showStamp ? `<div style="width: 55px; text-align: center;">${stampHtml}</div>` : ""}
+    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>فاطمة فلاتة</strong></div>
+    <div style="flex: 1; text-align: center;">التوقيع : ........................</div>
     <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ${hijriYear} هـ</div>
   </div>
 </div>
