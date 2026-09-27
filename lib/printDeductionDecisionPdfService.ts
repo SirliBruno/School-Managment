@@ -4,7 +4,7 @@ import {
 } from "@/lib/pdfTemplateBase";
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
-import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { DEFAULT_ADMIN_NAME, DEFAULT_PRINCIPAL_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
 
 export interface DeductionDecisionPdfData {
@@ -40,7 +40,8 @@ export function buildDeductionDecisionHtml(data: DeductionDecisionPdfData): stri
   const jobNumber = esc(data.jobNumber || civilId || "—");
   const currentAction = esc(data.currentAction || "معلم");
   const schoolName = esc(data.schoolName || SCHOOL_CONFIG.schoolName || "مدرسة الثانوية الخامسة مسارات");
-  const principalName = esc(data.principalName || DEFAULT_ADMIN_NAME);
+  const principalName = esc(data.principalName || DEFAULT_PRINCIPAL_NAME || "فاطمة فلاتة");
+  const vicePrincipalName = esc(DEFAULT_ADMIN_NAME || "أحلام صالح الضبيبي");
   const delayHours = esc(String(data.delayHours));
   const deductionDays = esc(String(data.deductionDays));
   const decisionNumber = esc(data.decisionNumber || "....................");
@@ -273,7 +274,7 @@ ${UNIFIED_PDF_CSS}
       <!-- Legal Preamble Text -->
       <div class="legal-text-body">
         <p style="margin-bottom:6px;">
-          إن قائدة المدرسة : <span style="font-weight:800;color:#0f766e">${principalName}</span>
+          إن مديرة المدرسة : <span style="font-weight:800;color:#0f766e">${principalName}</span>
         </p>
         <p>
           بناءً على صلاحياتها ، وبناءً على المادة ( <strong>٢١</strong> ) من نظام الخدمة المدنية ، وبناءً على موافقة معالي الوزير على إعطاء بعض الصلاحيات للمدارس بالقرار رقم <strong>١/١١٣٩</strong> وتاريخ <strong>١٤٢١/٣/١٧هـ</strong> ، ولبلوغ ساعات التأخر عن الدوام والخروج المبكر من الدوام 
@@ -303,8 +304,7 @@ ${UNIFIED_PDF_CSS}
       <!-- Signatures & Stamp -->
       <div class="signatures-section" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px;">
         <div class="sig-box" style="flex: 1;">
-          <div style="font-weight:800;font-size:10pt;color:#0f766e;margin-bottom:6px;">الرئيس المباشر / وكيلة المدرسة</div>
-          <div>الاسم : ${principalName}</div>
+          <div style="font-weight:800;font-size:10pt;color:#0f766e;margin-bottom:6px;">وكيلة الشؤون التعليمية : <span style="color:#0f172a;">${vicePrincipalName}</span></div>
           <div style="margin-top:4px; min-height: 44px; display: flex; align-items: center; gap: 8px;">
             <span>التوقيع :</span>
             <div>${sigElementHtml}</div>

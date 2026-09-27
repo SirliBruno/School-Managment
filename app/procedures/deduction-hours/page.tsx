@@ -28,7 +28,7 @@ import {
   AlertCircle,
   HelpCircle,
 } from "lucide-react";
-import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { DEFAULT_ADMIN_NAME, DEFAULT_PRINCIPAL_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -81,7 +81,7 @@ function DeductionHoursContent() {
   );
   const [decisionDate, setDecisionDate] = useState<string>(() => getSaudiToday());
   const [schoolName, setSchoolName] = useState<string>(SCHOOL_CONFIG.schoolName || "مدرسة الثانوية الخامسة مسارات");
-  const [principalName, setPrincipalName] = useState<string>(DEFAULT_ADMIN_NAME);
+  const [principalName, setPrincipalName] = useState<string>(DEFAULT_PRINCIPAL_NAME);
   const [rank, setRank] = useState<string>("معلم ممارس");
   const [currentAction, setCurrentAction] = useState<string>("معلمة");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -998,7 +998,7 @@ function DeductionHoursContent() {
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  قائدة المدرسة (الرئيس المباشر)
+                  مديرة المدرسة
                 </label>
                 <input
                   type="text"
