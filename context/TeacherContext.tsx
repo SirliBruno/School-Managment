@@ -291,6 +291,26 @@ export const mapPermissionToDbRow = (
   archived_by_cascade: Boolean(p.archivedByCascade),
 });
 
+export const mapTeacherToDbRow = (
+  t: Teacher
+): Record<string, unknown> => ({
+  id: t.id,
+  name: t.fullName,
+  full_name: t.fullName,
+  national_id: t.nationalId || t.username || t.jobNumber || t.id,
+  job_number: t.nationalId || t.username || t.jobNumber || t.id,
+  username: t.nationalId || t.username || t.jobNumber || t.id,
+  mobile: t.mobile || null,
+  employment_status: t.employmentStatus || "على رأس العمل",
+  job_title: t.jobTitle || "معلمة",
+  teaching_field: t.teachingField || t.specialty || null,
+  specialty: t.specialty || null,
+  total_absences: t.totalAbsences || 0,
+  is_archived: Boolean(t.isArchived),
+  archived_at: t.archivedAt || null,
+  archive_reason: t.archiveReason || null,
+});
+
 export const mapAbsenceToDbRow = (
   a: AbsenceRecord
 ): Record<string, unknown> => ({
@@ -1284,23 +1304,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                     .delete()
                     .in("id", cloudReconciled.removedTeacherIds);
 
-                  const toUpsertClean = cloudReconciled.cleanTeachers.map((t) => ({
-                    id: t.id,
-                    name: t.fullName,
-                    full_name: t.fullName,
-                    national_id: t.nationalId,
-                    job_number: t.nationalId,
-                    username: t.nationalId,
-                    mobile: t.mobile || null,
-                    employment_status: t.employmentStatus || "دائم",
-                    job_title: t.jobTitle || "معلم",
-                    teaching_field: t.teachingField || t.specialty || null,
-                    specialty: t.specialty || null,
-                    total_absences: t.totalAbsences || 0,
-                    is_archived: Boolean(t.isArchived),
-                    archived_at: t.archivedAt || null,
-                    archive_reason: t.archiveReason || null,
-                  }));
+                  const toUpsertClean = cloudReconciled.cleanTeachers.map(mapTeacherToDbRow);
                   await supabase.from("teachers").upsert(toUpsertClean);
                 } catch (syncErr) {
                   console.warn("فشل مزامنة حذف السجلات المكررة مع سوبابيز:", syncErr);
@@ -1310,23 +1314,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               cleanTeachersList = cloudReconciled.cleanTeachers;
             } else if (localTeachers.length > 0) {
               // Auto-seed Supabase from local data
-              const toInsertTeachers = localTeachers.map((t) => ({
-                id: t.id,
-                name: t.fullName,
-                full_name: t.fullName,
-                national_id: t.nationalId,
-                job_number: t.nationalId,
-                username: t.nationalId,
-                mobile: t.mobile || null,
-                employment_status: t.employmentStatus || "دائم",
-                job_title: t.jobTitle || "معلم",
-                teaching_field: t.teachingField || t.specialty || null,
-                specialty: t.specialty || null,
-                total_absences: t.totalAbsences || 0,
-                is_archived: Boolean(t.isArchived),
-                archived_at: t.archivedAt || null,
-                archive_reason: t.archiveReason || null,
-              }));
+              const toInsertTeachers = localTeachers.map(mapTeacherToDbRow);
               await supabase.from("teachers").upsert(toInsertTeachers);
             }
 
@@ -2189,7 +2177,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === "SUBSCRIBED") {
+          console.info("[Realtime] قناة التزامن السحابي المباشر متصلة بنجاح لكافة الجداول الستة");
+        } else if (err) {
+          console.warn("[Realtime] تنبيه في قناة التزامن المباشر:", err);
+        }
+      });
 
     return () => {
       supabase?.removeChannel(channel);
@@ -2356,22 +2350,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           ...plan.newTeachers,
           ...plan.updatedTeachers.map((u) => u.teacher),
           ...plan.restoredTeachers.map((r) => r.teacher),
-        ].map((t) => ({
-          id: t.id,
-          name: t.fullName,
-          full_name: t.fullName,
-          national_id: t.nationalId,
-          job_number: t.nationalId,
-          username: t.nationalId,
-          mobile: t.mobile || null,
-          email: t.email || null,
-          employment_status: t.employmentStatus || "دائم",
-          job_title: t.jobTitle || "معلم",
-          teaching_field: t.teachingField || t.specialty || null,
-          specialty: t.specialty || null,
-          total_absences: t.totalAbsences || 0,
-          updated_at: t.updatedAt || new Date().toISOString(),
-        }));
+        ].map(mapTeacherToDbRow);
 
         if (toUpsert.length > 0) {
           supabase
@@ -2883,12 +2862,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       supabase
         .from("absence_inquiries")
-        .update({
-          is_archived: true,
-          archived_at: now,
-          archive_reason: cascadeReason,
-          archived_by_cascade: true,
-        })
+        .delete()
         .eq("teacher_id", id)
         .then(() => {}, () => {});
 
@@ -3152,24 +3126,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("teachers")
-        .upsert(
-          list.map((t) => ({
-            id: t.id,
-            name: t.fullName,
-            full_name: t.fullName,
-            national_id: t.nationalId,
-            job_number: t.nationalId,
-            username: t.nationalId,
-            mobile: t.mobile,
-            email: t.email || null,
-            employment_status: t.employmentStatus,
-            job_title: t.jobTitle,
-            teaching_field: t.teachingField,
-            specialty: t.specialty,
-            total_absences: 0,
-            updated_at: new Date().toISOString(),
-          }))
-        )
+        .upsert(list.map((t) => mapTeacherToDbRow(t)))
         .then(() => {});
     }
 
@@ -3519,12 +3476,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         if (matchedInquiry) {
           supabase
             .from("absence_inquiries")
-            .update({
-              is_archived: true,
-              archived_at: now,
-              archive_reason: cleanReason,
-              archived_by_cascade: false,
-            })
+            .delete()
             .eq("id", matchedInquiry.id)
             .then(() => {}, () => {});
         }
