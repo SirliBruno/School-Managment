@@ -36,6 +36,7 @@ import { getSaudiToday } from "@/lib/timeUtils";
 import { PageHeader, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import { DEFAULT_STAMP_BASE64 } from "@/lib/defaultApprovalAssets";
+import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 
 interface ReportCardDef {
   type: ReportType;
@@ -527,25 +528,37 @@ export default function ReportsCenterPage() {
                   selectedType === "permissions_summary" ||
                   selectedType === "deduction_decisions_summary") && (
                   <div className="space-y-1.5">
-                    <label className="text-slate-700">
-                      {selectedType === "teacher_detailed_record" || selectedType === "teacher_permissions_record"
-                        ? "المعلمة المعنية (إلزامي)"
-                        : "تحديد معلمة معينة"}
-                    </label>
-                    <select
-                      value={filters.teacherId}
-                      onChange={(e) => setFilters({ ...filters, teacherId: e.target.value })}
-                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
-                    >
-                      {selectedType !== "teacher_detailed_record" && (
-                        <option value="all">جميع المعلمات (حصر عام)</option>
-                      )}
-                      {teachers.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.fullName} — {t.specialty || "عام"}
-                        </option>
-                      ))}
-                    </select>
+                    <TeacherCombobox
+                      teachers={teachers}
+                      selectedTeacherId={filters.teacherId === "all" || !filters.teacherId ? "" : filters.teacherId}
+                      onSelect={(teacher) => {
+                        setFilters({
+                          ...filters,
+                          teacherId: teacher
+                            ? teacher.id
+                            : selectedType === "teacher_detailed_record" || selectedType === "teacher_permissions_record"
+                            ? teachers[0]?.id || ""
+                            : "all",
+                        });
+                      }}
+                      label={
+                        selectedType === "teacher_detailed_record" || selectedType === "teacher_permissions_record"
+                          ? "المعلمة المعنية (إلزامي)"
+                          : "تحديد معلمة معينة"
+                      }
+                      required={
+                        selectedType === "teacher_detailed_record" || selectedType === "teacher_permissions_record"
+                      }
+                      placeholder={
+                        selectedType === "teacher_detailed_record" || selectedType === "teacher_permissions_record"
+                          ? "ابحثي بالاسم أو رقم الهوية أو التخصص..."
+                          : "جميع المعلمات (ابحثي لاختيار معلمة محددة)..."
+                      }
+                      allowAllOption={
+                        selectedType !== "teacher_detailed_record" && selectedType !== "teacher_permissions_record"
+                      }
+                      allOptionLabel="جميع المعلمات (حصر عام)"
+                    />
                   </div>
                 )}
 
