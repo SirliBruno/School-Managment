@@ -185,6 +185,9 @@ describe("Administrative Archive - Employee Permissions Soft Delete & Cascade Li
         teacher: { ...initialTeacher, isArchived: true, archivedAt: now, archiveReason: reason },
         archivedAt: now,
         archiveReason: reason,
+        associatedRecords: [],
+        associatedInquiries: [],
+        associatedDelayNotices: [],
         associatedPermissions: cascadedPermissions,
       };
 
@@ -215,6 +218,9 @@ describe("Administrative Archive - Employee Permissions Soft Delete & Cascade Li
       const archivedTeacherObj: ArchivedTeacher = {
         teacher: { ...initialTeacher, isArchived: true, archivedAt: now },
         archivedAt: now,
+        associatedRecords: [],
+        associatedInquiries: [],
+        associatedDelayNotices: [],
         associatedPermissions: cascadedPerms,
       };
 

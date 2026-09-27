@@ -91,9 +91,11 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
           id: "abs-1",
           teacherId: "t-100",
           teacherName: teacherA.fullName,
+          specialty: "رياضيات",
           date: "2026-09-10",
           type: "مرضي",
           reason: "وعكة صحية",
+          timestamp: "2026-09-10T08:00:00Z",
         },
       ];
 
@@ -103,10 +105,16 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
           teacherId: "t-100",
           teacherName: teacherA.fullName,
           noticeDate: "2026-09-11",
+          violationDelayStart: false,
+          violationAbsentDuring: false,
+          violationEarlyDeparture: false,
+          violationLeftSchool: false,
           status: "completed",
           directorOpinion: "rejected_with_deduction",
           calculatedMinutes: 60,
           hijriYear: "١٤٤٨",
+          shareToken: "tok-del-1",
+          tokenExpiresAt: "2026-09-13T08:00:00Z",
           createdAt: "2026-09-11T08:00:00Z",
         },
       ];
@@ -130,6 +138,11 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
           id: "ded-1",
           teacherId: "t-100",
           teacherName: teacherA.fullName,
+          civilId: "1011111111",
+          specialization: "رياضيات",
+          schoolName: "المدرسة النموذجية",
+          principalName: "أ. منيرة",
+          delayHours: 7,
           decisionNumber: "ق-101",
           decisionDate: "2026-09-15",
           deductionDays: 1,
@@ -255,10 +268,16 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
         teacherId: "t-100",
         teacherName: teacherA.fullName,
         noticeDate: "2026-09-01",
+        violationDelayStart: false,
+        violationAbsentDuring: false,
+        violationEarlyDeparture: false,
+        violationLeftSchool: false,
         status: "completed",
         directorOpinion: "rejected_with_deduction",
         calculatedMinutes: 200,
         hijriYear: "١٤٤٨",
+        shareToken: "tok-n1",
+        tokenExpiresAt: "2026-09-03T08:00:00Z",
         createdAt: "2026-09-01T08:00:00Z",
       };
 
@@ -267,10 +286,16 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
         teacherId: "t-100",
         teacherName: teacherA.fullName,
         noticeDate: "2026-09-05",
+        violationDelayStart: false,
+        violationAbsentDuring: false,
+        violationEarlyDeparture: false,
+        violationLeftSchool: false,
         status: "completed",
         directorOpinion: "rejected_with_deduction",
         calculatedMinutes: 250,
         hijriYear: "١٤٤٨",
+        shareToken: "tok-n2",
+        tokenExpiresAt: "2026-09-07T08:00:00Z",
         createdAt: "2026-09-05T08:00:00Z",
       };
 
@@ -279,6 +304,11 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
         id: "dec-1",
         teacherId: "t-100",
         teacherName: teacherA.fullName,
+        civilId: "1011111111",
+        specialization: "رياضيات",
+        schoolName: "المدرسة النموذجية",
+        principalName: "أ. منيرة",
+        delayHours: 3,
         decisionNumber: "101/د",
         decisionDate: "2026-09-02",
         deductionDays: 0,
@@ -338,9 +368,11 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
         id: "abs-act",
         teacherId: "t-100",
         teacherName: teacherA.fullName,
+        specialty: "عام",
         date: "2026-09-08",
         type: "مرضي",
         reason: "تقرير طبي",
+        timestamp: "2026-09-08T08:00:00Z",
         isArchived: false,
       };
 
@@ -348,9 +380,11 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
         id: "abs-arch",
         teacherId: "t-100",
         teacherName: teacherA.fullName,
+        specialty: "عام",
         date: "2026-09-09",
         type: "مرضي",
         reason: "مؤرشف",
+        timestamp: "2026-09-09T08:00:00Z",
         isArchived: true,
       };
 
@@ -384,7 +418,7 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
       status = "pending_director";
 
       // Once pending_director, teacher cannot resubmit
-      expect(status === "pending_teacher").toBe(false);
+      expect((status as string) === "pending_teacher").toBe(false);
 
       // Director approves
       const canDirectorSign = status === "pending_director";
@@ -408,7 +442,7 @@ describe("Sprint 1 - Business Logic & Feature Validation", () => {
       inqStatus = "approved";
 
       // Cannot submit response to approved inquiry
-      const canSubmitAgain = inqStatus === "pending";
+      const canSubmitAgain = (inqStatus as string) === "pending";
       expect(canSubmitAgain).toBe(false);
     });
   });

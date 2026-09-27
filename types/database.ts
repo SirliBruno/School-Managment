@@ -128,6 +128,74 @@ export interface DbEmployeePermissionRow {
   archived_by_cascade?: boolean | null;
 }
 
+export interface DbDeductionDecisionRow {
+  id: string;
+  teacher_id: string;
+  teacher_name: string;
+  civil_id: string;
+  specialization?: string | null;
+  rank?: string | null;
+  job_number?: string | null;
+  current_action?: string | null;
+  delay_minutes: number;
+  total_hours: number;
+  deduction_days: number;
+  decision_number: string;
+  decision_date: string;
+  principal_name?: string | null;
+  settled_notice_ids?: string[] | null;
+  remainder_minutes: number;
+  hijri_year?: string | null;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
+  archived_by_cascade?: boolean | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type AuditLogAction =
+  | "CREATE"
+  | "UPDATE"
+  | "ARCHIVE"
+  | "RESTORE"
+  | "APPROVE"
+  | "REJECT"
+  | "ISSUE_DEDUCTION"
+  | "EXPORT_REPORT"
+  | "BACKUP_CREATED"
+  | "BACKUP_RESTORED"
+  | "LOGIN"
+  | "LOGOUT";
+
+export type AuditLogEntityType =
+  | "teacher"
+  | "absence"
+  | "inquiry"
+  | "delay"
+  | "delay_notice"
+  | "permission"
+  | "deduction"
+  | "report"
+  | "backup"
+  | "system";
+
+export interface DbAuditLogRow {
+  id: string;
+  user_id?: string | null;
+  user_name?: string | null;
+  user_role?: string | null;
+  action: AuditLogAction;
+  entity_type: AuditLogEntityType;
+  entity_id?: string | null;
+  details?: string | null;
+  old_value?: Record<string, unknown> | unknown | null;
+  new_value?: Record<string, unknown> | unknown | null;
+  ip_address?: string | null;
+  timestamp: string;
+}
+
 export interface RealtimeDbPayload<T extends Record<string, unknown>> {
   schema: string;
   table: string;
@@ -137,3 +205,4 @@ export interface RealtimeDbPayload<T extends Record<string, unknown>> {
   old: Partial<T>;
   errors?: string[] | null;
 }
+

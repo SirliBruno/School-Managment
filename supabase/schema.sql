@@ -232,6 +232,69 @@ CREATE POLICY "Allow anon all on employee_permissions"
     USING (true)
     WITH CHECK (true);
 
+-- 9. جدول قرارات حسم ساعات التأخر (deduction_decisions)
+CREATE TABLE IF NOT EXISTS public.deduction_decisions (
+    id TEXT PRIMARY KEY,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_name TEXT NOT NULL,
+    civil_id TEXT NOT NULL,
+    specialization TEXT,
+    rank TEXT,
+    job_number TEXT,
+    current_action TEXT,
+    delay_minutes INTEGER NOT NULL DEFAULT 0,
+    total_hours NUMERIC(5,2) NOT NULL DEFAULT 0.0,
+    deduction_days INTEGER NOT NULL DEFAULT 1,
+    decision_number TEXT NOT NULL,
+    decision_date DATE NOT NULL,
+    principal_name TEXT,
+    settled_notice_ids TEXT[] DEFAULT ARRAY[]::TEXT[],
+    remainder_minutes INTEGER NOT NULL DEFAULT 0,
+    hijri_year TEXT DEFAULT '١٤٤٨',
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    archived_at TIMESTAMPTZ,
+    archived_by TEXT,
+    archive_reason TEXT,
+    archived_by_cascade BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
+CREATE INDEX IF NOT EXISTS idx_deductions_teacher_id ON public.deduction_decisions(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_deductions_is_archived ON public.deduction_decisions(is_archived);
 
+ALTER TABLE public.deduction_decisions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on deduction_decisions" ON public.deduction_decisions;
+CREATE POLICY "Allow anon all on deduction_decisions"
+    ON public.deduction_decisions FOR ALL
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);
 
+-- 10. جدول سجل العمليات والتدقيق الإداري (audit_logs)
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id TEXT PRIMARY KEY,
+    user_id TEXT,
+    user_name TEXT,
+    user_role TEXT,
+    action TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT,
+    details TEXT,
+    old_value JSONB,
+    new_value JSONB,
+    ip_address TEXT,
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON public.audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON public.audit_logs(timestamp DESC);
+
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on audit_logs" ON public.audit_logs;
+CREATE POLICY "Allow anon all on audit_logs"
+    ON public.audit_logs FOR ALL
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);

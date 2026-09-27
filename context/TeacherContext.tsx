@@ -55,6 +55,7 @@ import {
   reconcileWithOfficialTeachers,
   getOfficialTeachersList,
 } from "@/lib/officialTeachersData";
+import { logAuditEvent } from "@/lib/auditLogger";
 
 export interface AddTeachersResult {
   addedCount: number;
@@ -1994,6 +1995,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           });
       }
 
+      logAuditEvent({
+        action: "CREATE",
+        entityType: "teacher",
+        entityId: newTeacher.id,
+        details: `إضافة المعلمة: ${newTeacher.fullName} (سجل: ${newTeacher.nationalId})`,
+        newValue: newTeacher,
+      });
+
       return { success: true, teacher: newTeacher };
     },
     [teachers, archivedTeachers]
@@ -2139,6 +2148,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           });
       }
 
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "teacher",
+        entityId: id,
+        details: `تحديث بيانات المعلمة: ${finalTeacher.fullName}`,
+        newValue: finalTeacher,
+      });
+
       return { success: true, teacher: finalTeacher };
     },
     [teachers, archivedTeachers]
@@ -2283,21 +2300,47 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("absence_records")
-        .delete()
+        .update({
+          is_archived: true,
+          archived_at: now,
+          archive_reason: cascadeReason,
+          archived_by_cascade: true,
+        })
         .eq("teacher_id", id)
-        .then(() => {});
+        .then(() => {}, () => {});
 
       supabase
         .from("absence_inquiries")
-        .delete()
+        .update({
+          is_archived: true,
+          archived_at: now,
+          archive_reason: cascadeReason,
+          archived_by_cascade: true,
+        })
         .eq("teacher_id", id)
-        .then(() => {});
+        .then(() => {}, () => {});
 
       supabase
         .from("delay_notices")
-        .delete()
+        .update({
+          is_archived: true,
+          archived_at: now,
+          archive_reason: cascadeReason,
+          archived_by_cascade: true,
+        })
         .eq("teacher_id", id)
-        .then(() => {});
+        .then(() => {}, () => {});
+
+      supabase
+        .from("deduction_decisions")
+        .update({
+          is_archived: true,
+          archived_at: now,
+          archive_reason: cascadeReason,
+          archived_by_cascade: true,
+        })
+        .eq("teacher_id", id)
+        .then(() => {}, () => {});
 
       supabase
         .from("employee_permissions")
@@ -2313,12 +2356,24 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       supabase
         .from("teachers")
-        .delete()
+        .update({
+          is_archived: true,
+          archived_at: now,
+          archive_reason: cleanReason,
+        })
         .eq("id", id)
         .then(({ error }) => {
-          if (error) console.error("فشل حذف المعلمة من سوبابيز:", error);
+          if (error) console.error("فشل أرشفة المعلمة في سوبابيز:", error);
         });
     }
+
+    logAuditEvent({
+      action: "ARCHIVE",
+      entityType: "teacher",
+      entityId: id,
+      details: `أرشفة المعلمة: ${deletedTeacher?.fullName || id} وأرشفة جميع سجلاتها الإدارية المرتبطة تلقائيًا`,
+      oldValue: deletedTeacher,
+    });
 
     return { deletedTeacher, deletedRecords };
   }, [teachers, absenceRecords, inquiries, delayNotices, deductionDecisions, permissions]);
@@ -2413,6 +2468,49 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (isSupabaseConfigured() && supabase) {
         supabase
+          .from("teachers")
+          .update({
+            is_archived: false,
+            archived_at: null,
+            archive_reason: null,
+          })
+          .eq("id", cleanTeacher.id)
+          .then(() => {}, () => {});
+
+        supabase
+          .from("absence_records")
+          .update({
+            is_archived: false,
+            archived_at: null,
+            archive_reason: null,
+            archived_by_cascade: false,
+          })
+          .eq("teacher_id", cleanTeacher.id)
+          .then(() => {}, () => {});
+
+        supabase
+          .from("delay_notices")
+          .update({
+            is_archived: false,
+            archived_at: null,
+            archive_reason: null,
+            archived_by_cascade: false,
+          })
+          .eq("teacher_id", cleanTeacher.id)
+          .then(() => {}, () => {});
+
+        supabase
+          .from("deduction_decisions")
+          .update({
+            is_archived: false,
+            archived_at: null,
+            archive_reason: null,
+            archived_by_cascade: false,
+          })
+          .eq("teacher_id", cleanTeacher.id)
+          .then(() => {}, () => {});
+
+        supabase
           .from("employee_permissions")
           .update({
             is_archived: false,
@@ -2421,31 +2519,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             archive_reason: null,
             archived_by_cascade: false,
           })
-          .eq("teacher_id", teacher.id)
+          .eq("teacher_id", cleanTeacher.id)
           .then(() => {}, () => {});
       }
 
-      if (isSupabaseConfigured() && supabase) {
-        supabase
-          .from("teachers")
-          .insert({
-            id: cleanTeacher.id,
-            name: cleanTeacher.fullName,
-            full_name: cleanTeacher.fullName,
-            national_id: cleanTeacher.nationalId,
-            job_number: cleanTeacher.nationalId,
-            username: cleanTeacher.nationalId,
-            mobile: cleanTeacher.mobile || null,
-            email: cleanTeacher.email || null,
-            employment_status: cleanTeacher.employmentStatus || "دائم",
-            job_title: cleanTeacher.jobTitle || "معلم",
-            teaching_field: cleanTeacher.teachingField || cleanTeacher.specialty || null,
-            specialty: cleanTeacher.specialty || null,
-            total_absences: cleanTeacher.totalAbsences || 0,
-            updated_at: cleanTeacher.updatedAt || new Date().toISOString(),
-          })
-          .then(() => {});
-      }
+      logAuditEvent({
+        action: "RESTORE",
+        entityType: "teacher",
+        entityId: cleanTeacher.id,
+        details: `استعادة المعلمة: ${cleanTeacher.fullName} مع سجلاتها الإدارية`,
+        newValue: cleanTeacher,
+      });
     },
     []
   );
@@ -2578,6 +2662,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // 9. Record Absence
   const recordAbsence = useCallback(
     (data: Omit<AbsenceRecord, "id" | "timestamp">): AbsenceRecord => {
+      // Duplicate prevention: same teacher + date cannot have multiple active records
+      const existing = absenceRecords.find(
+        (r) => r.teacherId === data.teacherId && r.date === data.date && !r.isArchived
+      );
+      if (existing) {
+        return existing;
+      }
+
       const newRecord: AbsenceRecord = {
         ...data,
         id:
@@ -2626,6 +2718,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         notes: newRecord.notes || null,
         attachment_url: newRecord.attachmentUrl || null,
         timestamp: newRecord.timestamp,
+        is_archived: false,
       };
 
       if (isSupabaseConfigured() && supabase) {
@@ -2667,9 +2760,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         queueSyncOperation({ table: "absence_records", action: "insert", data: absencePayload });
       }
 
+      logAuditEvent({
+        action: "CREATE",
+        entityType: "absence",
+        entityId: newRecord.id,
+        details: `تسجيل غياب للمعلمة: ${newRecord.teacherName} بتاريخ ${newRecord.date} (${newRecord.type})`,
+        newValue: newRecord,
+      });
+
       return newRecord;
     },
-    []
+    [absenceRecords]
   );
 
   // 10. Update Absence Record
@@ -2733,6 +2834,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             if (error) console.error("فشل تحديث سجل الغياب في سوبابيز:", error);
           });
       }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "absence",
+        entityId: id,
+        details: `تحديث سجل غياب المعلمة: ${finalRecord.teacherName} بتاريخ ${finalRecord.date}`,
+        newValue: finalRecord,
+      });
 
       return { success: true, record: finalRecord };
     },
@@ -2825,18 +2934,28 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("absence_records")
-          .delete()
+          .update({
+            is_archived: true,
+            archived_at: now,
+            archive_reason: cleanReason,
+            archived_by_cascade: false,
+          })
           .eq("id", id)
           .then(({ error }) => {
-            if (error) console.error("فشل حذف المساءلة من سوبابيز:", error);
+            if (error) console.error("فشل أرشفة المساءلة في سوبابيز:", error);
           });
 
         if (matchedInquiry) {
           supabase
             .from("absence_inquiries")
-            .delete()
+            .update({
+              is_archived: true,
+              archived_at: now,
+              archive_reason: cleanReason,
+              archived_by_cascade: false,
+            })
             .eq("id", matchedInquiry.id)
-            .then(() => {});
+            .then(() => {}, () => {});
         }
 
         if (affectedTeacherId) {
@@ -2847,6 +2966,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             .then(() => {});
         }
       }
+
+      logAuditEvent({
+        action: "ARCHIVE",
+        entityType: "absence",
+        entityId: id,
+        details: `أرشفة غياب المعلمة: ${deletedRecord?.teacherName || ""} بتاريخ ${deletedRecord?.date || ""}`,
+        oldValue: deletedRecord,
+      });
 
       return { deletedRecord };
     },
@@ -2877,21 +3004,23 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("absence_records")
-        .insert({
-          id: record.id,
-          teacher_id: record.teacherId,
-          teacher_name: record.teacherName,
-          job_number: record.jobNumber,
-          specialty: record.specialty,
-          date: record.date,
-          type: record.type,
-          reason: record.reason,
-          notes: record.notes || null,
-          attachment_url: record.attachmentUrl || null,
-          timestamp: record.timestamp,
+        .update({
+          is_archived: false,
+          archived_at: null,
+          archive_reason: null,
+          archived_by_cascade: false,
         })
-        .then(() => {});
+        .eq("id", record.id)
+        .then(() => {}, () => {});
     }
+
+    logAuditEvent({
+      action: "RESTORE",
+      entityType: "absence",
+      entityId: record.id,
+      details: `استعادة غياب للمعلمة: ${record.teacherName} بتاريخ ${record.date}`,
+      newValue: record,
+    });
   }, []);
 
   // 11. Create Absence Inquiry
@@ -3089,6 +3218,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           console.warn("فشل تحديث قرار المساءلة في سوبابيز:", err);
         }
       }
+
+      logAuditEvent({
+        action: status === "approved" ? "APPROVE" : "REJECT",
+        entityType: "inquiry",
+        entityId: inquiryId,
+        details: `اتخاذ قرار (${status === "approved" ? "قبول العذر" : "رفض العذر"}) بشأن مساءلة المعلمة: ${updatedInquiry.teacherName} (تاريخ: ${updatedInquiry.absenceDate})`,
+        newValue: { status, adminNotes },
+      });
 
       return { success: true };
     },
@@ -3390,6 +3527,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         } else {
           queueSyncOperation({ table: "delay_notices", action: "insert", data: delayPayload });
         }
+
+        logAuditEvent({
+          action: "CREATE",
+          entityType: "delay_notice",
+          entityId: n.id,
+          details: `إصدار إشعار تأخر/انصراف للمعلمة: ${n.teacherName} برقم ${n.noticeNumber || ""}`,
+          newValue: n,
+        });
       }
 
       return { success: true, notice: createdNotice || undefined };
@@ -3442,6 +3587,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           .eq("id", id)
           .then(() => {});
       }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "delay_notice",
+        entityId: id,
+        details: `تحديث بيانات إشعار تأخر/انصراف للمعلمة: ${updatedNotice.teacherName}`,
+        newValue: updatedNotice,
+      });
 
       return { success: true, notice: updatedNotice };
     },
@@ -3587,10 +3740,23 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         if (isSupabaseConfigured() && supabase) {
           supabase
             .from("delay_notices")
-            .delete()
+            .update({
+              is_archived: true,
+              archived_at: now,
+              archive_reason: cleanReason,
+              archived_by_cascade: false,
+            })
             .eq("id", id)
-            .then(() => {});
+            .then(() => {}, () => {});
         }
+
+        logAuditEvent({
+          action: "ARCHIVE",
+          entityType: "delay_notice",
+          entityId: id,
+          details: `أرشفة إشعار تأخر/انصراف للمعلمة: ${deletedNotice.teacherName} برقم ${deletedNotice.noticeNumber || ""}`,
+          oldValue: deletedNotice,
+        });
       }
 
       return { deletedNotice };
@@ -3625,37 +3791,23 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("delay_notices")
-        .insert({
-          id: cleanNotice.id,
-          teacher_id: cleanNotice.teacherId,
-          teacher_name: cleanNotice.teacherName,
-          job_number: cleanNotice.jobNumber,
-          specialty: cleanNotice.specialty,
-          notice_date: cleanNotice.noticeDate,
-          violation_delay_start: cleanNotice.violationDelayStart,
-          delay_start_time: cleanNotice.delayStartTime || null,
-          violation_absent_during: cleanNotice.violationAbsentDuring,
-          absent_from_time: cleanNotice.absentFromTime || null,
-          absent_to_time: cleanNotice.absentToTime || null,
-          violation_early_departure: cleanNotice.violationEarlyDeparture,
-          early_departure_time: cleanNotice.earlyDepartureTime || null,
-          violation_left_school: cleanNotice.violationLeftSchool,
-          left_school_details: cleanNotice.leftSchoolDetails || null,
-          additional_notes: cleanNotice.additionalNotes || null,
-          status: cleanNotice.status,
-          teacher_reason: cleanNotice.teacherReason || null,
-          teacher_signature_date: cleanNotice.teacherSignatureDate || null,
-          director_opinion: cleanNotice.directorOpinion || null,
-          director_signature_date: cleanNotice.directorSignatureDate || null,
-          hijri_year: cleanNotice.hijriYear,
-          created_at: cleanNotice.createdAt,
-          share_token: cleanNotice.shareToken,
-          token_expires_at: cleanNotice.tokenExpiresAt,
-          teacher_response_submitted_at: cleanNotice.teacherResponseSubmittedAt || null,
-          link_shared_at: cleanNotice.linkSharedAt || null,
+        .update({
+          is_archived: false,
+          archived_at: null,
+          archive_reason: null,
+          archived_by_cascade: false,
         })
-        .then(() => {});
+        .eq("id", cleanNotice.id)
+        .then(() => {}, () => {});
     }
+
+    logAuditEvent({
+      action: "RESTORE",
+      entityType: "delay_notice",
+      entityId: cleanNotice.id,
+      details: `استعادة إشعار تأخر/انصراف للمعلمة: ${cleanNotice.teacherName} برقم ${cleanNotice.noticeNumber || ""}`,
+      newValue: cleanNotice,
+    });
   }, []);
 
   // === Archive Management Methods ===
@@ -3838,6 +3990,49 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (isSupabaseConfigured() && supabase) {
           supabase
+            .from("teachers")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+            })
+            .eq("id", id)
+            .then(() => {}, () => {});
+
+          supabase
+            .from("absence_records")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("teacher_id", id)
+            .then(() => {}, () => {});
+
+          supabase
+            .from("delay_notices")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("teacher_id", id)
+            .then(() => {}, () => {});
+
+          supabase
+            .from("deduction_decisions")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("teacher_id", id)
+            .then(() => {}, () => {});
+
+          supabase
             .from("employee_permissions")
             .update({
               is_archived: false,
@@ -3849,6 +4044,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             .eq("teacher_id", id)
             .then(() => {}, () => {});
         }
+
+        logAuditEvent({
+          action: "RESTORE",
+          entityType: "teacher",
+          entityId: id,
+          details: `استعادة المعلمة: ${restoredTeacher.fullName} وجميع سجلاتها المرتبطة من الأرشيف الإداري`,
+          newValue: restoredTeacher,
+        });
 
         return {
           success: true,
@@ -3929,6 +4132,40 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== id));
+
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("absence_records")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("id", id)
+            .then(() => {}, () => {});
+
+          if (!activeTeacher && archivedTeacher) {
+            supabase
+              .from("teachers")
+              .update({
+                is_archived: false,
+                archived_at: null,
+                archive_reason: null,
+              })
+              .eq("id", teacherId)
+              .then(() => {}, () => {});
+          }
+        }
+
+        logAuditEvent({
+          action: "RESTORE",
+          entityType: "absence",
+          entityId: id,
+          details: `استعادة غياب للمعلمة: ${cleanRecord.teacherName} من الأرشيف الإداري`,
+          newValue: cleanRecord,
+        });
+
         return {
           success: true,
           message:
@@ -3990,6 +4227,40 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         );
 
         setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== id));
+
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("delay_notices")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("id", id)
+            .then(() => {}, () => {});
+
+          if (!activeTeacher && archivedTeacher) {
+            supabase
+              .from("teachers")
+              .update({
+                is_archived: false,
+                archived_at: null,
+                archive_reason: null,
+              })
+              .eq("id", teacherId)
+              .then(() => {}, () => {});
+          }
+        }
+
+        logAuditEvent({
+          action: "RESTORE",
+          entityType: "delay_notice",
+          entityId: id,
+          details: `استعادة تنبيه تأخر للمعلمة: ${cleanNotice.teacherName} برقم ${cleanNotice.noticeNumber || ""} من الأرشيف`,
+          newValue: cleanNotice,
+        });
+
         return {
           success: true,
           message:
@@ -4042,6 +4313,40 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         );
 
         setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.id !== id));
+
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("deduction_decisions")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("id", id)
+            .then(() => {}, () => {});
+
+          if (!activeTeacher && archivedTeacher) {
+            supabase
+              .from("teachers")
+              .update({
+                is_archived: false,
+                archived_at: null,
+                archive_reason: null,
+              })
+              .eq("id", teacherId)
+              .then(() => {}, () => {});
+          }
+        }
+
+        logAuditEvent({
+          action: "RESTORE",
+          entityType: "deduction",
+          entityId: id,
+          details: `استعادة قرار حسم للمعلمة: ${cleanDecision.teacherName} برقم ${cleanDecision.decisionNumber} من الأرشيف`,
+          newValue: cleanDecision,
+        });
+
         return {
           success: true,
           message:
@@ -4107,7 +4412,26 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             })
             .eq("id", id)
             .then(() => {}, () => {});
+          if (!activeTeacher && archivedTeacher) {
+            supabase
+              .from("teachers")
+              .update({
+                is_archived: false,
+                archived_at: null,
+                archive_reason: null,
+              })
+              .eq("id", teacherId)
+              .then(() => {}, () => {});
+          }
         }
+
+        logAuditEvent({
+          action: "RESTORE",
+          entityType: "permission",
+          entityId: id,
+          details: `استعادة استئذان للمعلمة: ${cleanPermission.teacherName} من الأرشيف الإداري`,
+          newValue: cleanPermission,
+        });
 
         return {
           success: true,
@@ -4328,6 +4652,38 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           return next;
         });
 
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("deduction_decisions")
+            .insert({
+              id: newDecision.id,
+              teacher_id: newDecision.teacherId,
+              teacher_name: newDecision.teacherName,
+              job_number: newDecision.jobNumber,
+              specialty: newDecision.specialty || null,
+              decision_number: newDecision.decisionNumber,
+              hijri_year: newDecision.hijriYear,
+              academic_year: newDecision.academicYear,
+              hours_deducted: newDecision.hoursDeducted,
+              days_deducted: newDecision.daysDeducted,
+              absence_periods: newDecision.absencePeriods,
+              notes: newDecision.notes || null,
+              status: newDecision.status,
+              director_name: newDecision.directorName || null,
+              created_at: newDecision.createdAt,
+              is_archived: false,
+            })
+            .then(() => {}, () => {});
+        }
+
+        logAuditEvent({
+          action: "ISSUE_DEDUCTION",
+          entityType: "deduction",
+          entityId: id,
+          details: `إصدار قرار حسم للمعلمة: ${newDecision.teacherName} (${newDecision.hoursDeducted} ساعات / ${newDecision.daysDeducted} يوم) برقم ${newDecision.decisionNumber}`,
+          newValue: newDecision,
+        });
+
         return { success: true, decision: newDecision };
       } catch (err) {
         return {
@@ -4374,6 +4730,27 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return next;
       });
 
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("deduction_decisions")
+          .update({
+            is_archived: true,
+            archived_at: now,
+            archive_reason: reason,
+            archived_by_cascade: false,
+          })
+          .eq("id", id)
+          .then(() => {}, () => {});
+      }
+
+      logAuditEvent({
+        action: "ARCHIVE",
+        entityType: "deduction",
+        entityId: id,
+        details: `أرشفة قرار حسم للمعلمة: ${decisionToDelete.teacherName} برقم ${decisionToDelete.decisionNumber}`,
+        oldValue: decisionToDelete,
+      });
+
       return { deletedDecision: decisionToDelete };
     },
     [deductionDecisions]
@@ -4406,6 +4783,27 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch {}
       return next;
     });
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from("deduction_decisions")
+        .update({
+          is_archived: false,
+          archived_at: null,
+          archive_reason: null,
+          archived_by_cascade: false,
+        })
+        .eq("id", decision.id)
+        .then(() => {}, () => {});
+    }
+
+    logAuditEvent({
+      action: "RESTORE",
+      entityType: "deduction",
+      entityId: restored.id,
+      details: `استعادة قرار حسم للمعلمة: ${restored.teacherName} برقم ${restored.decisionNumber}`,
+      newValue: restored,
+    });
   }, []);
 
   // 24. Employee Permissions (نظام الاستئذان)
@@ -4414,6 +4812,31 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       data: Omit<EmployeePermission, "id" | "createdAt">
     ): { success: boolean; permission?: EmployeePermission; error?: string } => {
       try {
+        // Overlap and duplicate prevention on same teacher + same date
+        const toMinutes = (timeStr: string) => {
+          const [h, m] = timeStr.split(":").map(Number);
+          return (h || 0) * 60 + (m || 0);
+        };
+
+        const newStart = toMinutes(data.exitTime);
+        const newEnd = toMinutes(data.returnTime);
+
+        const hasOverlap = permissions.some((p) => {
+          if (p.isArchived || p.teacherId !== data.teacherId || p.permissionDate !== data.permissionDate) {
+            return false;
+          }
+          const pStart = toMinutes(p.exitTime);
+          const pEnd = toMinutes(p.returnTime);
+          return Math.max(newStart, pStart) < Math.min(newEnd, pEnd);
+        });
+
+        if (hasOverlap) {
+          return {
+            success: false,
+            error: "يوجد استئذان آخر مسجل لنفس المعلمة في نفس اليوم يتداخل مع هذا التوقيت.",
+          };
+        }
+
         const id = `perm-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
         const newPermission: EmployeePermission = {
           ...data,
@@ -4452,6 +4875,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             .then(() => {}, () => {});
         }
 
+        logAuditEvent({
+          action: "CREATE",
+          entityType: "permission",
+          entityId: id,
+          details: `تسجيل استئذان للمعلمة: ${newPermission.teacherName} بتاريخ ${newPermission.permissionDate} (${newPermission.durationMinutes} دقيقة)`,
+          newValue: newPermission,
+        });
+
         return { success: true, permission: newPermission };
       } catch (err) {
         return {
@@ -4460,7 +4891,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
     },
-    []
+    [permissions]
   );
 
   const updatePermission = useCallback(
@@ -4501,6 +4932,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             })
             .eq("id", id)
             .then(() => {}, () => {});
+        }
+
+        if (updatedItem) {
+          logAuditEvent({
+            action: "UPDATE",
+            entityType: "permission",
+            entityId: id,
+            details: `تحديث بيانات استئذان للمعلمة: ${(updatedItem as EmployeePermission).teacherName}`,
+            newValue: updatedItem,
+          });
         }
 
         return { success: true, permission: updatedItem };
@@ -4573,6 +5014,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           .then(() => {}, () => {});
       }
 
+      logAuditEvent({
+        action: "ARCHIVE",
+        entityType: "permission",
+        entityId: id,
+        details: `أرشفة استئذان للمعلمة: ${permissionToDelete.teacherName} بتاريخ ${permissionToDelete.permissionDate}`,
+        oldValue: permissionToDelete,
+      });
+
       return { deletedPermission: permissionToDelete };
     },
     [permissions]
@@ -4591,7 +5040,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     setPermissions((prev) => {
       const exists = prev.some((p) => p.id === restored.id);
       const next = exists
-        ? prev.map((p) => (p.id === restored.id ? restored : p))
+        ? prev.map((d) => (d.id === restored.id ? restored : d))
         : [restored, ...prev];
       try {
         localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
@@ -4620,6 +5069,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq("id", permission.id)
         .then(() => {}, () => {});
     }
+
+    logAuditEvent({
+      action: "RESTORE",
+      entityType: "permission",
+      entityId: restored.id,
+      details: `استعادة استئذان للمعلمة: ${restored.teacherName} بتاريخ ${restored.permissionDate}`,
+      newValue: restored,
+    });
   }, []);
 
   const contextValue = useMemo<TeacherContextType>(

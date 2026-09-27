@@ -197,6 +197,16 @@ export interface DeductionDecision {
   createdAt: string;
   updatedAt?: string;
 
+  // Additional fields used across procedures / reports
+  specialty?: string;
+  hijriYear?: string;
+  academicYear?: string;
+  hoursDeducted?: number;
+  daysDeducted?: number;
+  absencePeriods?: string;
+  status?: string;
+  directorName?: string;
+
   // Archive (Soft Delete) metadata
   isArchived?: boolean;
   archivedAt?: string;
@@ -312,5 +322,44 @@ export interface TeacherImportResult {
   backupAvailable: boolean;
 }
 
+// === Audit Log Types ===
+export type AuditLogAction =
+  | "CREATE"
+  | "UPDATE"
+  | "ARCHIVE"
+  | "RESTORE"
+  | "APPROVE"
+  | "REJECT"
+  | "ISSUE_DEDUCTION"
+  | "EXPORT_REPORT"
+  | "BACKUP_CREATED"
+  | "BACKUP_RESTORED"
+  | "LOGIN"
+  | "LOGOUT";
 
+export type AuditLogEntityType =
+  | "teacher"
+  | "absence"
+  | "inquiry"
+  | "delay"
+  | "delay_notice"
+  | "permission"
+  | "deduction"
+  | "report"
+  | "backup"
+  | "system";
 
+export interface AuditLog {
+  id: string;
+  userId?: string;
+  userName?: string;
+  userRole?: string;
+  action: AuditLogAction;
+  entityType: AuditLogEntityType;
+  entityId?: string;
+  details?: string;
+  oldValue?: Record<string, unknown> | unknown;
+  newValue?: Record<string, unknown> | unknown;
+  ipAddress?: string;
+  timestamp: string;
+}
