@@ -158,6 +158,23 @@ export default function ReportsCenterPage() {
     } catch (e) {
       console.error("Failed to read report history:", e);
     }
+
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const urlType = sp.get("reportType") as ReportType | null;
+      const urlTeacherId = sp.get("teacherId");
+      if (urlType && REPORT_CARDS.some((c) => c.type === urlType)) {
+        setSelectedType(urlType);
+        if (urlTeacherId) {
+          setFilters((prev) => ({ ...prev, teacherId: urlTeacherId }));
+        }
+        setStep(2);
+      } else if (urlTeacherId) {
+        setSelectedType("teacher_detailed_record");
+        setFilters((prev) => ({ ...prev, teacherId: urlTeacherId }));
+        setStep(2);
+      }
+    }
   }, []);
 
   const saveToHistory = (item: ReportHistoryItem) => {

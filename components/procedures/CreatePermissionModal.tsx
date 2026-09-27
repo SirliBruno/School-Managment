@@ -323,11 +323,24 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
 
               {/* Return Time */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
-                  <span>وقت العودة (HH:MM)</span>
-                  <span className="text-rose-500">*</span>
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                    <span>وقت العودة (HH:MM)</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReturnTime("13:30");
+                      if (!notes) setNotes("استئذان حتى نهاية الدوام الرسمي (بدون عودة)");
+                    }}
+                    className="text-[10px] font-bold text-[#137a85] hover:underline cursor-pointer bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200"
+                    title="تعبئة تلقائية لنهاية الدوام الرسمي"
+                  >
+                    بدون عودة (13:30)
+                  </button>
+                </div>
                 <input
                   type="time"
                   value={returnTime}
@@ -343,26 +356,39 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
             {/* Calculated Duration Banner */}
             <div
               className={cn(
-                "p-3.5 rounded-2xl border flex items-center justify-between transition-all",
+                "p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-all",
                 durationCalc.isValid
-                  ? "bg-emerald-50/70 border-emerald-200 text-emerald-900"
+                  ? durationCalc.totalMinutes >= 420
+                    ? "bg-amber-50/80 border-amber-300 text-amber-950"
+                    : "bg-emerald-50/70 border-emerald-200 text-emerald-900"
                   : "bg-rose-50/70 border-rose-200 text-rose-900"
               )}
             >
               <div className="flex items-center gap-2">
                 {durationCalc.isValid ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  durationCalc.totalMinutes >= 420 ? (
+                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  ) : (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  )
                 ) : (
                   <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 )}
                 <div className="text-xs font-bold">
                   {durationCalc.isValid ? (
-                    <span>
-                      مدة الاستئذان المحتسبة تلقائياً:{" "}
-                      <strong className="text-emerald-800 text-sm font-black underline">
-                        {durationCalc.text}
-                      </strong>
-                    </span>
+                    <div>
+                      <span>
+                        مدة الاستئذان المحتسبة:{" "}
+                        <strong className="text-emerald-800 text-sm font-black underline">
+                          {durationCalc.text}
+                        </strong>
+                      </span>
+                      {durationCalc.totalMinutes >= 420 && (
+                        <p className="text-[11px] text-amber-800 font-semibold mt-0.5">
+                          تنبيه نظامي: بلغت المدة يوم عمل كامل (420 دقيقة / 7 ساعات)، وفق اللائحة يفضل توثيقها كإجازة أو غياب.
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <span>{durationCalc.error || "يرجى تحديد أوقات خروج وعودة صحيحة"}</span>
                   )}
@@ -370,7 +396,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
               </div>
 
               {durationCalc.isValid && (
-                <span className="font-mono text-xs font-black bg-white px-2 py-0.5 rounded-md border border-emerald-200 text-emerald-700">
+                <span className="font-mono text-xs font-black bg-white px-2 py-0.5 rounded-md border border-emerald-200 text-emerald-700 shrink-0 self-start sm:self-auto">
                   {durationCalc.totalMinutes} دقيقة
                 </span>
               )}

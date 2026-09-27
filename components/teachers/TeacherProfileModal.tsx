@@ -23,6 +23,9 @@ import {
   ShieldAlert,
   MessageCircle,
   DoorOpen,
+  Printer,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision, EmployeePermission } from "@/types/teacher";
 import { formatSaudiMobileDisplay, normalizeSaudiMobile } from "@/lib/teacherDeduplication";
@@ -34,6 +37,8 @@ import { printAbsencePdf } from "@/lib/printPdfService";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { printDeductionDecisionPdf } from "@/lib/printDeductionDecisionPdfService";
 import { printPermissionPdf } from "@/lib/printPermissionPdfService";
+import { generateReportData } from "@/lib/reportsEngine";
+import { printReportPdf } from "@/lib/reportPdfService";
 import { getTeacherDelaySummary } from "@/lib/delayDeductionIntegration";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +96,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   }, [teachers, teacher]);
 
   const [activeHistoryTab, setActiveHistoryTab] = useState<
-    "absences" | "delays" | "deductions" | "permissions"
+    "absences" | "delays" | "deductions" | "permissions" | "reports"
   >("absences");
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
@@ -250,6 +255,68 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
       console.error("فشل طباعة الـ PDF من ملف المعلمة:", err);
     } finally {
       setExportingId(null);
+    }
+  };
+
+  const handlePrintTeacherDetailedRecord = () => {
+    if (!currentTeacher) return;
+    try {
+      const data = generateReportData(
+        "teacher_detailed_record",
+        {
+          teacherId: currentTeacher.id,
+          month: "all",
+          year: "2026",
+          status: "all",
+          specialty: "all",
+          employmentStatus: "all",
+        },
+        teachers,
+        absenceRecords,
+        delayNotices,
+        deductionDecisions,
+        "وكيلة الشؤون التعليمية",
+        permissions
+      );
+      printReportPdf(data.payload);
+      showToast({
+        message: `تم تجهيز السجل الإداري الشامل للمعلمة (${currentTeacher.fullName || currentTeacher.name}) للطباعة بنجاح`,
+        type: "success",
+      });
+    } catch (e) {
+      console.error("فشل طباعة تقرير المعلمة:", e);
+      showToast({ message: "تعذر فتح نافذة الطباعة", type: "error" });
+    }
+  };
+
+  const handlePrintTeacherPermissionsRecord = () => {
+    if (!currentTeacher) return;
+    try {
+      const data = generateReportData(
+        "teacher_permissions_record",
+        {
+          teacherId: currentTeacher.id,
+          month: "all",
+          year: "2026",
+          status: "all",
+          specialty: "all",
+          employmentStatus: "all",
+        },
+        teachers,
+        absenceRecords,
+        delayNotices,
+        deductionDecisions,
+        "وكيلة الشؤون التعليمية",
+        permissions
+      );
+      printReportPdf(data.payload);
+      showToast({
+        message: `تم تجهيز سجل الاستئذان الرسمي للمعلمة (${currentTeacher.fullName || currentTeacher.name}) للطباعة بنجاح`,
+        type: "success",
+      });
+    } catch (e) {
+      console.error("فشل طباعة تقرير الاستئذان:", e);
+      showToast({ message: "تعذر فتح نافذة الطباعة", type: "error" });
     }
   };
 
@@ -636,6 +703,20 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   >
                     <DoorOpen className="w-3.5 h-3.5 shrink-0" />
                     <span>سجل الاستئذان ({teacherPermissions.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("reports")}
+                    className={cn(
+                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
+                      activeHistoryTab === "reports"
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <FileText className="w-3.5 h-3.5 shrink-0" />
+                    <span>التقارير الإدارية</span>
                   </button>
                 </div>
 
@@ -1049,6 +1130,95 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Tab 5: Official Administrative Reports */}
+              {activeHistoryTab === "reports" && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Report 1: Comprehensive Record */}
+                    <div className="p-4 rounded-2xl border border-indigo-200/80 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900">
+                              السجل الإداري التراكمي الشامل
+                            </h4>
+                            <span className="text-[10px] text-indigo-700 font-semibold">
+                              غيابات + تأخرات + قرارات الحسم
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+                          حصر إداري رسمي شامل يوثق مسيرة المعلمة خلال العام الدراسي مع ملخص أيام الغياب وساعات التأخر التراكمية.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-indigo-100">
+                        <button
+                          type="button"
+                          onClick={handlePrintTeacherDetailedRecord}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>طباعة السجل (PDF)</span>
+                        </button>
+                        <Link
+                          href={`/reports?reportType=teacher_detailed_record&teacherId=${currentTeacher.id}`}
+                          onClick={onClose}
+                          className="p-2 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-100/50 text-indigo-700 transition-colors inline-flex items-center justify-center cursor-pointer"
+                          title="عرض وتخصيص في مركز التقارير"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+
+                    {/* Report 2: Permissions Record */}
+                    <div className="p-4 rounded-2xl border border-teal-200/80 bg-teal-50/40 hover:bg-teal-50/70 transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-teal-100 text-[#137a85] flex items-center justify-center">
+                            <DoorOpen className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-900">
+                              سجل حصر استئذان الموظفة
+                            </h4>
+                            <span className="text-[10px] text-teal-700 font-semibold">
+                              إجمالي {teacherPermissions.length} استئذانات ({totalPermissionMinutes} دقيقة)
+                            </span>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+                          توثيق معتمد لجميع حالات الخروج والعودة أثناء الدوام مع تفاصيل المبررات والمدد الزمنية المعتمدة.
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-teal-100">
+                        <button
+                          type="button"
+                          onClick={handlePrintTeacherPermissionsRecord}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-[#137a85] hover:bg-teal-800 text-white transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span>طباعة الاستئذان (PDF)</span>
+                        </button>
+                        <Link
+                          href={`/reports?reportType=teacher_permissions_record&teacherId=${currentTeacher.id}`}
+                          onClick={onClose}
+                          className="p-2 rounded-xl border border-teal-200 bg-white hover:bg-teal-100/50 text-[#137a85] transition-colors inline-flex items-center justify-center cursor-pointer"
+                          title="عرض وتخصيص في مركز التقارير"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

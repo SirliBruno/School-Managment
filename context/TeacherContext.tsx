@@ -1927,7 +1927,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
 
-      // Check for uniqueness
+      // Check for uniqueness against active teachers
       const isExisting = teachers.some(
         (t) =>
           normalizeNationalId(t.nationalId || t.username || t.jobNumber) ===
@@ -1938,6 +1938,21 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return {
           success: false,
           error: `رقم الهوية (${cleanNationalId}) مسجل بالفعل لمعلمة أخرى.`,
+        };
+      }
+
+      // Check for uniqueness against archived teachers
+      const isArchived = archivedTeachers.some(
+        (a) =>
+          normalizeNationalId(
+            a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber
+          ) === cleanNationalId
+      );
+
+      if (isArchived) {
+        return {
+          success: false,
+          error: `رقم الهوية (${cleanNationalId}) مسجل مسبقاً في الأرشيف الإداري. يمكنك استعادة المعلمة من قسم الأرشيف.`,
         };
       }
 
@@ -1981,7 +1996,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { success: true, teacher: newTeacher };
     },
-    [teachers]
+    [teachers, archivedTeachers]
   );
 
   // 5. Update existing teacher details
@@ -2007,6 +2022,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           return {
             success: false,
             error: `رقم الهوية (${cleanNationalId}) مسجل بالفعل لمعلمة أخرى.`,
+          };
+        }
+
+        const isDuplicateArchived = archivedTeachers.some(
+          (a) =>
+            a.teacher.id !== id &&
+            normalizeNationalId(
+              a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber
+            ) === cleanNationalId
+        );
+        if (isDuplicateArchived) {
+          return {
+            success: false,
+            error: `رقم الهوية (${cleanNationalId}) مسجل في الأرشيف الإداري.`,
           };
         }
       }
@@ -2112,7 +2141,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { success: true, teacher: finalTeacher };
     },
-    [teachers]
+    [teachers, archivedTeachers]
   );
 
   // 6. Delete Teacher with Cascade Soft-Delete & Archive
