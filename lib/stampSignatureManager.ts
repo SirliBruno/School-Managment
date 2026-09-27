@@ -171,7 +171,7 @@ export function renderOfficialApprovalFooterHtml(options: OfficialApprovalFooter
   const officialTitle = options.officialTitle || DEFAULT_ADMIN_ROLE_LABEL; // وكيلة المدرسة
   const officialName = options.officialName || DEFAULT_ADMIN_NAME; // أحلام صالح الضبيبي
   const secondaryTitle = options.secondaryTitle || "مديرة المدرسة / القائدة";
-  const secondaryName = options.secondaryName || "منى محمد الغامدي";
+  const secondaryName = options.secondaryName || "فاطمة فلاتة";
   const dateStr = options.date || new Date().toLocaleDateString("ar-SA");
 
   const showStamp =

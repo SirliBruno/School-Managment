@@ -92,6 +92,7 @@ export interface SchoolConfiguration {
     region: string;
   };
   principalTitle: string;
+  principalName?: string;
   vicePrincipalName: string;
   vicePrincipalRole: string;
   officialLogoBase64: string;
@@ -99,19 +100,20 @@ export interface SchoolConfiguration {
 
 export const SCHOOL_CONFIG: SchoolConfiguration = {
   schoolName: "الثانوية الخامسة مسارات",
-  educationalAdministration: "الإدارة العامة للتعليم بمنطقة الرياض",
+  educationalAdministration: "الإدارة العامة للتعليم بمنطقة مكة المكرمة",
   educationalStage: "المرحلة الثانوية (نظام المسارات)",
   academicYear: "1446-1447هـ",
   semester: "الفصل الدراسي الأول",
   contact: {
     phone: "011-4770000",
     email: "secondary5@moe.gov.sa",
-    city: "الرياض",
-    region: "منطقة الرياض",
+    city: "مكة المكرمة",
+    region: "منطقة مكة المكرمة",
   },
   principalTitle: "مديرة المدرسة",
+  principalName: "فاطمة فلاتة",
   vicePrincipalName: "أحلام صالح الضبيبي",
-  vicePrincipalRole: "وكيلة المدرسة",
+  vicePrincipalRole: "وكيلة الشؤون التعليمية",
   officialLogoBase64: MOE_LOGO_BASE64,
 };
 

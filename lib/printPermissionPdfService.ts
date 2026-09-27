@@ -25,7 +25,7 @@ export function generatePermissionPdfHtml({
   permission,
   teacher,
   schoolName = "الثانوية الخامسة مسارات",
-  principalName = "منى محمد الغامدي",
+  principalName = "فاطمة فلاتة",
   vicePrincipalName = "أحلام صالح الضبيبي",
 }: PrintPermissionPdfOptions): string {
   const teacherName = esc(teacher?.fullName || permission.teacherName || "الموظفة");
