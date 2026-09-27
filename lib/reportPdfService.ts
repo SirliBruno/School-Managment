@@ -212,7 +212,7 @@ ${REPORT_CSS}
             schoolName,
             officialTitle: "وكيلة المدرسة",
             officialName: creatorName,
-            secondaryTitle: "مديرة المدرسة / القائدة",
+            secondaryTitle: "مديرة المدرسة",
             secondaryName: principalName,
             date: payload.dateFormatted,
           })

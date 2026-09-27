@@ -217,7 +217,7 @@ ${schoolTableHtml}
 <div class="sec sbd">
   <div class="sh">
     <span class="st">( ٢ ) رد وإفادة المعلمة</span>
-    <span style="font-size:8.5pt">المكرمة / قائدة المدرسة وفقها الله</span>
+    <span style="font-size:8.5pt">المكرمة / مديرة المدرسة وفقها الله</span>
   </div>
   <div class="sg">السلام عليكم ورحمة الله وبركاته ،،، وبعد :</div>
   <div style="font-size:8.5pt;margin-bottom:2px;font-weight:bold;color:#334155">
@@ -241,7 +241,7 @@ ${schoolTableHtml}
 <!-- Stage 3 Body: Director Decision -->
 <div class="sec sbd" style="margin-bottom:0">
   <div style="text-align:center;font-weight:900;color:#0f766e;margin-bottom:4px;font-size:9.5pt">
-    ( ٣ ) رأي قائدة المدرسة
+    ( ٣ ) رأي مديرة المدرسة
   </div>
   <div class="decision-box">
     <div class="cr">

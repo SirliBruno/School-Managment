@@ -108,7 +108,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     title: "التقرير الشامل للمدرسة",
     description: "تقرير إداري شامل لمديرة المدرسة يجمع المؤشرات العامة لجميع المعلمات ومستوى الانضباط.",
     icon: School,
-    badge: "تقرير القائدة",
+    badge: "تقرير المديرة",
     accentColor: "border-emerald-500 text-emerald-600 bg-emerald-50",
   },
   {
@@ -880,7 +880,7 @@ export default function ReportsCenterPage() {
                     </div>
                   </div>
                   <div className="space-y-4">
-                    <span className="font-bold text-[#0f766e] block">مديرة المدرسة / القائدة</span>
+                    <span className="font-bold text-[#0f766e] block">مديرة المدرسة</span>
                     <span className="font-bold text-slate-800 block">{reportData.payload.principalName}</span>
                   </div>
                 </div>

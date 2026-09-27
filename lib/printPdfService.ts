@@ -173,7 +173,7 @@ ${schoolTableHtml}
 <div class="sec sbd">
   <div class="sh">
     <span class="st">( ٢ ) رد وإفادة المعلمة</span>
-    <span style="font-size:8.5pt">المكرمة / قائدة المدرسة وفقها الله</span>
+    <span style="font-size:8.5pt">المكرمة / مديرة المدرسة وفقها الله</span>
   </div>
   <div class="sg">السلام عليكم ورحمة الله وبركاته ،،، وبعد :</div>
   <div style="font-size:8.5pt;margin-bottom:2px;font-weight:bold;color:#334155">

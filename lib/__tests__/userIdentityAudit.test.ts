@@ -118,7 +118,8 @@ describe("Administrative User Identity & Dynamic Admin Profile Audit", () => {
 
       expect(html).toContain("وكيلة المدرسة");
       expect(html).toContain("أحلام صالح الضبيبي");
-      expect(html).toContain("مديرة المدرسة / القائدة");
+      expect(html).toContain("مديرة المدرسة");
+      expect(html).toContain("فاطمة فلاتة");
       expect(html).toContain("الثانوية الخامسة مسارات");
     });
 
