@@ -821,7 +821,7 @@ export default function DashboardPage() {
                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
                     transition={{ duration: 0.15 }}
                     role="menu"
-                    className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200 shadow-xl p-2 z-40 space-y-1 text-right text-xs"
+                    className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200/90 shadow-2xl p-2 z-50 space-y-1 text-right text-xs"
                   >
                     <button
                       type="button"
