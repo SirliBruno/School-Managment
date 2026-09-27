@@ -35,6 +35,7 @@ import { printReportPdf } from "@/lib/reportPdfService";
 import { getSaudiToday } from "@/lib/timeUtils";
 import { PageHeader, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { DEFAULT_STAMP_BASE64 } from "@/lib/defaultApprovalAssets";
 
 interface ReportCardDef {
   type: ReportType;
@@ -862,16 +863,23 @@ export default function ReportsCenterPage() {
 
                 {/* Official Signatures */}
                 <div className="pt-6 border-t border-slate-200 flex justify-between items-end text-xs text-center">
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <span className="font-bold text-[#0f766e] block">
                       {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
                     </span>
                     <span className="font-bold text-slate-800 block">{reportData.payload.creatorName}</span>
                   </div>
-                  <div className="w-24 h-24 border border-dashed border-slate-300 rounded-full flex items-center justify-center text-[10px] text-slate-400">
-                    الختم الإداري
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="text-[11px] font-bold text-[#0f766e] mb-1">الختم الرسمي للمدرسة</span>
+                    <div className="w-24 h-24 flex items-center justify-center">
+                      <img
+                        src={DEFAULT_STAMP_BASE64}
+                        alt="الختم الرسمي للمدرسة"
+                        className="max-h-24 max-w-24 w-auto h-auto object-contain drop-shadow-md"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <span className="font-bold text-[#0f766e] block">مديرة المدرسة / القائدة</span>
                     <span className="font-bold text-slate-800 block">{reportData.payload.principalName}</span>
                   </div>
