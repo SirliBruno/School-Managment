@@ -898,3 +898,43 @@ export function generateReportData(
     ],
   };
 }
+
+export interface DashboardStats {
+  totalTeachers: number;
+  totalAbsences: number;
+  totalDelayNotices: number;
+  totalPermissions: number;
+  absenceRate: number;
+}
+
+/**
+ * حساب مؤشرات الأداء ولوحة القيادة الإدارية بسرعة فائقة مع استبعاد المؤرشفات
+ */
+export function getDashboardStats(
+  teachers: Teacher[] = [],
+  absenceRecords: AbsenceRecord[] = [],
+  delayNotices: DelayNotice[] = [],
+  permissions: EmployeePermission[] = []
+): DashboardStats {
+  const activeTeachers = teachers.filter((t) => !t.isArchived);
+  const activeAbsences = absenceRecords.filter((a) => !a.isArchived);
+  const activeDelays = delayNotices.filter((d) => !d.isArchived);
+  const activePermissions = permissions.filter((p) => !p.isArchived);
+
+  const totalTeachers = activeTeachers.length;
+  const totalAbsences = activeAbsences.length;
+  const totalDelayNotices = activeDelays.length;
+  const totalPermissions = activePermissions.length;
+
+  const absenceRate =
+    totalTeachers > 0 ? Number(((totalAbsences / totalTeachers) * 100).toFixed(1)) : 0;
+
+  return {
+    totalTeachers,
+    totalAbsences,
+    totalDelayNotices,
+    totalPermissions,
+    absenceRate,
+  };
+}
+
