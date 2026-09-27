@@ -68,22 +68,22 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-3xl w-full overflow-hidden text-right flex flex-col max-h-[92vh]"
+          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-3xl w-full overflow-hidden text-right flex flex-col max-h-[92vh]"
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/70 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center">
+              <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-400 flex items-center justify-center">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <span>تفاصيل تنبيه التأخر / الانصراف</span>
-                  <span className="font-mono text-xs text-[#137a85] bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                  <span className="font-mono text-xs text-[#137a85] dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800/60">
                     {notice.noticeNumber}
                   </span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                   استعراض المراحل الثلاث للإجراء الإداري والتصدير الرسمي
                 </p>
               </div>
@@ -93,25 +93,25 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
               type="button"
               onClick={onClose}
               aria-label="إغلاق النافذة"
-              className="w-8 h-8 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
           {/* Stepper / Timeline Header */}
-          <div className="px-6 py-4 bg-slate-50/40 border-b border-slate-100">
+          <div className="px-6 py-4 bg-slate-50/40 dark:bg-slate-850/40 border-b border-slate-100 dark:border-slate-800">
             <div className="grid grid-cols-3 gap-2">
               {/* Step 1 */}
-              <div className="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200">
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
                 <div className="w-7 h-7 rounded-lg bg-teal-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
                   <Check className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 block truncate">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
                     1. إدخال وكيلة المدرسة
                   </span>
-                  <span className="text-[10px] text-teal-600 font-semibold block">
+                  <span className="text-[10px] text-teal-600 dark:text-teal-400 font-semibold block">
                     مكتمل وموثق
                   </span>
                 </div>
@@ -122,8 +122,8 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 className={cn(
                   "flex items-center gap-2 p-2 rounded-xl border transition-all",
                   isStage2Done
-                    ? "bg-white border-slate-200"
-                    : "bg-sky-50/60 border-sky-300 ring-1 ring-sky-300/30"
+                    ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                    : "bg-sky-50/60 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 ring-1 ring-sky-300/30 dark:ring-sky-800/40"
                 )}
               >
                 <div
@@ -137,13 +137,13 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   {isStage2Done ? <Check className="w-4 h-4" /> : "2"}
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 block truncate">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
                     2. إفادة المعلمة
                   </span>
                   <span
                     className={cn(
                       "text-[10px] font-semibold block",
-                      isStage2Done ? "text-teal-600" : "text-sky-600"
+                      isStage2Done ? "text-teal-600 dark:text-teal-400" : "text-sky-600 dark:text-sky-400"
                     )}
                   >
                     {isStage2Done ? "تم تقديم الإفادة" : "بانتظار الرد"}
@@ -156,10 +156,10 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 className={cn(
                   "flex items-center gap-2 p-2 rounded-xl border transition-all",
                   isStage3Done
-                    ? "bg-white border-slate-200"
+                    ? "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"
                     : notice.status === "pending_director"
-                    ? "bg-amber-50/60 border-amber-300 ring-1 ring-amber-300/30"
-                    : "bg-slate-50 border-slate-200 opacity-60"
+                    ? "bg-amber-50/60 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 ring-1 ring-amber-300/30 dark:ring-amber-800/40"
+                    : "bg-slate-50 dark:bg-slate-800/40 border-slate-200 dark:border-slate-800 opacity-60"
                 )}
               >
                 <div
@@ -169,23 +169,23 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                       ? "bg-emerald-600 text-white"
                       : notice.status === "pending_director"
                       ? "bg-amber-600 text-white"
-                      : "bg-slate-300 text-slate-600"
+                      : "bg-slate-300 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                   )}
                 >
                   {isStage3Done ? <Check className="w-4 h-4" /> : "3"}
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[11px] font-bold text-slate-900 block truncate">
+                  <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 block truncate">
                     3. قرار المديرة
                   </span>
                   <span
                     className={cn(
                       "text-[10px] font-semibold block",
                       isStage3Done
-                        ? "text-emerald-600"
+                        ? "text-emerald-600 dark:text-emerald-400"
                         : notice.status === "pending_director"
-                        ? "text-amber-600"
-                        : "text-slate-400"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-slate-400 dark:text-slate-500"
                     )}
                   >
                     {isStage3Done
@@ -204,38 +204,38 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
           {/* Scrollable Content Body */}
           <div className="p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
             {/* Teacher Info Card */}
-            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
               <div>
-                <span className="text-slate-400 block text-[11px]">المعلمة</span>
-                <span className="font-bold text-slate-900 mt-0.5 block truncate">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">المعلمة</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 mt-0.5 block truncate">
                   {notice.teacherName}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">رقم الهوية</span>
-                <span className="font-bold text-slate-800 mt-0.5 block font-mono">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">رقم الهوية</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block font-mono">
                   {notice.nationalId || notice.jobNumber}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">التخصص / المجال</span>
-                <span className="font-semibold text-slate-800 mt-0.5 block truncate">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">التخصص / المجال</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5 block truncate">
                   {notice.specialty || "عام"}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">تاريخ المخالفة</span>
-                <span className="font-bold text-[#137a85] mt-0.5 block font-mono">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">تاريخ المخالفة</span>
+                <span className="font-bold text-[#137a85] dark:text-teal-400 mt-0.5 block font-mono">
                   {notice.date}
                 </span>
               </div>
             </div>
 
             {/* Stage 1 Box: Violations Details */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <span>المرحلة الأولى: المخالفات المسجلة من قبل وكيلة المدرسة</span>
                 </span>
                 {notice.status === "pending_teacher" && (
@@ -245,7 +245,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                       onClose();
                       onOpenEdit(notice);
                     }}
-                    className="text-xs font-semibold text-amber-700 hover:text-amber-800 flex items-center gap-1 cursor-pointer"
+                    className="text-xs font-semibold text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 flex items-center gap-1 cursor-pointer"
                   >
                     <Pencil className="w-3 h-3" />
                     <span>تعديل</span>
@@ -255,18 +255,18 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
 
               <div className="space-y-2 text-xs">
                 {notice.violationDelayStart && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <span className="font-bold text-slate-800 flex items-center gap-2">
-                      <LogIn className="w-4 h-4 text-amber-600" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <LogIn className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       <span>تأخركم من بداية الدوام وحضوركم الساعة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-mono text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                         {notice.delayStartFromTime ? `من ${notice.delayStartFromTime} إلى ` : "حضور: "}
                         {notice.delayStartTime || "—"}
                       </span>
                       {notice.calculatedDuration && (
-                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/60">
                           المدة: {notice.calculatedDuration}
                         </span>
                       )}
@@ -275,17 +275,17 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 )}
 
                 {notice.violationAbsentDuring && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <span className="font-bold text-slate-800 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-amber-600" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       <span>عدم تواجدكم أثناء الدوام من الساعة إلى الساعة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-mono text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                         من: {notice.absentFromTime || "—"} إلى: {notice.absentToTime || "—"}
                       </span>
                       {notice.calculatedDuration && (
-                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/60">
                           المدة: {notice.calculatedDuration}
                         </span>
                       )}
@@ -294,18 +294,18 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 )}
 
                 {notice.violationEarlyDeparture && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <span className="font-bold text-slate-800 flex items-center gap-2">
-                      <LogOut className="w-4 h-4 text-amber-600" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <LogOut className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       <span>انصرافكم مبكراً قبل نهاية الدوام من الساعة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                      <span className="font-mono text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="font-mono text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                         {notice.earlyDepartureFromTime ? `من ${notice.earlyDepartureFromTime} إلى ` : "انصراف: "}
                         {notice.earlyDepartureTime || "—"}
                       </span>
                       {notice.calculatedDuration && (
-                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/60">
                           المدة: {notice.calculatedDuration}
                         </span>
                       )}
@@ -314,19 +314,19 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 )}
 
                 {notice.violationLeftSchool && (
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
-                    <span className="font-bold text-slate-800 flex items-center gap-2">
-                      <DoorOpen className="w-4 h-4 text-amber-600" />
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <DoorOpen className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                       <span>انصرافكم من غير المدرسة</span>
                     </span>
                     <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
-                      <span className="text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      <span className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
                         {notice.leftSchoolFromTime && notice.leftSchoolToTime
                           ? `من ${notice.leftSchoolFromTime} إلى ${notice.leftSchoolToTime}`
                           : notice.leftSchoolDetails || "—"}
                       </span>
                       {notice.calculatedDuration && (
-                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/60">
                           المدة: {notice.calculatedDuration}
                         </span>
                       )}
@@ -335,8 +335,8 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 )}
 
                 {notice.notes && (
-                  <div className="mt-2 text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
-                    <strong className="text-slate-700 block mb-0.5">ملاحظات وكيلة المدرسة:</strong>
+                  <div className="mt-2 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                    <strong className="text-slate-700 dark:text-slate-300 block mb-0.5">ملاحظات وكيلة المدرسة:</strong>
                     <span>{notice.notes}</span>
                   </div>
                 )}
@@ -344,14 +344,14 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
             </div>
 
             {/* Stage 2 Box: Teacher Justification */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <FileEdit className="w-4 h-4 text-sky-600" />
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <FileEdit className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                   <span>المرحلة الثانية: إفادة ومبرر المعلمة</span>
                 </span>
                 {notice.teacherSignedAt && (
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                     تاريخ التوقيع: {notice.teacherSignedAt}
                   </span>
                 )}
@@ -359,12 +359,12 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
 
               {notice.teacherReason ? (
                 <div className="space-y-2">
-                  <div className="p-3.5 rounded-xl bg-sky-50/50 border border-sky-100 text-xs sm:text-sm text-slate-800 leading-relaxed">
+                  <div className="p-3.5 rounded-xl bg-sky-50/50 dark:bg-sky-950/30 border border-sky-100 dark:border-sky-900/50 text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
                     {notice.teacherReason}
                   </div>
                   {notice.teacherResponseSubmittedAt && (
-                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 bg-emerald-50/80 px-2.5 py-1 rounded-lg border border-emerald-200/60 font-medium">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <div className="flex items-center gap-1.5 text-[11px] text-emerald-700 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200/60 dark:border-emerald-800/60 font-medium">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>
                         تم استلام هذا الرد إلكترونياً عبر الرابط العام بتاريخ:{" "}
                         <strong className="font-mono">
@@ -375,8 +375,8 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   )}
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2.5">
-                  <p className="text-xs text-slate-500">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     لم يتم تسجيل إفادة المعلمة حتى الآن. يمكنك مشاركة الرابط معها عبر الواتساب لتعبئته من جوالها، أو تسجيلها يدوياً.
                   </p>
                   <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
@@ -399,7 +399,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                         onClose();
                         onOpenTeacherResponse(notice);
                       }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200 dark:border-sky-800/60 transition-all cursor-pointer"
                     >
                       <FileEdit className="w-3.5 h-3.5" />
                       <span>تسجيل الإفادة يدوياً</span>
@@ -410,14 +410,14 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
             </div>
 
             {/* Stage 3 Box: Principal Decision */}
-            <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-3 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-800 space-y-3 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+                <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>المرحلة الثالثة: قرار مديرة المدرسة</span>
                 </span>
                 {notice.directorSignedAt && (
-                  <span className="text-[11px] text-slate-400 font-mono">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                     تاريخ الاعتماد: {notice.directorSignedAt}
                   </span>
                 )}
@@ -426,23 +426,23 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
               {notice.directorOpinion ? (
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500">القرار المعتمد:</span>
+                    <span className="text-slate-500 dark:text-slate-400">القرار المعتمد:</span>
                     <span
                       className={cn(
                         "inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold border",
                         notice.directorOpinion === "accepted"
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                          : "bg-rose-50 text-rose-800 border-rose-300"
+                          ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800/60"
+                          : "bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-800/60"
                       )}
                     >
                       {notice.directorOpinion === "accepted" ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                           <span>قبول العذر وحفظ الإشعار دون حسم</span>
                         </>
                       ) : (
                         <>
-                          <Ban className="w-3.5 h-3.5 text-rose-600" />
+                          <Ban className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                           <span>عدم قبول العذر والحسم من الراتب</span>
                         </>
                       )}
@@ -450,15 +450,15 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   </div>
 
                   {notice.directorNotes && (
-                    <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-slate-600">
-                      <strong className="text-slate-800 block mb-0.5">توجيهات المديرة:</strong>
+                    <div className="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300">
+                      <strong className="text-slate-800 dark:text-slate-200 block mb-0.5">توجيهات المديرة:</strong>
                       <span>{notice.directorNotes}</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-2">
-                  <p className="text-xs text-slate-500">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     {notice.status === "pending_teacher"
                       ? "المرحلة الثالثة معلقة حتى تقديم المعلمة لإفادتها."
                       : "بانتظار اعتماد قرار مديرة المدرسة."}
@@ -482,13 +482,13 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+          <div className="px-6 py-4 bg-slate-50/70 dark:bg-slate-850/70 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
             <button
               type="button"
               onClick={handlePrint}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all shadow-2xs cursor-pointer"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all shadow-2xs cursor-pointer"
             >
-              <FileDown className="w-4 h-4 text-[#137a85]" />
+              <FileDown className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
               <span>تصدير إشعار التنبيه الرسمي (PDF)</span>
             </button>
 
@@ -541,7 +541,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   onClose();
                   onOpenDelete(notice);
                 }}
-                className="p-2.5 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                className="p-2.5 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 transition-colors cursor-pointer"
                 title="حذف هذا التنبيه"
                 aria-label="حذف التنبيه"
               >

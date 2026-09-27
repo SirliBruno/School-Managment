@@ -105,17 +105,17 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.94, y: 10 }}
           transition={{ type: "spring", damping: 25, stiffness: 350 }}
-          className="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 overflow-hidden z-10 text-right space-y-4"
+          className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10 text-right space-y-4"
         >
           <div className="flex items-start gap-3.5">
             <div
               className={cn(
                 "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm",
                 variant === "danger"
-                  ? "bg-rose-50 text-rose-600 border border-rose-200"
+                  ? "bg-rose-50 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
                   : variant === "warning"
-                  ? "bg-amber-50 text-amber-600 border border-amber-200"
-                  : "bg-teal-50 text-[#137a85] border border-teal-200"
+                  ? "bg-amber-50 dark:bg-amber-950/70 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+                  : "bg-teal-50 dark:bg-teal-950/70 text-[#137a85] dark:text-teal-400 border border-teal-200 dark:border-teal-800"
               )}
             >
               {variant === "danger" ? (
@@ -130,13 +130,13 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <div className="flex-1 min-w-0">
               <h3
                 id="confirm-dialog-title"
-                className="text-base font-bold text-slate-900"
+                className="text-base font-bold text-slate-900 dark:text-slate-100"
               >
                 {title}
               </h3>
               <p
                 id="confirm-dialog-description"
-                className="text-xs text-slate-600 mt-1.5 leading-relaxed whitespace-pre-line"
+                className="text-xs text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed whitespace-pre-line"
               >
                 {message}
               </p>
@@ -148,7 +148,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 if (!isLoading) onCancel();
               }}
               disabled={isLoading}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="إغلاق"
             >
               <X className="w-4 h-4" />
@@ -157,7 +157,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
           {/* Optional Archive Reason Input */}
           {showReasonInput && (
-            <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3 space-y-2.5">
+            <div className="bg-slate-50/80 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 rounded-xl p-3 space-y-2.5">
               <label className="flex items-center gap-2.5 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -165,7 +165,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   onChange={(e) => setIncludeReason(e.target.checked)}
                   className="w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85] cursor-pointer"
                 />
-                <span className="text-xs font-bold text-slate-700">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                   سبب الأرشفة (اختياري)
                 </span>
               </label>
@@ -176,7 +176,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   onChange={(e) => setReasonText(e.target.value)}
                   placeholder={reasonPlaceholder}
                   rows={2}
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] resize-none transition-all"
+                  className="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] resize-none transition-all"
                 />
               )}
             </div>
@@ -188,7 +188,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer disabled:opacity-50"
             >
               {cancelLabel}
             </button>

@@ -37,7 +37,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <header
       className={cn(
-        "bg-white border-b border-slate-200 sticky top-0 z-20 shadow-2xs",
+        "bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-2xs transition-colors",
         className
       )}
     >
@@ -46,7 +46,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {breadcrumbs && breadcrumbs.length > 0 && (
             <nav
               aria-label="Breadcrumb"
-              className="flex items-center gap-1.5 text-xs text-slate-400 mb-1.5 flex-wrap"
+              className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-1.5 flex-wrap"
             >
               {breadcrumbs.map((crumb, idx) => {
                 const isLast = idx === breadcrumbs.length - 1;
@@ -54,14 +54,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   <React.Fragment key={crumb.label + idx}>
                     {idx > 0 && (
                       <ChevronLeft
-                        className="w-3.5 h-3.5 text-slate-300 shrink-0"
+                        className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0"
                         aria-hidden="true"
                       />
                     )}
                     {crumb.href && !isLast ? (
                       <Link
                         href={crumb.href}
-                        className="hover:text-teal-700 transition-colors font-medium"
+                        className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors font-medium"
                       >
                         {crumb.label}
                       </Link>
@@ -69,8 +69,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                       <span
                         className={cn(
                           isLast
-                            ? "text-[#137a85] font-bold"
-                            : "font-medium text-slate-500"
+                            ? "text-[#137a85] dark:text-teal-400 font-bold"
+                            : "font-medium text-slate-500 dark:text-slate-400"
                         )}
                       >
                         {crumb.label}
@@ -88,7 +88,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           </div>
 
           {descText && (
-            <p className="text-xs md:text-sm text-slate-500 mt-1">
+            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
               {descText}
             </p>
           )}

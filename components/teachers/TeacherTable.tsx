@@ -300,23 +300,23 @@ export const TeacherTable: React.FC = () => {
 
         return (
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-200/80 text-[#137a85] flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200/80 dark:border-teal-900/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-sm shrink-0 shadow-2xs">
               {(row.fullName || row.name || "م").charAt(0)}
             </div>
             <div className="min-w-0">
               <button
                 type="button"
                 onClick={() => setSelectedTeacherForProfile(row)}
-                className="text-xs sm:text-sm font-bold text-slate-900 hover:text-[#137a85] transition-colors block truncate text-right cursor-pointer"
+                className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 hover:text-[#137a85] dark:hover:text-teal-400 transition-colors block truncate text-right cursor-pointer"
               >
                 {row.fullName || row.name}
               </button>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="text-[11px] text-slate-500 font-mono" dir="ltr">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-mono" dir="ltr">
                   {row.nationalId || row.username || row.jobNumber}
                 </span>
-                <span className="text-slate-300">|</span>
-                <span className="text-[11px] text-[#137a85] font-semibold">
+                <span className="text-slate-300 dark:text-slate-700">|</span>
+                <span className="text-[11px] text-[#137a85] dark:text-teal-400 font-semibold">
                   {displayJobTitle}
                 </span>
               </div>
@@ -337,11 +337,11 @@ export const TeacherTable: React.FC = () => {
 
         return (
           <div className="min-w-0">
-            <span className="text-xs font-semibold text-slate-800 block truncate">
+            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 block truncate">
               {spec}
             </span>
             {field && !isDuplicate && (
-              <span className="text-[11px] text-slate-400 block truncate">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 block truncate">
                 {field}
               </span>
             )}
@@ -361,8 +361,8 @@ export const TeacherTable: React.FC = () => {
             className={cn(
               "inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border",
               isContract
-                ? "bg-amber-50 text-amber-800 border-amber-200"
-                : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                ? "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50"
+                : "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50"
             )}
           >
             {row.employmentStatus || "دائم"}
@@ -382,7 +382,7 @@ export const TeacherTable: React.FC = () => {
           <div className="flex items-center gap-2">
             {rawPhone ? (
               <>
-                <span className="text-xs font-mono font-medium text-slate-700" dir="ltr">
+                <span className="text-xs font-mono font-medium text-slate-700 dark:text-slate-300" dir="ltr">
                   {formattedDisplay}
                 </span>
                 {normalizedDigits && (
@@ -390,7 +390,7 @@ export const TeacherTable: React.FC = () => {
                     href={`https://wa.me/${normalizedDigits}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 hover:scale-105 transition-all shadow-2xs inline-flex items-center justify-center cursor-pointer"
+                    className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:scale-105 transition-all shadow-2xs inline-flex items-center justify-center cursor-pointer"
                     title="مراسلة المعلمة عبر واتساب"
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
@@ -398,7 +398,7 @@ export const TeacherTable: React.FC = () => {
                 )}
               </>
             ) : (
-              <span className="text-xs text-slate-400">—</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">—</span>
             )}
           </div>
         );
@@ -413,14 +413,14 @@ export const TeacherTable: React.FC = () => {
         const count = row.totalAbsences || 0;
         if (count === 0) {
           return (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 text-slate-500 border border-slate-200/80">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700/80">
               لا يوجد غياب
             </span>
           );
         }
 
         return (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold font-mono border bg-rose-50 text-rose-700 border-rose-200 shadow-2xs">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold font-mono border bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900/50 shadow-2xs">
             {count} {count === 1 ? "يوم" : count === 2 ? "يومان" : "أيام"}
           </span>
         );
@@ -450,7 +450,7 @@ export const TeacherTable: React.FC = () => {
 
         if (status === "warning") {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800/60">
               <span className="w-2 h-2 rounded-full bg-amber-500" />
               <span>إنذار قرب النصاب ({hours} س)</span>
             </span>
@@ -458,7 +458,7 @@ export const TeacherTable: React.FC = () => {
         }
 
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             <span>منتظمة ({hours} س)</span>
           </span>
@@ -523,30 +523,30 @@ export const TeacherTable: React.FC = () => {
       teacher.jobTitle && teacher.jobTitle !== "معلم" ? teacher.jobTitle : "معلمة";
 
     return (
-      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <input
               type="checkbox"
               checked={selectedTeacherIds.has(teacher.id)}
               onChange={() => toggleSelectTeacher(teacher.id)}
-              className="w-4 h-4 rounded text-[#137a85] focus:ring-[#137a85] border-slate-300 cursor-pointer shrink-0"
+              className="w-4 h-4 rounded text-[#137a85] focus:ring-[#137a85] border-slate-300 dark:border-slate-700 cursor-pointer shrink-0"
               aria-label={`تحديد ${teacher.fullName || teacher.name}`}
             />
-            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-900/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">
               {(teacher.fullName || teacher.name || "م").charAt(0)}
             </div>
             <div className="min-w-0">
               <button
                 type="button"
                 onClick={() => setSelectedTeacherForProfile(teacher)}
-                className="text-xs sm:text-sm font-bold text-slate-900 truncate block text-right"
+                className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate block text-right"
               >
                 {teacher.fullName || teacher.name}
               </button>
-              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
                 <span>{displayJob}</span>
-                <span className="text-slate-300">•</span>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
                 <span>{teacher.specialty || "عام"}</span>
               </div>
             </div>
@@ -556,8 +556,8 @@ export const TeacherTable: React.FC = () => {
             className={cn(
               "px-2 py-0.5 rounded-md text-[11px] font-bold border shrink-0",
               teacher.employmentStatus === "عقد"
-                ? "bg-amber-50 text-amber-800 border-amber-200"
-                : "bg-emerald-50 text-emerald-800 border-emerald-200"
+                ? "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-900/50"
+                : "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/50"
             )}
           >
             {teacher.employmentStatus || "دائم"}
@@ -565,42 +565,42 @@ export const TeacherTable: React.FC = () => {
         </div>
 
         {/* Mobile Info Grid */}
-        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+        <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
           <div>
-            <span className="text-[10px] text-slate-400 block">السجل المدني</span>
-            <span className="font-mono text-slate-800 font-bold" dir="ltr">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 block">السجل المدني</span>
+            <span className="font-mono text-slate-800 dark:text-slate-200 font-bold" dir="ltr">
               {teacher.nationalId || teacher.username || teacher.jobNumber || "—"}
             </span>
           </div>
 
           <div>
-            <span className="text-[10px] text-slate-400 block">أيام الغياب</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 block">أيام الغياب</span>
             {teacher.totalAbsences && teacher.totalAbsences > 0 ? (
-              <span className="font-bold text-rose-600">
+              <span className="font-bold text-rose-600 dark:text-rose-400">
                 {teacher.totalAbsences} يوم
               </span>
             ) : (
-              <span className="text-slate-500">لا يوجد غياب</span>
+              <span className="text-slate-500 dark:text-slate-400">لا يوجد غياب</span>
             )}
           </div>
         </div>
 
         {/* Mobile Actions and WhatsApp */}
-        <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+        <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-1.5">
             {teacher.mobile ? (
-              <span className="text-xs font-mono text-slate-600" dir="ltr">
+              <span className="text-xs font-mono text-slate-600 dark:text-slate-300" dir="ltr">
                 {formattedMobile}
               </span>
             ) : (
-              <span className="text-xs text-slate-400">لا يوجد جوال</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">لا يوجد جوال</span>
             )}
             {cleanDigits && (
               <a
                 href={`https://wa.me/${cleanDigits}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 inline-flex items-center justify-center"
+                className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 inline-flex items-center justify-center"
                 title="واتساب"
               >
                 <MessageCircle className="w-3.5 h-3.5" />
@@ -740,7 +740,7 @@ export const TeacherTable: React.FC = () => {
                 "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
                 selectedStatus === "all"
                   ? "bg-[#137a85] text-white shadow-2xs font-bold"
-                  : "bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200/80"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-200/80 dark:hover:bg-slate-700"
               )}
             >
               الكل ({activeTeachers.length})
@@ -752,7 +752,7 @@ export const TeacherTable: React.FC = () => {
                 "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
                 selectedStatus === "دائم"
                   ? "bg-emerald-600 text-white shadow-2xs font-bold"
-                  : "bg-emerald-50 text-emerald-800 hover:bg-emerald-100/80 border border-emerald-200/60"
+                  : "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100/80 dark:hover:bg-emerald-900/50 border border-emerald-200/60 dark:border-emerald-900/50"
               )}
             >
               دائم ({permanentCount})
@@ -764,7 +764,7 @@ export const TeacherTable: React.FC = () => {
                 "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
                 selectedStatus === "عقد"
                   ? "bg-amber-600 text-white shadow-2xs font-bold"
-                  : "bg-amber-50 text-amber-800 hover:bg-amber-100/80 border border-amber-200/60"
+                  : "bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:bg-amber-100/80 dark:hover:bg-amber-900/50 border border-amber-200/60 dark:border-amber-900/50"
               )}
             >
               عقد ({contractCount})
@@ -776,7 +776,7 @@ export const TeacherTable: React.FC = () => {
                 "px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0",
                 selectedStatus === "with_absence"
                   ? "bg-rose-600 text-white shadow-2xs font-bold"
-                  : "bg-rose-50 text-rose-800 hover:bg-rose-100/80 border border-rose-200/60"
+                  : "bg-rose-50 dark:bg-rose-950/50 text-rose-800 dark:text-rose-300 hover:bg-rose-100/80 dark:hover:bg-rose-900/50 border border-rose-200/60 dark:border-rose-900/50"
               )}
             >
               لديهن غياب ({withAbsenceCount})

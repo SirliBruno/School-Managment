@@ -384,7 +384,7 @@ function DeductionHoursContent() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-slate-50/50 pb-16">
+    <div className="flex-1 flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-16">
       <PageHeader
         breadcrumbs={[
           { label: "الإجراءات الإدارية", href: "/procedures/list" },
@@ -398,19 +398,19 @@ function DeductionHoursContent() {
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-8">
         {/* Top KPI Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 font-medium block">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block">
                 إجمالي التأخر غير المعذور
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-mono font-extrabold text-slate-800">
+                <span className="text-2xl font-mono font-extrabold text-slate-800 dark:text-slate-100">
                   {schoolKpis.totalUnexcusedHours}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">ساعة</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">ساعة</span>
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 flex items-center justify-center">
               <Clock className="w-5 h-5" />
             </div>
           </div>
@@ -419,15 +419,15 @@ function DeductionHoursContent() {
             className={cn(
               "p-4 rounded-2xl border shadow-xs flex items-center justify-between transition-colors",
               schoolKpis.teachersDueCount > 0
-                ? "bg-rose-50/70 border-rose-200"
-                : "bg-white border-slate-200/80"
+                ? "bg-rose-50/70 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/50"
+                : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800"
             )}
           >
             <div>
               <span
                 className={cn(
                   "text-xs font-bold block",
-                  schoolKpis.teachersDueCount > 0 ? "text-rose-800" : "text-slate-500"
+                  schoolKpis.teachersDueCount > 0 ? "text-rose-800 dark:text-rose-300" : "text-slate-500 dark:text-slate-400"
                 )}
               >
                 معلمات مستحقات للحسم (≥ 7س)
@@ -436,56 +436,56 @@ function DeductionHoursContent() {
                 <span
                   className={cn(
                     "text-2xl font-mono font-extrabold",
-                    schoolKpis.teachersDueCount > 0 ? "text-rose-700" : "text-slate-800"
+                    schoolKpis.teachersDueCount > 0 ? "text-rose-700 dark:text-rose-300" : "text-slate-800 dark:text-slate-100"
                   )}
                 >
                   {schoolKpis.teachersDueCount}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">معلمة</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">معلمة</span>
               </div>
             </div>
             <div
               className={cn(
                 "w-10 h-10 rounded-xl flex items-center justify-center",
                 schoolKpis.teachersDueCount > 0
-                  ? "bg-rose-600 text-white shadow-sm shadow-rose-200 animate-pulse"
-                  : "bg-slate-100 text-slate-500"
+                  ? "bg-rose-600 text-white shadow-sm shadow-rose-200 dark:shadow-none animate-pulse"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
               )}
             >
               <ShieldAlert className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 font-medium block">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block">
                 قرارات الحسم الصادرة
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-mono font-extrabold text-teal-800">
+                <span className="text-2xl font-mono font-extrabold text-teal-800 dark:text-teal-300">
                   {schoolKpis.decisionsIssuedCount}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">قرار</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">قرار</span>
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 flex items-center justify-center">
               <FileCheck className="w-5 h-5" />
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-500 font-medium block">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block">
                 أيام الراتب المحسومة
               </span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-mono font-extrabold text-slate-800">
+                <span className="text-2xl font-mono font-extrabold text-slate-800 dark:text-slate-100">
                   {schoolKpis.totalDeductionDaysIssued}
                 </span>
-                <span className="text-xs text-slate-400 font-semibold">يوم عمل</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">يوم عمل</span>
               </div>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-400 flex items-center justify-center">
               <Calculator className="w-5 h-5" />
             </div>
           </div>
@@ -493,20 +493,20 @@ function DeductionHoursContent() {
 
         {/* Proactive Radar: Teachers Due for Deduction */}
         {teachersDue.length > 0 && (
-          <section className="bg-gradient-to-br from-rose-50/90 via-red-50/50 to-orange-50/40 border border-rose-200 rounded-3xl p-5 md:p-6 shadow-sm space-y-4">
+          <section className="bg-gradient-to-br from-rose-50/90 via-red-50/50 to-orange-50/40 dark:from-rose-950/40 dark:via-red-950/30 dark:to-orange-950/20 border border-rose-200 dark:border-rose-900/50 rounded-3xl p-5 md:p-6 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-sm shadow-rose-300 shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-sm shadow-rose-300 dark:shadow-none shrink-0">
                   <Zap className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-rose-950 flex items-center gap-2">
+                  <h3 className="text-base font-bold text-rose-950 dark:text-rose-200 flex items-center gap-2">
                     <span>رادار استحقاق الحسم المباشر (المادة 21)</span>
-                    <span className="px-2 py-0.5 rounded-full text-xs bg-rose-200 text-rose-800 font-extrabold">
+                    <span className="px-2 py-0.5 rounded-full text-xs bg-rose-200 dark:bg-rose-900/70 text-rose-800 dark:text-rose-200 font-extrabold">
                       {teachersDue.length} حالة مستحقة
                     </span>
                   </h3>
-                  <p className="text-xs text-rose-700 mt-0.5">
+                  <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
                     معلمات تجاوزن نصاب الـ 7 ساعات (420 دقيقة) من التأخر غير المعذور ويستوجب النظام إصدار قرار حسم بحقهن.
                   </p>
                 </div>
@@ -515,7 +515,7 @@ function DeductionHoursContent() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-white/80 border-b border-rose-200 text-rose-900 font-bold">
+                <thead className="bg-white/80 dark:bg-slate-900/90 border-b border-rose-200 dark:border-rose-900/50 text-rose-900 dark:text-rose-300 font-bold">
                   <tr>
                     <th className="py-2.5 px-3">اسم المعلمة</th>
                     <th className="py-2.5 px-3">السجل المدني</th>
@@ -526,24 +526,24 @@ function DeductionHoursContent() {
                     <th className="py-2.5 px-3 text-center">إجراء فوري</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-rose-100 bg-white/60">
+                <tbody className="divide-y divide-rose-100 dark:divide-rose-950/40 bg-white/60 dark:bg-slate-900/60">
                   {teachersDue.map((due) => (
-                    <tr key={due.teacherId} className="hover:bg-rose-50/80 transition-colors">
-                      <td className="py-3 px-3 font-bold text-slate-900">{due.teacherName}</td>
-                      <td className="py-3 px-3 font-mono text-slate-600">{due.nationalId}</td>
-                      <td className="py-3 px-3 text-slate-600">{due.specialty}</td>
-                      <td className="py-3 px-3 font-mono font-bold text-rose-700">
+                    <tr key={due.teacherId} className="hover:bg-rose-50/80 dark:hover:bg-rose-950/40 transition-colors">
+                      <td className="py-3 px-3 font-bold text-slate-900 dark:text-slate-100">{due.teacherName}</td>
+                      <td className="py-3 px-3 font-mono text-slate-600 dark:text-slate-400">{due.nationalId}</td>
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400">{due.specialty}</td>
+                      <td className="py-3 px-3 font-mono font-bold text-rose-700 dark:text-rose-300">
                         {due.totalUnexcusedHours} س ({due.totalUnexcusedMinutes} د)
                       </td>
                       <td className="py-3 px-3">
-                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 border border-rose-300">
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800">
                           {due.deductionDays} يوم
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-slate-600">
+                      <td className="py-3 px-3 text-slate-600 dark:text-slate-400">
                         {due.unsettledNotices.length} تنبيه
                         {due.carriedOverMinutes > 0 && (
-                          <span className="text-2xs text-amber-700 block">
+                          <span className="text-2xs text-amber-700 dark:text-amber-400 block">
                             + {due.carriedOverMinutes} دقيقة مرحلة
                           </span>
                         )}
@@ -570,12 +570,12 @@ function DeductionHoursContent() {
         {/* Input Form Section */}
         <div ref={formRef} className="max-w-4xl mx-auto w-full space-y-6">
           {/* Mode Selector Toggle */}
-          <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-teal-700" />
-              <span className="text-xs font-bold text-slate-800">طريقة احتساب ساعات الحسم:</span>
+              <Sliders className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-200">طريقة احتساب ساعات الحسم:</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold w-full sm:w-auto">
+            <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => handleSwitchMode("smart")}
@@ -583,7 +583,7 @@ function DeductionHoursContent() {
                   "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer",
                   calculationMode === "smart"
                     ? "bg-teal-600 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                 )}
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -596,7 +596,7 @@ function DeductionHoursContent() {
                   "flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all cursor-pointer",
                   calculationMode === "manual"
                     ? "bg-slate-800 text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                 )}
               >
                 <Calculator className="w-3.5 h-3.5" />
@@ -638,29 +638,29 @@ function DeductionHoursContent() {
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50/80 rounded-xl border border-slate-200/60 text-xs"
+                className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 bg-slate-50/80 dark:bg-slate-800/80 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-xs"
               >
                 <div>
-                  <span className="text-slate-400 block mb-0.5">السجل المدني</span>
-                  <span className="font-mono font-bold text-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 block mb-0.5">السجل المدني</span>
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
                     {selectedTeacher.nationalId}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">التخصص</span>
-                  <span className="font-semibold text-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 block mb-0.5">التخصص</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-100">
                     {selectedTeacher.specialty || selectedTeacher.teachingField || "عام"}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">الرقم الوظيفي</span>
-                  <span className="font-mono font-semibold text-slate-800">
+                  <span className="text-slate-400 dark:text-slate-500 block mb-0.5">الرقم الوظيفي</span>
+                  <span className="font-mono font-semibold text-slate-800 dark:text-slate-100">
                     {selectedTeacher.jobNumber || selectedTeacher.nationalId}
                   </span>
                 </div>
                 <div>
-                  <span className="text-slate-400 block mb-0.5">حالة التوظيف</span>
-                  <span className="font-semibold text-teal-700">
+                  <span className="text-slate-400 dark:text-slate-500 block mb-0.5">حالة التوظيف</span>
+                  <span className="font-semibold text-teal-700 dark:text-teal-400">
                     {selectedTeacher.employmentStatus || "دائم"}
                   </span>
                 </div>
@@ -669,7 +669,7 @@ function DeductionHoursContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                   المستوى / المرتبة
                 </label>
                 <input
@@ -677,11 +677,11 @@ function DeductionHoursContent() {
                   value={rank}
                   onChange={(e) => setRank(e.target.value)}
                   placeholder="مثال: معلم ممارس"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                   العمل الحالي
                 </label>
                 <input
@@ -689,24 +689,24 @@ function DeductionHoursContent() {
                   value={currentAction}
                   onChange={(e) => setCurrentAction(e.target.value)}
                   placeholder="معلمة"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
                 />
               </div>
             </div>
           </Card>
 
           {/* Section 2: Delay & Hours Calculator Card */}
-          <Card className="p-6 border-slate-200/80 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <Card className="p-6 border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-lg bg-rose-50 dark:bg-rose-950/60 border border-rose-100 dark:border-rose-900/50 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
                   ٢
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-800">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
                     حاسبة ساعات التأخر وأيام الحسم
                   </h2>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     كل 7 ساعات (420 دقيقة) = حسم يوم عمل واحد نظاماً
                   </p>
                 </div>
@@ -716,32 +716,32 @@ function DeductionHoursContent() {
 
             {/* Smart Mode: Interactive Breakdown Table of Notices Being Settled */}
             {calculationMode === "smart" && currentTeacherSummary && (
-              <div className="space-y-3 p-4 rounded-2xl bg-teal-50/50 border border-teal-200/70">
+              <div className="space-y-3 p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200/70 dark:border-teal-900/40">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-teal-700" />
-                    <h3 className="text-xs font-bold text-teal-900">
+                    <Sparkles className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                    <h3 className="text-xs font-bold text-teal-900 dark:text-teal-200">
                       تنبيهات التأخر غير المعذورة المشمولة في هذا القرار:
                     </h3>
                   </div>
-                  <span className="text-xs font-bold text-teal-800">
+                  <span className="text-xs font-bold text-teal-800 dark:text-teal-300">
                     {selectedNoticeIds.length} من {currentTeacherSummary.unsettledNotices.length} محددة
                   </span>
                 </div>
 
                 {currentTeacherSummary.unsettledNotices.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-slate-500 bg-white rounded-xl border border-slate-200">
+                  <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                     لا توجد تنبيهات تأخر غير معذورة مكتملة لهذه المعلمة حالياً.
                     {currentTeacherSummary.carriedOverMinutes > 0 && (
-                      <span className="block mt-1 font-bold text-amber-700">
+                      <span className="block mt-1 font-bold text-amber-700 dark:text-amber-400">
                         يوجد رصيد مرحل ({currentTeacherSummary.carriedOverMinutes}) دقيقة من قرارات سابقة.
                       </span>
                     )}
                   </div>
                 ) : (
-                  <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+                  <div className="overflow-x-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                     <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-600 font-bold">
+                      <thead className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold">
                         <tr>
                           <th className="py-2.5 px-3 w-8 text-center">شمول</th>
                           <th className="py-2.5 px-3">رقم وتاريخ التنبيه</th>
@@ -749,7 +749,7 @@ function DeductionHoursContent() {
                           <th className="py-2.5 px-3">المدة المحتسبة</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {currentTeacherSummary.unsettledNotices.map((n) => {
                           const isChecked = selectedNoticeIds.includes(n.id);
                           const duration = calculateNoticeDurationMinutes(n);
@@ -758,8 +758,8 @@ function DeductionHoursContent() {
                               key={n.id}
                               onClick={() => handleToggleNotice(n.id)}
                               className={cn(
-                                "hover:bg-teal-50/30 transition-colors cursor-pointer",
-                                isChecked ? "bg-teal-50/20" : "opacity-60"
+                                "hover:bg-teal-50/30 dark:hover:bg-teal-950/30 transition-colors cursor-pointer",
+                                isChecked ? "bg-teal-50/20 dark:bg-teal-950/40" : "opacity-60"
                               )}
                             >
                               <td className="py-2.5 px-3 text-center">
@@ -771,22 +771,22 @@ function DeductionHoursContent() {
                                     handleToggleNotice(n.id);
                                   }}
                                   onClick={(e) => e.stopPropagation()}
-                                  className="w-4 h-4 text-teal-600 rounded border-slate-300 focus:ring-teal-500 cursor-pointer"
+                                  className="w-4 h-4 text-teal-600 rounded border-slate-300 dark:border-slate-700 focus:ring-teal-500 cursor-pointer"
                                 />
                               </td>
-                              <td className="py-2.5 px-3 font-mono font-bold text-slate-800">
+                              <td className="py-2.5 px-3 font-mono font-bold text-slate-800 dark:text-slate-100">
                                 {n.noticeNumber || `ت-${n.id.slice(-4)}`}{" "}
-                                <span className="text-slate-400 font-normal">
+                                <span className="text-slate-400 dark:text-slate-500 font-normal">
                                   ({n.noticeDate || n.date})
                                 </span>
                               </td>
-                              <td className="py-2.5 px-3 text-slate-600">
+                              <td className="py-2.5 px-3 text-slate-600 dark:text-slate-300">
                                 {n.violationDelayStart && "تأخر صباحي"}
                                 {n.violationAbsentDuring && "عدم تواجد أثناء الدوام"}
                                 {n.violationEarlyDeparture && "انصراف مبكر"}
                                 {n.violationLeftSchool && "خروج وعودة"}
                               </td>
-                              <td className="py-2.5 px-3 font-mono font-bold text-teal-800">
+                              <td className="py-2.5 px-3 font-mono font-bold text-teal-800 dark:text-teal-300">
                                 {duration} دقيقة ({(duration / 60).toFixed(1)} س)
                               </td>
                             </tr>
@@ -798,9 +798,9 @@ function DeductionHoursContent() {
                 )}
 
                 {currentTeacherSummary.carriedOverMinutes > 0 && (
-                  <div className="flex items-center justify-between text-xs p-2.5 bg-amber-50 text-amber-900 rounded-lg border border-amber-200">
+                  <div className="flex items-center justify-between text-xs p-2.5 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 rounded-lg border border-amber-200 dark:border-amber-900/50">
                     <span className="font-bold flex items-center gap-1.5">
-                      <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
+                      <HelpCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                       دقائق فائضة مرحلة من قرار حسم سابق:
                     </span>
                     <span className="font-mono font-bold">
@@ -814,7 +814,7 @@ function DeductionHoursContent() {
             {/* Manual Mode Presets */}
             {calculationMode === "manual" && (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">
+                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-2">
                   اختيارات سريعة للمدد المتراكمة:
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -830,8 +830,8 @@ function DeductionHoursContent() {
                       onClick={() => setPresetHours(preset.hours)}
                       className={`px-3 py-2 text-xs font-bold rounded-lg border transition-all text-center cursor-pointer ${
                         calculation.totalHours === preset.hours
-                          ? "bg-rose-500 text-white border-rose-600 shadow-sm shadow-rose-200"
-                          : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                          ? "bg-rose-500 text-white border-rose-600 shadow-sm shadow-rose-200 dark:shadow-none"
+                          : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
                       }`}
                     >
                       {preset.label}
@@ -844,7 +844,7 @@ function DeductionHoursContent() {
             {/* Precise Minutes / Hours Input */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   إجمالي دقائق التأخر والخروج (بالدقائق) <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
@@ -864,19 +864,19 @@ function DeductionHoursContent() {
                         return n;
                       });
                     }}
-                    className="w-full pl-12 pr-4 py-2.5 text-sm font-mono font-bold bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none"
+                    className="w-full pl-12 pr-4 py-2.5 text-sm font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none"
                   />
-                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-semibold pointer-events-none">
+                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 dark:text-slate-500 font-semibold pointer-events-none">
                     دقيقة
                   </span>
                 </div>
                 {errors.delayMinutes && (
-                  <p className="text-xs text-rose-600 mt-1 font-medium">{errors.delayMinutes}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">{errors.delayMinutes}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   المعادل بالساعات
                 </label>
                 <div className="relative">
@@ -888,9 +888,9 @@ function DeductionHoursContent() {
                       const h = parseFloat(e.target.value) || 0;
                       setDelayMinutes(Math.round(h * MINUTES_PER_HOUR));
                     }}
-                    className="w-full pl-12 pr-4 py-2.5 text-sm font-mono font-bold bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none"
+                    className="w-full pl-12 pr-4 py-2.5 text-sm font-mono font-bold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 outline-none"
                   />
-                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 font-semibold pointer-events-none">
+                  <span className="absolute left-3 top-2.5 text-xs text-slate-400 dark:text-slate-500 font-semibold pointer-events-none">
                     ساعة
                   </span>
                 </div>
@@ -898,29 +898,29 @@ function DeductionHoursContent() {
             </div>
 
             {/* Calculator Summary Card */}
-            <div className="p-4 rounded-xl bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="p-4 rounded-xl bg-gradient-to-br from-rose-50 to-orange-50 dark:from-rose-950/30 dark:to-orange-950/20 border border-rose-200 dark:border-rose-900/50 flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="space-y-1 text-center sm:text-right">
-                <div className="text-xs text-rose-700 font-bold">
+                <div className="text-xs text-rose-700 dark:text-rose-300 font-bold">
                   نتيجة الاحتساب النظامي الصادرة بالقرار:
                 </div>
-                <div className="text-sm font-extrabold text-slate-900">
-                  حسم <span className="text-rose-600 text-lg mx-1">({calculation.deductionDays})</span> يوماً من الراتب
+                <div className="text-sm font-extrabold text-slate-900 dark:text-slate-100">
+                  حسم <span className="text-rose-600 dark:text-rose-400 text-lg mx-1">({calculation.deductionDays})</span> يوماً من الراتب
                 </div>
                 {calculation.remainderMinutes > 0 && (
-                  <div className="text-xs text-slate-500">
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     ويتبقى ({calculation.remainderMinutes}) دقيقة تُرحّل آلياً للقرار القادم
                   </div>
                 )}
                 {selectedTeacher && calculation.deductionDays === 0 && (
-                  <div className="text-2xs text-amber-800 font-medium bg-amber-50/90 px-2.5 py-1 rounded-lg border border-amber-200 mt-1">
+                  <div className="text-2xs text-amber-800 dark:text-amber-300 font-medium bg-amber-50/90 dark:bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-200 dark:border-amber-900/50 mt-1">
                     تنبيه نظامي: لم يبلغ المجموع عتبة الـ 7 ساعات (420 دقيقة) الموجبة لخصم يوم عمل وفق المادة 21.
                   </div>
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <div className="text-center px-4 py-2 bg-white/90 rounded-lg border border-rose-200 shadow-2xs">
-                  <span className="text-2xs text-slate-400 block">إجمالي الساعات</span>
-                  <span className="font-mono text-base font-bold text-slate-800">
+                <div className="text-center px-4 py-2 bg-white/90 dark:bg-slate-900/90 rounded-lg border border-rose-200 dark:border-rose-900/50 shadow-2xs">
+                  <span className="text-2xs text-slate-400 dark:text-slate-500 block">إجمالي الساعات</span>
+                  <span className="font-mono text-base font-bold text-slate-800 dark:text-slate-100">
                     {calculation.totalHours} س
                   </span>
                 </div>
@@ -933,20 +933,20 @@ function DeductionHoursContent() {
               </div>
             </div>
             {errors.deductionDays && (
-              <p className="text-xs text-rose-600 font-medium">{errors.deductionDays}</p>
+              <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{errors.deductionDays}</p>
             )}
           </Card>
 
           {/* Section 3: Decision Details Card */}
-          <Card className="p-6 border-slate-200/80 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <Card className="p-6 border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-100 text-teal-700 flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-100 dark:border-teal-900/50 text-teal-700 dark:text-teal-400 flex items-center justify-center font-bold">
                   ٣
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-800">بيانات القرار الرسمي والاعتماد</h2>
-                  <p className="text-xs text-slate-500">
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">بيانات القرار الرسمي والاعتماد</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     رقم القرار وتاريخه وتوقيع رئيس المدرسة المباشر
                   </p>
                 </div>
@@ -955,7 +955,7 @@ function DeductionHoursContent() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   رقم القرار <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -963,14 +963,14 @@ function DeductionHoursContent() {
                   value={decisionNumber}
                   onChange={(e) => setDecisionNumber(e.target.value)}
                   placeholder="مثال: ١٩/٤٨"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
                 />
                 {errors.decisionNumber && (
-                  <p className="text-xs text-rose-600 mt-1 font-medium">{errors.decisionNumber}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">{errors.decisionNumber}</p>
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   تاريخ القرار <span className="text-rose-500">*</span>
                 </label>
                 <input
@@ -978,39 +978,39 @@ function DeductionHoursContent() {
                   value={decisionDate}
                   onChange={(e) => setDecisionDate(e.target.value)}
                   placeholder="١٤٤٨/٠٢/١٥هـ"
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
                 />
                 {errors.decisionDate && (
-                  <p className="text-xs text-rose-600 mt-1 font-medium">{errors.decisionDate}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1 font-medium">{errors.decisionDate}</p>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">اسم المدرسة</label>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">اسم المدرسة</label>
                 <input
                   type="text"
                   value={schoolName}
                   onChange={(e) => setSchoolName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                   مديرة المدرسة
                 </label>
                 <input
                   type="text"
                   value={principalName}
                   onChange={(e) => setPrincipalName(e.target.value)}
-                  className="w-full px-3.5 py-2 text-sm bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
+                  className="w-full px-3.5 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 outline-none"
                 />
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-3">
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row gap-3">
               <Button
                 type="button"
                 variant="primary"
@@ -1025,9 +1025,9 @@ function DeductionHoursContent() {
                 type="button"
                 variant="outline"
                 onClick={handlePrintPdf}
-                className="flex-1 h-10 px-4 inline-flex flex-row items-center justify-center gap-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-bold whitespace-nowrap"
+                className="flex-1 h-10 px-4 inline-flex flex-row items-center justify-center gap-2 border-teal-600 text-teal-700 dark:text-teal-400 hover:bg-teal-50 dark:hover:bg-teal-950/40 font-bold whitespace-nowrap"
               >
-                <Printer className="w-4 h-4 shrink-0 text-teal-700" />
+                <Printer className="w-4 h-4 shrink-0 text-teal-700 dark:text-teal-400" />
                 <span className="whitespace-nowrap">معاينة وطباعة قرار الحسم (PDF)</span>
               </Button>
             </div>
@@ -1038,33 +1038,33 @@ function DeductionHoursContent() {
         <div className="space-y-4 pt-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-teal-700" />
-              <h3 className="text-base font-bold text-slate-800">
+              <FileCheck className="w-5 h-5 text-teal-700 dark:text-teal-400" />
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-100">
                 سجل قرارات الحسم الصادرة بالمدرسة ({deductionDecisions.length})
               </h3>
             </div>
             <Link
               href="/procedures/list"
-              className="text-xs font-semibold text-teal-700 hover:text-teal-800 flex items-center gap-1 hover:underline"
+              className="text-xs font-semibold text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 flex items-center gap-1 hover:underline"
             >
               عرض كافة الإجراءات الإدارية
               <ArrowRight className="w-3.5 h-3.5 rotate-180" />
             </Link>
           </div>
 
-          <Card className="border-slate-200/80 shadow-sm overflow-hidden">
+          <Card className="border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
             {deductionDecisions.length === 0 ? (
               <div className="p-8 text-center space-y-2">
-                <FileText className="w-10 h-10 text-slate-300 mx-auto" />
-                <div className="text-sm font-bold text-slate-700">لا توجد قرارات حسم صادرة حالياً</div>
-                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+                <div className="text-sm font-bold text-slate-700 dark:text-slate-300">لا توجد قرارات حسم صادرة حالياً</div>
+                <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
                   عند إصدار قرارات حسم لساعات التأخر والخروج المبكر، ستظهر جميع السجلات هنا مع إمكانية إعادة طباعتها في أي وقت.
                 </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-right text-xs">
-                  <thead className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold">
+                  <thead className="bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200/80 dark:border-slate-700/80 text-slate-500 dark:text-slate-400 font-semibold">
                     <tr>
                       <th className="py-3 px-4">رقم القرار</th>
                       <th className="py-3 px-4">المعلمة</th>
@@ -1076,32 +1076,32 @@ function DeductionHoursContent() {
                       <th className="py-3 px-4 text-center">إجراءات</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {deductionDecisions.map((dec) => (
-                      <tr key={dec.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      <tr key={dec.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60 transition-colors">
+                        <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
                           {dec.decisionNumber}
                         </td>
-                        <td className="py-3.5 px-4 font-bold text-teal-800">{dec.teacherName}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-600">{dec.civilId}</td>
-                        <td className="py-3.5 px-4 font-mono font-semibold text-slate-800">
+                        <td className="py-3.5 px-4 font-bold text-teal-800 dark:text-teal-300">{dec.teacherName}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">{dec.civilId}</td>
+                        <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200">
                           {dec.delayHours} س
                         </td>
                         <td className="py-3.5 px-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50">
                             {dec.deductionDays} يوم
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-600">
+                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">
                           {Array.isArray(dec.settledNoticeIds) && dec.settledNoticeIds.length > 0 ? (
-                            <span className="font-semibold text-teal-800">
+                            <span className="font-semibold text-teal-800 dark:text-teal-300">
                               {dec.settledNoticeIds.length} تنبيه
                             </span>
                           ) : (
-                            <span className="text-slate-400">إدخال مباشر</span>
+                            <span className="text-slate-400 dark:text-slate-500">إدخال مباشر</span>
                           )}
                         </td>
-                        <td className="py-3.5 px-4 text-slate-600">{dec.decisionDate}</td>
+                        <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{dec.decisionDate}</td>
                         <td className="py-3.5 px-4 text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <Button
@@ -1123,7 +1123,7 @@ function DeductionHoursContent() {
                                   decisionDate: dec.decisionDate,
                                 })
                               }
-                              className="h-8 px-2 text-teal-700 hover:text-teal-800 hover:bg-teal-50"
+                              className="h-8 px-2 text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40"
                               title="طباعة قرار الحسم"
                             >
                               <Printer className="w-3.5 h-3.5 ml-1" />
@@ -1133,10 +1133,10 @@ function DeductionHoursContent() {
                               size="sm"
                               variant="ghost"
                               onClick={() => setDecisionToDelete(dec)}
-                              className="h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                              className="h-8 px-2 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/40"
                               title="حذف ونقل للأرشيف"
                             >
-                              <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                              <Trash2 className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
                             </Button>
                           </div>
                         </td>

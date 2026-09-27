@@ -145,7 +145,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
   return (
     <div ref={containerRef} className={cn("relative w-full space-y-1.5", className)}>
       {label && (
-        <label id="teacher-combobox-label" className="block text-xs font-bold text-slate-700">
+        <label id="teacher-combobox-label" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}
@@ -164,26 +164,26 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
           if (!disabled) setIsOpen((prev) => !prev);
         }}
         className={cn(
-          "w-full min-h-[46px] px-3.5 py-2 rounded-xl border bg-white flex items-center justify-between gap-3 cursor-pointer transition-all duration-150 shadow-sm select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/30 focus-visible:border-[#137a85]",
-          disabled && "opacity-60 cursor-not-allowed bg-slate-50",
+          "w-full min-h-[46px] px-3.5 py-2 rounded-xl border bg-white dark:bg-slate-900 flex items-center justify-between gap-3 cursor-pointer transition-all duration-150 shadow-sm select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/30 focus-visible:border-[#137a85]",
+          disabled && "opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-800",
           error
             ? "border-rose-400 focus-within:ring-2 focus-within:ring-rose-200"
             : isOpen
             ? "border-[#137a85] ring-2 ring-[#137a85]/20"
-            : "border-slate-200 hover:border-slate-300"
+            : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
         )}
       >
         {selectedTeacher ? (
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-teal-50 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+              <div className="w-8 h-8 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">
                 {(selectedTeacher.fullName || selectedTeacher.name || "م").charAt(0)}
               </div>
               <div className="truncate">
-                <span className="block text-xs md:text-sm font-bold text-slate-800 truncate">
+                <span className="block text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                   {selectedTeacher.fullName || selectedTeacher.name}
                 </span>
-                <span className="block text-[11px] text-slate-400 font-mono">
+                <span className="block text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                   {selectedTeacher.nationalId || selectedTeacher.username || selectedTeacher.jobNumber} • {selectedTeacher.specialty || selectedTeacher.teachingField || "عام"}
                 </span>
               </div>
@@ -194,7 +194,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                  className="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                   title="إلغاء التحديد"
                   aria-label="إلغاء اختيار المعلمة"
                 >
@@ -212,14 +212,14 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
         ) : allowAllOption && (!selectedTeacherId || selectedTeacherId === "all") ? (
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-slate-100 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">
                 ★
               </div>
               <div className="truncate">
-                <span className="block text-xs md:text-sm font-bold text-slate-800 truncate">
+                <span className="block text-xs md:text-sm font-bold text-slate-800 dark:text-slate-100 truncate">
                   {allOptionLabel}
                 </span>
-                <span className="block text-[11px] text-slate-400">
+                <span className="block text-[11px] text-slate-400 dark:text-slate-500">
                   كافة المعلمات المسجلات في المنظومة
                 </span>
               </div>
@@ -233,7 +233,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
             />
           </div>
         ) : (
-          <div className="flex items-center justify-between w-full text-slate-400 text-xs md:text-sm">
+          <div className="flex items-center justify-between w-full text-slate-400 dark:text-slate-500 text-xs md:text-sm">
             <span>{placeholder}</span>
             <ChevronDown
               className={cn(
@@ -251,10 +251,10 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
           id="teacher-combobox-listbox"
           role="listbox"
           aria-label="قائمة المعلمات المتاحة"
-          className="absolute top-full right-0 left-0 mt-1.5 z-40 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute top-full right-0 left-0 mt-1.5 z-40 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {/* Search Box */}
-          <div className="p-2.5 border-b border-slate-100 bg-slate-50/70">
+          <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90">
             <div className="relative">
               <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               <input
@@ -264,13 +264,13 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="اكتبي اسم المعلمة أو رقم الهوية... (الأسهم للتنقل و Enter للاختيار)"
-                className="w-full pl-3 pr-9 py-2 text-xs bg-white rounded-lg border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85]"
+                className="w-full pl-3 pr-9 py-2 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-lg border border-slate-200 dark:border-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85]"
               />
             </div>
           </div>
 
           {/* List of Teachers */}
-          <div ref={listRef} className="max-h-60 overflow-y-auto divide-y divide-slate-50 custom-scrollbar">
+          <div ref={listRef} className="max-h-60 overflow-y-auto divide-y divide-slate-50 dark:divide-slate-800/60 custom-scrollbar">
             {allowAllOption && (
               <div
                 role="option"
@@ -281,28 +281,28 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                   setSearchQuery("");
                 }}
                 className={cn(
-                  "px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors text-xs md:text-sm border-b border-slate-100",
+                  "px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors text-xs md:text-sm border-b border-slate-100 dark:border-slate-800",
                   (!selectedTeacherId || selectedTeacherId === "all")
-                    ? "bg-teal-50/80 text-[#137a85] font-bold"
-                    : "hover:bg-slate-50 text-slate-700"
+                    ? "bg-teal-50/80 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-400 font-bold"
+                    : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300"
                 )}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-full bg-slate-100 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-slate-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0">
                     ★
                   </div>
                   <div>
-                    <div className="font-bold text-slate-900 leading-tight">{allOptionLabel}</div>
-                    <div className="text-[11px] text-slate-400 mt-0.5">تضمين كافة منسوبات المدرسة في التقرير</div>
+                    <div className="font-bold text-slate-900 dark:text-slate-100 leading-tight">{allOptionLabel}</div>
+                    <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">تضمين كافة منسوبات المدرسة في التقرير</div>
                   </div>
                 </div>
                 {(!selectedTeacherId || selectedTeacherId === "all") && (
-                  <Check className="w-4 h-4 text-[#137a85] shrink-0" />
+                  <Check className="w-4 h-4 text-[#137a85] dark:text-teal-400 shrink-0" />
                 )}
               </div>
             )}
             {filteredTeachers.length === 0 ? (
-              <div className="p-6 text-center text-xs text-slate-400">
+              <div className="p-6 text-center text-xs text-slate-400 dark:text-slate-500">
                 لم يتم العثور على معلمات مطابقة للبحث
               </div>
             ) : (
@@ -319,10 +319,10 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                     className={cn(
                       "px-3.5 py-2.5 flex items-center justify-between cursor-pointer transition-colors text-xs md:text-sm",
                       isSelected
-                        ? "bg-teal-50/80 text-[#137a85] font-bold"
+                        ? "bg-teal-50/80 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-400 font-bold"
                         : isHighlighted
-                        ? "bg-slate-100/90 text-slate-900 ring-1 ring-[#137a85]/20"
-                        : "hover:bg-slate-50 text-slate-700"
+                        ? "bg-slate-100/90 dark:bg-slate-800 text-slate-900 dark:text-slate-100 ring-1 ring-[#137a85]/20"
+                        : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-700 dark:text-slate-300"
                     )}
                   >
                     <div className="flex items-center gap-3">
@@ -331,17 +331,17 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                           "w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0",
                           isSelected
                             ? "bg-[#137a85] text-white"
-                            : "bg-slate-100 text-slate-600"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                         )}
                       >
                         {(teacher.fullName || teacher.name || "م").charAt(0)}
                       </div>
 
                       <div>
-                        <div className="font-bold text-slate-900 leading-tight">
+                        <div className="font-bold text-slate-900 dark:text-slate-100 leading-tight">
                           {teacher.fullName || teacher.name}
                         </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
+                        <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-2">
                           <span className="font-mono">{teacher.nationalId || teacher.username || teacher.jobNumber}</span>
                           <span>•</span>
                           <span>{teacher.specialty || teacher.teachingField || "عام"}</span>
@@ -354,15 +354,15 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                         className={cn(
                           "text-[10px] px-2 py-0.5 rounded-full font-bold border",
                           (teacher.totalAbsences || 0) === 0
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                            : "bg-amber-50 text-amber-800 border-amber-300"
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                            : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800"
                         )}
                       >
                         {teacher.totalAbsences || 0} غياب سابق
                       </span>
 
                       {isSelected && (
-                        <Check className="w-4 h-4 text-[#137a85] shrink-0" />
+                        <Check className="w-4 h-4 text-[#137a85] dark:text-teal-400 shrink-0" />
                       )}
                     </div>
                   </div>
@@ -399,23 +399,23 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 320 }}
-                className="relative bg-white rounded-t-3xl max-h-[85vh] flex flex-col z-10 shadow-2xl pb-safe overflow-hidden"
+                className="relative bg-white dark:bg-slate-900 rounded-t-3xl max-h-[85vh] flex flex-col z-10 shadow-2xl pb-safe overflow-hidden"
               >
                 {/* Drag Handle */}
                 <div className="flex items-center justify-center pt-3 pb-1">
-                  <div className="w-10 h-1.5 rounded-full bg-slate-300" />
+                  <div className="w-10 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
                 </div>
 
                 {/* Mobile Header with Search */}
-                <div className="p-4 border-b border-slate-100 space-y-3">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-base font-bold text-slate-900">
+                    <span className="text-base font-bold text-slate-900 dark:text-slate-100">
                       اختيار المعلمة ({filteredTeachers.length})
                     </span>
                     <button
                       type="button"
                       onClick={() => setIsOpen(false)}
-                      className="p-2 -me-1 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                      className="p-2 -me-1 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       aria-label="إغلاق قائمة المعلمات"
                     >
                       <X className="w-5 h-5" />
@@ -430,7 +430,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="ابحثي بالاسم أو التخصص أو الرقم..."
-                      className="w-full pl-3 pr-10 py-3 text-base bg-slate-50 rounded-xl border border-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/30 focus:border-[#137a85] focus:bg-white transition-all"
+                      className="w-full pl-3 pr-10 py-3 text-base bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl border border-slate-200 dark:border-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/30 focus:border-[#137a85] focus:bg-white dark:focus:bg-slate-800 transition-all"
                     />
                   </div>
                 </div>
@@ -440,7 +440,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                   id="teacher-combobox-listbox"
                   role="listbox"
                   aria-label="قائمة المعلمات المتاحة"
-                  className="overflow-y-auto flex-1 divide-y divide-slate-100 p-2"
+                  className="overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-slate-800 p-2"
                 >
                   {allowAllOption && (
                     <div
@@ -452,32 +452,32 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                         setSearchQuery("");
                       }}
                       className={cn(
-                        "px-4 py-3.5 rounded-xl flex items-center justify-between transition-colors min-h-[56px] active:scale-[0.99] border-b border-slate-100",
+                        "px-4 py-3.5 rounded-xl flex items-center justify-between transition-colors min-h-[56px] active:scale-[0.99] border-b border-slate-100 dark:border-slate-800",
                         (!selectedTeacherId || selectedTeacherId === "all")
-                          ? "bg-teal-50 text-[#137a85] font-bold"
-                          : "hover:bg-slate-50 text-slate-800"
+                          ? "bg-teal-50 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-400 font-bold"
+                          : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200"
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 text-[#137a85] flex items-center justify-center font-bold text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-sm shrink-0">
                           ★
                         </div>
                         <div>
-                          <div className="text-sm font-bold text-slate-900 leading-tight">
+                          <div className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
                             {allOptionLabel}
                           </div>
-                          <div className="text-xs text-slate-400 mt-1">
+                          <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                             تضمين كافة منسوبات المدرسة في التقرير
                           </div>
                         </div>
                       </div>
                       {(!selectedTeacherId || selectedTeacherId === "all") && (
-                        <Check className="w-5 h-5 text-[#137a85] shrink-0" />
+                        <Check className="w-5 h-5 text-[#137a85] dark:text-teal-400 shrink-0" />
                       )}
                     </div>
                   )}
                   {filteredTeachers.length === 0 ? (
-                    <div className="p-8 text-center text-sm text-slate-400">
+                    <div className="p-8 text-center text-sm text-slate-400 dark:text-slate-500">
                       لم يتم العثور على معلمات مطابقة للبحث
                     </div>
                   ) : (
@@ -492,8 +492,8 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                           className={cn(
                             "px-4 py-3.5 rounded-xl flex items-center justify-between transition-colors min-h-[56px] active:scale-[0.99]",
                             isSelected
-                              ? "bg-teal-50 text-[#137a85] font-bold"
-                              : "hover:bg-slate-50 text-slate-800"
+                              ? "bg-teal-50 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-400 font-bold"
+                              : "hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200"
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -502,16 +502,16 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                                 "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0",
                                 isSelected
                                   ? "bg-[#137a85] text-white"
-                                  : "bg-slate-100 text-slate-600"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                               )}
                             >
                               {(teacher.fullName || teacher.name || "م").charAt(0)}
                             </div>
                             <div>
-                              <div className="text-sm font-bold text-slate-900 leading-tight">
+                              <div className="text-sm font-bold text-slate-900 dark:text-slate-100 leading-tight">
                                 {teacher.fullName || teacher.name}
                               </div>
-                              <div className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                              <div className="text-xs text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-2">
                                 <span className="font-mono">{teacher.nationalId || teacher.username || teacher.jobNumber}</span>
                                 <span>•</span>
                                 <span>{teacher.specialty || teacher.teachingField || "عام"}</span>
@@ -524,14 +524,14 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
                               className={cn(
                                 "text-[11px] px-2 py-0.5 rounded-full font-bold border",
                                 (teacher.totalAbsences || 0) === 0
-                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                                  : "bg-amber-50 text-amber-800 border-amber-300"
+                                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                                  : "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800"
                               )}
                             >
                               {teacher.totalAbsences || 0} غياب
                             </span>
                             {isSelected && (
-                              <Check className="w-5 h-5 text-[#137a85] shrink-0" />
+                              <Check className="w-5 h-5 text-[#137a85] dark:text-teal-400 shrink-0" />
                             )}
                           </div>
                         </div>

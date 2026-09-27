@@ -515,16 +515,16 @@ export default function TeacherInquiryPage() {
   // Loading Screen
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 flex flex-col items-center gap-4 max-w-sm w-full text-center">
-          <div className="w-14 h-14 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center animate-pulse">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 flex flex-col items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col items-center gap-4 max-w-sm w-full text-center">
+          <div className="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center animate-pulse border border-teal-200/60 dark:border-teal-800/60">
             <Loader2 className="w-7 h-7 animate-spin" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-800">
+            <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">
               جاري تحميل نموذج المساءلة...
             </h2>
-            <p className="text-xs text-slate-400 mt-1">نظام الإدارة المدرسية الموحد</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">نظام الإدارة المدرسية الموحد</p>
           </div>
         </div>
       </div>
@@ -534,26 +534,26 @@ export default function TeacherInquiryPage() {
   // Error Screen
   if (errorMessage || !inquiry) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-rose-200 max-w-md w-full text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-rose-200 dark:border-rose-800/80 max-w-md w-full text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-200/60 dark:border-rose-800/60">
             <AlertCircle className="w-7 h-7" />
           </div>
-          <h1 className="text-lg font-bold text-slate-900">تعذر فتح المساءلة</h1>
-          <p className="text-sm text-slate-600 leading-relaxed">
+          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">تعذر فتح المساءلة</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             {errorMessage || "رابط المساءلة غير صحيح أو تم حذفه من قبل الإدارة."}
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <button
               onClick={() => window.location.reload()}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white font-medium text-xs sm:text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-medium text-xs sm:text-sm hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               إعادة المحاولة
             </button>
           </div>
-          <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
+          <div className="pt-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
             إذا كنتِ تعتقدين أن هذا خطأ، يرجى التواصل مع إدارة المدرسة لتجديد الرابط.
           </div>
         </div>
@@ -568,16 +568,16 @@ export default function TeacherInquiryPage() {
 
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-sm border border-amber-200 max-w-md w-full text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-amber-200 dark:border-amber-800/80 max-w-md w-full text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto border border-amber-200/60 dark:border-amber-800/60">
             <Clock className="w-7 h-7" />
           </div>
-          <h1 className="text-lg font-bold text-slate-900">انتهت صلاحية الرابط</h1>
-          <p className="text-sm text-slate-600 leading-relaxed">
+          <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">انتهت صلاحية الرابط</h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (48 ساعة من تاريخ الإرسال).
           </p>
-          <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 text-xs text-amber-800 text-right space-y-1">
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 text-right space-y-1">
             <p>
               تاريخ الغياب:{" "}
               {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
@@ -586,7 +586,7 @@ export default function TeacherInquiryPage() {
             </p>
             <p>تاريخ الانتهاء: {new Date(inquiry.expiresAt).toLocaleDateString("ar-SA")}</p>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك الورقية.
           </p>
         </div>
@@ -597,45 +597,45 @@ export default function TeacherInquiryPage() {
   // Already Submitted / Success Screen
   if (submittedSuccess || inquiry.status !== "pending") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50/40 via-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-teal-50/40 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white p-7 sm:p-9 rounded-3xl shadow-sm border border-emerald-200 max-w-lg w-full text-center space-y-6"
+          className="bg-white dark:bg-slate-900 p-7 sm:p-9 rounded-3xl shadow-sm border border-emerald-200 dark:border-emerald-800/80 max-w-lg w-full text-center space-y-6"
         >
-          <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-2xs">
+          <div className="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs border border-emerald-200/60 dark:border-emerald-800/60">
             <CheckCircle2 className="w-8 h-8" />
           </div>
 
           <div>
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100/80 text-emerald-800 mb-2">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100/80 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 mb-2">
               تم استلام الإفادة بنجاح
             </span>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               شكراً لكِ، أستاذة {inquiry.teacherName}
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               تم توثيق إفادتك الإدارية ومرفقك في النظام وأُحيلت لوكيلة الشؤون التعليمية للمراجعة.
             </p>
           </div>
 
           {/* Details Card */}
-          <div className="bg-slate-50 rounded-2xl p-4 text-right text-xs space-y-2.5 border border-slate-100">
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-              <span className="text-slate-500">تاريخ الغياب المعني:</span>
-              <span className="font-bold text-slate-800">
+          <div className="bg-slate-50 dark:bg-slate-850 rounded-2xl p-4 text-right text-xs space-y-2.5 border border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">تاريخ الغياب المعني:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200">
                 {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
                   ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
                   : inquiry.absenceDate}
               </span>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-              <span className="text-slate-500">نوع الغياب المختار:</span>
-              <span className="font-bold text-[#137a85]">{inquiry.absenceType || absenceType}</span>
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">نوع الغياب المختار:</span>
+              <span className="font-bold text-[#137a85] dark:text-teal-400">{inquiry.absenceType || absenceType}</span>
             </div>
-            <div className="py-1 border-b border-slate-200/60">
-              <span className="text-slate-500 block mb-1">سبب ومبرر الغياب:</span>
-              <p className="font-medium text-slate-800 bg-white p-2.5 rounded-xl border border-slate-200">
+            <div className="py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400 block mb-1">سبب ومبرر الغياب:</span>
+              <p className="font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
                 {inquiry.teacherReason || reason}
               </p>
             </div>
@@ -643,23 +643,23 @@ export default function TeacherInquiryPage() {
               const atts = parseAttachments(inquiry.attachmentUrl);
               if (atts.length === 0) return null;
               return (
-                <div className="py-2 border-b border-slate-200/60 text-right">
-                  <span className="text-slate-500 block mb-1.5 font-bold">المرفقات المسلمة ({atts.length}):</span>
+                <div className="py-2 border-b border-slate-200/60 dark:border-slate-800 text-right">
+                  <span className="text-slate-500 dark:text-slate-400 block mb-1.5 font-bold">المرفقات المسلمة ({atts.length}):</span>
                   <div className="space-y-1.5">
                     {atts.map((att, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-2 rounded-xl bg-white border border-slate-200 text-xs"
+                        className="flex items-center justify-between p-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs"
                       >
-                        <span className="font-bold text-slate-800 flex items-center gap-1.5 truncate">
-                          <FileCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5 truncate">
+                          <FileCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                           <span className="truncate">{att.label}</span>
                         </span>
                         <a
                           href={att.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[11px] font-bold text-[#137a85] hover:underline shrink-0"
+                          className="text-[11px] font-bold text-[#137a85] dark:text-teal-400 hover:underline shrink-0"
                         >
                           عرض المرفق
                         </a>
@@ -670,8 +670,8 @@ export default function TeacherInquiryPage() {
               );
             })()}
             <div className="flex justify-between items-center py-1">
-              <span className="text-slate-500">حالة المساءلة:</span>
-              <span className="font-bold px-2.5 py-0.5 rounded-lg bg-teal-50 text-[#137a85] border border-teal-200 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400">حالة المساءلة:</span>
+              <span className="font-bold px-2.5 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 border border-teal-200 dark:border-teal-800 text-[11px]">
                 {inquiry.status === "approved"
                   ? "معتمدة من الإدارة"
                   : inquiry.status === "rejected"
@@ -681,8 +681,8 @@ export default function TeacherInquiryPage() {
             </div>
           </div>
 
-          <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <div className="pt-2 text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>معاملة رسمية موثقة إلكترونياً برمز تحقق فريد</span>
           </div>
         </motion.div>
@@ -692,57 +692,57 @@ export default function TeacherInquiryPage() {
 
   // Active Inquiry Form
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-8 px-4 sm:px-6">
       <div className="max-w-xl mx-auto space-y-6">
 
         {/* Top Header Card */}
-        <header className="bg-white rounded-3xl p-6 shadow-2xs border border-slate-200 text-center relative overflow-hidden">
+        <header className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xs border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#137a85] to-teal-500" />
           
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#137a85] mb-2">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#137a85] dark:text-teal-400 mb-2">
             <Building2 className="w-4 h-4" />
             <span>المملكة العربية السعودية — وزارة التعليم</span>
           </div>
 
-          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900">
+          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100">
             نموذج إفادة ومساءلة غياب
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             إفادة المعلمة عن سبب الغياب وإرفاق المسوغات الطبية أو النظامية
           </p>
         </header>
 
         {/* Teacher & Absence Details Card */}
-        <section className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-slate-200 space-y-3">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <User className="w-4 h-4 text-[#137a85]" />
+        <section className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 shadow-2xs border border-slate-200 dark:border-slate-800 space-y-3">
+          <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <User className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
             <span>بيانات المكرمة المعلمة</span>
           </h2>
 
           <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-              <span className="text-slate-400 block text-[11px]">اسم المعلمة</span>
-              <span className="font-bold text-slate-900 text-sm mt-0.5 block">
+            <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">اسم المعلمة</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-0.5 block">
                 {inquiry.teacherName}
               </span>
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-              <span className="text-slate-400 block text-[11px]">الرقم الوظيفي / السجل</span>
-              <span className="font-bold text-slate-800 text-sm mt-0.5 block">
+            <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">الرقم الوظيفي / السجل</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
                 {inquiry.jobNumber}
               </span>
             </div>
 
-            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-              <span className="text-slate-400 block text-[11px]">التخصص</span>
-              <span className="font-semibold text-slate-700 mt-0.5 block">
+            <div className="bg-slate-50 dark:bg-slate-850 p-3 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">التخصص</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5 block">
                 {inquiry.specialty || "الكادر التعليمي"}
               </span>
             </div>
 
-            <div className="bg-teal-50/70 p-3 rounded-2xl border border-teal-200">
-              <span className="text-[#137a85] block text-[11px] font-semibold flex items-center gap-1">
+            <div className="bg-teal-50/70 dark:bg-teal-950/40 p-3 rounded-2xl border border-teal-200 dark:border-teal-800/60">
+              <span className="text-[#137a85] dark:text-teal-400 block text-[11px] font-semibold flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 <span>
                   {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
@@ -750,7 +750,7 @@ export default function TeacherInquiryPage() {
                     : "تاريخ الغياب المطلوب"}
                 </span>
               </span>
-              <span className="font-extrabold text-[#137a85] text-sm mt-0.5 block">
+              <span className="font-extrabold text-[#137a85] dark:text-teal-300 text-sm mt-0.5 block">
                 {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
                   ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
                   : inquiry.absenceDate}
@@ -760,11 +760,11 @@ export default function TeacherInquiryPage() {
         </section>
 
         {/* Main Response Form */}
-        <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-7 shadow-xs border border-slate-200 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-xs border border-slate-200 dark:border-slate-800 space-y-6">
           
           {/* General Error Alert */}
           {formErrors.general && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{formErrors.general}</span>
             </div>
@@ -772,7 +772,7 @@ export default function TeacherInquiryPage() {
 
           {/* 1. Absence Type Selection */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold text-slate-800">
+            <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
               نوع الغياب <span className="text-rose-500">*</span>
             </label>
 
@@ -789,8 +789,8 @@ export default function TeacherInquiryPage() {
                     className={cn(
                       "p-3 rounded-2xl border text-right transition-all flex flex-col justify-between gap-2 cursor-pointer focus:outline-none",
                       isSelected
-                        ? "bg-teal-50/80 border-[#137a85] ring-2 ring-[#137a85]/20 shadow-2xs"
-                        : "bg-slate-50/60 border-slate-200 hover:border-slate-300"
+                        ? "bg-teal-50/80 dark:bg-teal-950/60 border-[#137a85] dark:border-teal-600 ring-2 ring-[#137a85]/20 shadow-2xs"
+                        : "bg-slate-50/60 dark:bg-slate-850 border-slate-200 dark:border-slate-750 hover:border-slate-300 dark:hover:border-slate-700"
                     )}
                   >
                     <div className="flex items-center justify-between w-full">
@@ -799,7 +799,7 @@ export default function TeacherInquiryPage() {
                           "w-7 h-7 rounded-xl flex items-center justify-center text-xs",
                           isSelected
                             ? "bg-[#137a85] text-white"
-                            : "bg-white text-slate-600 border border-slate-200"
+                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                         )}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -810,7 +810,7 @@ export default function TeacherInquiryPage() {
                           "w-4 h-4 rounded-full border flex items-center justify-center",
                           isSelected
                             ? "border-[#137a85] bg-[#137a85] text-white"
-                            : "border-slate-300 bg-white"
+                            : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
                         )}
                       >
                         {isSelected && <Check className="w-2.5 h-2.5" />}
@@ -821,12 +821,12 @@ export default function TeacherInquiryPage() {
                       <span
                         className={cn(
                           "block text-xs font-bold",
-                          isSelected ? "text-[#137a85]" : "text-slate-800"
+                          isSelected ? "text-[#137a85] dark:text-teal-400" : "text-slate-800 dark:text-slate-200"
                         )}
                       >
                         {item.label}
                       </span>
-                      <span className="block text-[10px] text-slate-400 mt-0.5 leading-tight">
+                      <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
                         {item.description}
                       </span>
                     </div>
@@ -837,15 +837,15 @@ export default function TeacherInquiryPage() {
 
             {/* Custom Other Type Field */}
             {absenceType === "أخرى" && (
-              <div className="p-3.5 rounded-2xl bg-teal-50/60 border border-teal-200 space-y-1.5 animate-in fade-in">
+              <div className="p-3.5 rounded-2xl bg-teal-50/60 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 space-y-1.5 animate-in fade-in">
                 <label
                   htmlFor={`${formId}-custom-other`}
-                  className="block text-xs font-bold text-slate-800"
+                  className="block text-xs font-bold text-slate-800 dark:text-slate-200"
                 >
                   اكتبي نوع الغياب بين قوسين بالتحديد <span className="text-rose-500">*</span>
                 </label>
-                <div className="flex items-center gap-1.5 bg-white px-3 py-2 rounded-xl border border-teal-200">
-                  <span className="font-bold text-[#137a85] text-sm">(</span>
+                <div className="flex items-center gap-1.5 bg-white dark:bg-slate-800 px-3 py-2 rounded-xl border border-teal-200 dark:border-teal-800">
+                  <span className="font-bold text-[#137a85] dark:text-teal-400 text-sm">(</span>
                   <input
                     id={`${formId}-custom-other`}
                     type="text"
@@ -855,12 +855,12 @@ export default function TeacherInquiryPage() {
                       setFormErrors((prev) => ({ ...prev, customOtherType: "" }));
                     }}
                     placeholder="مثال: مهمة رسمية، إجازة وضع، دورة تدريبية..."
-                    className="w-full text-xs sm:text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 text-slate-800 font-semibold"
+                    className="w-full text-xs sm:text-sm bg-transparent border-0 focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 text-slate-800 dark:text-slate-100 font-semibold"
                   />
-                  <span className="font-bold text-[#137a85] text-sm">)</span>
+                  <span className="font-bold text-[#137a85] dark:text-teal-400 text-sm">)</span>
                 </div>
                 {formErrors.customOtherType && (
-                  <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1">
+                  <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>{formErrors.customOtherType}</span>
                   </p>
@@ -874,11 +874,11 @@ export default function TeacherInquiryPage() {
             <div className="flex items-center justify-between">
               <label
                 htmlFor={`${formId}-reason`}
-                className="block text-xs font-bold text-slate-800"
+                className="block text-xs font-bold text-slate-800 dark:text-slate-200"
               >
                 سبب ومبرر الغياب بالتفصيل <span className="text-rose-500">*</span>
               </label>
-              <span className="text-[11px] text-slate-400">{reason.length}/300</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">{reason.length}/300</span>
             </div>
 
             <textarea
@@ -892,15 +892,15 @@ export default function TeacherInquiryPage() {
               }}
               placeholder="اكتبي تفاصيل ومبررات ظرف الغياب للإدارة المدرسية..."
               className={cn(
-                "w-full p-3.5 rounded-2xl border text-xs sm:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
+                "w-full p-3.5 rounded-2xl border text-xs sm:text-sm bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
                 formErrors.reason
                   ? "border-rose-400 focus:ring-rose-200"
-                  : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                  : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-500 focus:ring-[#137a85]/20"
               )}
             />
 
             {formErrors.reason && (
-              <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+              <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{formErrors.reason}</span>
               </p>
@@ -910,10 +910,10 @@ export default function TeacherInquiryPage() {
           {/* 3. Dynamic Mandatory Attachments */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <label className="block text-xs font-bold text-slate-800">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 المرفقات المطلوبة حسب نوع الغياب <span className="text-rose-500">* (إلزامية)</span>
               </label>
-              <span className="text-[11px] text-slate-400">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">
                 {getAttachmentSlotsForType(absenceType).length} مرفق مطلوب
               </span>
             </div>
@@ -930,11 +930,11 @@ export default function TeacherInquiryPage() {
                 return (
                   <div
                     key={slot.id}
-                    className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 bg-white space-y-2.5 shadow-2xs"
+                    className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-750 bg-white dark:bg-slate-850 space-y-2.5 shadow-2xs"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+                        <div className="w-7 h-7 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0 border border-teal-200/60 dark:border-teal-800/60">
                           {slot.id === "faris" ? (
                             <Building2 className="w-4 h-4" />
                           ) : slot.id === "medical" ? (
@@ -944,38 +944,38 @@ export default function TeacherInquiryPage() {
                           )}
                         </div>
                         <div>
-                          <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1">
+                          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
                             <span>{slot.label}</span>
                             <span className="text-rose-500">*</span>
                           </h3>
-                          <p className="text-[10px] text-slate-400">{slot.hint}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500">{slot.hint}</p>
                         </div>
                       </div>
                       {slotFile && (
-                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                        <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200/60 dark:border-emerald-800/60">
                           تم الإرفاق
                         </span>
                       )}
                     </div>
 
                     {slotCompressing ? (
-                      <div className="border-2 border-dashed border-teal-300 bg-teal-50/50 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center animate-pulse">
-                        <Loader2 className="w-6 h-6 animate-spin text-[#137a85]" />
-                        <p className="text-xs font-bold text-slate-800">
+                      <div className="border-2 border-dashed border-teal-300 dark:border-teal-700 bg-teal-50/50 dark:bg-teal-950/30 rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center animate-pulse">
+                        <Loader2 className="w-6 h-6 animate-spin text-[#137a85] dark:text-teal-400" />
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                           جاري ضغط وتحسين جودة الصورة...
                         </p>
-                        <p className="text-[10px] text-slate-500">
-                          تقليل استهلاك المساحة السحابية بنسبة تتجاوز 80% مع حفظ وضوح الخط والأختام
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                          تقليل استهلاك المساحة السحابية بنسبة تتجاوز 80% مع حفظ ووضوح الخط والأختام
                         </p>
                       </div>
                     ) : !slotFile ? (
                       <label
                         htmlFor={`${formId}-file-${slot.id}`}
                         className={cn(
-                          "border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:bg-slate-50/80",
+                          "border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center gap-2 text-center cursor-pointer transition-all hover:bg-slate-50/80 dark:hover:bg-slate-800/80",
                           slotError
-                            ? "border-rose-300 bg-rose-50/40"
-                            : "border-slate-300 bg-slate-50/40 hover:border-[#137a85]"
+                            ? "border-rose-300 dark:border-rose-700 bg-rose-50/40 dark:bg-rose-950/30"
+                            : "border-slate-300 dark:border-slate-700 bg-slate-50/40 dark:bg-slate-800/40 hover:border-[#137a85] dark:hover:border-teal-500"
                         )}
                       >
                         <input
@@ -985,51 +985,51 @@ export default function TeacherInquiryPage() {
                           onChange={(e) => handleSlotFileChange(slot.id, e)}
                           className="hidden"
                         />
-                        <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center">
+                        <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center">
                           <Upload className="w-4 h-4" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-slate-800">
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                             اضغطي هنا لاختيار ({slot.label})
                           </p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                             PDF (حتى 3MB) أو صورة للمستند (يتم ضغطها فورياً)
                           </p>
                         </div>
                       </label>
                     ) : (
-                      <div className="p-3 rounded-2xl bg-teal-50/60 border border-teal-200 flex items-center justify-between gap-3">
+                      <div className="p-3 rounded-2xl bg-teal-50/60 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 overflow-hidden">
                           {slotPreview ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={slotPreview}
                               alt="معاينة المرفق"
-                              className="w-11 h-11 rounded-xl object-cover border border-teal-200 shrink-0"
+                              className="w-11 h-11 rounded-xl object-cover border border-teal-200 dark:border-teal-700 shrink-0"
                             />
                           ) : (
-                            <div className="w-11 h-11 rounded-xl bg-teal-100 text-[#137a85] flex items-center justify-center shrink-0">
+                            <div className="w-11 h-11 rounded-xl bg-teal-100 dark:bg-teal-900 text-[#137a85] dark:text-teal-300 flex items-center justify-center shrink-0">
                               <FileCheck className="w-5 h-5" />
                             </div>
                           )}
                           <div className="truncate text-right">
-                            <p className="text-xs font-bold text-slate-800 truncate">
+                            <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
                               {slotFile.name}
                             </p>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <p className="text-[10px] text-slate-500 font-medium">
+                              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                                 {slotFile.size > 1024 * 1024
                                   ? `${(slotFile.size / (1024 * 1024)).toFixed(2)} ميغابايت`
                                   : `${Math.round(slotFile.size / 1024)} كيلوبايت`}
                               </p>
                               {slotRatio !== null && slotRatio > 0 && (
-                                <span className="text-[9px] font-bold text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                                <span className="text-[9px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-200/60 dark:border-emerald-800/60">
                                   تم الضغط {slotRatio}%
                                 </span>
                               )}
                               {(slotFile.type === "application/pdf" ||
                                 slotFile.name.toLowerCase().endsWith(".pdf")) && (
-                                <span className="text-[9px] font-bold text-rose-800 bg-rose-100 px-1.5 py-0.5 rounded border border-rose-200/60">
+                                <span className="text-[9px] font-bold text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/80 px-1.5 py-0.5 rounded border border-rose-200/60 dark:border-rose-800/60">
                                   مستند PDF
                                 </span>
                               )}
@@ -1040,7 +1040,7 @@ export default function TeacherInquiryPage() {
                         <button
                           type="button"
                           onClick={() => removeSlotFile(slot.id)}
-                          className="w-7 h-7 rounded-xl bg-white text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 flex items-center justify-center transition-colors shrink-0"
+                          className="w-7 h-7 rounded-xl bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors shrink-0"
                           title="حذف المرفق"
                         >
                           <X className="w-3.5 h-3.5" />
@@ -1049,7 +1049,7 @@ export default function TeacherInquiryPage() {
                     )}
 
                     {slotError && (
-                      <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                      <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                         <span>{slotError}</span>
                       </p>
@@ -1070,14 +1070,14 @@ export default function TeacherInquiryPage() {
                   setConfirmedPledge(e.target.checked);
                   setFormErrors((prev) => ({ ...prev, pledge: "" }));
                 }}
-                className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85] cursor-pointer"
+                className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-[#137a85] focus:ring-[#137a85] cursor-pointer"
               />
-              <span className="text-xs text-slate-700 leading-relaxed">
+              <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
                 أقر بصحة البيانات المسجلة أعلاه ومطابقة المرفق المرفوع للواقع، وأتحمل المسؤولية الإدارية عن صحتها.
               </span>
             </label>
             {formErrors.pledge && (
-              <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1.5">
+              <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1.5">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{formErrors.pledge}</span>
               </p>
@@ -1085,7 +1085,7 @@ export default function TeacherInquiryPage() {
           </div>
 
           {/* Submit Button */}
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="submit"
               disabled={isSubmitting}
@@ -1107,7 +1107,7 @@ export default function TeacherInquiryPage() {
 
         </form>
 
-        <footer className="text-center text-xs text-slate-400 pb-6">
+        <footer className="text-center text-xs text-slate-400 dark:text-slate-500 pb-6">
           نظام الإدارة المدرسية الموحد — منصة الغياب الإدارية
         </footer>
       </div>

@@ -39,9 +39,12 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import {
+  DbTeacherRow,
   DbAbsenceRecordRow,
   DbDelayNoticeRow,
   DbAbsenceInquiryRow,
+  DbEmployeePermissionRow,
+  DbDeductionDecisionRow,
 } from "@/types/database";
 import {
   getSaudiToday,
@@ -223,12 +226,192 @@ const PENDING_SYNC_STORAGE_KEY = "school_admin_pending_sync_v1";
 
 export interface PendingSyncOperation {
   id: string;
-  table: "teachers" | "absence_records" | "delay_notices" | "absence_inquiries";
+  table:
+    | "teachers"
+    | "absence_records"
+    | "delay_notices"
+    | "absence_inquiries"
+    | "employee_permissions"
+    | "deduction_decisions";
   action: "insert" | "update" | "delete";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>;
   timestamp: number;
 }
+
+export const mapDbPermissionToPermission = (
+  p: DbEmployeePermissionRow
+): EmployeePermission => ({
+  id: p.id,
+  teacherId: p.teacher_id || "",
+  teacherName: p.teacher_name || undefined,
+  nationalId: p.national_id || undefined,
+  jobNumber: p.job_number || undefined,
+  specialty: p.specialty || undefined,
+  permissionDate: p.permission_date,
+  exitTime: p.exit_time,
+  returnTime: p.return_time,
+  durationMinutes: p.duration_minutes || 0,
+  reason: p.reason,
+  notes: p.notes || undefined,
+  createdBy: p.created_by || undefined,
+  createdByName: p.created_by_name || undefined,
+  createdAt: p.created_at || new Date().toISOString(),
+  updatedAt: p.updated_at || undefined,
+  isArchived: Boolean(p.is_archived),
+  archivedAt: p.archived_at || undefined,
+  archivedBy: p.archived_by || undefined,
+  archiveReason: p.archive_reason || undefined,
+  archivedByCascade: Boolean(p.archived_by_cascade),
+});
+
+export const mapPermissionToDbRow = (
+  p: EmployeePermission
+): Record<string, unknown> => ({
+  id: p.id,
+  teacher_id: p.teacherId || null,
+  teacher_name: p.teacherName || null,
+  national_id: p.nationalId || null,
+  job_number: p.jobNumber || null,
+  specialty: p.specialty || null,
+  permission_date: p.permissionDate,
+  exit_time: p.exitTime,
+  return_time: p.returnTime,
+  duration_minutes: p.durationMinutes || 0,
+  reason: p.reason,
+  notes: p.notes || null,
+  created_by: p.createdBy || null,
+  created_by_name: p.createdByName || null,
+  created_at: p.createdAt || new Date().toISOString(),
+  updated_at: p.updatedAt || new Date().toISOString(),
+  is_archived: Boolean(p.isArchived),
+  archived_at: p.archivedAt || null,
+  archived_by: p.archivedBy || null,
+  archive_reason: p.archiveReason || null,
+  archived_by_cascade: Boolean(p.archivedByCascade),
+});
+
+export const mapAbsenceToDbRow = (
+  a: AbsenceRecord
+): Record<string, unknown> => ({
+  id: a.id,
+  teacher_id: a.teacherId,
+  teacher_name: a.teacherName,
+  job_number: a.jobNumber || a.teacherId || "1000000000",
+  specialty: a.specialty || "عام",
+  date: a.date,
+  type: a.type,
+  reason: a.reason,
+  notes: a.notes || null,
+  timestamp: a.timestamp || new Date().toISOString(),
+  is_archived: Boolean(a.isArchived),
+  archived_at: a.archivedAt || null,
+  archive_reason: a.archiveReason || null,
+  archived_by_cascade: Boolean(a.archivedByCascade),
+});
+
+export const mapDelayToDbRow = (
+  dn: DelayNotice
+): Record<string, unknown> => ({
+  id: dn.id,
+  notice_number: dn.noticeNumber || null,
+  teacher_id: dn.teacherId,
+  teacher_name: dn.teacherName,
+  job_number: dn.jobNumber || dn.teacherId || "1000000000",
+  specialty: dn.specialty || null,
+  notice_date: dn.noticeDate || dn.date,
+  violation_delay_start: Boolean(dn.violationDelayStart),
+  delay_start_time: dn.delayStartTime || null,
+  violation_absent_during: Boolean(dn.violationAbsentDuring),
+  absent_from_time: dn.absentFromTime || null,
+  absent_to_time: dn.absentToTime || null,
+  violation_early_departure: Boolean(dn.violationEarlyDeparture),
+  early_departure_time: dn.earlyDepartureTime || null,
+  violation_left_school: Boolean(dn.violationLeftSchool),
+  left_school_details: dn.leftSchoolDetails || null,
+  additional_notes: dn.additionalNotes || dn.notes || null,
+  status: dn.status,
+  teacher_reason: dn.teacherReason || null,
+  teacher_signature_date: dn.teacherSignatureDate || null,
+  director_opinion: dn.directorOpinion || null,
+  director_notes: dn.directorNotes || null,
+  director_signature_date: dn.directorSignatureDate || null,
+  hijri_year: dn.hijriYear || "١٤٤٨",
+  share_token: dn.shareToken,
+  token_expires_at: dn.tokenExpiresAt,
+  teacher_response_submitted_at: dn.teacherResponseSubmittedAt || null,
+  teacher_ip_address: dn.teacherIpAddress || null,
+  link_shared_at: dn.linkSharedAt || null,
+  created_at: dn.createdAt || new Date().toISOString(),
+  is_archived: Boolean(dn.isArchived),
+  archived_at: dn.archivedAt || null,
+  archive_reason: dn.archiveReason || null,
+  archived_by_cascade: Boolean(dn.archivedByCascade),
+});
+
+export const mapDbDeductionToDecision = (
+  d: DbDeductionDecisionRow
+): DeductionDecision => ({
+  id: d.id,
+  decisionNumber: d.decision_number,
+  decisionDate: d.decision_date,
+  teacherId: d.teacher_id || "",
+  teacherName: d.teacher_name,
+  civilId: d.civil_id,
+  specialization: d.specialization || "",
+  specialty: d.specialization || undefined,
+  rank: d.rank || undefined,
+  jobNumber: d.job_number || d.civil_id,
+  currentAction: d.current_action || undefined,
+  schoolName: "الثانوية الخامسة مسارات",
+  principalName: d.principal_name || "فاطمة فلاتة",
+  directorName: d.principal_name || undefined,
+  delayHours: Number(d.total_hours || 0),
+  delayMinutes: d.delay_minutes || 0,
+  deductionDays: d.deduction_days || 1,
+  hoursDeducted: Number(d.total_hours || 0),
+  daysDeducted: d.deduction_days || 1,
+  settledNoticeIds: Array.isArray(d.settled_notice_ids) ? d.settled_notice_ids : [],
+  remainderMinutes: d.remainder_minutes || 0,
+  hijriYear: d.hijri_year || "١٤٤٨",
+  notes: undefined,
+  createdAt: d.created_at || new Date().toISOString(),
+  updatedAt: d.updated_at || undefined,
+  isArchived: Boolean(d.is_archived),
+  archivedAt: d.archived_at || undefined,
+  archivedBy: d.archived_by || undefined,
+  archiveReason: d.archive_reason || undefined,
+  archivedByCascade: Boolean(d.archived_by_cascade),
+});
+
+export const mapDecisionToDbRow = (
+  d: DeductionDecision
+): Record<string, unknown> => ({
+  id: d.id,
+  teacher_id: d.teacherId || null,
+  teacher_name: d.teacherName,
+  civil_id: d.civilId || d.jobNumber || "1000000000",
+  specialization: d.specialization || d.specialty || null,
+  rank: d.rank || null,
+  job_number: d.jobNumber || d.civilId || null,
+  current_action: d.currentAction || null,
+  delay_minutes: d.delayMinutes || 0,
+  total_hours: d.delayHours || d.hoursDeducted || 0,
+  deduction_days: d.deductionDays || d.daysDeducted || 1,
+  decision_number: d.decisionNumber,
+  decision_date: d.decisionDate || getSaudiToday(),
+  principal_name: d.principalName || d.directorName || null,
+  settled_notice_ids: d.settledNoticeIds || [],
+  remainder_minutes: d.remainderMinutes || 0,
+  hijri_year: d.hijriYear || "١٤٤٨",
+  is_archived: Boolean(d.isArchived),
+  archived_at: d.archivedAt || null,
+  archived_by: null,
+  archive_reason: d.archiveReason || null,
+  archived_by_cascade: Boolean(d.archivedByCascade),
+  created_at: d.createdAt || new Date().toISOString(),
+  updated_at: d.updatedAt || new Date().toISOString(),
+});
 
 export const normalizeTeacher = (t: Record<string, unknown>): Teacher => {
   const rawFullName =
@@ -702,21 +885,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         let parsedArchDeductions: ArchivedDeductionDecision[] = [];
         let parsedArchPermissions: ArchivedEmployeePermission[] = [];
 
-        // One-time total wipe per explicit user instruction
-        const WIPE_FLAG_KEY = "school_admin_wipe_all_teachers_2026";
-        let isCleared = false;
         try {
-          if (!localStorage.getItem(WIPE_FLAG_KEY)) {
-            localStorage.setItem(WIPE_FLAG_KEY, "done");
-            localStorage.setItem("school_admin_teachers_cleared_v1", "true");
-            localStorage.setItem(TEACHERS_STORAGE_KEY, "[]");
-            localStorage.setItem(ABSENCES_STORAGE_KEY, "[]");
-            localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, "[]");
-            localStorage.setItem(INQUIRIES_STORAGE_KEY, "[]");
-            localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, "[]");
-          }
-          isCleared = localStorage.getItem("school_admin_teachers_cleared_v1") === "true";
-
           const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
           if (storedTeachers) {
             const parsed = JSON.parse(storedTeachers);
@@ -724,10 +893,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               localTeachers = parsed.map((item) =>
                 normalizeTeacher(item as Record<string, unknown>)
               );
-              // If teachers exist in storage, we are not in cleared state
-              isCleared = false;
-              localStorage.removeItem("school_admin_teachers_cleared_v1");
             }
+          }
+
+          if (localTeachers.length === 0) {
+            localTeachers = getOfficialTeachersList();
           }
 
           const storedAbsences = localStorage.getItem(ABSENCES_STORAGE_KEY);
@@ -937,7 +1107,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         teachers: localTeachers,
         updatedNationalIdByTeacherId: new Map<string, string>(),
       };
-      if (!isCleared && localTeachers.length > 0) {
+      if (localTeachers.length > 0) {
         officialReconciled = reconcileWithOfficialTeachers(localTeachers);
         if (officialReconciled.changed) {
           localTeachers = officialReconciled.teachers;
@@ -1021,50 +1191,51 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
         try {
-          if (isCleared) {
-            await Promise.all([
-              supabase.from("teachers").delete().neq("id", ""),
-              supabase.from("absence_records").delete().neq("id", ""),
-              supabase.from("delay_notices").delete().neq("id", ""),
-              supabase.from("absence_inquiries").delete().neq("id", ""),
-            ]).catch((err) => console.warn("Supabase clean:", err));
-            setIsCloudConnected(true);
-          } else {
-            const { data: dbTeachers, error: tErr } = await supabase
-              .from("teachers")
-              .select("*")
-              .order("created_at", { ascending: true });
+          // 1. Fetch all primary collections in parallel from Supabase
+          const [
+            { data: dbTeachers, error: tErr },
+            { data: dbAbsences, error: aErr },
+            { data: dbDelays, error: delayErr },
+            { data: dbInquiries, error: inqErr },
+            { data: dbPermissions, error: permErr },
+            { data: dbDeductions, error: dedErr },
+          ] = await Promise.all([
+            supabase.from("teachers").select("*").order("created_at", { ascending: true }),
+            supabase.from("absence_records").select("*").order("timestamp", { ascending: false }),
+            supabase.from("delay_notices").select("*").order("created_at", { ascending: false }),
+            supabase.from("absence_inquiries").select("*").order("created_at", { ascending: false }),
+            supabase.from("employee_permissions").select("*").order("permission_date", { ascending: false }),
+            supabase.from("deduction_decisions").select("*").order("decision_date", { ascending: false }),
+          ]);
 
-          const { data: dbAbsences, error: aErr } = await supabase
-            .from("absence_records")
-            .select("*")
-            .order("timestamp", { ascending: false });
+          setIsCloudConnected(true);
 
-          if (!tErr && !aErr && dbTeachers) {
-            setIsCloudConnected(true);
-
-            if (dbTeachers.length > 0) {
+            // A. Process Teachers
+            let cleanTeachersList: Teacher[] = localTeachers;
+            if (!tErr && dbTeachers && dbTeachers.length > 0) {
               const mappedTeachers: Teacher[] = dbTeachers.map((t) =>
                 normalizeTeacher(t as Record<string, unknown>)
               );
 
-              const mappedAbsences: AbsenceRecord[] = (dbAbsences || []).map(
-                (a) => ({
-                  id: a.id,
-                  teacherId: a.teacher_id,
-                  teacherName: a.teacher_name,
-                  jobNumber: a.job_number,
-                  specialty: a.specialty || "",
-                  date: a.date,
-                  type: a.type,
-                  reason: a.reason,
-                  notes: a.notes || undefined,
-                  attachmentUrl: a.attachment_url || undefined,
-                  timestamp: a.timestamp,
-                })
-              );
-
               // Merge local and cloud absences, then audit and migrate
+              const mappedAbsences: AbsenceRecord[] = (dbAbsences || []).map((a) => ({
+                id: a.id,
+                teacherId: a.teacher_id,
+                teacherName: a.teacher_name,
+                jobNumber: a.job_number,
+                specialty: a.specialty || "",
+                date: a.date,
+                type: a.type,
+                reason: a.reason,
+                notes: a.notes || undefined,
+                attachmentUrl: a.attachment_url || undefined,
+                timestamp: a.timestamp,
+                isArchived: Boolean(a.is_archived),
+                archivedAt: a.archived_at || undefined,
+                archiveReason: a.archive_reason || undefined,
+                archivedByCascade: Boolean(a.archived_by_cascade),
+              }));
+
               const absenceMap = new Map<string, AbsenceRecord>();
               for (const loc of localAbsences) {
                 if (loc.id) absenceMap.set(loc.id, loc);
@@ -1100,14 +1271,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                     job_number: t.nationalId,
                     username: t.nationalId,
                     mobile: t.mobile || null,
-                    email: t.email || null,
                     employment_status: t.employmentStatus || "دائم",
                     job_title: t.jobTitle || "معلم",
                     teaching_field: t.teachingField || t.specialty || null,
                     specialty: t.specialty || null,
                     total_absences: t.totalAbsences || 0,
-                    total_delay_notices: t.totalDelayNotices || 0,
-                    updated_at: new Date().toISOString(),
+                    is_archived: Boolean(t.isArchived),
+                    archived_at: t.archivedAt || null,
+                    archive_reason: t.archiveReason || null,
                   }));
                   await supabase.from("teachers").upsert(toUpsertClean);
                 } catch (syncErr) {
@@ -1115,20 +1286,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 }
               }
 
-              // Update local storage with clean data
-              try {
-                localStorage.setItem(
-                  TEACHERS_STORAGE_KEY,
-                  JSON.stringify(cloudReconciled.cleanTeachers)
-                );
-                localStorage.setItem(
-                  ABSENCES_STORAGE_KEY,
-                  JSON.stringify(cloudReconciled.cleanAbsences)
-                );
-              } catch {}
-
-              setTeachers(cloudReconciled.cleanTeachers);
-              setAbsenceRecords(cloudReconciled.cleanAbsences);
+              cleanTeachersList = cloudReconciled.cleanTeachers;
             } else if (localTeachers.length > 0) {
               // Auto-seed Supabase from local data
               const toInsertTeachers = localTeachers.map((t) => ({
@@ -1139,104 +1297,103 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 job_number: t.nationalId,
                 username: t.nationalId,
                 mobile: t.mobile || null,
-                email: t.email || null,
                 employment_status: t.employmentStatus || "دائم",
                 job_title: t.jobTitle || "معلم",
                 teaching_field: t.teachingField || t.specialty || null,
                 specialty: t.specialty || null,
                 total_absences: t.totalAbsences || 0,
-                updated_at: t.updatedAt || new Date().toISOString(),
+                is_archived: Boolean(t.isArchived),
+                archived_at: t.archivedAt || null,
+                archive_reason: t.archiveReason || null,
               }));
               await supabase.from("teachers").upsert(toInsertTeachers);
-
-              if (localAbsences.length > 0) {
-                const toInsertAbsences = localAbsences.map((a) => ({
-                  id: a.id,
-                  teacher_id: a.teacherId,
-                  teacher_name: a.teacherName,
-                  job_number: a.jobNumber,
-                  specialty: a.specialty,
-                  date: a.date,
-                  type: a.type,
-                  reason: a.reason,
-                  notes: a.notes || null,
-                  attachment_url: a.attachmentUrl || null,
-                  timestamp: a.timestamp,
-                }));
-                await supabase.from("absence_records").upsert(toInsertAbsences);
-              }
-            }
-          }
-
-          // Hydrate absence inquiries
-          const { data: dbInquiries, error: inqErr } = await supabase
-            .from("absence_inquiries")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-          if (!inqErr && dbInquiries && dbInquiries.length > 0) {
-            const mappedInquiries: AbsenceInquiry[] = (dbInquiries as unknown as DbAbsenceInquiryRow[]).map(
-              (inq: DbAbsenceInquiryRow) => {
-                const meta = parseInquiryMeta(inq.admin_notes);
-                const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
-                const isMulti = Boolean(endDate && endDate !== inq.absence_date);
-                const days = inq.days_count || meta.daysCount || (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
-
-                return {
-                  id: inq.id,
-                  teacherId: inq.teacher_id,
-                  teacherName: inq.teacher_name,
-                  jobNumber: inq.job_number,
-                  specialty: inq.specialty || undefined,
-                  mobile: inq.mobile || undefined,
-                  absenceDate: inq.absence_date,
-                  absenceEndDate: isMulti ? endDate : undefined,
-                  daysCount: days,
-                  isMultiDay: isMulti,
-                  token: inq.token,
-                  status: inq.status,
-                  expiresAt: inq.expires_at,
-                  absenceType: inq.absence_type || undefined,
-                  teacherReason: inq.teacher_reason || undefined,
-                  attachmentUrl: inq.attachment_url || undefined,
-                  adminNotes: meta.adminNotes,
-                  submittedAt: inq.submitted_at || undefined,
-                  createdAt: inq.created_at,
-                  isArchived: false,
-                };
-              }
-            );
-
-            // Exclude any inquiry that has been archived locally in parsedArchAbsences
-            const archivedInquiryIds = new Set<string>();
-            const archivedTeacherDatePairs = new Set<string>();
-            for (const archItem of parsedArchAbsences) {
-              if (archItem.record.id) archivedInquiryIds.add(archItem.record.id);
-              if (archItem.linkedInquiry?.id) archivedInquiryIds.add(archItem.linkedInquiry.id);
-              if (archItem.record.teacherId && archItem.record.date) {
-                archivedTeacherDatePairs.add(`${archItem.record.teacherId}:${archItem.record.date}`);
-              }
             }
 
-            const activeMappedInquiries = mappedInquiries.filter(
-              (inq) =>
-                !archivedInquiryIds.has(inq.id) &&
-                !archivedInquiryIds.has(`abs-inq-${inq.id}`) &&
-                !archivedTeacherDatePairs.has(`${inq.teacherId}:${inq.absenceDate}`)
-            );
+            // B. Process Absences
+            let cleanAbsencesList: AbsenceRecord[] = localAbsences;
+            if (!aErr && dbAbsences) {
+              const mappedAbsences: AbsenceRecord[] = dbAbsences.map((a) => ({
+                id: a.id,
+                teacherId: a.teacher_id,
+                teacherName: a.teacher_name,
+                jobNumber: a.job_number,
+                specialty: a.specialty || "",
+                date: a.date,
+                type: a.type,
+                reason: a.reason,
+                notes: a.notes || undefined,
+                attachmentUrl: a.attachment_url || undefined,
+                timestamp: a.timestamp,
+                isArchived: Boolean(a.is_archived),
+                archivedAt: a.archived_at || undefined,
+                archiveReason: a.archive_reason || undefined,
+                archivedByCascade: Boolean(a.archived_by_cascade),
+              }));
+              const cloudAbsenceIds = new Set(mappedAbsences.map((a) => a.id));
+              const missingAbsences = localAbsences.filter((loc) => loc.id && !cloudAbsenceIds.has(loc.id));
+              if (missingAbsences.length > 0) {
+                supabase
+                  .from("absence_records")
+                  .insert(missingAbsences.map(mapAbsenceToDbRow))
+                  .then(({ error }) => {
+                    if (error) console.warn("Failed to sync local absences to cloud:", error);
+                  });
+              }
 
-            setInquiries(activeMappedInquiries);
+              const absenceMap = new Map<string, AbsenceRecord>();
+              for (const loc of localAbsences) {
+                if (loc.id) absenceMap.set(loc.id, loc);
+              }
+              for (const cl of mappedAbsences) {
+                if (cl.id) absenceMap.set(cl.id, cl);
+              }
+              cleanAbsencesList = Array.from(absenceMap.values());
+            }
 
-            // Reconcile approved non-archived inquiries with absenceRecords
-            setAbsenceRecords((prevAbsences) => {
-              const toAdd: AbsenceRecord[] = [];
-              for (const inq of activeMappedInquiries) {
+            // C. Process Inquiries
+            if (!inqErr && dbInquiries && dbInquiries.length > 0) {
+              const mappedInquiries: AbsenceInquiry[] = (dbInquiries as unknown as DbAbsenceInquiryRow[]).map(
+                (inq: DbAbsenceInquiryRow) => {
+                  const meta = parseInquiryMeta(inq.admin_notes);
+                  const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
+                  const isMulti = Boolean(endDate && endDate !== inq.absence_date);
+                  const days = inq.days_count || meta.daysCount || (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
+
+                  return {
+                    id: inq.id,
+                    teacherId: inq.teacher_id,
+                    teacherName: inq.teacher_name,
+                    jobNumber: inq.job_number,
+                    specialty: inq.specialty || undefined,
+                    mobile: inq.mobile || undefined,
+                    absenceDate: inq.absence_date,
+                    absenceEndDate: isMulti ? endDate : undefined,
+                    daysCount: days,
+                    isMultiDay: isMulti,
+                    token: inq.token,
+                    status: inq.status,
+                    expiresAt: inq.expires_at,
+                    absenceType: inq.absence_type || undefined,
+                    teacherReason: inq.teacher_reason || undefined,
+                    attachmentUrl: inq.attachment_url || undefined,
+                    adminNotes: meta.adminNotes,
+                    submittedAt: inq.submitted_at || undefined,
+                    createdAt: inq.created_at,
+                    isArchived: Boolean(inq.is_archived),
+                  };
+                }
+              );
+
+              setInquiries(mappedInquiries);
+
+              // Reconcile approved inquiries with absences
+              for (const inq of mappedInquiries) {
                 if (inq.status === "approved" && inq.absenceDate && !inq.isArchived) {
-                  const exists = prevAbsences.some(
+                  const exists = cleanAbsencesList.some(
                     (a) => a.teacherId === inq.teacherId && a.date === inq.absenceDate
                   );
                   if (!exists) {
-                    toAdd.push({
+                    cleanAbsencesList.push({
                       id: `abs-inq-${inq.id}`,
                       teacherId: inq.teacherId,
                       teacherName: inq.teacherName,
@@ -1253,84 +1410,282 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   }
                 }
               }
+            }
 
-              if (toAdd.length === 0) return prevAbsences;
-              const nextAbsences = [...toAdd, ...prevAbsences];
-
-              // Update teachers count
-              setTeachers((prevTeachers) =>
-                prevTeachers.map((t) => {
-                  const count = nextAbsences.filter(
-                    (a) => a.teacherId === t.id && !a.isArchived
-                  ).length;
-                  return t.totalAbsences !== count ? { ...t, totalAbsences: count } : t;
+            // D. Process Delay Notices
+            let cleanDelaysList: DelayNotice[] = localDelayNotices;
+            if (!delayErr && dbDelays) {
+              const mappedDelays: DelayNotice[] = (dbDelays as unknown as DbDelayNoticeRow[]).map(
+                (dn: DbDelayNoticeRow) => ({
+                  id: dn.id,
+                  noticeNumber: dn.notice_number || undefined,
+                  teacherId: dn.teacher_id,
+                  teacherName: dn.teacher_name,
+                  jobNumber: dn.job_number,
+                  specialty: dn.specialty || undefined,
+                  noticeDate: dn.notice_date,
+                  date: dn.notice_date,
+                  violationDelayStart: dn.violation_delay_start,
+                  delayStartTime: dn.delay_start_time || undefined,
+                  violationAbsentDuring: dn.violation_absent_during,
+                  absentFromTime: dn.absent_from_time || undefined,
+                  absentToTime: dn.absent_to_time || undefined,
+                  violationEarlyDeparture: dn.violation_early_departure,
+                  earlyDepartureTime: dn.early_departure_time || undefined,
+                  violationLeftSchool: dn.violation_left_school,
+                  leftSchoolDetails: dn.left_school_details || undefined,
+                  additionalNotes: dn.additional_notes || undefined,
+                  notes: dn.additional_notes || undefined,
+                  status: dn.status,
+                  teacherReason: dn.teacher_reason || undefined,
+                  teacherSignatureDate: dn.teacher_signature_date || undefined,
+                  directorOpinion: dn.director_opinion || null,
+                  directorNotes: dn.director_notes || undefined,
+                  directorSignatureDate: dn.director_signature_date || undefined,
+                  hijriYear: dn.hijri_year || "١٤٤٨",
+                  shareToken: dn.share_token,
+                  tokenExpiresAt: dn.token_expires_at,
+                  teacherResponseSubmittedAt: dn.teacher_response_submitted_at || undefined,
+                  teacherIpAddress: dn.teacher_ip_address || undefined,
+                  linkSharedAt: dn.link_shared_at || undefined,
+                  createdAt: dn.created_at,
+                  isArchived: Boolean(dn.is_archived),
+                  archivedAt: dn.archived_at || undefined,
+                  archiveReason: dn.archive_reason || undefined,
+                  archivedByCascade: Boolean(dn.archived_by_cascade),
                 })
               );
 
-              return nextAbsences;
-            });
-          }
+              const cloudDelayIds = new Set(mappedDelays.map((d) => d.id));
+              const missingDelays = localDelayNotices.filter((loc) => loc.id && !cloudDelayIds.has(loc.id));
+              if (missingDelays.length > 0) {
+                supabase
+                  .from("delay_notices")
+                  .insert(missingDelays.map(mapDelayToDbRow))
+                  .then(({ error }) => {
+                    if (error) console.warn("Failed to sync local delays to cloud:", error);
+                  });
+              }
 
-          // Hydrate delay notices from Supabase
-          const { data: dbDelays, error: delayErr } = await supabase
-            .from("delay_notices")
-            .select("*")
-            .order("created_at", { ascending: false });
+              const delayMap = new Map<string, DelayNotice>();
+              for (const loc of localDelayNotices) {
+                if (loc.id) delayMap.set(loc.id, loc);
+              }
+              for (const cl of mappedDelays) {
+                if (cl.id) delayMap.set(cl.id, cl);
+              }
+              cleanDelaysList = Array.from(delayMap.values());
+            }
 
-          if (!delayErr && dbDelays && dbDelays.length > 0) {
-            const mappedDelays: DelayNotice[] = (dbDelays as unknown as DbDelayNoticeRow[]).map((dn: DbDelayNoticeRow) => ({
-              id: dn.id,
-              noticeNumber: dn.notice_number || undefined,
-              teacherId: dn.teacher_id,
-              teacherName: dn.teacher_name,
-              jobNumber: dn.job_number,
-              specialty: dn.specialty || undefined,
-              noticeDate: dn.notice_date,
-              date: dn.notice_date,
-              violationDelayStart: dn.violation_delay_start,
-              delayStartTime: dn.delay_start_time || undefined,
-              violationAbsentDuring: dn.violation_absent_during,
-              absentFromTime: dn.absent_from_time || undefined,
-              absentToTime: dn.absent_to_time || undefined,
-              violationEarlyDeparture: dn.violation_early_departure,
-              earlyDepartureTime: dn.early_departure_time || undefined,
-              violationLeftSchool: dn.violation_left_school,
-              leftSchoolDetails: dn.left_school_details || undefined,
-              additionalNotes: dn.additional_notes || undefined,
-              notes: dn.additional_notes || undefined,
-              status: dn.status,
-              teacherReason: dn.teacher_reason || undefined,
-              teacherSignatureDate: dn.teacher_signature_date || undefined,
-              directorOpinion: dn.director_opinion || null,
-              directorNotes: dn.director_notes || undefined,
-              directorSignatureDate: dn.director_signature_date || undefined,
-              hijriYear: dn.hijri_year || "١٤٤٨",
-              shareToken: dn.share_token,
-              tokenExpiresAt: dn.token_expires_at,
-              teacherResponseSubmittedAt: dn.teacher_response_submitted_at || undefined,
-              teacherIpAddress: dn.teacher_ip_address || undefined,
-              linkSharedAt: dn.link_shared_at || undefined,
-              createdAt: dn.created_at,
+            // E. Process Employee Permissions from Supabase
+            let cleanPermissionsList: EmployeePermission[] = localPermissions;
+            if (!permErr && dbPermissions) {
+              const mappedPerms: EmployeePermission[] = (dbPermissions as unknown as DbEmployeePermissionRow[]).map(
+                (p: DbEmployeePermissionRow) => mapDbPermissionToPermission(p)
+              );
+              const permMap = new Map<string, EmployeePermission>();
+              for (const cl of mappedPerms) {
+                if (cl.id) permMap.set(cl.id, cl);
+              }
+              for (const loc of localPermissions) {
+                if (loc.id && !permMap.has(loc.id)) {
+                  permMap.set(loc.id, loc);
+                  queueSyncOperation({
+                    table: "employee_permissions",
+                    action: "insert",
+                    data: mapPermissionToDbRow(loc),
+                  });
+                }
+              }
+              cleanPermissionsList = Array.from(permMap.values());
+            }
+
+            // F. Process Deduction Decisions from Supabase
+            let cleanDeductionsList: DeductionDecision[] = localDeductions;
+            if (!dedErr && dbDeductions) {
+              const mappedDeductions: DeductionDecision[] = (dbDeductions as unknown as DbDeductionDecisionRow[]).map(
+                (d: DbDeductionDecisionRow) => mapDbDeductionToDecision(d)
+              );
+              const dedMap = new Map<string, DeductionDecision>();
+              for (const cl of mappedDeductions) {
+                if (cl.id) dedMap.set(cl.id, cl);
+              }
+              for (const loc of localDeductions) {
+                if (loc.id && !dedMap.has(loc.id)) {
+                  dedMap.set(loc.id, loc);
+                  queueSyncOperation({
+                    table: "deduction_decisions",
+                    action: "insert",
+                    data: mapDecisionToDbRow(loc),
+                  });
+                }
+              }
+              cleanDeductionsList = Array.from(dedMap.values());
+            }
+
+            // =========================================================================
+            // G. Partition ALL entities into Active and Archived sets centrally
+            // =========================================================================
+
+            // 1. Teachers Partitioning
+            const activeTeachers = cleanTeachersList.filter((t) => !t.isArchived);
+            const cloudArchTeachers: ArchivedTeacher[] = cleanTeachersList
+              .filter((t) => t.isArchived)
+              .map((t) => ({
+                teacher: t,
+                archivedAt: t.archivedAt || t.updatedAt || new Date().toISOString(),
+                archiveReason: t.archiveReason || "أرشفة إدارية",
+                associatedRecords: cleanAbsencesList.filter((a) => a.teacherId === t.id && a.isArchived),
+                associatedInquiries: [],
+                associatedDelayNotices: cleanDelaysList.filter((d) => d.teacherId === t.id && d.isArchived),
+                associatedDeductionDecisions: cleanDeductionsList.filter((dec) => dec.teacherId === t.id && dec.isArchived),
+                associatedPermissions: cleanPermissionsList.filter((p) => p.teacherId === t.id && p.isArchived),
+              }));
+            const archTeacherMap = new Map<string, ArchivedTeacher>();
+            for (const at of cloudArchTeachers) {
+              if (at.teacher.id) archTeacherMap.set(at.teacher.id, at);
+            }
+            for (const at of parsedArchTeachers) {
+              if (at.teacher.id && !archTeacherMap.has(at.teacher.id)) {
+                archTeacherMap.set(at.teacher.id, at);
+              }
+            }
+            const finalArchivedTeachers = Array.from(archTeacherMap.values());
+
+            // 2. Absences Partitioning
+            const activeAbsences = cleanAbsencesList.filter((a) => !a.isArchived);
+            const cloudArchAbsences: ArchivedAbsenceRecord[] = cleanAbsencesList
+              .filter((a) => a.isArchived)
+              .map((a) => ({
+                record: a,
+                archivedAt: a.archivedAt || a.timestamp || new Date().toISOString(),
+                archiveReason: a.archiveReason || "أرشفة إدارية",
+                archivedByCascade: Boolean(a.archivedByCascade),
+              }));
+            const archAbsenceMap = new Map<string, ArchivedAbsenceRecord>();
+            for (const aa of cloudArchAbsences) {
+              if (aa.record.id) archAbsenceMap.set(aa.record.id, aa);
+            }
+            for (const aa of parsedArchAbsences) {
+              if (aa.record.id && !archAbsenceMap.has(aa.record.id)) {
+                archAbsenceMap.set(aa.record.id, aa);
+              }
+            }
+            const finalArchivedAbsences = Array.from(archAbsenceMap.values());
+
+            // 3. Delays Partitioning
+            const activeDelays = cleanDelaysList.filter((d) => !d.isArchived);
+            const cloudArchDelays: ArchivedDelayNotice[] = cleanDelaysList
+              .filter((d) => d.isArchived)
+              .map((d) => ({
+                notice: d,
+                archivedAt: d.archivedAt || d.createdAt || new Date().toISOString(),
+                archiveReason: d.archiveReason || "أرشفة إدارية",
+                archivedByCascade: Boolean(d.archivedByCascade),
+              }));
+            const archDelayMap = new Map<string, ArchivedDelayNotice>();
+            for (const ad of cloudArchDelays) {
+              if (ad.notice.id) archDelayMap.set(ad.notice.id, ad);
+            }
+            for (const ad of parsedArchDelays) {
+              if (ad.notice.id && !archDelayMap.has(ad.notice.id)) {
+                archDelayMap.set(ad.notice.id, ad);
+              }
+            }
+            const finalArchivedDelays = Array.from(archDelayMap.values());
+
+            // 4. Permissions Partitioning
+            const activePermissions = cleanPermissionsList.filter((p) => !p.isArchived);
+            const cloudArchPerms: ArchivedEmployeePermission[] = cleanPermissionsList
+              .filter((p) => p.isArchived)
+              .map((p) => ({
+                permission: p,
+                archivedAt: p.archivedAt || p.createdAt || new Date().toISOString(),
+                archivedBy: p.archivedBy || "الإدارة",
+                archiveReason: p.archiveReason || "أرشفة إدارية",
+                archivedByCascade: Boolean(p.archivedByCascade),
+              }));
+            const archPermMap = new Map<string, ArchivedEmployeePermission>();
+            for (const ap of cloudArchPerms) {
+              if (ap.permission.id) archPermMap.set(ap.permission.id, ap);
+            }
+            for (const ap of parsedArchPermissions) {
+              if (ap.permission.id && !archPermMap.has(ap.permission.id)) {
+                archPermMap.set(ap.permission.id, ap);
+              }
+            }
+            const finalArchivedPermissions = Array.from(archPermMap.values());
+
+            // 5. Deductions Partitioning
+            const activeDeductions = cleanDeductionsList.filter((d) => !d.isArchived);
+            const cloudArchDeds: ArchivedDeductionDecision[] = cleanDeductionsList
+              .filter((d) => d.isArchived)
+              .map((d) => ({
+                decision: d,
+                archivedAt: d.archivedAt || d.createdAt || new Date().toISOString(),
+                archiveReason: d.archiveReason || "أرشفة إدارية",
+                archivedByCascade: Boolean(d.archivedByCascade),
+              }));
+            const archDedMap = new Map<string, ArchivedDeductionDecision>();
+            for (const ad of cloudArchDeds) {
+              if (ad.decision.id) archDedMap.set(ad.decision.id, ad);
+            }
+            for (const ad of parsedArchDeductions) {
+              if (ad.decision.id && !archDedMap.has(ad.decision.id)) {
+                archDedMap.set(ad.decision.id, ad);
+              }
+            }
+            const finalArchivedDeductions = Array.from(archDedMap.values());
+
+            // Recalculate teacher counters strictly based on active linked records
+            const absCountMap: Record<string, number> = {};
+            for (const a of activeAbsences) {
+              absCountMap[a.teacherId] = (absCountMap[a.teacherId] || 0) + 1;
+            }
+            const delayCountMap: Record<string, number> = {};
+            for (const d of activeDelays) {
+              delayCountMap[d.teacherId] = (delayCountMap[d.teacherId] || 0) + 1;
+            }
+
+            const updatedActiveTeachers = activeTeachers.map((t) => ({
+              ...t,
+              totalAbsences: absCountMap[t.id] || 0,
+              totalDelayNotices: delayCountMap[t.id] || 0,
             }));
 
-            // Merge local and cloud delay notices
-            const delayMap = new Map<string, DelayNotice>();
-            for (const loc of localDelayNotices) {
-              if (loc.id) delayMap.set(loc.id, loc);
+            // Commit to Context State
+            setTeachers(updatedActiveTeachers);
+            setAbsenceRecords(activeAbsences);
+            setDelayNotices(activeDelays);
+            setPermissions(activePermissions);
+            setDeductionDecisions(activeDeductions);
+            setArchivedTeachers(finalArchivedTeachers);
+            setArchivedAbsences(finalArchivedAbsences);
+            setArchivedDelayNotices(finalArchivedDelays);
+            setArchivedPermissions(finalArchivedPermissions);
+            setArchivedDeductionDecisions(finalArchivedDeductions);
+
+            // Update LocalStorage solely as an offline cache
+            try {
+              localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(updatedActiveTeachers));
+              localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(activeAbsences));
+              localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(activeDelays));
+              localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(activePermissions));
+              localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(activeDeductions));
+              localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(finalArchivedTeachers));
+              localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(finalArchivedAbsences));
+              localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(finalArchivedDelays));
+              localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(finalArchivedPermissions));
+              localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(finalArchivedDeductions));
+            } catch (cacheErr) {
+              console.warn("فشل تحديث التخزين المؤقت المحلي:", cacheErr);
             }
-            for (const cl of mappedDelays) {
-              if (cl.id) delayMap.set(cl.id, cl);
-            }
-            const mergedDelays = Array.from(delayMap.values());
-            setDelayNotices(mergedDelays);
-          }
+        } catch (cloudErr) {
+          console.warn(
+            "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
+            cloudErr
+          );
         }
-      } catch (cloudErr) {
-        console.warn(
-          "المزامنة السحابية غير متاحة حالياً، تم استخدام التخزين المحلي:",
-          cloudErr
-        );
-      }
     }
   } catch (err) {
     console.error("خطأ أثناء تحميل البيانات الأولية:", err);
@@ -1482,14 +1837,59 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
     const channel = supabase
       .channel("school-platform-realtime-sync")
+      // 1. Teachers Realtime Sync
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "teachers" },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const row = payload.new as unknown as DbTeacherRow;
+            if (!row || !row.id) return;
+            const updatedTeacher = normalizeTeacher(row as unknown as Record<string, unknown>);
+            if (updatedTeacher.isArchived) {
+              setTeachers((prev) => prev.filter((t) => t.id !== updatedTeacher.id));
+              setArchivedTeachers((prev) => {
+                const existing = prev.find((at) => at.teacher.id === updatedTeacher.id);
+                const updatedArch: ArchivedTeacher = {
+                  teacher: updatedTeacher,
+                  archivedAt: updatedTeacher.archivedAt || existing?.archivedAt || new Date().toISOString(),
+                  archiveReason: updatedTeacher.archiveReason || existing?.archiveReason || "أرشفة إدارية",
+                  associatedRecords: existing?.associatedRecords || [],
+                  associatedInquiries: existing?.associatedInquiries || [],
+                  associatedDelayNotices: existing?.associatedDelayNotices || [],
+                  associatedDeductionDecisions: existing?.associatedDeductionDecisions || [],
+                  associatedPermissions: existing?.associatedPermissions || [],
+                };
+                return [updatedArch, ...prev.filter((at) => at.teacher.id !== updatedTeacher.id)];
+              });
+            } else {
+              setArchivedTeachers((prev) => prev.filter((at) => at.teacher.id !== updatedTeacher.id));
+              setTeachers((prev) => {
+                const exists = prev.some((t) => t.id === updatedTeacher.id);
+                if (exists) {
+                  return prev.map((t) => (t.id === updatedTeacher.id ? updatedTeacher : t));
+                }
+                return [updatedTeacher, ...prev];
+              });
+            }
+          } else if (payload.eventType === "DELETE") {
+            const oldRow = payload.old as Partial<DbTeacherRow>;
+            if (oldRow && oldRow.id) {
+              setTeachers((prev) => prev.filter((t) => t.id !== oldRow.id));
+              setArchivedTeachers((prev) => prev.filter((at) => at.teacher.id !== oldRow.id));
+            }
+          }
+        }
+      )
+      // 2. Absence Records Realtime Sync
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "absence_records" },
         (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
-          if (payload.eventType === "INSERT") {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const r = payload.new as unknown as DbAbsenceRecordRow;
             if (!r || !r.id) return;
-            const newRec: AbsenceRecord = {
+            const rec: AbsenceRecord = {
               id: r.id,
               teacherId: r.teacher_id,
               teacherName: r.teacher_name,
@@ -1501,26 +1901,43 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               notes: r.notes || undefined,
               attachmentUrl: r.attachment_url || undefined,
               timestamp: r.timestamp || new Date().toISOString(),
+              isArchived: Boolean(r.is_archived),
+              archivedAt: r.archived_at || undefined,
+              archiveReason: r.archive_reason || undefined,
+              archivedByCascade: Boolean(r.archived_by_cascade),
             };
-            setAbsenceRecords((prev) => {
-              if (prev.some((item) => item.id === newRec.id)) return prev;
-              return [newRec, ...prev];
-            });
-            setTeachers((prev) =>
-              prev.map((t) =>
-                t.id === newRec.teacherId
-                  ? { ...t, totalAbsences: (t.totalAbsences || 0) + 1 }
-                  : t
-              )
-            );
+
+            if (rec.isArchived) {
+              setAbsenceRecords((prev) => prev.filter((item) => item.id !== rec.id));
+              setArchivedAbsences((prev) => {
+                const archRec: ArchivedAbsenceRecord = {
+                  record: rec,
+                  archivedAt: rec.archivedAt || new Date().toISOString(),
+                  archiveReason: rec.archiveReason || "أرشفة إدارية",
+                  archivedByCascade: Boolean(rec.archivedByCascade),
+                };
+                return [archRec, ...prev.filter((a) => a.record.id !== rec.id)];
+              });
+            } else {
+              setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== rec.id));
+              setAbsenceRecords((prev) => {
+                const exists = prev.some((item) => item.id === rec.id);
+                if (exists) {
+                  return prev.map((item) => (item.id === rec.id ? rec : item));
+                }
+                return [rec, ...prev];
+              });
+            }
           } else if (payload.eventType === "DELETE") {
             const oldRow = payload.old as Partial<DbAbsenceRecordRow>;
             if (oldRow && oldRow.id) {
               setAbsenceRecords((prev) => prev.filter((r) => r.id !== oldRow.id));
+              setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== oldRow.id));
             }
           }
         }
       )
+      // 3. Delay Notices Realtime Sync
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "delay_notices" },
@@ -1561,17 +1978,43 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               teacherIpAddress: row.teacher_ip_address || undefined,
               linkSharedAt: row.link_shared_at || undefined,
               createdAt: row.created_at,
+              isArchived: Boolean(row.is_archived),
+              archivedAt: row.archived_at || undefined,
+              archiveReason: row.archive_reason || undefined,
+              archivedByCascade: Boolean(row.archived_by_cascade),
             };
-            setDelayNotices((prev) => {
-              const exists = prev.some((d) => d.id === updatedNotice.id);
-              if (exists) {
-                return prev.map((d) => (d.id === updatedNotice.id ? updatedNotice : d));
-              }
-              return [updatedNotice, ...prev];
-            });
+
+            if (updatedNotice.isArchived) {
+              setDelayNotices((prev) => prev.filter((d) => d.id !== updatedNotice.id));
+              setArchivedDelayNotices((prev) => {
+                const archNotice: ArchivedDelayNotice = {
+                  notice: updatedNotice,
+                  archivedAt: updatedNotice.archivedAt || new Date().toISOString(),
+                  archiveReason: updatedNotice.archiveReason || "أرشفة إدارية",
+                  archivedByCascade: Boolean(updatedNotice.archivedByCascade),
+                };
+                return [archNotice, ...prev.filter((d) => d.notice.id !== updatedNotice.id)];
+              });
+            } else {
+              setArchivedDelayNotices((prev) => prev.filter((d) => d.notice.id !== updatedNotice.id));
+              setDelayNotices((prev) => {
+                const exists = prev.some((d) => d.id === updatedNotice.id);
+                if (exists) {
+                  return prev.map((d) => (d.id === updatedNotice.id ? updatedNotice : d));
+                }
+                return [updatedNotice, ...prev];
+              });
+            }
+          } else if (payload.eventType === "DELETE") {
+            const oldRow = payload.old as Partial<DbDelayNoticeRow>;
+            if (oldRow && oldRow.id) {
+              setDelayNotices((prev) => prev.filter((d) => d.id !== oldRow.id));
+              setArchivedDelayNotices((prev) => prev.filter((d) => d.notice.id !== oldRow.id));
+            }
           }
         }
       )
+      // 4. Absence Inquiries Realtime Sync
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "absence_inquiries" },
@@ -1604,6 +2047,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               adminNotes: meta.adminNotes,
               submittedAt: inq.submitted_at || undefined,
               createdAt: inq.created_at,
+              isArchived: Boolean(inq.is_archived),
             };
             setInquiries((prev) => {
               const exists = prev.some((i) => i.id === updatedInq.id);
@@ -1612,6 +2056,92 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               }
               return [updatedInq, ...prev];
             });
+          } else if (payload.eventType === "DELETE") {
+            const oldRow = payload.old as Partial<DbAbsenceInquiryRow>;
+            if (oldRow && oldRow.id) {
+              setInquiries((prev) => prev.filter((i) => i.id !== oldRow.id));
+            }
+          }
+        }
+      )
+      // 5. Employee Permissions Realtime Sync
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "employee_permissions" },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const p = payload.new as unknown as DbEmployeePermissionRow;
+            if (!p || !p.id) return;
+            const updatedPerm: EmployeePermission = mapDbPermissionToPermission(p);
+
+            if (updatedPerm.isArchived) {
+              setPermissions((prev) => prev.filter((perm) => perm.id !== updatedPerm.id));
+              setArchivedPermissions((prev) => {
+                const archPerm: ArchivedEmployeePermission = {
+                  permission: updatedPerm,
+                  archivedAt: updatedPerm.archivedAt || new Date().toISOString(),
+                  archivedBy: updatedPerm.archivedBy || "الإدارة",
+                  archiveReason: updatedPerm.archiveReason || "أرشفة إدارية",
+                  archivedByCascade: Boolean(updatedPerm.archivedByCascade),
+                };
+                return [archPerm, ...prev.filter((ap) => ap.permission.id !== updatedPerm.id)];
+              });
+            } else {
+              setArchivedPermissions((prev) => prev.filter((ap) => ap.permission.id !== updatedPerm.id));
+              setPermissions((prev) => {
+                const exists = prev.some((perm) => perm.id === updatedPerm.id);
+                if (exists) {
+                  return prev.map((perm) => (perm.id === updatedPerm.id ? updatedPerm : perm));
+                }
+                return [updatedPerm, ...prev];
+              });
+            }
+          } else if (payload.eventType === "DELETE") {
+            const oldRow = payload.old as Partial<DbEmployeePermissionRow>;
+            if (oldRow && oldRow.id) {
+              setPermissions((prev) => prev.filter((p) => p.id !== oldRow.id));
+              setArchivedPermissions((prev) => prev.filter((ap) => ap.permission.id !== oldRow.id));
+            }
+          }
+        }
+      )
+      // 6. Deduction Decisions Realtime Sync
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "deduction_decisions" },
+        (payload: RealtimePostgresChangesPayload<Record<string, unknown>>) => {
+          if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+            const d = payload.new as unknown as DbDeductionDecisionRow;
+            if (!d || !d.id) return;
+            const updatedDecision: DeductionDecision = mapDbDeductionToDecision(d);
+
+            if (updatedDecision.isArchived) {
+              setDeductionDecisions((prev) => prev.filter((dec) => dec.id !== updatedDecision.id));
+              setArchivedDeductionDecisions((prev) => {
+                const archDec: ArchivedDeductionDecision = {
+                  decision: updatedDecision,
+                  archivedAt: updatedDecision.archivedAt || new Date().toISOString(),
+                  archiveReason: updatedDecision.archiveReason || "أرشفة إدارية",
+                  archivedByCascade: Boolean(updatedDecision.archivedByCascade),
+                };
+                return [archDec, ...prev.filter((ad) => ad.decision.id !== updatedDecision.id)];
+              });
+            } else {
+              setArchivedDeductionDecisions((prev) => prev.filter((ad) => ad.decision.id !== updatedDecision.id));
+              setDeductionDecisions((prev) => {
+                const exists = prev.some((dec) => dec.id === updatedDecision.id);
+                if (exists) {
+                  return prev.map((dec) => (dec.id === updatedDecision.id ? updatedDecision : dec));
+                }
+                return [updatedDecision, ...prev];
+              });
+            }
+          } else if (payload.eventType === "DELETE") {
+            const oldRow = payload.old as Partial<DbDeductionDecisionRow>;
+            if (oldRow && oldRow.id) {
+              setDeductionDecisions((prev) => prev.filter((dec) => dec.id !== oldRow.id));
+              setArchivedDeductionDecisions((prev) => prev.filter((ad) => ad.decision.id !== oldRow.id));
+            }
           }
         }
       )
@@ -1983,13 +2513,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             job_number: newTeacher.nationalId,
             username: newTeacher.nationalId,
             mobile: newTeacher.mobile || null,
-            email: newTeacher.email || null,
             employment_status: newTeacher.employmentStatus || "دائم",
             job_title: newTeacher.jobTitle || "معلم",
             teaching_field: newTeacher.teachingField || newTeacher.specialty || null,
             specialty: newTeacher.specialty || null,
             total_absences: newTeacher.totalAbsences || 0,
-            updated_at: newTeacher.updatedAt || new Date().toISOString(),
+            is_archived: false,
           })
           .then(({ error }) => {
             if (error) console.error("فشل إدراج المعلمة في سوبابيز:", error);
@@ -2136,12 +2665,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             job_number: finalTeacher.nationalId,
             username: finalTeacher.nationalId,
             mobile: finalTeacher.mobile || null,
-            email: finalTeacher.email || null,
             employment_status: finalTeacher.employmentStatus,
             job_title: finalTeacher.jobTitle,
             teaching_field: finalTeacher.teachingField,
             specialty: finalTeacher.specialty,
-            updated_at: finalTeacher.updatedAt,
           })
           .eq("id", id)
           .then(({ error }) => {
@@ -2596,7 +3123,6 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             teaching_field: t.teachingField,
             specialty: t.specialty,
             total_absences: 0,
-            total_delay_notices: 0,
             updated_at: new Date().toISOString(),
           }))
         )
@@ -3897,10 +4423,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         // Restore associated inquiries
-        if (found.associatedInquiries && found.associatedInquiries.length > 0) {
+        const archInqs = found.associatedInquiries;
+        if (archInqs && archInqs.length > 0) {
           setInquiries((prev) => {
             const existingIds = new Set(prev.map((i) => i.id));
-            const toAdd = found.associatedInquiries
+            const toAdd = archInqs
               .filter((i) => !existingIds.has(i.id))
               .map((i) => ({
                 ...i,
@@ -4464,7 +4991,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         setInquiries((prev) => prev.filter((i) => i.teacherId !== id));
 
         if (isSupabaseConfigured() && supabase) {
-          supabase.from("employee_permissions").delete().eq("teacher_id", id).then(() => {}, () => {});
+          Promise.all([
+            supabase.from("teachers").delete().eq("id", id),
+            supabase.from("absence_records").delete().eq("teacher_id", id),
+            supabase.from("delay_notices").delete().eq("teacher_id", id),
+            supabase.from("deduction_decisions").delete().eq("teacher_id", id),
+            supabase.from("employee_permissions").delete().eq("teacher_id", id),
+            supabase.from("absence_inquiries").delete().eq("teacher_id", id),
+          ]).catch((err) => console.warn("Permanent delete teacher cloud error:", err));
         }
         return true;
       } else if (type === "absence") {
@@ -4476,6 +5010,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             associatedRecords: (at.associatedRecords || []).filter((r) => r.id !== id),
           }))
         );
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("absence_records").delete().eq("id", id).then(() => {}, (err) => console.warn("Permanent delete absence cloud error:", err));
+        }
         return true;
       } else if (type === "delay") {
         // Remove from archivedDelayNotices AND from associatedDelayNotices inside archivedTeachers (Edge Case 2)
@@ -4488,6 +5025,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             ),
           }))
         );
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("delay_notices").delete().eq("id", id).then(() => {}, (err) => console.warn("Permanent delete delay notice cloud error:", err));
+        }
         return true;
       } else if (type === "deduction") {
         setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.id !== id));
@@ -4499,6 +5039,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             ),
           }))
         );
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("deduction_decisions").delete().eq("id", id).then(() => {}, (err) => console.warn("Permanent delete deduction decision cloud error:", err));
+        }
         return true;
       } else if (type === "permission") {
         setArchivedPermissions((prev) => {
@@ -4517,11 +5060,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           }))
         );
         if (isSupabaseConfigured() && supabase) {
-          supabase
-            .from("employee_permissions")
-            .delete()
-            .eq("id", id)
-            .then(() => {}, () => {});
+          supabase.from("employee_permissions").delete().eq("id", id).then(() => {}, (err) => console.warn("Permanent delete permission cloud error:", err));
         }
         return true;
       }
@@ -4535,22 +5074,37 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!type || type === "teacher") {
         setArchivedTeachers([]);
         try { localStorage.removeItem(ARCHIVED_TEACHERS_STORAGE_KEY); } catch {}
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("teachers").delete().eq("is_archived", true).then(() => {}, () => {});
+        }
       }
       if (!type || type === "absence") {
         setArchivedAbsences([]);
         try { localStorage.removeItem(ARCHIVED_ABSENCES_STORAGE_KEY); } catch {}
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("absence_records").delete().eq("is_archived", true).then(() => {}, () => {});
+        }
       }
       if (!type || type === "delay") {
         setArchivedDelayNotices([]);
         try { localStorage.removeItem(ARCHIVED_DELAYS_STORAGE_KEY); } catch {}
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("delay_notices").delete().eq("is_archived", true).then(() => {}, () => {});
+        }
       }
       if (!type || type === "deduction") {
         setArchivedDeductionDecisions([]);
         try { localStorage.removeItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY); } catch {}
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("deduction_decisions").delete().eq("is_archived", true).then(() => {}, () => {});
+        }
       }
       if (!type || type === "permission") {
         setArchivedPermissions([]);
         try { localStorage.removeItem(ARCHIVED_PERMISSIONS_STORAGE_KEY); } catch {}
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("employee_permissions").delete().eq("is_archived", true).then(() => {}, () => {});
+        }
       }
     },
     []
@@ -4653,35 +5207,32 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           return next;
         });
 
+        const dbPayload = mapDecisionToDbRow(newDecision);
         if (isSupabaseConfigured() && supabase) {
           supabase
             .from("deduction_decisions")
-            .insert({
-              id: newDecision.id,
-              teacher_id: newDecision.teacherId,
-              teacher_name: newDecision.teacherName,
-              job_number: newDecision.jobNumber,
-              specialty: newDecision.specialty || null,
-              decision_number: newDecision.decisionNumber,
-              hijri_year: newDecision.hijriYear,
-              academic_year: newDecision.academicYear,
-              hours_deducted: newDecision.hoursDeducted,
-              days_deducted: newDecision.daysDeducted,
-              absence_periods: newDecision.absencePeriods,
-              notes: newDecision.notes || null,
-              status: newDecision.status,
-              director_name: newDecision.directorName || null,
-              created_at: newDecision.createdAt,
-              is_archived: false,
-            })
-            .then(() => {}, () => {});
+            .insert(dbPayload)
+            .then(
+              ({ error }) => {
+                if (error) {
+                  console.warn("فشل حفظ قرار الحسم في سوبابيز، تم إدراجه في طابور المزامنة:", error);
+                  queueSyncOperation({ table: "deduction_decisions", action: "insert", data: dbPayload });
+                }
+              },
+              (err) => {
+                console.warn("خطأ شبكة أثناء حفظ قرار الحسم:", err);
+                queueSyncOperation({ table: "deduction_decisions", action: "insert", data: dbPayload });
+              }
+            );
+        } else {
+          queueSyncOperation({ table: "deduction_decisions", action: "insert", data: dbPayload });
         }
 
         logAuditEvent({
           action: "ISSUE_DEDUCTION",
           entityType: "deduction",
           entityId: id,
-          details: `إصدار قرار حسم للمعلمة: ${newDecision.teacherName} (${newDecision.hoursDeducted} ساعات / ${newDecision.daysDeducted} يوم) برقم ${newDecision.decisionNumber}`,
+          details: `إصدار قرار حسم للمعلمة: ${newDecision.teacherName} (${newDecision.delayHours || newDecision.hoursDeducted || 0} ساعات / ${newDecision.deductionDays || newDecision.daysDeducted || 1} يوم) برقم ${newDecision.decisionNumber}`,
           newValue: newDecision,
         });
 
@@ -4693,7 +5244,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
     },
-    []
+    [queueSyncOperation]
   );
 
   const deleteDeductionDecision = useCallback(
@@ -4731,17 +5282,28 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return next;
       });
 
+      const dbUpdate = {
+        is_archived: true,
+        archived_at: now,
+        archive_reason: reason,
+        archived_by_cascade: false,
+      };
+
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("deduction_decisions")
-          .update({
-            is_archived: true,
-            archived_at: now,
-            archive_reason: reason,
-            archived_by_cascade: false,
-          })
+          .update(dbUpdate)
           .eq("id", id)
-          .then(() => {}, () => {});
+          .then(
+            ({ error }) => {
+              if (error) {
+                queueSyncOperation({ table: "deduction_decisions", action: "update", data: { id, ...dbUpdate } });
+              }
+            },
+            () => {
+              queueSyncOperation({ table: "deduction_decisions", action: "update", data: { id, ...dbUpdate } });
+            }
+          );
       }
 
       logAuditEvent({
@@ -4785,17 +5347,30 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       return next;
     });
 
+    const dbUpdate = {
+      is_archived: false,
+      archived_at: null,
+      archive_reason: null,
+      archived_by_cascade: false,
+    };
+
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("deduction_decisions")
-        .update({
-          is_archived: false,
-          archived_at: null,
-          archive_reason: null,
-          archived_by_cascade: false,
-        })
+        .update(dbUpdate)
         .eq("id", decision.id)
-        .then(() => {}, () => {});
+        .then(
+          ({ error }) => {
+            if (error) {
+              queueSyncOperation({ table: "deduction_decisions", action: "update", data: { id: decision.id, ...dbUpdate } });
+            }
+          },
+          () => {
+            queueSyncOperation({ table: "deduction_decisions", action: "update", data: { id: decision.id, ...dbUpdate } });
+          }
+        );
+    } else {
+      queueSyncOperation({ table: "deduction_decisions", action: "update", data: { id: decision.id, ...dbUpdate } });
     }
 
     logAuditEvent({
@@ -4805,7 +5380,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       details: `استعادة قرار حسم للمعلمة: ${restored.teacherName} برقم ${restored.decisionNumber}`,
       newValue: restored,
     });
-  }, []);
+  }, [queueSyncOperation]);
 
   // 24. Employee Permissions (نظام الاستئذان)
   const createPermission = useCallback(
@@ -4856,24 +5431,25 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           return next;
         });
 
-        // Sync to Supabase if table exists
+        const dbRow = mapPermissionToDbRow(newPermission);
         if (isSupabaseConfigured() && supabase) {
           supabase
             .from("employee_permissions")
-            .insert({
-              id: newPermission.id,
-              teacher_id: newPermission.teacherId,
-              permission_date: newPermission.permissionDate,
-              exit_time: newPermission.exitTime,
-              return_time: newPermission.returnTime,
-              duration_minutes: newPermission.durationMinutes,
-              reason: newPermission.reason,
-              notes: newPermission.notes || null,
-              created_by: newPermission.createdBy || null,
-              created_at: newPermission.createdAt,
-              is_archived: false,
-            })
-            .then(() => {}, () => {});
+            .insert(dbRow)
+            .then(
+              ({ error }) => {
+                if (error) {
+                  console.warn("فشل حفظ الاستئذان في سوبابيز، تم إدراجه في طابور المزامنة:", error);
+                  queueSyncOperation({ table: "employee_permissions", action: "insert", data: dbRow });
+                }
+              },
+              (err) => {
+                console.warn("خطأ شبكة أثناء حفظ الاستئذان:", err);
+                queueSyncOperation({ table: "employee_permissions", action: "insert", data: dbRow });
+              }
+            );
+        } else {
+          queueSyncOperation({ table: "employee_permissions", action: "insert", data: dbRow });
         }
 
         logAuditEvent({
@@ -4892,7 +5468,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
     },
-    [permissions]
+    [permissions, queueSyncOperation]
   );
 
   const updatePermission = useCallback(
@@ -4920,19 +5496,26 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           return next;
         });
 
-        if (updatedItem && isSupabaseConfigured() && supabase) {
-          supabase
-            .from("employee_permissions")
-            .update({
-              exit_time: updatedItem.exitTime,
-              return_time: updatedItem.returnTime,
-              duration_minutes: updatedItem.durationMinutes,
-              reason: updatedItem.reason,
-              notes: updatedItem.notes || null,
-              updated_at: updatedItem.updatedAt,
-            })
-            .eq("id", id)
-            .then(() => {}, () => {});
+        if (updatedItem) {
+          const dbRow = mapPermissionToDbRow(updatedItem);
+          if (isSupabaseConfigured() && supabase) {
+            supabase
+              .from("employee_permissions")
+              .update(dbRow)
+              .eq("id", id)
+              .then(
+                ({ error }) => {
+                  if (error) {
+                    queueSyncOperation({ table: "employee_permissions", action: "update", data: dbRow });
+                  }
+                },
+                () => {
+                  queueSyncOperation({ table: "employee_permissions", action: "update", data: dbRow });
+                }
+              );
+          } else {
+            queueSyncOperation({ table: "employee_permissions", action: "update", data: dbRow });
+          }
         }
 
         if (updatedItem) {
@@ -4953,7 +5536,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
     },
-    []
+    [queueSyncOperation]
   );
 
   const deletePermission = useCallback(
@@ -5000,19 +5583,29 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return next;
       });
 
-      // Soft-delete in Supabase: UPDATE is_archived = true (Never DELETE directly)
+      const dbUpdate = {
+        is_archived: true,
+        archived_at: now,
+        archived_by: actor,
+        archive_reason: reason,
+        archived_by_cascade: false,
+      };
+
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("employee_permissions")
-          .update({
-            is_archived: true,
-            archived_at: now,
-            archived_by: actor,
-            archive_reason: reason,
-            archived_by_cascade: false,
-          })
+          .update(dbUpdate)
           .eq("id", id)
-          .then(() => {}, () => {});
+          .then(
+            ({ error }) => {
+              if (error) {
+                queueSyncOperation({ table: "employee_permissions", action: "update", data: { id, ...dbUpdate } });
+              }
+            },
+            () => {
+              queueSyncOperation({ table: "employee_permissions", action: "update", data: { id, ...dbUpdate } });
+            }
+          );
       }
 
       logAuditEvent({
@@ -5025,7 +5618,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { deletedPermission: permissionToDelete };
     },
-    [permissions]
+    [permissions, queueSyncOperation]
   );
 
   const restorePermission = useCallback((permission: EmployeePermission) => {
@@ -5057,18 +5650,29 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       return next;
     });
 
+    const dbUpdate = {
+      is_archived: false,
+      archived_at: null,
+      archived_by: null,
+      archive_reason: null,
+      archived_by_cascade: false,
+    };
+
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("employee_permissions")
-        .update({
-          is_archived: false,
-          archived_at: null,
-          archived_by: null,
-          archive_reason: null,
-          archived_by_cascade: false,
-        })
+        .update(dbUpdate)
         .eq("id", permission.id)
-        .then(() => {}, () => {});
+        .then(
+          ({ error }) => {
+            if (error) {
+              queueSyncOperation({ table: "employee_permissions", action: "update", data: { id: permission.id, ...dbUpdate } });
+            }
+          },
+          () => {
+            queueSyncOperation({ table: "employee_permissions", action: "update", data: { id: permission.id, ...dbUpdate } });
+          }
+        );
     }
 
     logAuditEvent({

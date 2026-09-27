@@ -127,8 +127,8 @@ export default function PermissionsManagementPage() {
         const teacher = teachersMap.get(row.teacherId);
         return (
           <div className="space-y-0.5">
-            <span className="font-black text-slate-900 block">{teacher?.fullName || row.teacherName || "—"}</span>
-            <span className="text-slate-400 text-2xs font-mono block">
+            <span className="font-black text-slate-900 dark:text-slate-100 block">{teacher?.fullName || row.teacherName || "—"}</span>
+            <span className="text-slate-400 dark:text-slate-500 text-2xs font-mono block">
               سجل: {teacher?.nationalId || row.nationalId || "—"} • {teacher?.specialty || row.specialty || "عام"}
             </span>
           </div>
@@ -147,8 +147,8 @@ export default function PermissionsManagementPage() {
         } catch {}
         return (
           <div className="text-center font-mono">
-            <span className="font-bold text-slate-800 block text-xs">{row.permissionDate}</span>
-            {dayName && <span className="text-[10px] text-teal-700 block font-sans">{dayName}</span>}
+            <span className="font-bold text-slate-800 dark:text-slate-200 block text-xs">{row.permissionDate}</span>
+            {dayName && <span className="text-[10px] text-teal-700 dark:text-teal-400 block font-sans">{dayName}</span>}
           </div>
         );
       },
@@ -159,7 +159,7 @@ export default function PermissionsManagementPage() {
       accessorKey: "exitTime",
       align: "center",
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 text-xs" dir="ltr">
+        <span className="font-mono font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-800/60 text-xs" dir="ltr">
           {row.exitTime}
         </span>
       ),
@@ -170,7 +170,7 @@ export default function PermissionsManagementPage() {
       accessorKey: "returnTime",
       align: "center",
       cell: ({ row }) => (
-        <span className="font-mono font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/80 text-xs" dir="ltr">
+        <span className="font-mono font-bold text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 px-2 py-0.5 rounded-md border border-teal-200/80 dark:border-teal-800/60 text-xs" dir="ltr">
           {row.returnTime}
         </span>
       ),
@@ -186,7 +186,7 @@ export default function PermissionsManagementPage() {
         let txt = `${row.durationMinutes} دقيقة`;
         if (hrs > 0) txt = `${hrs} س و ${mins} د`;
         return (
-          <span className="font-mono font-black text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded-lg text-xs">
+          <span className="font-mono font-black text-slate-800 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-lg text-xs">
             {txt}
           </span>
         );
@@ -198,8 +198,8 @@ export default function PermissionsManagementPage() {
       accessorKey: "reason",
       cell: ({ row }) => (
         <div className="max-w-xs space-y-0.5" title={row.reason}>
-          <p className="truncate font-semibold text-slate-800">{row.reason}</p>
-          {row.notes && <p className="truncate text-slate-400 text-2xs">ملاحظة: {row.notes}</p>}
+          <p className="truncate font-semibold text-slate-800 dark:text-slate-200">{row.reason}</p>
+          {row.notes && <p className="truncate text-slate-400 dark:text-slate-500 text-2xs">ملاحظة: {row.notes}</p>}
         </div>
       ),
     },
@@ -208,7 +208,7 @@ export default function PermissionsManagementPage() {
       header: "الحالة",
       align: "center",
       cell: () => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 whitespace-nowrap">
           <CheckCircle2 className="w-3 h-3 shrink-0" />
           <span>معتمد وموثق</span>
         </span>
@@ -294,34 +294,34 @@ export default function PermissionsManagementPage() {
           <KpiCard
             title="إجمالي استئذانات الشهر"
             value={totalMonthPermissionsCount}
-            subtitle={<span className="text-xs text-teal-700 font-medium">الشهر الحالي</span>}
+            subtitle={<span className="text-xs text-teal-700 dark:text-teal-400 font-medium">الشهر الحالي</span>}
             icon={<Calendar className="w-5 h-5" />}
-            iconBgColor="bg-teal-50"
-            iconColor="text-[#137a85]"
+            iconBgColor="bg-teal-50 dark:bg-teal-950/50"
+            iconColor="text-[#137a85] dark:text-teal-400"
           />
           <KpiCard
             title="الموظفات المستأذنات"
             value={uniqueMonthTeachersCount}
-            subtitle={<span className="text-xs text-slate-400 font-medium">من أصل {teachers.length} موظفة</span>}
+            subtitle={<span className="text-xs text-slate-400 dark:text-slate-500 font-medium">من أصل {teachers.length} موظفة</span>}
             icon={<Users className="w-5 h-5" />}
-            iconBgColor="bg-cyan-50"
-            iconColor="text-cyan-700"
+            iconBgColor="bg-cyan-50 dark:bg-cyan-950/50"
+            iconColor="text-cyan-700 dark:text-cyan-400"
           />
           <KpiCard
             title="إجمالي دقائق الاستئذان"
             value={totalMonthMinutes}
-            subtitle={<span className="text-xs text-amber-700 font-medium">تعادل {(totalMonthMinutes / 60).toFixed(1)} ساعة</span>}
+            subtitle={<span className="text-xs text-amber-700 dark:text-amber-400 font-medium">تعادل {(totalMonthMinutes / 60).toFixed(1)} ساعة</span>}
             icon={<Clock className="w-5 h-5" />}
-            iconBgColor="bg-amber-50"
-            iconColor="text-amber-700"
+            iconBgColor="bg-amber-50 dark:bg-amber-950/50"
+            iconColor="text-amber-700 dark:text-amber-400"
           />
           <KpiCard
             title="متوسط مدة الاستئذان"
             value={averageDurationMinutes}
-            subtitle={<span className="text-xs text-indigo-700 font-medium">دقيقة / حالة</span>}
+            subtitle={<span className="text-xs text-indigo-700 dark:text-indigo-400 font-medium">دقيقة / حالة</span>}
             icon={<Timer className="w-5 h-5" />}
-            iconBgColor="bg-indigo-50"
-            iconColor="text-indigo-700"
+            iconBgColor="bg-indigo-50 dark:bg-indigo-950/50"
+            iconColor="text-indigo-700 dark:text-indigo-400"
           />
         </div>
 
@@ -337,13 +337,13 @@ export default function PermissionsManagementPage() {
         searchFilterKeys={["teacherName", "nationalId", "reason", "permissionDate", "notes"]}
         filtersSlot={
           <div className="flex items-center gap-2">
-            <label className="text-xs font-bold text-slate-600 whitespace-nowrap">
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 whitespace-nowrap">
               تصفية بالمعلمة:
             </label>
             <select
               value={selectedTeacherFilter}
               onChange={(e) => setSelectedTeacherFilter(e.target.value)}
-              className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
             >
               <option value="all">جميع المعلمات ({activePermissions.length})</option>
               {teachers

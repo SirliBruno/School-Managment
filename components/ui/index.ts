@@ -10,3 +10,4 @@ export * from "./SkeletonLoader";
 export * from "./Modal";
 export * from "./DataTable";
 export * from "./ActionMenu";
+export * from "./ThemeToggle";

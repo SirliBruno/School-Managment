@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Cairo } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { TeacherProvider } from "@/context/TeacherContext";
@@ -29,8 +30,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" className={cairo.variable}>
-      <body className="font-cairo bg-slate-50 text-slate-800 antialiased min-h-screen">
+    <html lang="ar" dir="rtl" className={cairo.variable} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                const stored = localStorage.getItem('school_platform_theme');
+                const isDark = stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (isDark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="font-cairo bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 antialiased min-h-screen transition-colors duration-200">
         {/* Skip Navigation — للوصولية (WCAG 2.4.1) */}
         <a
           href="#main-content"
@@ -38,13 +53,15 @@ export default function RootLayout({
         >
           تخطى إلى المحتوى الرئيسي
         </a>
-        <ToastProvider>
-          <AuthProvider>
-            <TeacherProvider>
-              <AuthGuard>{children}</AuthGuard>
-            </TeacherProvider>
-          </AuthProvider>
-        </ToastProvider>
+        <ThemeProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <TeacherProvider>
+                <AuthGuard>{children}</AuthGuard>
+              </TeacherProvider>
+            </AuthProvider>
+          </ToastProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

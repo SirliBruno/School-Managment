@@ -265,7 +265,7 @@ export default function ProceduresListPage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-slate-50/50 pb-16">
+    <div className="flex-1 flex flex-col min-h-screen bg-slate-50/50 dark:bg-slate-950 pb-16">
       <PageHeader
         breadcrumbs={[
           { label: "لوحة التحكم", href: "/" },
@@ -288,9 +288,9 @@ export default function ProceduresListPage() {
 
             <Link
               href="/procedures/absence"
-              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-white border border-slate-200/90 shadow-2xs hover:bg-teal-50/50 hover:border-teal-200 hover:text-teal-900 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:bg-teal-50/50 dark:hover:bg-teal-950/40 hover:border-teal-200 dark:hover:border-teal-800 hover:text-teal-900 dark:hover:text-teal-300 active:scale-[0.98] transition-all duration-200 cursor-pointer"
             >
-              <span className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-100 text-[#137a85] flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-teal-100/80">
+              <span className="w-6 h-6 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-100 dark:border-teal-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-teal-100/80">
                 <FileText className="w-3.5 h-3.5 stroke-[2.2]" />
               </span>
               <span>مساءلة غياب (نموذج 20)</span>
@@ -298,9 +298,9 @@ export default function ProceduresListPage() {
 
             <Link
               href="/procedures/delay-notice"
-              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 bg-white border border-slate-200/90 shadow-2xs hover:bg-amber-50/50 hover:border-amber-200 hover:text-amber-900 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:bg-amber-50/50 dark:hover:bg-amber-950/40 hover:border-amber-200 dark:hover:border-amber-800 hover:text-amber-900 dark:hover:text-amber-300 active:scale-[0.98] transition-all duration-200 cursor-pointer"
             >
-              <span className="w-6 h-6 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-amber-100/80">
+              <span className="w-6 h-6 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-100 dark:border-amber-800 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-amber-100/80">
                 <Clock className="w-3.5 h-3.5 stroke-[2.2]" />
               </span>
               <span>إشعار تأخر / انصراف</span>
@@ -316,37 +316,37 @@ export default function ProceduresListPage() {
             title="إجمالي الإجراءات المسجلة"
             value={totalCount}
             subtitle="كافة القرارات والمساءلات"
-            icon={<FileCheck className="w-5 h-5 text-teal-700" />}
+            icon={<FileCheck className="w-5 h-5 text-teal-700 dark:text-teal-400" />}
             variant="emerald"
           />
           <KpiCard
             title="قرارات حسم الساعات"
             value={deductionCount}
             subtitle="نموذج رقم (١٩) معتمد"
-            icon={<ShieldCheck className="w-5 h-5 text-rose-600" />}
+            icon={<ShieldCheck className="w-5 h-5 text-rose-600 dark:text-rose-400" />}
             variant="rose"
           />
           <KpiCard
             title="مساءلات الغياب"
             value={inquiryCount}
             subtitle="نموذج رقم (٢٠) رسمي"
-            icon={<FileText className="w-5 h-5 text-blue-600" />}
+            icon={<FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />}
             variant="blue"
           />
           <KpiCard
             title="إشعارات التأخر والخروج"
             value={delayCount}
             subtitle="تنبيهات الدوام والانصراف"
-            icon={<Clock className="w-5 h-5 text-amber-600" />}
+            icon={<Clock className="w-5 h-5 text-amber-600 dark:text-amber-400" />}
             variant="amber"
           />
         </div>
 
         {/* Filter Tabs & Search Bar Card */}
-        <Card className="p-4 border-slate-200/80 shadow-sm space-y-4">
+        <Card className="p-4 border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Filter Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 rounded-xl">
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-800 rounded-xl">
               {[
                 { id: "all", label: "الكل", count: totalCount },
                 { id: "deduction", label: "قرارات حسم الساعات (١٩)", count: deductionCount },
@@ -359,16 +359,16 @@ export default function ProceduresListPage() {
                   onClick={() => setActiveTab(tab.id as ProcedureTab)}
                   className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
                     activeTab === tab.id
-                      ? "bg-white text-teal-800 shadow-xs border border-slate-200/60"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-teal-800 dark:text-teal-300 shadow-xs border border-slate-200/60 dark:border-slate-700"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   }`}
                 >
                   <span>{tab.label}</span>
                   <span
                     className={`px-1.5 py-0.5 rounded-full text-3xs font-mono font-bold ${
                       activeTab === tab.id
-                        ? "bg-teal-50 text-teal-800"
-                        : "bg-slate-200 text-slate-600"
+                        ? "bg-teal-50 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                     }`}
                   >
                     {tab.count}
@@ -385,21 +385,21 @@ export default function ProceduresListPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="بحث برقم القرار، اسم المعلمة، أو السجل المدني..."
-                className="w-full pr-10 pl-4 py-2 text-xs bg-slate-50 hover:bg-white focus:bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-all"
+                className="w-full pr-10 pl-4 py-2 text-xs bg-slate-50 dark:bg-slate-800/80 hover:bg-white dark:hover:bg-slate-800 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-600 transition-all"
               />
             </div>
           </div>
         </Card>
 
         {/* Unified Procedures Table */}
-        <Card className="border-slate-200/80 shadow-sm overflow-hidden">
+        <Card className="border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
           {filteredItems.length === 0 ? (
             <div className="p-12 text-center space-y-3">
-              <FileText className="w-12 h-12 text-slate-300 mx-auto" />
-              <div className="text-base font-bold text-slate-700">
+              <FileText className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto" />
+              <div className="text-base font-bold text-slate-700 dark:text-slate-300">
                 لا توجد إجراءات إدارية مطابقة
               </div>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
                 {searchQuery
                   ? "لم نجد أي نتائج تطابق البحث المدخل. جربي تغيير كلمات البحث."
                   : "لم يتم تسجيل أي إجراءات إدارية تحت هذا التصنيف حتى الآن."}
@@ -408,7 +408,7 @@ export default function ProceduresListPage() {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-right text-xs">
-                <thead className="bg-slate-50/90 border-b border-slate-200/80 text-slate-500 font-bold">
+                <thead className="bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 text-slate-500 dark:text-slate-400 font-bold">
                   <tr>
                     <th className="py-3 px-4">نوع الإجراء</th>
                     <th className="py-3 px-4">رقم الإجراء</th>
@@ -420,11 +420,11 @@ export default function ProceduresListPage() {
                     <th className="py-3 px-4 text-center">إجراءات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                   {filteredItems.map((item) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-slate-50/70 transition-colors group"
+                      className="hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group"
                     >
                       {/* Procedure Type Badge */}
                       <td className="py-3.5 px-4">
@@ -432,42 +432,42 @@ export default function ProceduresListPage() {
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded text-3xs font-bold ${
                               item.type === "deduction"
-                                ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/60"
                                 : item.type === "inquiry"
-                                ? "bg-blue-50 text-blue-700 border border-blue-200"
-                                : "bg-amber-50 text-amber-700 border border-amber-200"
+                                ? "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/60"
+                                : "bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/60"
                             }`}
                           >
                             {item.formNumberBadge}
                           </span>
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
                             {item.typeName}
                           </span>
                         </div>
                       </td>
 
                       {/* Reference Number */}
-                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                      <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
                         {item.referenceNumber}
                       </td>
 
                       {/* Teacher Name */}
-                      <td className="py-3.5 px-4 font-bold text-teal-800">
+                      <td className="py-3.5 px-4 font-bold text-teal-800 dark:text-teal-400">
                         {item.teacherName}
                       </td>
 
                       {/* Civil ID */}
-                      <td className="py-3.5 px-4 font-mono text-slate-600">
+                      <td className="py-3.5 px-4 font-mono text-slate-600 dark:text-slate-400">
                         {item.civilId}
                       </td>
 
                       {/* Date */}
-                      <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400 whitespace-nowrap">
                         {item.date}
                       </td>
 
                       {/* Details */}
-                      <td className="py-3.5 px-4 text-slate-700 max-w-xs truncate font-medium">
+                      <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 max-w-xs truncate font-medium">
                         {item.details}
                       </td>
 
@@ -485,7 +485,7 @@ export default function ProceduresListPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handlePrintItem(item)}
-                            className="h-8 px-2 text-teal-700 hover:text-teal-800 hover:bg-teal-50"
+                            className="h-8 px-2 text-teal-700 dark:text-teal-400 hover:text-teal-800 dark:hover:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/50"
                             title="طباعة النموذج المعتمد (PDF)"
                           >
                             <Printer className="w-3.5 h-3.5 ml-1" />
@@ -495,10 +495,10 @@ export default function ProceduresListPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => setItemToDelete(item)}
-                            className="h-8 px-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                            className="h-8 px-2 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/50"
                             title="نقل للأرشيف"
                           >
-                            <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                            <Trash2 className="w-3.5 h-3.5 text-rose-500 dark:text-rose-400" />
                           </Button>
                         </div>
                       </td>

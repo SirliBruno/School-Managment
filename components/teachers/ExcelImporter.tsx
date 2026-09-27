@@ -299,9 +299,9 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
         className={cn(
           "flex flex-wrap items-center transition-all duration-200",
           compact
-            ? "gap-2 p-1.5 rounded-xl border border-slate-200/60 bg-slate-50/50"
+            ? "gap-2 p-1.5 rounded-xl border border-slate-200/60 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50"
             : "gap-3 p-2.5 rounded-2xl border border-transparent",
-          isDragging && "bg-teal-50/90 border-2 border-dashed border-[#137a85] scale-[1.01]",
+          isDragging && "bg-teal-50/90 dark:bg-teal-950/40 border-2 border-dashed border-[#137a85] scale-[1.01]",
           className
         )}
       >
@@ -329,12 +329,12 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           type="button"
           onClick={() => downloadEmptyExcelTemplate()}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap bg-white text-slate-700 hover:bg-teal-50/50 hover:text-[#137a85] hover:border-teal-300 active:scale-[0.98] border border-slate-200 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
+            "inline-flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-200 hover:bg-teal-50/50 dark:hover:bg-teal-950/40 hover:text-[#137a85] dark:hover:text-teal-400 hover:border-teal-300 dark:hover:border-teal-700 active:scale-[0.98] border border-slate-200 dark:border-slate-700 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400",
             compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-xs"
           )}
           title="تحميل قالب فارغ يحتوي على الأعمدة الثمانية المعتمدة"
         >
-          <FileDown className="w-3.5 h-3.5 text-[#137a85] shrink-0" aria-hidden="true" />
+          <FileDown className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400 shrink-0" aria-hidden="true" />
           <span className="whitespace-nowrap">تحميل القالب الفارغ</span>
         </button>
 
@@ -343,12 +343,12 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           type="button"
           onClick={() => downloadSampleExcelTemplate()}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap bg-slate-50 text-slate-600 hover:bg-slate-100 active:scale-[0.98] border border-slate-200/80 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
+            "inline-flex items-center gap-1.5 rounded-xl font-semibold whitespace-nowrap bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750 active:scale-[0.98] border border-slate-200/80 dark:border-slate-700 transition-all shadow-2xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400",
             compact ? "px-2.5 py-1.5 text-xs" : "px-3.5 py-2.5 text-xs"
           )}
           title="تحميل نموذج معبأ ببيانات تجريبية للاسترشاد"
         >
-          <Download className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
+          <Download className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" aria-hidden="true" />
           <span className="whitespace-nowrap">نموذج بأمثلة</span>
         </button>
 
@@ -358,7 +358,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-xs font-bold shadow-2xs animate-pulse"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs font-bold shadow-2xs animate-pulse"
           >
             <span>التراجع متاح ({undoSecondsLeft} ث):</span>
             <button
@@ -372,7 +372,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
         )}
 
         {isDragging && (
-          <span className="text-xs font-bold text-[#137a85] animate-pulse">
+          <span className="text-xs font-bold text-[#137a85] dark:text-teal-400 animate-pulse">
             أفلتي ملف الإكسل هنا لبدء الفحص والمطابقة
           </span>
         )}
@@ -385,26 +385,26 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           aria-live="polite"
           className={`p-4 rounded-xl border flex items-start justify-between gap-3 text-xs md:text-sm animate-in fade-in slide-in-from-top-2 duration-200 shadow-xs ${
             alertInfo.type === "success"
-              ? "bg-emerald-50/95 border-emerald-300 text-emerald-950"
+              ? "bg-emerald-50/95 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-100"
               : alertInfo.type === "error"
-              ? "bg-rose-50/95 border-rose-300 text-rose-950"
+              ? "bg-rose-50/95 dark:bg-rose-950/60 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-100"
               : alertInfo.type === "warning"
-              ? "bg-amber-50/95 border-amber-300 text-amber-950"
-              : "bg-blue-50/95 border-blue-300 text-blue-950"
+              ? "bg-amber-50/95 dark:bg-amber-950/60 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-100"
+              : "bg-blue-50/95 dark:bg-blue-950/60 border-blue-300 dark:border-blue-800 text-blue-950 dark:text-blue-100"
           }`}
         >
           <div className="flex items-start gap-3">
             {alertInfo.type === "success" && (
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             {alertInfo.type === "error" && (
-              <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             {alertInfo.type === "warning" && (
-              <FileSpreadsheet className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <FileSpreadsheet className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             {alertInfo.type === "info" && (
-              <Info className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" aria-hidden="true" />
             )}
             <div className="space-y-0.5">
               <p className="font-bold leading-tight">{alertInfo.message}</p>
@@ -417,7 +417,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
           <button
             type="button"
             onClick={() => setAlertInfo(null)}
-            className="p-1 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-black/5 transition-colors cursor-pointer"
+            className="p-1 text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
             aria-label="إغلاق التنبيه"
           >
             <X className="w-4 h-4" aria-hidden="true" />
@@ -449,19 +449,19 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 15 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden z-10"
+              className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10"
             >
               {/* Modal Header */}
-              <div className="p-5 md:p-6 border-b border-slate-100 bg-slate-50 flex items-start justify-between gap-4">
+              <div className="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center font-bold shadow-2xs">
+                  <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold shadow-2xs border border-teal-200/60 dark:border-teal-800/60">
                     <Eye className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 id="preview-modal-title" className="text-base md:text-lg font-bold text-slate-900">
+                    <h3 id="preview-modal-title" className="text-base md:text-lg font-bold text-slate-900 dark:text-slate-100">
                       معاينة وتدقيق ملف الاستيراد قبل التطبيق
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                       تم فحص {previewPlan.totalRows} صف في الملف وتصنيفها وفقاً لقواعد البيانات
                     </p>
                   </div>
@@ -470,7 +470,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsPreviewOpen(false)}
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer"
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                   aria-label="إغلاق المعاينة"
                 >
                   <X className="w-5 h-5" />
@@ -478,22 +478,22 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               </div>
 
               {/* KPI Summary Cards */}
-              <div className="p-5 md:p-6 border-b border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {/* 1. New Teachers */}
                 <button
                   type="button"
                   onClick={() => setPreviewActiveTab("new")}
                   className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                     previewActiveTab === "new"
-                      ? "bg-teal-50/80 border-[#137a85] ring-2 ring-[#137a85]/20 shadow-xs"
-                      : "bg-white border-slate-200 hover:bg-slate-50"
+                      ? "bg-teal-50/80 dark:bg-teal-950/60 border-[#137a85] dark:border-teal-600 ring-2 ring-[#137a85]/20 shadow-xs"
+                      : "bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
                     <span>معلمات جديدات</span>
-                    <UserPlus className="w-4 h-4 text-[#137a85]" />
+                    <UserPlus className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                   </div>
-                  <p className="text-2xl font-extrabold text-slate-900 font-mono">
+                  <p className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 font-mono">
                     {previewPlan.newTeachers.length} 🆕
                   </p>
                 </button>
@@ -504,15 +504,15 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                   onClick={() => setPreviewActiveTab("updated")}
                   className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                     previewActiveTab === "updated"
-                      ? "bg-blue-50/80 border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
-                      : "bg-white border-slate-200 hover:bg-slate-50"
+                      ? "bg-blue-50/80 dark:bg-blue-950/60 border-blue-500 ring-2 ring-blue-500/20 shadow-xs"
+                      : "bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
                     <span>تحديث بيانات</span>
-                    <RefreshCw className="w-4 h-4 text-blue-600" />
+                    <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <p className="text-2xl font-extrabold text-blue-700 font-mono">
+                  <p className="text-2xl font-extrabold text-blue-700 dark:text-blue-300 font-mono">
                     {previewPlan.updatedTeachers.length} 🔄
                   </p>
                 </button>
@@ -523,15 +523,15 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                   onClick={() => setPreviewActiveTab("restored")}
                   className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                     previewActiveTab === "restored"
-                      ? "bg-purple-50/80 border-purple-500 ring-2 ring-purple-500/20 shadow-xs"
-                      : "bg-white border-slate-200 hover:bg-slate-50"
+                      ? "bg-purple-50/80 dark:bg-purple-950/60 border-purple-500 ring-2 ring-purple-500/20 shadow-xs"
+                      : "bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
                     <span>استعادة من الأرشيف</span>
-                    <ArchiveRestore className="w-4 h-4 text-purple-600" />
+                    <ArchiveRestore className="w-4 h-4 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <p className="text-2xl font-extrabold text-purple-700 font-mono">
+                  <p className="text-2xl font-extrabold text-purple-700 dark:text-purple-300 font-mono">
                     {previewPlan.restoredTeachers.length} ♻️
                   </p>
                 </button>
@@ -542,15 +542,15 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                   onClick={() => setPreviewActiveTab("skipped")}
                   className={`p-3 rounded-xl border text-right transition-all cursor-pointer ${
                     previewActiveTab === "skipped"
-                      ? "bg-rose-50/80 border-rose-500 ring-2 ring-rose-500/20 shadow-xs"
-                      : "bg-white border-slate-200 hover:bg-slate-50"
+                      ? "bg-rose-50/80 dark:bg-rose-950/60 border-rose-500 ring-2 ring-rose-500/20 shadow-xs"
+                      : "bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-750 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
-                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">
                     <span>صفوف مستبعدة</span>
-                    <ShieldAlert className="w-4 h-4 text-rose-600" />
+                    <ShieldAlert className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   </div>
-                  <p className="text-2xl font-extrabold text-rose-700 font-mono">
+                  <p className="text-2xl font-extrabold text-rose-700 dark:text-rose-300 font-mono">
                     {previewPlan.skippedRows.length} ⚠️
                   </p>
                 </button>
@@ -559,7 +559,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               {/* Preview Rows Table (Shows First 5 rows of selected category) */}
               <div className="p-5 md:p-6 overflow-y-auto max-h-[350px] space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="font-bold text-xs md:text-sm text-slate-800">
+                  <h4 className="font-bold text-xs md:text-sm text-slate-800 dark:text-slate-200">
                     {previewActiveTab === "new" &&
                       `قائمة المعلمات الجديدات (عرض أول 5 من ${previewPlan.newTeachers.length})`}
                     {previewActiveTab === "updated" &&
@@ -569,16 +569,16 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                     {previewActiveTab === "skipped" &&
                       `قائمة الصفوف المستبعدة وأسباب الرفض (${previewPlan.skippedRows.length} صف)`}
                   </h4>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
                     {previewActiveTab === "updated" && "تحديث الفراغات فقط دون استبدال البيانات الحالية"}
                   </span>
                 </div>
 
                 {/* TAB 1: NEW TEACHERS */}
                 {previewActiveTab === "new" && (
-                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-750 rounded-xl">
                     <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                      <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-750">
                         <tr>
                           <th className="py-2.5 px-3">#</th>
                           <th className="py-2.5 px-3">اسم المعلمة</th>
@@ -588,25 +588,25 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                           <th className="py-2.5 px-3">حالة التوظيف</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {previewPlan.newTeachers.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="py-6 text-center text-slate-400">
+                            <td colSpan={6} className="py-6 text-center text-slate-400 dark:text-slate-500">
                               لا توجد معلمات جديدات في هذا الملف
                             </td>
                           </tr>
                         ) : (
                           previewPlan.newTeachers.slice(0, 5).map((t, idx) => (
-                            <tr key={t.id || idx} className="hover:bg-slate-50/60">
-                              <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
-                              <td className="py-2 px-3 font-bold text-slate-900">{t.fullName}</td>
-                              <td className="py-2 px-3 font-mono text-slate-600">{t.nationalId}</td>
-                              <td className="py-2 px-3 text-slate-700">{t.specialty || "—"}</td>
-                              <td className="py-2 px-3 font-mono text-slate-600 dir-ltr text-right">
+                            <tr key={t.id || idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                              <td className="py-2 px-3 font-mono text-slate-400 dark:text-slate-500">{idx + 1}</td>
+                              <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{t.fullName}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-300">{t.nationalId}</td>
+                              <td className="py-2 px-3 text-slate-700 dark:text-slate-300">{t.specialty || "—"}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-300 dir-ltr text-right">
                                 {t.mobile || "—"}
                               </td>
                               <td className="py-2 px-3">
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                                   {t.employmentStatus || "دائم"}
                                 </span>
                               </td>
@@ -620,9 +620,9 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
 
                 {/* TAB 2: UPDATED TEACHERS */}
                 {previewActiveTab === "updated" && (
-                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-750 rounded-xl">
                     <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                      <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-750">
                         <tr>
                           <th className="py-2.5 px-3">#</th>
                           <th className="py-2.5 px-3">اسم المعلمة</th>
@@ -630,25 +630,25 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                           <th className="py-2.5 px-3">الحقول التي سيتم ملؤها 🔄</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {previewPlan.updatedTeachers.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-6 text-center text-slate-400">
+                            <td colSpan={4} className="py-6 text-center text-slate-400 dark:text-slate-500">
                               لا توجد سجلات تحتاج لتحديث الفراغات
                             </td>
                           </tr>
                         ) : (
                           previewPlan.updatedTeachers.slice(0, 5).map((u, idx) => (
-                            <tr key={u.teacher.id || idx} className="hover:bg-slate-50/60">
-                              <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
-                              <td className="py-2 px-3 font-bold text-slate-900">{u.teacher.fullName}</td>
-                              <td className="py-2 px-3 font-mono text-slate-600">{u.teacher.nationalId}</td>
+                            <tr key={u.teacher.id || idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                              <td className="py-2 px-3 font-mono text-slate-400 dark:text-slate-500">{idx + 1}</td>
+                              <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{u.teacher.fullName}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-300">{u.teacher.nationalId}</td>
                               <td className="py-2 px-3">
                                 <div className="flex flex-wrap gap-1">
                                   {u.filledFields.map((f) => (
                                     <span
                                       key={f}
-                                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200"
+                                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
                                     >
                                       + {f}
                                     </span>
@@ -665,9 +665,9 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
 
                 {/* TAB 3: RESTORED TEACHERS */}
                 {previewActiveTab === "restored" && (
-                  <div className="overflow-x-auto border border-slate-200 rounded-xl">
+                  <div className="overflow-x-auto border border-slate-200 dark:border-slate-750 rounded-xl">
                     <table className="w-full text-right text-xs">
-                      <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                      <thead className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-750">
                         <tr>
                           <th className="py-2.5 px-3">#</th>
                           <th className="py-2.5 px-3">اسم المعلمة</th>
@@ -675,21 +675,21 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                           <th className="py-2.5 px-3">الإجراء</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                         {previewPlan.restoredTeachers.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-6 text-center text-slate-400">
+                            <td colSpan={4} className="py-6 text-center text-slate-400 dark:text-slate-500">
                               لا توجد معلمات مسترجعة من الأرشيف
                             </td>
                           </tr>
                         ) : (
                           previewPlan.restoredTeachers.slice(0, 5).map((r, idx) => (
-                            <tr key={r.teacher.id || idx} className="hover:bg-slate-50/60">
-                              <td className="py-2 px-3 font-mono text-slate-400">{idx + 1}</td>
-                              <td className="py-2 px-3 font-bold text-slate-900">{r.teacher.fullName}</td>
-                              <td className="py-2 px-3 font-mono text-slate-600">{r.teacher.nationalId}</td>
+                            <tr key={r.teacher.id || idx} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/60">
+                              <td className="py-2 px-3 font-mono text-slate-400 dark:text-slate-500">{idx + 1}</td>
+                              <td className="py-2 px-3 font-bold text-slate-900 dark:text-slate-100">{r.teacher.fullName}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-300">{r.teacher.nationalId}</td>
                               <td className="py-2 px-3">
-                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
                                   استعادة من الأرشيف وتفعيل السجل
                                 </span>
                               </td>
@@ -703,9 +703,9 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
 
                 {/* TAB 4: SKIPPED ROWS WITH EXACT REASONS (Stage 3 & 6) */}
                 {previewActiveTab === "skipped" && (
-                  <div className="overflow-x-auto border border-rose-200 rounded-xl bg-rose-50/20">
+                  <div className="overflow-x-auto border border-rose-200 dark:border-rose-800/80 rounded-xl bg-rose-50/20 dark:bg-rose-950/20">
                     <table className="w-full text-right text-xs">
-                      <thead className="bg-rose-50 text-rose-900 font-bold border-b border-rose-200">
+                      <thead className="bg-rose-50 dark:bg-rose-950/60 text-rose-900 dark:text-rose-200 font-bold border-b border-rose-200 dark:border-rose-800">
                         <tr>
                           <th className="py-2.5 px-3">رقم الصف</th>
                           <th className="py-2.5 px-3">الاسم (إن وجد)</th>
@@ -713,22 +713,22 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                           <th className="py-2.5 px-3">سبب الاستبعاد ⚠️</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-rose-100">
+                      <tbody className="divide-y divide-rose-100 dark:divide-rose-900/40">
                         {previewPlan.skippedRows.length === 0 ? (
                           <tr>
-                            <td colSpan={4} className="py-6 text-center text-emerald-600 font-bold">
+                            <td colSpan={4} className="py-6 text-center text-emerald-600 dark:text-emerald-400 font-bold">
                               ✓ ملف سليم تماماً! لم يتم استبعاد أي صف.
                             </td>
                           </tr>
                         ) : (
                           previewPlan.skippedRows.map((s, idx) => (
-                            <tr key={idx} className="hover:bg-rose-50/50">
-                              <td className="py-2 px-3 font-mono font-bold text-rose-700">
+                            <tr key={idx} className="hover:bg-rose-50/50 dark:hover:bg-rose-950/40">
+                              <td className="py-2 px-3 font-mono font-bold text-rose-700 dark:text-rose-400">
                                 صف {s.rowNumber}
                               </td>
-                              <td className="py-2 px-3 text-slate-800">{s.fullName || "—"}</td>
-                              <td className="py-2 px-3 font-mono text-slate-600">{s.nationalId || "—"}</td>
-                              <td className="py-2 px-3 font-bold text-rose-700">{s.reason}</td>
+                              <td className="py-2 px-3 text-slate-800 dark:text-slate-200">{s.fullName || "—"}</td>
+                              <td className="py-2 px-3 font-mono text-slate-600 dark:text-slate-400">{s.nationalId || "—"}</td>
+                              <td className="py-2 px-3 font-bold text-rose-700 dark:text-rose-300">{s.reason}</td>
                             </tr>
                           ))
                         )}
@@ -739,11 +739,11 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               </div>
 
               {/* Preview Footer Actions */}
-              <div className="p-4 md:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+              <div className="p-4 md:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-center justify-between gap-3">
                 <button
                   type="button"
                   onClick={() => setIsPreviewOpen(false)}
-                  className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-600 hover:bg-slate-200 transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl text-xs md:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   إلغاء العملية
                 </button>
@@ -791,18 +791,18 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               initial={{ opacity: 0, scale: 0.96, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 15 }}
-              className="relative bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden z-10"
+              className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10"
             >
-              <div className="p-5 md:p-6 border-b border-slate-100 bg-emerald-50 flex items-start justify-between">
+              <div className="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 bg-emerald-50 dark:bg-emerald-950/40 flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold shadow-2xs">
                     <CheckCircle2 className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 id="summary-modal-title" className="text-base md:text-lg font-bold text-emerald-950">
+                    <h3 id="summary-modal-title" className="text-base md:text-lg font-bold text-emerald-950 dark:text-emerald-200">
                       ملخص نتيجة استيراد المعلمات
                     </h3>
-                    <p className="text-xs text-emerald-800/80 mt-0.5">
+                    <p className="text-xs text-emerald-800/80 dark:text-emerald-400 mt-0.5">
                       تم تحديث قاعدة بيانات المدرسة بنجاح دون أي تكرار
                     </p>
                   </div>
@@ -811,7 +811,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowResultModal(false)}
-                  className="p-1.5 rounded-lg text-emerald-700 hover:bg-emerald-100 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -819,30 +819,30 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
 
               {/* Statistics Grid */}
               <div className="p-5 md:p-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3.5 rounded-xl bg-teal-50 border border-teal-200 text-center">
-                  <p className="text-[11px] font-bold text-teal-800">معلمات جديدات</p>
-                  <p className="text-2xl font-black text-teal-900 font-mono mt-1">
+                <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 text-center">
+                  <p className="text-[11px] font-bold text-teal-800 dark:text-teal-300">معلمات جديدات</p>
+                  <p className="text-2xl font-black text-teal-900 dark:text-teal-200 font-mono mt-1">
                     {importResult.addedCount} 🆕
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-center">
-                  <p className="text-[11px] font-bold text-blue-800">سجلات تم تحديثها</p>
-                  <p className="text-2xl font-black text-blue-900 font-mono mt-1">
+                <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-center">
+                  <p className="text-[11px] font-bold text-blue-800 dark:text-blue-300">سجلات تم تحديثها</p>
+                  <p className="text-2xl font-black text-blue-900 dark:text-blue-200 font-mono mt-1">
                     {importResult.updatedCount} 🔄
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-purple-50 border border-purple-200 text-center">
-                  <p className="text-[11px] font-bold text-purple-800">استعادة من الأرشيف</p>
-                  <p className="text-2xl font-black text-purple-900 font-mono mt-1">
+                <div className="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 text-center">
+                  <p className="text-[11px] font-bold text-purple-800 dark:text-purple-300">استعادة من الأرشيف</p>
+                  <p className="text-2xl font-black text-purple-900 dark:text-purple-200 font-mono mt-1">
                     {importResult.restoredCount} ♻️
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-center">
-                  <p className="text-[11px] font-bold text-rose-800">صفوف تم تجاهلها</p>
-                  <p className="text-2xl font-black text-rose-900 font-mono mt-1">
+                <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-center">
+                  <p className="text-[11px] font-bold text-rose-800 dark:text-rose-300">صفوف تم تجاهلها</p>
+                  <p className="text-2xl font-black text-rose-900 dark:text-rose-200 font-mono mt-1">
                     {importResult.skippedCount} ⚠️
                   </p>
                 </div>
@@ -851,23 +851,23 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               {/* Skipped Rows List (If any exist) */}
               {importResult.skippedRows.length > 0 && (
                 <div className="px-5 md:px-6 pb-4 space-y-2 overflow-y-auto max-h-[200px]">
-                  <p className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
+                  <p className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                     <span>الصفوف التي تم تجاهلها وسبب التجاهل:</span>
                   </p>
                   <div className="space-y-1.5">
                     {importResult.skippedRows.map((s, idx) => (
                       <div
                         key={idx}
-                        className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between"
+                        className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 text-xs flex items-center justify-between"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="font-mono font-bold text-slate-500">صف {s.rowNumber}:</span>
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-mono font-bold text-slate-500 dark:text-slate-400">صف {s.rowNumber}:</span>
+                          <span className="font-semibold text-slate-800 dark:text-slate-200">
                             {s.fullName || s.nationalId || "صف ناقص"}
                           </span>
                         </div>
-                        <span className="text-rose-700 font-medium">{s.reason}</span>
+                        <span className="text-rose-700 dark:text-rose-400 font-medium">{s.reason}</span>
                       </div>
                     ))}
                   </div>
@@ -875,7 +875,7 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
               )}
 
               {/* Modal Footer with Undo Button (Stage 5) */}
-              <div className="p-4 md:p-6 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+              <div className="p-4 md:p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-850 flex items-center justify-between gap-3">
                 {canUndoImport && undoSecondsLeft > 0 ? (
                   <button
                     type="button"
@@ -886,13 +886,13 @@ export const ExcelImporter: React.FC<ExcelImporterProps> = ({
                     <span>تراجع عن الاستيراد ({undoSecondsLeft} ث)</span>
                   </button>
                 ) : (
-                  <span className="text-[11px] text-slate-400">انتهت مهلة التراجع التلقائي</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">انتهت مهلة التراجع التلقائي</span>
                 )}
 
                 <button
                   type="button"
                   onClick={() => setShowResultModal(false)}
-                  className="px-6 py-2.5 rounded-xl bg-slate-800 text-white text-xs md:text-sm font-bold hover:bg-slate-900 transition-all cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl bg-slate-800 dark:bg-slate-700 text-white text-xs md:text-sm font-bold hover:bg-slate-900 dark:hover:bg-slate-600 transition-all cursor-pointer"
                 >
                   إغلاق الملخص
                 </button>

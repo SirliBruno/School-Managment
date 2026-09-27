@@ -97,7 +97,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             dragElastic={{ top: 0, bottom: 0.5 }}
             onDragEnd={handleDragEnd}
             className={cn(
-              "relative bg-white z-10 w-full flex flex-col text-right overflow-hidden shadow-2xl",
+              "relative bg-white dark:bg-slate-900 z-10 w-full flex flex-col text-right overflow-hidden shadow-2xl border-t md:border border-slate-200/80 dark:border-slate-800",
               // Mobile BottomSheet styling:
               "rounded-t-3xl max-h-[92vh] pb-safe",
               // Desktop Modal styling:
@@ -109,26 +109,26 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
           >
             {/* Mobile Drag Handle Bar */}
             <div className="md:hidden flex items-center justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
-              <div className="w-10 h-1.5 rounded-full bg-slate-300" />
+              <div className="w-10 h-1.5 rounded-full bg-slate-300 dark:bg-slate-700" />
             </div>
 
             {/* Header */}
             {(title || !hideCloseButton) && (
-              <div className="px-5 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3 bg-slate-50/70 shrink-0">
+              <div className="px-5 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3 bg-slate-50/70 dark:bg-slate-850/70 shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                   {icon && (
-                    <div className="w-10 h-10 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center shrink-0 shadow-sm">
+                    <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center shrink-0 shadow-sm border border-teal-200/60 dark:border-teal-800/60">
                       {icon}
                     </div>
                   )}
                   <div className="min-w-0">
                     {title && (
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 truncate">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 truncate">
                         {title}
                       </h3>
                     )}
                     {subtitle && (
-                      <p className="text-xs text-slate-400 mt-0.5 truncate">
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 truncate">
                         {subtitle}
                       </p>
                     )}
@@ -139,7 +139,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                   <button
                     type="button"
                     onClick={onClose}
-                    className="w-11 h-11 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                    className="w-11 h-11 rounded-xl bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors cursor-pointer shrink-0"
                     aria-label="إغلاق النافذة"
                   >
                     <X className="w-5 h-5" />
@@ -155,7 +155,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
 
             {/* Footer */}
             {footer && (
-              <div className="p-4 sm:px-6 bg-slate-50/80 border-t border-slate-100 shrink-0">
+              <div className="p-4 sm:px-6 bg-slate-50/80 dark:bg-slate-850/80 border-t border-slate-100 dark:border-slate-800 shrink-0">
                 {footer}
               </div>
             )}

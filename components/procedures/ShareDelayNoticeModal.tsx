@@ -169,19 +169,19 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-10 flex flex-col my-auto max-h-[92vh]"
+          className="relative w-full max-w-xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-10 flex flex-col my-auto max-h-[92vh]"
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-l from-teal-50/70 via-white to-white">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-l from-teal-50/70 via-white to-white dark:from-teal-950/40 dark:via-slate-900 dark:to-slate-900">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-600/10 text-teal-700 flex items-center justify-center">
-                <Share2 className="w-5 h-5 text-teal-600" />
+              <div className="w-10 h-10 rounded-xl bg-teal-600/10 dark:bg-teal-950/60 text-teal-700 dark:text-teal-400 flex items-center justify-center">
+                <Share2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-slate-800">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
                   مشاركة تنبيه التأخر مع المعلمة
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   رابط إلكتروني مؤمن للمعلمة لتقديم إفادتها عبر الجوال
                 </p>
               </div>
@@ -190,7 +190,7 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="إغلاق النافذة"
-              className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-2 rounded-xl transition cursor-pointer"
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl transition cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -199,21 +199,21 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
           {/* Modal Body */}
           <div className="p-5 sm:p-6 overflow-y-auto space-y-4 text-right">
             {/* Teacher & Notice Overview Card */}
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 space-y-2.5">
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-2">
-                  <User className="w-4 h-4 text-teal-600" />
-                  <span className="text-sm font-bold text-slate-800">
+                  <User className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-100">
                     {teacherName}
                   </span>
                   {notice.noticeNumber && (
-                    <span className="text-xs px-2 py-0.5 rounded-md bg-teal-100/80 text-teal-800 font-mono font-bold">
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-teal-100/80 dark:bg-teal-950/60 text-teal-800 dark:text-teal-300 font-mono font-bold">
                       {notice.noticeNumber}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 text-xs text-slate-600 font-medium">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   <span>تاريخ التنبيه: {noticeDate}</span>
                 </div>
               </div>
@@ -223,7 +223,7 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
                 {violationsList.map((v, i) => (
                   <span
                     key={i}
-                    className="text-xs bg-white text-slate-700 border border-slate-200 px-2.5 py-1 rounded-md font-medium"
+                    className="text-xs bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md font-medium"
                   >
                     • {v}
                   </span>
@@ -231,14 +231,14 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
               </div>
 
               {/* Mobile Number Badge */}
-              <div className="text-xs text-slate-500 pt-1 flex items-center justify-between border-t border-slate-200/60 mt-2">
+              <div className="text-xs text-slate-500 dark:text-slate-400 pt-1 flex items-center justify-between border-t border-slate-200/60 dark:border-slate-700 mt-2">
                 <span>رقم الجوال المسجل:</span>
                 {teacherMobile ? (
-                  <span className="font-mono font-bold text-slate-700 dir-ltr">
+                  <span className="font-mono font-bold text-slate-700 dark:text-slate-200 dir-ltr">
                     {teacherMobile}
                   </span>
                 ) : (
-                  <span className="text-amber-600 font-medium">
+                  <span className="text-amber-600 dark:text-amber-400 font-medium">
                     غير مسجل بالملف (سيُفتح الواتساب لاختيار جهة الاتصال)
                   </span>
                 )}
@@ -247,7 +247,7 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
 
             {/* Unique Link Input Section */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 الرابط المباشر للمعلمة (مؤمن وفريد)
               </label>
               <div className="flex items-center gap-2">
@@ -256,17 +256,17 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
                     type="text"
                     readOnly
                     value={publicUrl}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 font-mono text-left select-all focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 dark:text-slate-300 font-mono text-left select-all focus:outline-none focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500"
                   />
                 </div>
                 <button
                   onClick={handleCopyLink}
                   type="button"
                   className={cn(
-                    "flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs transition whitespace-nowrap shadow-sm",
+                    "flex items-center gap-1.5 px-4 py-2.5 rounded-xl font-bold text-xs transition whitespace-nowrap shadow-sm cursor-pointer",
                     copiedLink
                       ? "bg-emerald-600 text-white"
-                      : "bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-200"
+                      : "bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-400 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-200 dark:border-teal-800/60"
                   )}
                 >
                   {copiedLink ? (
@@ -282,18 +282,18 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
                   )}
                 </button>
               </div>
-              <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-slate-400" />
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                 <span>الرابط صالح لمدة 7 أيام من تاريخ الإصدار.</span>
               </p>
             </div>
 
             {/* WhatsApp Message Preview Section */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 معاينة رسالة الواتساب الرسمية
               </label>
-              <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed font-sans whitespace-pre-line shadow-inner">
+              <div className="bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 rounded-xl p-3.5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans whitespace-pre-line shadow-inner">
                 {fullWhatsAppMessage}
               </div>
             </div>
@@ -304,7 +304,7 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
               <button
                 type="button"
                 onClick={handleOpenWhatsApp}
-                className="w-full flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 active:scale-[0.99] transition duration-150"
+                className="w-full flex items-center justify-center gap-2.5 bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 px-4 rounded-xl font-bold text-sm shadow-md shadow-emerald-600/20 hover:shadow-lg hover:shadow-emerald-600/30 active:scale-[0.99] transition duration-150 cursor-pointer"
               >
                 <svg
                   className="w-5 h-5 fill-current"
@@ -320,18 +320,18 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
               <button
                 type="button"
                 onClick={handleCopyFullMessage}
-                className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 py-2.5 px-4 rounded-xl font-semibold text-xs transition"
+                className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-2.5 px-4 rounded-xl font-semibold text-xs transition cursor-pointer"
               >
                 {copiedFullMessage ? (
                   <>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                    <span className="text-emerald-700 font-bold">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                    <span className="text-emerald-700 dark:text-emerald-400 font-bold">
                       تم نسخ الرسالة والرابط بالكامل
                     </span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4 text-slate-500" />
+                    <Copy className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     <span>نسخ نص الرسالة بالكامل لمشاركته بوسائل أخرى (SMS / إيميل)</span>
                   </>
                 )}
@@ -340,14 +340,14 @@ export const ShareDelayNoticeModal: React.FC<ShareDelayNoticeModalProps> = ({
           </div>
 
           {/* Footer Note */}
-          <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+          <div className="px-6 py-3 bg-slate-50 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
             <span className="flex items-center gap-1">
-              <Shield className="w-3.5 h-3.5 text-teal-600" />
+              <Shield className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
               رابط إلكتروني رسمي مؤمن وفق اللائحة الإدارية
             </span>
             <button
               onClick={onClose}
-              className="text-slate-600 hover:text-slate-800 font-bold"
+              className="text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-bold cursor-pointer"
             >
               إغلاق
             </button>

@@ -517,15 +517,15 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden">
       {/* Institutional Header */}
-      <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-            <FileText className="w-5 h-5 text-[#137a85]" />
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <FileText className="w-5 h-5 text-[#137a85] dark:text-teal-400" />
             <span>تسجيل إجراء مساءلة غياب جديد</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             توثيق غياب المعلمة وإصدار استمارة المساءلة الرسمية وفق اللوائح المدرسية
           </p>
         </div>
@@ -534,20 +534,20 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
           <button
             type="button"
             onClick={() => setIsInquiryModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-colors shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200/80 dark:border-emerald-800/60 transition-colors shadow-2xs cursor-pointer"
           >
             <MessageCircle className="w-3.5 h-3.5" />
             <span>إرسال عبر الواتساب</span>
           </button>
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-            <Clock className="w-3.5 h-3.5 text-[#137a85]" />
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+            <Clock className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400" />
             <span>التوثيق الفوري</span>
           </div>
         </div>
       </div>
 
       {/* Stepper Progress Indicator */}
-      <div className="px-6 pt-5 pb-3 border-b border-slate-100 bg-white">
+      <div className="px-6 pt-5 pb-3 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="grid grid-cols-4 gap-2">
           {WIZARD_STEPS.map((s) => {
             const isCompleted = currentStep > s.step;
@@ -567,10 +567,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 className={cn(
                   "text-right group cursor-pointer transition-all pb-2 border-b-2 flex flex-col gap-1 focus-visible:outline-none",
                   isCurrent
-                    ? "border-[#137a85]"
+                    ? "border-[#137a85] dark:border-teal-400"
                     : isCompleted
-                    ? "border-emerald-500"
-                    : "border-slate-200 hover:border-slate-300"
+                    ? "border-emerald-500 dark:border-emerald-400"
+                    : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                 )}
               >
                 <div className="flex items-center gap-1.5">
@@ -578,10 +578,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                     className={cn(
                       "w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors",
                       isCurrent
-                        ? "bg-[#137a85] text-white"
+                        ? "bg-[#137a85] dark:bg-teal-500 text-white"
                         : isCompleted
-                        ? "bg-emerald-500 text-white"
-                        : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
+                        ? "bg-emerald-500 dark:bg-emerald-600 text-white"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-slate-700"
                     )}
                   >
                     {isCompleted ? <Check className="w-3 h-3" /> : s.step}
@@ -590,16 +590,16 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                     className={cn(
                       "text-xs font-bold truncate",
                       isCurrent
-                        ? "text-slate-900"
+                        ? "text-slate-900 dark:text-slate-100"
                         : isCompleted
-                        ? "text-emerald-700"
-                        : "text-slate-500"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-slate-500 dark:text-slate-400"
                     )}
                   >
                     {s.label}
                   </span>
                 </div>
-                <span className="hidden sm:block text-[10px] text-slate-400 truncate">
+                <span className="hidden sm:block text-[10px] text-slate-400 dark:text-slate-500 truncate">
                   {s.description}
                 </span>
               </button>
@@ -617,10 +617,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             exit={{ opacity: 0, y: -10, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 350, damping: 25 }}
             role="alert"
-            className="m-4 sm:m-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm shadow-2xs"
+            className="m-4 sm:m-6 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm shadow-2xs"
           >
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <div>
                 <p className="font-bold">تم حفظ الإجراء بنجاح!</p>
                 <p className="text-xs opacity-90 mt-0.5">{successMessage}</p>
@@ -633,7 +633,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   whileTap={{ scale: 0.95 }}
                   type="button"
                   onClick={handleDownloadLastPdf}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#137a85] text-white hover:bg-teal-700 transition-colors shadow-2xs cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#137a85] dark:bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 transition-colors shadow-2xs cursor-pointer"
                 >
                   <FileDown className="w-4 h-4" />
                   <span>تحميل استمارة PDF</span>
@@ -643,7 +643,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 onClick={() => setSuccessMessage(null)}
-                className="text-emerald-700 hover:text-emerald-900 text-xs font-bold px-2 py-1 rounded-lg hover:bg-emerald-100/60"
+                className="text-emerald-700 dark:text-emerald-300 hover:text-emerald-900 dark:hover:text-emerald-100 text-xs font-bold px-2 py-1 rounded-lg hover:bg-emerald-100/60 dark:hover:bg-emerald-900/60"
               >
                 إغلاق
               </motion.button>
@@ -663,11 +663,11 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             className="space-y-5"
           >
             <div className="max-w-xl">
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
-                <UserCheck className="w-4 h-4 text-[#137a85]" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-1">
+                <UserCheck className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                 <span>الخطوة 1: اختيار المعلمة المعنية بالمساءلة</span>
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 ابحثي عن اسم المعلمة أو السجل المدني لإصدار المساءلة وتحديث سجل الغياب التراكمي
               </p>
             </div>
@@ -687,18 +687,18 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-4 rounded-2xl bg-teal-50/50 border border-teal-200/80 max-w-2xl"
+                className="p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/60 max-w-2xl"
               >
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#137a85] text-white flex items-center justify-center font-bold text-sm shadow-2xs">
+                    <div className="w-10 h-10 rounded-xl bg-[#137a85] dark:bg-teal-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs">
                       {selectedTeacher.fullName?.charAt(0) || "م"}
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                         {selectedTeacher.fullName || selectedTeacher.name}
                       </h4>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
+                      <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                         <span className="font-mono">{selectedTeacher.nationalId || "—"}</span>
                         <span>•</span>
                         <span>{selectedTeacher.specialty || selectedTeacher.teachingField || "عام"}</span>
@@ -707,8 +707,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   </div>
 
                   <div className="text-left shrink-0">
-                    <span className="text-[11px] text-slate-500 block">رصيد الغياب الحالي</span>
-                    <span className="text-sm font-extrabold text-[#137a85] font-mono">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block">رصيد الغياب الحالي</span>
+                    <span className="text-sm font-extrabold text-[#137a85] dark:text-teal-400 font-mono">
                       {selectedTeacher.totalAbsences || 0} أيام
                     </span>
                   </div>
@@ -727,29 +727,29 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             className="space-y-6"
           >
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
-                <Calendar className="w-4 h-4 text-[#137a85]" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-1">
+                <Calendar className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                 <span>الخطوة 2: بيانات وتفاصيل الغياب</span>
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 تحديد فترة الغياب، نوع العذر، والمسوغ الإداري المكتوب
               </p>
             </div>
 
             {/* Duration Mode Switch */}
             <div className="space-y-1.5 max-w-md">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 مدة وفترة الغياب <span className="text-rose-500">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/80">
+              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200/80 dark:border-slate-700">
                 <button
                   type="button"
                   onClick={() => setDurationMode("single")}
                   className={cn(
                     "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
                     durationMode === "single"
-                      ? "bg-white text-[#137a85] shadow-2xs font-extrabold"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-[#137a85] dark:text-teal-400 shadow-2xs font-extrabold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
                   <Calendar className="w-3.5 h-3.5" />
@@ -770,11 +770,11 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   className={cn(
                     "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
                     durationMode === "multiple"
-                      ? "bg-white text-[#137a85] shadow-2xs font-extrabold"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-[#137a85] dark:text-teal-400 shadow-2xs font-extrabold"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
-                  <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                  <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                   <span>عدة أيام (فترة غياب)</span>
                 </button>
               </div>
@@ -785,7 +785,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <div className="space-y-1.5 max-w-md">
                 <label
                   htmlFor={`${formId}-date`}
-                  className="block text-xs font-bold text-slate-700"
+                  className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                 >
                   تاريخ الغياب <span className="text-rose-500">*</span>
                 </label>
@@ -806,17 +806,17 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                     aria-invalid={!!errors.date}
                     aria-describedby={errors.date ? `${formId}-date-error` : undefined}
                     className={cn(
-                      "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-2xs",
+                      "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-2xs",
                       errors.date
-                        ? "border-rose-400 focus:ring-rose-200"
-                        : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                        ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
+                        : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
                     )}
                   />
                 </div>
                 {errors.date && (
                   <p
                     id={`${formId}-date-error`}
-                    className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1"
+                    className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1"
                   >
                     <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                     <span>{errors.date}</span>
@@ -824,14 +824,14 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 )}
               </div>
             ) : (
-              <div className="space-y-3 p-4 rounded-xl bg-teal-50/50 border border-teal-100 max-w-2xl">
+              <div className="space-y-3 p-4 rounded-xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-800/60 max-w-2xl">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-teal-900 flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-[#137a85]" />
+                  <span className="text-xs font-bold text-teal-900 dark:text-teal-200 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                     <span>تحديد فترة الغياب الممتدة</span>
                   </span>
                   {calculatedDays > 0 && (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#137a85] text-white shadow-2xs">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#137a85] dark:bg-teal-600 text-white shadow-2xs">
                       <span>المدة:</span>
                       <span>{daysLabel}</span>
                     </span>
@@ -841,7 +841,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`${formId}-start-date`}
-                      className="block text-xs font-bold text-slate-700"
+                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                     >
                       من تاريخ (بداية الغياب) <span className="text-rose-500">*</span>
                     </label>
@@ -863,15 +863,15 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                           setErrors((prev) => ({ ...prev, date: "" }));
                         }}
                         className={cn(
-                          "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-2xs",
+                          "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-2xs",
                           errors.date
-                            ? "border-rose-400 focus:ring-rose-200"
-                            : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                            ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
+                            : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
                         )}
                       />
                     </div>
                     {errors.date && (
-                      <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                      <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                         <span>{errors.date}</span>
                       </p>
@@ -881,7 +881,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`${formId}-end-date`}
-                      className="block text-xs font-bold text-slate-700"
+                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                     >
                       إلى تاريخ (نهاية الغياب) <span className="text-rose-500">*</span>
                     </label>
@@ -901,15 +901,15 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                           setErrors((prev) => ({ ...prev, endDate: "" }));
                         }}
                         className={cn(
-                          "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 transition-all shadow-2xs",
+                          "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-2xs",
                           errors.endDate
-                            ? "border-rose-400 focus:ring-rose-200"
-                            : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                            ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
+                            : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
                         )}
                       />
                     </div>
                     {errors.endDate && (
-                      <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                      <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                         <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                         <span>{errors.endDate}</span>
                       </p>
@@ -921,7 +921,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
 
             {/* Absence Type Cards */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 نوع الغياب <span className="text-rose-500">*</span>
               </label>
 
@@ -939,10 +939,10 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                         setErrors((prev) => ({ ...prev, type: "" }));
                       }}
                       className={cn(
-                        "p-3.5 rounded-xl border text-right transition-all flex flex-col justify-between gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]",
+                        "p-3.5 rounded-xl border text-right transition-all flex flex-col justify-between gap-2 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] dark:focus-visible:ring-teal-400",
                         isSelected
-                          ? "bg-teal-50/80 border-[#137a85] ring-2 ring-[#137a85]/20 shadow-2xs"
-                          : "bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60"
+                          ? "bg-teal-50/80 dark:bg-teal-950/50 border-[#137a85] dark:border-teal-400 ring-2 ring-[#137a85]/20 dark:ring-teal-400/20 shadow-2xs"
+                          : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50/60 dark:hover:bg-slate-750"
                       )}
                     >
                       <div className="flex items-center justify-between w-full">
@@ -950,8 +950,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                           className={cn(
                             "w-8 h-8 rounded-lg flex items-center justify-center transition-colors",
                             isSelected
-                              ? "bg-[#137a85] text-white"
-                              : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+                              ? "bg-[#137a85] dark:bg-teal-600 text-white"
+                              : "bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 group-hover:bg-slate-200 dark:group-hover:bg-slate-600"
                           )}
                         >
                           <Icon className="w-4 h-4" />
@@ -961,8 +961,8 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                           className={cn(
                             "w-4 h-4 rounded-full border flex items-center justify-center transition-all",
                             isSelected
-                              ? "border-[#137a85] bg-[#137a85] text-white"
-                              : "border-slate-300 bg-white"
+                              ? "border-[#137a85] dark:border-teal-400 bg-[#137a85] dark:bg-teal-500 text-white"
+                              : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
                           )}
                         >
                           {isSelected && <Check className="w-2.5 h-2.5" />}
@@ -973,12 +973,12 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                         <span
                           className={cn(
                             "block text-xs md:text-sm font-bold",
-                            isSelected ? "text-[#137a85]" : "text-slate-800"
+                            isSelected ? "text-[#137a85] dark:text-teal-400" : "text-slate-800 dark:text-slate-200"
                           )}
                         >
                           {item.label}
                         </span>
-                        <span className="block text-[11px] text-slate-400 mt-0.5 leading-tight">
+                        <span className="block text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 leading-tight">
                           {item.description}
                         </span>
                       </div>
@@ -988,7 +988,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               </div>
 
               {errors.type && (
-                <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+                <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{errors.type}</span>
                 </p>
@@ -1000,11 +1000,11 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor={`${formId}-reason`}
-                  className="block text-xs font-bold text-slate-700"
+                  className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                 >
                   سبب الغياب (مطلوب) <span className="text-rose-500">*</span>
                 </label>
-                <span className="text-[11px] text-slate-400">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500">
                   {reason.length}/200 حرف
                 </span>
               </div>
@@ -1021,16 +1021,16 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 aria-describedby={errors.reason ? `${formId}-reason-error` : undefined}
                 placeholder="اكتبي سبب الغياب الموضح من المعلمة أو مسوغ الرصد الإداري..."
                 className={cn(
-                  "w-full p-3.5 min-h-[90px] rounded-xl border text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
+                  "w-full p-3.5 min-h-[90px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
                   errors.reason
-                    ? "border-rose-400 focus:ring-rose-200"
-                    : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                    ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
+                    : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
                 )}
               />
               {errors.reason && (
                 <p
                   id={`${formId}-reason-error`}
-                  className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1"
+                  className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1"
                 >
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{errors.reason}</span>
@@ -1042,7 +1042,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             <div className="space-y-1.5">
               <label
                 htmlFor={`${formId}-notes`}
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 ملاحظات إدارية إضافية (اختياري)
               </label>
@@ -1052,7 +1052,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="أي ملاحظات تخص الحصص البديلة، أو تنبيهات الإدارة المدرسية..."
-                className="w-full p-3.5 min-h-[70px] rounded-xl border border-slate-200 text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:border-[#137a85] focus:ring-[#137a85]/20 transition-all shadow-2xs resize-none"
+                className="w-full p-3.5 min-h-[70px] rounded-xl border border-slate-200 dark:border-slate-700 text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20 transition-all shadow-2xs resize-none"
               />
             </div>
           </motion.div>
@@ -1067,11 +1067,11 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             className="space-y-5"
           >
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
-                <Paperclip className="w-4 h-4 text-[#137a85]" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-1">
+                <Paperclip className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                 <span>الخطوة 3: المرفقات والتوثيق الطبي</span>
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 إرفاق التقارير الطبية أو إجازات منصة صحتي (اختياري ولكن يُنصح به لتوثيق العذر رسمياً)
               </p>
             </div>
@@ -1098,29 +1098,29 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   }
                 }}
                 className={cn(
-                  "border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]",
+                  "border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] dark:focus-visible:ring-teal-400",
                   errors.attachment
-                    ? "border-rose-300 bg-rose-50/40"
-                    : "border-slate-200 hover:border-[#137a85] bg-slate-50/50 hover:bg-teal-50/20"
+                    ? "border-rose-300 dark:border-rose-800 bg-rose-50/40 dark:bg-rose-950/20"
+                    : "border-slate-200 dark:border-slate-700 hover:border-[#137a85] dark:hover:border-teal-400 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-teal-50/20 dark:hover:bg-teal-950/20"
                 )}
               >
-                <div className="w-12 h-12 rounded-xl bg-white text-slate-500 group-hover:text-[#137a85] group-hover:scale-105 flex items-center justify-center shadow-2xs border border-slate-100 transition-all">
+                <div className="w-12 h-12 rounded-xl bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:text-[#137a85] dark:group-hover:text-teal-400 group-hover:scale-105 flex items-center justify-center shadow-2xs border border-slate-100 dark:border-slate-700 transition-all">
                   <Upload className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-800 group-hover:text-[#137a85] transition-colors">
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#137a85] dark:group-hover:text-teal-400 transition-colors">
                     انقري هنا لإرفاق تقرير طبي، إجازة صحتي، أو مستند عذر
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                     يدعم صور الجوال المباشرة ومستندات PDF حتى 3 ميغابايت • ضغط ذكي تلقائي
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl border border-teal-200 bg-teal-50/40 flex items-center justify-between gap-3 max-w-xl">
+              <div className="p-4 rounded-2xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/40 flex items-center justify-between gap-3 max-w-xl">
                 <div className="flex items-center gap-3 min-w-0">
                   {attachmentPreview ? (
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-teal-300 shrink-0 bg-white shadow-2xs">
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-teal-300 dark:border-teal-700 shrink-0 bg-white dark:bg-slate-800 shadow-2xs">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={attachmentPreview}
@@ -1129,20 +1129,20 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                       />
                     </div>
                   ) : (
-                    <div className="w-14 h-14 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 font-bold text-xs border border-rose-200">
+                    <div className="w-14 h-14 rounded-xl bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0 font-bold text-xs border border-rose-200 dark:border-rose-800">
                       PDF
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate" title={attachmentFile.name}>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={attachmentFile.name}>
                       {attachmentFile.name}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[11px] font-mono text-slate-500">
+                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                         {(attachmentFile.size / 1024).toFixed(0)} كيلوبايت
                       </span>
                       {compressionRatio !== null && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full">
                           <Sparkles className="w-3 h-3" />
                           <span>وفرت {compressionRatio}%</span>
                         </span>
@@ -1157,7 +1157,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                       href={attachmentPreview}
                       target="_blank"
                       rel="noreferrer"
-                      className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
+                      className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors"
                       title="معاينة المرفق بالحجم الكامل"
                       aria-label="معاينة المرفق بالحجم الكامل"
                     >
@@ -1167,7 +1167,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   <button
                     type="button"
                     onClick={removeSelectedFile}
-                    className="p-2 rounded-xl bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 transition-colors cursor-pointer"
+                    className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
                     title="حذف هذا المرفق"
                     aria-label="حذف هذا المرفق"
                   >
@@ -1178,14 +1178,14 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             )}
 
             {isCompressing && (
-              <div className="flex items-center gap-2 text-xs text-teal-700 font-semibold px-1">
+              <div className="flex items-center gap-2 text-xs text-teal-700 dark:text-teal-300 font-semibold px-1">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 <span>جاري معالجة وتحسين جودة المستند المرفق...</span>
               </div>
             )}
 
             {errors.attachment && (
-              <p className="text-[11px] font-semibold text-rose-600 flex items-center gap-1 mt-1">
+              <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{errors.attachment}</span>
               </p>
@@ -1202,83 +1202,83 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
             className="space-y-5"
           >
             <div>
-              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-1">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>الخطوة 4: مراجعة واعتماد مساءلة الغياب</span>
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 يرجى التأكد من صحة البيانات المسجلة قبل الاعتماد الرسمي في سجلات المدرسة
               </p>
             </div>
 
             {/* Institutional Summary Sheet */}
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-slate-200/80">
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200/80 dark:border-slate-800 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
                 <div>
-                  <span className="text-[11px] text-slate-400 block mb-0.5">المعلمة المعنية</span>
-                  <p className="text-sm font-bold text-slate-900">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-0.5">المعلمة المعنية</span>
+                  <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                     {selectedTeacher?.fullName || selectedTeacher?.name || "—"}
                   </p>
-                  <p className="text-xs text-slate-500 font-mono mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-0.5">
                     السجل المدني: {selectedTeacher?.nationalId || "—"}
                   </p>
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-slate-400 block mb-0.5">التخصص والمسمى</span>
-                  <p className="text-sm font-bold text-slate-800">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-0.5">التخصص والمسمى</span>
+                  <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
                     {selectedTeacher?.specialty || selectedTeacher?.teachingField || "عام"}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     الحالة الوظيفية: {selectedTeacher?.employmentStatus || "دائم"}
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200/80">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
                 <div>
-                  <span className="text-[11px] text-slate-400 block mb-0.5">فترة الغياب</span>
-                  <p className="text-xs font-bold text-slate-900 font-mono">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-0.5">فترة الغياب</span>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100 font-mono">
                     {durationMode === "single"
                       ? absenceDate
                       : `من ${absenceDate} إلى ${absenceEndDate}`}
                   </p>
-                  <span className="inline-block mt-1 text-[11px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200">
+                  <span className="inline-block mt-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
                     {daysLabel}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-slate-400 block mb-0.5">نوع الغياب</span>
-                  <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] border border-teal-200">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-0.5">نوع الغياب</span>
+                  <span className="inline-block px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200 dark:border-teal-800">
                     {absenceType || "—"}
                   </span>
                 </div>
 
                 <div>
-                  <span className="text-[11px] text-slate-400 block mb-0.5">حالة المرفقات</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-0.5">حالة المرفقات</span>
                   {attachmentFile ? (
-                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
                       <Check className="w-3.5 h-3.5" />
                       <span>مرفق: {attachmentFile.name}</span>
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-400">بدون مرفقات</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">بدون مرفقات</span>
                   )}
                 </div>
               </div>
 
               <div>
-                <span className="text-[11px] text-slate-400 block mb-1">سبب ومسوغ الغياب</span>
-                <p className="text-xs text-slate-800 bg-white p-3 rounded-xl border border-slate-200">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-1">سبب ومسوغ الغياب</span>
+                <p className="text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
                   {reason || "—"}
                 </p>
               </div>
 
               {notes && (
                 <div>
-                  <span className="text-[11px] text-slate-400 block mb-1">ملاحظات إضافية</span>
-                  <p className="text-xs text-slate-600 bg-white p-2.5 rounded-xl border border-slate-200">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-1">ملاحظات إضافية</span>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
                     {notes}
                   </p>
                 </div>
@@ -1288,7 +1288,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
         )}
 
         {/* Wizard Navigation & Action Controls */}
-        <div className="pt-4 border-t border-slate-100 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-3">
           {/* Previous / Reset Button */}
           <div className="w-full sm:w-auto flex items-center gap-2">
             {currentStep > 1 ? (
@@ -1296,7 +1296,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 type="button"
                 onClick={handlePrevStep}
                 disabled={isSubmitting || isExportingDirect}
-                className="w-full sm:w-auto min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
                 <span>الخطوة السابقة</span>
@@ -1306,7 +1306,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                 type="button"
                 onClick={handleReset}
                 disabled={isSubmitting || isExportingDirect}
-                className="w-full sm:w-auto min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
                 <span>تفريغ الحقول</span>
@@ -1320,7 +1320,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto min-h-[46px] px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-[#137a85] dark:bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span className="whitespace-nowrap">متابعة للخطوة التالية</span>
                 <ChevronLeft className="w-4 h-4 shrink-0" />
@@ -1332,12 +1332,12 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   type="button"
                   onClick={handleSaveAndExportPdf}
                   disabled={isSubmitting || isExportingDirect}
-                  className="w-full sm:w-auto min-h-[46px] px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-teal-100 border border-teal-300 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="w-full sm:w-auto min-h-[46px] px-5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/60 border border-teal-300 dark:border-teal-700 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   {isExportingDirect ? (
-                    <Loader2 className="w-4 h-4 animate-spin text-[#137a85] shrink-0" />
+                    <Loader2 className="w-4 h-4 animate-spin text-[#137a85] dark:text-teal-400 shrink-0" />
                   ) : (
-                    <FileDown className="w-4 h-4 text-[#137a85] shrink-0" />
+                    <FileDown className="w-4 h-4 text-[#137a85] dark:text-teal-400 shrink-0" />
                   )}
                   <span className="whitespace-nowrap">{isExportingDirect ? "جاري الحفظ والتصدير..." : "حفظ وتصدير PDF"}</span>
                 </motion.button>
@@ -1347,7 +1347,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
                   type="button"
                   onClick={() => handleSubmit()}
                   disabled={isSubmitting || isExportingDirect}
-                  className="w-full sm:w-auto min-h-[46px] px-7 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+                  className="w-full sm:w-auto min-h-[46px] px-7 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap bg-[#137a85] dark:bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
                 >
                   <Save className="w-4 h-4 text-teal-100 shrink-0" />
                   <span className="whitespace-nowrap">{isSubmitting ? "جاري الحفظ..." : "اعتماد وحفظ المساءلة"}</span>

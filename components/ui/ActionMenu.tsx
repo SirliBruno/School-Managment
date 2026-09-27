@@ -129,10 +129,10 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
   }, [isOpen]);
 
   const variantTextClasses: Record<string, string> = {
-    default: "text-slate-700 hover:text-slate-900 hover:bg-slate-100/90",
-    danger: "text-rose-600 hover:text-rose-700 hover:bg-rose-50",
-    success: "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50",
-    warning: "text-amber-700 hover:text-amber-800 hover:bg-amber-50",
+    default: "text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/90 dark:hover:bg-slate-800",
+    danger: "text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-950/50",
+    success: "text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50",
+    warning: "text-amber-700 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/50",
   };
 
   return (
@@ -148,8 +148,8 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
         aria-expanded={isOpen}
         aria-label={triggerLabel}
         className={cn(
-          "w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/50",
-          isOpen && "bg-slate-100 text-slate-900 border-slate-200 shadow-2xs"
+          "w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 transition-all duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/50",
+          isOpen && "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-slate-200 dark:border-slate-700 shadow-2xs"
         )}
       >
         <MoreVertical className="w-4 h-4" />
@@ -190,11 +190,11 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({
                     left: `${menuCoords.left}px`,
                     width: "220px",
                   }}
-                  className="z-[9999] rounded-2xl bg-white/98 backdrop-blur-md border border-slate-200/90 shadow-2xl p-1.5 focus:outline-none text-right font-sans select-none"
+                  className="z-[9999] rounded-2xl bg-white/98 dark:bg-slate-900/98 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 shadow-2xl p-1.5 focus:outline-none text-right font-sans select-none"
                 >
                   {items.map((item) => (
                     <React.Fragment key={item.id}>
-                      {item.dividerBefore && <div className="my-1 border-t border-slate-100" />}
+                      {item.dividerBefore && <div className="my-1 border-t border-slate-100 dark:border-slate-800" />}
                       <button
                         type="button"
                         role="menuitem"

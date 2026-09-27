@@ -361,14 +361,14 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ type: "spring", damping: 26, stiffness: 320 }}
-          className="relative bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 overflow-hidden z-10"
+          className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10"
         >
           {/* Modal Header */}
-          <div className="p-6 border-b border-slate-100 bg-slate-50/80 flex items-start justify-between gap-4">
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className="w-14 h-14 rounded-2xl bg-[#137a85] text-white flex items-center justify-center font-bold text-xl shadow-md ring-4 ring-teal-50 shrink-0 mt-0.5"
+                className="w-14 h-14 rounded-2xl bg-[#137a85] text-white flex items-center justify-center font-bold text-xl shadow-md ring-4 ring-teal-50 dark:ring-teal-950/60 shrink-0 mt-0.5"
               >
                 {(currentTeacher.fullName || currentTeacher.name || "م").charAt(0)}
               </motion.div>
@@ -376,7 +376,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 <div className="flex flex-wrap items-center gap-2">
                   <h2
                     id="teacher-profile-title"
-                    className="text-lg md:text-xl font-bold text-slate-900"
+                    className="text-lg md:text-xl font-bold text-slate-900 dark:text-slate-100"
                   >
                     {currentTeacher.fullName || currentTeacher.name}
                   </h2>
@@ -384,40 +384,40 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     className={cn(
                       "px-2.5 py-0.5 rounded-full text-xs font-bold border",
                       currentTeacher.employmentStatus === "عقد"
-                        ? "bg-amber-50 text-amber-800 border-amber-300"
-                        : "bg-emerald-50 text-emerald-800 border-emerald-300"
+                        ? "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800"
+                        : "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
                     )}
                   >
                     {currentTeacher.employmentStatus || "دائم"}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 font-medium">
+                <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 dark:text-slate-400 font-medium">
                   <span className="flex items-center gap-1 font-mono">
-                    <Briefcase className="w-3.5 h-3.5 text-slate-400" />
-                    <span>رقم الهوية: <strong className="text-slate-800">{currentTeacher.nationalId || currentTeacher.username || currentTeacher.jobNumber}</strong></span>
+                    <Briefcase className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                    <span>رقم الهوية: <strong className="text-slate-800 dark:text-slate-200">{currentTeacher.nationalId || currentTeacher.username || currentTeacher.jobNumber}</strong></span>
                   </span>
                   {currentTeacher.email && (
                     <>
-                      <span className="text-slate-300">•</span>
-                      <span className="font-mono text-slate-700">✉️ {currentTeacher.email}</span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <span className="font-mono text-slate-700 dark:text-slate-300">✉️ {currentTeacher.email}</span>
                     </>
                   )}
-                  <span className="text-slate-300">•</span>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
                   <span className="flex items-center gap-1">
-                    <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
-                    <span>التخصص: <strong className="text-slate-800">{currentTeacher.specialty || currentTeacher.teachingField || "عام"}</strong></span>
+                    <GraduationCap className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                    <span>التخصص: <strong className="text-slate-800 dark:text-slate-200">{currentTeacher.specialty || currentTeacher.teachingField || "عام"}</strong></span>
                   </span>
                   {currentTeacher.teachingField && currentTeacher.specialty?.trim().toLowerCase() !== currentTeacher.teachingField.trim().toLowerCase() && (
                     <>
-                      <span className="text-slate-300">•</span>
-                      <span>المجال: <strong className="text-slate-800">{currentTeacher.teachingField}</strong></span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                      <span>المجال: <strong className="text-slate-800 dark:text-slate-200">{currentTeacher.teachingField}</strong></span>
                     </>
                   )}
                   {currentTeacher.mobile && (
                     <>
-                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
                       <span className="flex items-center gap-1.5">
-                        <span dir="ltr" className="font-mono text-slate-800 font-bold">
+                        <span dir="ltr" className="font-mono text-slate-800 dark:text-slate-200 font-bold">
                           {formatSaudiMobileDisplay(currentTeacher.mobile)}
                         </span>
                         {normalizeSaudiMobile(currentTeacher.mobile) && (
@@ -425,7 +425,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                             href={`https://wa.me/${normalizeSaudiMobile(currentTeacher.mobile)}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1 rounded-md bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors inline-flex items-center justify-center shadow-2xs"
+                            className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-colors inline-flex items-center justify-center shadow-2xs"
                             title="مراسلة المعلمة عبر واتساب"
                           >
                             <MessageCircle className="w-3.5 h-3.5" />
@@ -443,7 +443,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               type="button"
               ref={closeButtonRef}
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 cursor-pointer"
               aria-label="إغلاق ملف المعلمة"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -459,24 +459,24 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               className={cn(
                 "mx-6 mt-4 p-3 rounded-xl border flex items-center justify-between text-xs",
                 feedback.type === "success"
-                  ? "bg-emerald-50 text-emerald-900 border-emerald-300"
-                  : "bg-rose-50 text-rose-900 border-rose-300"
+                  ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800"
+                  : "bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-800"
               )}
             >
               <div className="flex items-center gap-2">
                 {feedback.type === "success" ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-600" />
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                 )}
                 <span className="font-bold">{feedback.message}</span>
               </div>
               <button
                 type="button"
                 onClick={() => setFeedback(null)}
-                className="text-slate-400 hover:text-slate-600 p-0.5 cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
             </motion.div>
           )}
@@ -485,19 +485,19 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           <div className="p-6 overflow-y-auto space-y-6">
             {/* Proactive Delay Deduction Banner */}
             {teacherDelaySummary && teacherDelaySummary.status === "due_for_deduction" && (
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50 to-orange-50 border border-rose-200 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/50 dark:to-amber-950/50 border border-rose-200 dark:border-rose-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-sm">
                     <Zap className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-rose-950 flex items-center gap-2">
+                    <h4 className="text-xs font-bold text-rose-950 dark:text-rose-100 flex items-center gap-2">
                       <span>المعلمة مستحقة لقرار حسم مجموع ساعات (المادة 21)</span>
                       <span className="px-2 py-0.5 rounded-full text-2xs font-extrabold bg-rose-600 text-white">
                         {teacherDelaySummary.deductionDays} يوم حسم
                       </span>
                     </h4>
-                    <p className="text-xs text-rose-700 mt-0.5">
+                    <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
                       إجمالي ساعات التأخر غير المعذورة: {teacherDelaySummary.totalUnexcusedHours} ساعة ({teacherDelaySummary.totalUnexcusedMinutes} دقيقة)
                       {teacherDelaySummary.remainderMinutes > 0 && ` — ويتبقى ${teacherDelaySummary.remainderMinutes} دقيقة مرحلة`}.
                     </p>
@@ -516,71 +516,71 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 
             {/* Summary Cards */}
             <div>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">
+              <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
                 ملخص إحصائيات الغياب والانضباط المدرسي
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 {/* Total */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 shadow-sm"
+                  className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm"
                 >
-                  <span className="block text-[11px] font-medium text-slate-500 mb-1">
+                  <span className="block text-[11px] font-medium text-slate-500 dark:text-slate-400 mb-1">
                     إجمالي الغياب
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-slate-900 font-mono">
+                    <span className="text-2xl font-black text-slate-900 dark:text-slate-100 font-mono">
                       {teacherAbsences.length}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">يوم</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">يوم</span>
                   </div>
                 </motion.div>
 
                 {/* Sick */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/60 shadow-sm"
+                  className="p-3.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 shadow-sm"
                 >
-                  <span className="block text-[11px] font-medium text-blue-700 mb-1">
+                  <span className="block text-[11px] font-medium text-blue-700 dark:text-blue-300 mb-1">
                     إجازات مرضية
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-blue-800 font-mono">
+                    <span className="text-2xl font-black text-blue-800 dark:text-blue-200 font-mono">
                       {sickLeavesCount}
                     </span>
-                    <span className="text-[11px] text-blue-600/70 font-medium">يوم</span>
+                    <span className="text-[11px] text-blue-600/70 dark:text-blue-400 font-medium">يوم</span>
                   </div>
                 </motion.div>
 
                 {/* Emergency */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-rose-50/50 border border-rose-200/60 shadow-sm"
+                  className="p-3.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/40 border border-rose-200/60 dark:border-rose-800/60 shadow-sm"
                 >
-                  <span className="block text-[11px] font-medium text-rose-700 mb-1">
+                  <span className="block text-[11px] font-medium text-rose-700 dark:text-rose-300 mb-1">
                     غياب اضطراري
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-rose-800 font-mono">
+                    <span className="text-2xl font-black text-rose-800 dark:text-rose-200 font-mono">
                       {emergencyLeavesCount}
                     </span>
-                    <span className="text-[11px] text-rose-600/70 font-medium">يوم</span>
+                    <span className="text-[11px] text-rose-600/70 dark:text-rose-400 font-medium">يوم</span>
                   </div>
                 </motion.div>
 
                 {/* Companion / Other */}
                 <motion.div
                   whileHover={{ y: -2 }}
-                  className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-200/60 shadow-sm"
+                  className="p-3.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 shadow-sm"
                 >
-                  <span className="block text-[11px] font-medium text-purple-700 mb-1">
+                  <span className="block text-[11px] font-medium text-purple-700 dark:text-purple-300 mb-1">
                     مرافق وأخرى
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-purple-800 font-mono">
+                    <span className="text-2xl font-black text-purple-800 dark:text-purple-200 font-mono">
                       {companionLeavesCount + otherLeavesCount}
                     </span>
-                    <span className="text-[11px] text-purple-600/70 font-medium">يوم</span>
+                    <span className="text-[11px] text-purple-600/70 dark:text-purple-400 font-medium">يوم</span>
                   </div>
                 </motion.div>
 
@@ -591,18 +591,18 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   className={cn(
                     "p-3.5 rounded-xl border shadow-sm cursor-pointer transition-all",
                     activeHistoryTab === "delays"
-                      ? "bg-amber-50 border-amber-300 ring-2 ring-amber-400/20"
-                      : "bg-amber-50/50 border-amber-200/60 hover:bg-amber-50"
+                      ? "bg-amber-50 dark:bg-amber-950/60 border-amber-300 dark:border-amber-700 ring-2 ring-amber-400/20"
+                      : "bg-amber-50/50 dark:bg-amber-950/30 border-amber-200/60 dark:border-amber-800/60 hover:bg-amber-50 dark:hover:bg-amber-950/50"
                   )}
                 >
-                  <span className="block text-[11px] font-medium text-amber-800 mb-1">
+                  <span className="block text-[11px] font-medium text-amber-800 dark:text-amber-300 mb-1">
                     تنبيهات التأخر
                   </span>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black text-amber-900 font-mono">
+                    <span className="text-2xl font-black text-amber-900 dark:text-amber-200 font-mono">
                       {teacherDelayNotices.length}
                     </span>
-                    <span className="text-[11px] text-amber-700/70 font-medium">إشعار</span>
+                    <span className="text-[11px] text-amber-700/70 dark:text-amber-400 font-medium">إشعار</span>
                   </div>
                 </motion.div>
 
@@ -613,16 +613,16 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   className={cn(
                     "p-3.5 rounded-xl border shadow-sm cursor-pointer transition-all",
                     activeHistoryTab === "deductions"
-                      ? "bg-rose-50 border-rose-300 ring-2 ring-rose-400/20"
+                      ? "bg-rose-50 dark:bg-rose-950/60 border-rose-300 dark:border-rose-700 ring-2 ring-rose-400/20"
                       : teacherDelaySummary?.status === "due_for_deduction"
-                      ? "bg-rose-50/70 border-rose-200"
+                      ? "bg-rose-50/70 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800"
                       : teacherDelaySummary?.status === "warning"
-                      ? "bg-amber-50/60 border-amber-200"
-                      : "bg-slate-50 border-slate-200/80"
+                      ? "bg-amber-50/60 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800"
+                      : "bg-slate-50 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700"
                   )}
                 >
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-bold text-slate-700">
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">
                       التأخر غير المعذور
                     </span>
                     {teacherDelaySummary?.status === "due_for_deduction" ? (
@@ -634,12 +634,12 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     )}
                   </div>
                   <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black font-mono text-slate-900">
+                    <span className="text-2xl font-black font-mono text-slate-900 dark:text-slate-100">
                       {teacherDelaySummary?.totalUnexcusedHours || 0}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium">ساعة</span>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">ساعة</span>
                   </div>
-                  <span className="text-2xs text-slate-500 block mt-0.5 truncate">
+                  <span className="text-2xs text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
                     {teacherDelaySummary?.deductionDays
                       ? `${teacherDelaySummary.deductionDays} يوم حسم مستحق`
                       : "لا يوجد حسم مستحق"}
@@ -650,8 +650,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
 
             {/* History Section Tabs */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <button
                     type="button"
                     onClick={() => setActiveHistoryTab("absences")}
@@ -659,7 +659,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer",
                       activeHistoryTab === "absences"
                         ? "bg-[#137a85] text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     )}
                   >
                     مساءلات الغياب ({teacherAbsences.length})
@@ -672,7 +672,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
                       activeHistoryTab === "delays"
                         ? "bg-amber-600 text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     )}
                   >
                     <Clock className="w-3.5 h-3.5" />
@@ -686,7 +686,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
                       activeHistoryTab === "deductions"
                         ? "bg-rose-600 text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     )}
                   >
                     <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
@@ -700,7 +700,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
                       activeHistoryTab === "permissions"
                         ? "bg-[#137a85] text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     )}
                   >
                     <DoorOpen className="w-3.5 h-3.5 shrink-0" />
@@ -714,7 +714,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
                       activeHistoryTab === "reports"
                         ? "bg-indigo-600 text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     )}
                   >
                     <FileText className="w-3.5 h-3.5 shrink-0" />
@@ -722,7 +722,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   </button>
                 </div>
 
-                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 hidden sm:inline">
                   مرتبة من الأحدث إلى الأقدم
                 </span>
               </div>
@@ -731,22 +731,22 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               {activeHistoryTab === "absences" && (
                 <div>
                   {teacherAbsences.length === 0 ? (
-                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
-                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                    <div className="p-8 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center mx-auto">
                         <FileCheck className="w-5 h-5" aria-hidden="true" />
                       </div>
-                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                      <p className="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200">
                         سجل المعلمة منضبط بالكامل
                       </p>
-                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
                         لم يتم تسجيل أي استمارات مساءلة أو أيام غياب لهذه المعلمة حتى الآن.
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                          <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                             <tr>
                               <th scope="col" className="py-3 px-4">تاريخ الغياب</th>
                               <th scope="col" className="py-3 px-4">النوع</th>
@@ -755,7 +755,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                               <th scope="col" className="py-3 px-4 text-center">الإجراءات والاستمارة</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {teacherAbsences.map((rec) => {
                               const style =
                                 TYPE_BADGE_STYLES[rec.type] || TYPE_BADGE_STYLES["أخرى"];
@@ -764,11 +764,11 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                               return (
                                 <tr
                                   key={rec.id}
-                                  className="hover:bg-slate-50/80 transition-colors duration-150"
+                                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-150"
                                 >
-                                  <td className="py-3 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
+                                  <td className="py-3 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                                     <div className="flex items-center gap-1.5">
-                                      <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                      <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                                       <span>{rec.date}</span>
                                     </div>
                                   </td>
@@ -784,10 +784,10 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                       {rec.type}
                                     </span>
                                   </td>
-                                  <td className="py-3 px-4 text-slate-700 max-w-xs truncate font-medium">
+                                  <td className="py-3 px-4 text-slate-700 dark:text-slate-300 max-w-xs truncate font-medium">
                                     {rec.reason || "—"}
                                   </td>
-                                  <td className="py-3 px-4 text-slate-500 max-w-xs truncate">
+                                  <td className="py-3 px-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
                                     {rec.notes || "—"}
                                   </td>
                                   <td className="py-3 px-4 text-center whitespace-nowrap">
@@ -797,7 +797,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                         type="button"
                                         onClick={() => handleExportPdf(rec)}
                                         disabled={isExporting}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-[#137a85] dark:hover:text-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                         title="تصدير استمارة مساءلة الغياب (نموذج 20)"
                                       >
                                         {isExporting ? (
@@ -811,7 +811,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                         whileTap={{ scale: 0.95 }}
                                         type="button"
                                         onClick={() => setRecordToEdit(rec)}
-                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 transition-all cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-600 hover:text-white border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/60 dark:hover:bg-amber-600 dark:hover:text-white transition-all cursor-pointer"
                                         title="تعديل سجل الغياب"
                                       >
                                         <Pencil className="w-3.5 h-3.5" />
@@ -821,10 +821,10 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                         whileTap={{ scale: 0.95 }}
                                         type="button"
                                         onClick={() => setRecordToDelete(rec)}
-                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-rose-700 hover:bg-rose-50 border border-rose-200 dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
                                         title="حذف سجل الغياب"
                                       >
-                                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                        <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                                         <span>حذف</span>
                                       </motion.button>
                                     </div>
@@ -844,22 +844,22 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               {activeHistoryTab === "delays" && (
                 <div>
                   {teacherDelayNotices.length === 0 ? (
-                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
-                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                    <div className="p-8 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center mx-auto">
                         <Clock className="w-5 h-5" aria-hidden="true" />
                       </div>
-                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                      <p className="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200">
                         لا توجد تنبيهات تأخر أو انصراف
                       </p>
-                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
                         المعلمة ملتزمة بمواعيد الدوام الرسمي ولم يصدر بحقها أي تنبيه.
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                          <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                             <tr>
                               <th scope="col" className="py-3 px-4">رقم وتاريخ التنبيه</th>
                               <th scope="col" className="py-3 px-4">المخالفات المسجلة</th>
@@ -868,18 +868,18 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                               <th scope="col" className="py-3 px-4 text-center">الاستمارة</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {teacherDelayNotices.map((notice) => {
                               return (
                                 <tr
                                   key={notice.id}
-                                  className="hover:bg-slate-50/80 transition-colors duration-150"
+                                  className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-150"
                                 >
                                   <td className="py-3 px-4 whitespace-nowrap">
-                                    <div className="font-mono font-bold text-[#137a85]">
+                                    <div className="font-mono font-bold text-[#137a85] dark:text-teal-400">
                                       {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
                                     </div>
-                                    <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                                    <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
                                       {notice.noticeDate || notice.date}
                                     </div>
                                   </td>
@@ -887,47 +887,47 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                   <td className="py-3 px-4">
                                     <div className="flex flex-wrap gap-1">
                                       {notice.violationDelayStart && (
-                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 px-1.5 py-0.5 rounded">
                                           تأخر صباحي ({notice.delayStartTime})
                                         </span>
                                       )}
                                       {notice.violationAbsentDuring && (
-                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 px-1.5 py-0.5 rounded">
                                           عدم تواجد ({notice.absentFromTime} - {notice.absentToTime})
                                         </span>
                                       )}
                                       {notice.violationEarlyDeparture && (
-                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 px-1.5 py-0.5 rounded">
                                           انصراف مبكر ({notice.earlyDepartureTime})
                                         </span>
                                       )}
                                       {notice.violationLeftSchool && (
-                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+                                        <span className="text-[10px] bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 px-1.5 py-0.5 rounded">
                                           خروج وعودة
                                         </span>
                                       )}
                                     </div>
                                   </td>
 
-                                  <td className="py-3 px-4 max-w-xs truncate text-slate-700">
+                                  <td className="py-3 px-4 max-w-xs truncate text-slate-700 dark:text-slate-300">
                                     {notice.teacherReason || (
-                                      <span className="text-slate-400 italic">بانتظار الإفادة</span>
+                                      <span className="text-slate-400 dark:text-slate-500 italic">بانتظار الإفادة</span>
                                     )}
                                   </td>
 
                                   <td className="py-3 px-4 whitespace-nowrap">
                                     {notice.status === "pending_teacher" && (
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60">
                                         بانتظار المعلمة
                                       </span>
                                     )}
                                     {notice.status === "pending_director" && (
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60">
                                         بانتظار قرار المديرة
                                       </span>
                                     )}
                                     {notice.status === "completed" && (
-                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60">
                                         {notice.directorOpinion === "accepted"
                                           ? "مكتمل (قبول العذر)"
                                           : "مكتمل (تقرر الحسم)"}
@@ -940,7 +940,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                       whileTap={{ scale: 0.95 }}
                                       type="button"
                                       onClick={() => handleExportDelayPdf(notice)}
-                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-[#137a85] dark:hover:text-white transition-all cursor-pointer"
                                       title="طباعة إشعار التنبيه الرسمي (PDF)"
                                     >
                                       <FileDown className="w-3.5 h-3.5" />
@@ -962,15 +962,15 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               {activeHistoryTab === "deductions" && (
                 <div>
                   {teacherDeductions.length === 0 ? (
-                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-3">
-                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                    <div className="p-8 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-3">
+                      <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center mx-auto">
                         <FileCheck className="w-5 h-5" aria-hidden="true" />
                       </div>
                       <div>
-                        <p className="text-xs md:text-sm font-bold text-slate-700">
+                        <p className="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200">
                           لا توجد أي قرارات حسم ساعات صادرة
                         </p>
-                        <p className="text-[11px] text-slate-400 max-w-sm mx-auto mt-0.5">
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto mt-0.5">
                           لم يصدر بحق المعلمة أي قرار حسم لساعات التأخر أو الخروج المبكر حتى الآن.
                         </p>
                       </div>
@@ -986,10 +986,10 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                          <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                             <tr>
                               <th scope="col" className="py-3 px-4">رقم القرار</th>
                               <th scope="col" className="py-3 px-4">تاريخ القرار</th>
@@ -999,28 +999,28 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                               <th scope="col" className="py-3 px-4 text-center">القرار الرسمي (نموذج 19)</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {teacherDeductions.map((dec) => (
-                              <tr key={dec.id} className="hover:bg-slate-50/60 transition-colors">
-                                <td className="py-3.5 px-4 font-mono font-bold text-slate-900">
+                              <tr key={dec.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/50 transition-colors">
+                                <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
                                   {dec.decisionNumber}
                                 </td>
-                                <td className="py-3.5 px-4 text-slate-600">{dec.decisionDate}</td>
-                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800">
+                                <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{dec.decisionDate}</td>
+                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200">
                                   {dec.delayHours} س
                                 </td>
                                 <td className="py-3.5 px-4">
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/60">
                                     {dec.deductionDays} يوم
                                   </span>
                                 </td>
-                                <td className="py-3.5 px-4 text-slate-600">
+                                <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">
                                   {Array.isArray(dec.settledNoticeIds) && dec.settledNoticeIds.length > 0 ? (
-                                    <span className="font-semibold text-teal-800">
+                                    <span className="font-semibold text-teal-800 dark:text-teal-400">
                                       {dec.settledNoticeIds.length} تنبيه
                                     </span>
                                   ) : (
-                                    <span className="text-slate-400">إدخال يدوي</span>
+                                    <span className="text-slate-400 dark:text-slate-500">إدخال يدوي</span>
                                   )}
                                 </td>
                                 <td className="py-3.5 px-4 text-center">
@@ -1042,7 +1042,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                         decisionDate: dec.decisionDate,
                                       })
                                     }
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-[#137a85] dark:hover:text-white transition-all cursor-pointer"
                                     title="طباعة قرار الحسم الرسمي (نموذج 19)"
                                   >
                                     <FileDown className="w-3.5 h-3.5" />
@@ -1063,22 +1063,22 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               {activeHistoryTab === "permissions" && (
                 <div>
                   {teacherPermissions.length === 0 ? (
-                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
-                      <div className="w-10 h-10 rounded-full bg-teal-50 text-[#137a85] flex items-center justify-center mx-auto">
+                    <div className="p-8 rounded-xl bg-slate-50/80 dark:bg-slate-850 border border-dashed border-slate-200 dark:border-slate-800 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-teal-50 text-[#137a85] dark:bg-teal-950/40 dark:text-teal-400 flex items-center justify-center mx-auto">
                         <DoorOpen className="w-5 h-5" aria-hidden="true" />
                       </div>
-                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                      <p className="text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200">
                         لا توجد أي استئذانات مسجلة
                       </p>
-                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                      <p className="text-[11px] text-slate-400 dark:text-slate-500 max-w-sm mx-auto">
                         لم تقم المعلمة بأي عملية خروج أثناء الدوام الرسمي مسجلة في المنصة.
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                       <div className="overflow-x-auto">
                         <table className="w-full text-right text-xs">
-                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                          <thead className="bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
                             <tr>
                               <th scope="col" className="py-3 px-4">التاريخ</th>
                               <th scope="col" className="py-3 px-4">وقت الخروج</th>
@@ -1088,25 +1088,25 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                               <th scope="col" className="py-3 px-4 text-center">الإجراءات</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-slate-100">
+                          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {teacherPermissions.map((perm) => (
                               <tr
                                 key={perm.id}
-                                className="hover:bg-slate-50/80 transition-colors duration-150"
+                                className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-150"
                               >
-                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
+                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
                                   {perm.permissionDate}
                                 </td>
-                                <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
+                                <td className="py-3.5 px-4 font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                   {perm.exitTime}
                                 </td>
-                                <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
+                                <td className="py-3.5 px-4 font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                   {perm.returnTime}
                                 </td>
-                                <td className="py-3.5 px-4 font-mono font-bold text-teal-800 whitespace-nowrap">
+                                <td className="py-3.5 px-4 font-mono font-bold text-teal-800 dark:text-teal-400 whitespace-nowrap">
                                   {perm.durationMinutes} دقيقة
                                 </td>
-                                <td className="py-3.5 px-4 text-slate-700 max-w-xs truncate" title={perm.reason}>
+                                <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300 max-w-xs truncate" title={perm.reason}>
                                   {perm.reason}
                                 </td>
                                 <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -1118,7 +1118,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                         teacher: currentTeacher,
                                       })
                                     }
-                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-[#137a85] dark:hover:text-white transition-all cursor-pointer"
                                     title="طباعة استمارة الاستئذان الرسمية"
                                   >
                                     <FileDown className="w-3.5 h-3.5 shrink-0" />
@@ -1140,27 +1140,27 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Report 1: Comprehensive Record */}
-                    <div className="p-4 rounded-2xl border border-indigo-200/80 bg-indigo-50/40 hover:bg-indigo-50/70 transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                    <div className="p-4 rounded-2xl border border-indigo-200/80 bg-indigo-50/40 hover:bg-indigo-50/70 dark:border-indigo-900/60 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 transition-all flex flex-col justify-between gap-3 shadow-2xs">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-400 flex items-center justify-center">
                             <FileText className="w-4 h-4" />
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-slate-900">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
                               السجل الإداري التراكمي الشامل
                             </h4>
-                            <span className="text-[10px] text-indigo-700 font-semibold">
+                            <span className="text-[10px] text-indigo-700 dark:text-indigo-400 font-semibold">
                               غيابات + تأخرات + قرارات الحسم
                             </span>
                           </div>
                         </div>
-                        <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
                           حصر إداري رسمي شامل يوثق مسيرة المعلمة خلال العام الدراسي مع ملخص أيام الغياب وساعات التأخر التراكمية.
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2 border-t border-indigo-100">
+                      <div className="flex items-center gap-2 pt-2 border-t border-indigo-100 dark:border-indigo-900/40">
                         <button
                           type="button"
                           onClick={handlePrintTeacherDetailedRecord}
@@ -1172,7 +1172,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                         <Link
                           href={`/reports?reportType=teacher_detailed_record&teacherId=${currentTeacher.id}`}
                           onClick={onClose}
-                          className="p-2 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-100/50 text-indigo-700 transition-colors inline-flex items-center justify-center cursor-pointer"
+                          className="p-2 rounded-xl border border-indigo-200 bg-white hover:bg-indigo-100/50 text-indigo-700 dark:border-indigo-800 dark:bg-slate-900 dark:hover:bg-indigo-950/50 dark:text-indigo-400 transition-colors inline-flex items-center justify-center cursor-pointer"
                           title="عرض وتخصيص في مركز التقارير"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -1181,27 +1181,27 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     </div>
 
                     {/* Report 2: Permissions Record */}
-                    <div className="p-4 rounded-2xl border border-teal-200/80 bg-teal-50/40 hover:bg-teal-50/70 transition-all flex flex-col justify-between gap-3 shadow-2xs">
+                    <div className="p-4 rounded-2xl border border-teal-200/80 bg-teal-50/40 hover:bg-teal-50/70 dark:border-teal-900/60 dark:bg-teal-950/20 dark:hover:bg-teal-950/40 transition-all flex flex-col justify-between gap-3 shadow-2xs">
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-teal-100 text-[#137a85] flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-xl bg-teal-100 text-[#137a85] dark:bg-teal-900/50 dark:text-teal-400 flex items-center justify-center">
                             <DoorOpen className="w-4 h-4" />
                           </div>
                           <div>
-                            <h4 className="text-xs font-bold text-slate-900">
+                            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
                               سجل حصر استئذان الموظفة
                             </h4>
-                            <span className="text-[10px] text-teal-700 font-semibold">
+                            <span className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold">
                               إجمالي {teacherPermissions.length} استئذانات ({totalPermissionMinutes} دقيقة)
                             </span>
                           </div>
                         </div>
-                        <p className="text-[11px] text-slate-500 leading-relaxed pt-1">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed pt-1">
                           توثيق معتمد لجميع حالات الخروج والعودة أثناء الدوام مع تفاصيل المبررات والمدد الزمنية المعتمدة.
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 pt-2 border-t border-teal-100">
+                      <div className="flex items-center gap-2 pt-2 border-t border-teal-100 dark:border-teal-900/40">
                         <button
                           type="button"
                           onClick={handlePrintTeacherPermissionsRecord}
@@ -1213,7 +1213,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                         <Link
                           href={`/reports?reportType=teacher_permissions_record&teacherId=${currentTeacher.id}`}
                           onClick={onClose}
-                          className="p-2 rounded-xl border border-teal-200 bg-white hover:bg-teal-100/50 text-[#137a85] transition-colors inline-flex items-center justify-center cursor-pointer"
+                          className="p-2 rounded-xl border border-teal-200 bg-white hover:bg-teal-100/50 text-[#137a85] dark:border-teal-800 dark:bg-slate-900 dark:hover:bg-teal-950/50 dark:text-teal-400 transition-colors inline-flex items-center justify-center cursor-pointer"
                           title="عرض وتخصيص في مركز التقارير"
                         >
                           <ExternalLink className="w-3.5 h-3.5" />
@@ -1227,7 +1227,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           </div>
 
           {/* Modal Footer */}
-          <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
             <div className="flex items-center gap-2 w-full sm:w-auto">
               {teacherDelaySummary && teacherDelaySummary.status === "due_for_deduction" && (
                 <Link
@@ -1242,9 +1242,9 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               <Link
                 href="/procedures/delay-notice"
                 onClick={onClose}
-                className="px-3 py-1.5 rounded-xl font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 transition-colors flex items-center gap-1 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800/60 dark:hover:bg-teal-900/50 transition-colors flex items-center gap-1 cursor-pointer"
               >
-                <Clock className="w-3.5 h-3.5 text-teal-700" />
+                <Clock className="w-3.5 h-3.5 text-teal-700 dark:text-teal-400" />
                 <span>تنبيه تأخر</span>
               </Link>
             </div>
@@ -1253,7 +1253,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               whileTap={{ scale: 0.95 }}
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-all cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2 rounded-xl font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 dark:hover:bg-slate-750 transition-all cursor-pointer"
             >
               إغلاق
             </motion.button>

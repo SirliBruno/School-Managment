@@ -64,24 +64,24 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.15 }}
-        className="bg-white/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-slate-200 text-right min-w-[140px] text-xs space-y-1"
+        className="bg-white/95 dark:bg-slate-850/95 backdrop-blur-sm p-3 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 text-right min-w-[140px] text-xs space-y-1"
       >
-        <div className="flex items-center gap-2 font-bold text-slate-800">
+        <div className="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-100">
           <span
             className="w-2.5 h-2.5 rounded-full shrink-0"
             style={{ backgroundColor: data.payload.fill || "#137a85" }}
           />
           <span>{data.name || data.payload.dayName}</span>
         </div>
-        <p className="text-slate-500 font-mono">
+        <p className="text-slate-500 dark:text-slate-400 font-mono">
           العدد:{" "}
-          <strong className="text-slate-900 font-bold text-sm">
+          <strong className="text-slate-900 dark:text-slate-100 font-bold text-sm">
             {data.value}
           </strong>{" "}
           حالة
         </p>
         {data.payload.date && (
-          <p className="text-[10px] text-slate-400 font-mono">{data.payload.date}</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{data.payload.date}</p>
         )}
       </motion.div>
     );
@@ -136,35 +136,35 @@ export const AbsenceCharts: React.FC = () => {
   if (!mounted || isLoading) {
     return (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-80 flex flex-col justify-between animate-pulse">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm h-80 flex flex-col justify-between animate-pulse">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-200" />
+            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800" />
             <div className="space-y-2">
-              <div className="w-32 h-4 bg-slate-200 rounded" />
-              <div className="w-48 h-3 bg-slate-100 rounded" />
+              <div className="w-32 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="w-48 h-3 bg-slate-100 dark:bg-slate-800/60 rounded" />
             </div>
           </div>
-          <div className="h-44 w-44 rounded-full border-8 border-slate-100 mx-auto" />
-          <div className="w-full h-4 bg-slate-100 rounded" />
+          <div className="h-44 w-44 rounded-full border-8 border-slate-100 dark:border-slate-800 mx-auto" />
+          <div className="w-full h-4 bg-slate-100 dark:bg-slate-800/60 rounded" />
         </div>
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm h-80 flex flex-col justify-between animate-pulse">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm h-80 flex flex-col justify-between animate-pulse">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-slate-200" />
+            <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800" />
             <div className="space-y-2">
-              <div className="w-32 h-4 bg-slate-200 rounded" />
-              <div className="w-48 h-3 bg-slate-100 rounded" />
+              <div className="w-32 h-4 bg-slate-200 dark:bg-slate-800 rounded" />
+              <div className="w-48 h-3 bg-slate-100 dark:bg-slate-800/60 rounded" />
             </div>
           </div>
           <div className="h-40 w-full flex items-end justify-between gap-2 px-6">
-            <div className="w-8 h-16 bg-slate-200 rounded-t" />
-            <div className="w-8 h-28 bg-slate-200 rounded-t" />
-            <div className="w-8 h-20 bg-slate-200 rounded-t" />
-            <div className="w-8 h-32 bg-slate-200 rounded-t" />
-            <div className="w-8 h-14 bg-slate-200 rounded-t" />
-            <div className="w-8 h-24 bg-slate-200 rounded-t" />
-            <div className="w-8 h-36 bg-slate-200 rounded-t" />
+            <div className="w-8 h-16 bg-slate-200 dark:bg-slate-800 rounded-t" />
+            <div className="w-8 h-28 bg-slate-200 dark:bg-slate-800 rounded-t" />
+            <div className="w-8 h-20 bg-slate-200 dark:bg-slate-800 rounded-t" />
+            <div className="w-8 h-32 bg-slate-200 dark:bg-slate-800 rounded-t" />
+            <div className="w-8 h-14 bg-slate-200 dark:bg-slate-800 rounded-t" />
+            <div className="w-8 h-24 bg-slate-200 dark:bg-slate-800 rounded-t" />
+            <div className="w-8 h-36 bg-slate-200 dark:bg-slate-800 rounded-t" />
           </div>
-          <div className="w-full h-4 bg-slate-100 rounded" />
+          <div className="w-full h-4 bg-slate-100 dark:bg-slate-800/60 rounded" />
         </div>
       </div>
     );
@@ -179,36 +179,36 @@ export const AbsenceCharts: React.FC = () => {
     >
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 1. Donut Chart: أنواع الغياب */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400 flex items-center justify-center shadow-sm">
                 <PieIcon className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
-                <h3 className="text-sm md:text-base font-bold text-slate-900">
+                <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-slate-100">
                   توزيع حالات الغياب حسب النوع
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   تصنيف الغياب المسجل (اضطراري، مرضي، مرافق، أخرى)
                 </p>
               </div>
             </div>
 
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200/60">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700">
               {totalAbsencesCount} حالة مسجلة
             </span>
           </div>
 
           {!hasAbsences ? (
-            <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+            <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3 bg-slate-50/50 dark:bg-slate-850/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center">
                 <HelpCircle className="w-6 h-6" aria-hidden="true" />
               </div>
-              <p className="text-sm font-bold text-slate-700">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 لا توجد حالات غياب مسجلة حتى الآن
               </p>
-              <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-xs leading-relaxed">
                 ستظهر الرسوم البيانية لتوزيع أنواع الغياب تلقائياً فور تسجيل أول
                 مساءلة غياب في النظام.
               </p>
@@ -232,8 +232,8 @@ export const AbsenceCharts: React.FC = () => {
                       <Cell
                         key={`cell-${index}`}
                         fill={entry.color}
-                        stroke="#ffffff"
-                        strokeWidth={2}
+                        stroke="transparent"
+                        strokeWidth={0}
                       />
                     ))}
                     <Label
@@ -249,14 +249,14 @@ export const AbsenceCharts: React.FC = () => {
                               <tspan
                                 x={viewBox.cx}
                                 y={(viewBox.cy || 0) - 4}
-                                className="fill-slate-900 text-3xl font-black font-mono"
+                                className="fill-slate-900 dark:fill-slate-100 text-3xl font-black font-mono"
                               >
                                 {totalAbsencesCount}
                               </tspan>
                               <tspan
                                 x={viewBox.cx}
                                 y={(viewBox.cy || 0) + 16}
-                                className="fill-slate-500 text-xs font-bold"
+                                className="fill-slate-500 dark:fill-slate-400 text-xs font-bold"
                               >
                                 حالة
                               </tspan>
@@ -273,7 +273,7 @@ export const AbsenceCharts: React.FC = () => {
                     verticalAlign="bottom"
                     height={36}
                     formatter={(value: string) => (
-                      <span className="text-xs font-semibold text-slate-700 px-1">
+                      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 px-1">
                         {value}
                       </span>
                     )}
@@ -306,37 +306,37 @@ export const AbsenceCharts: React.FC = () => {
         </div>
 
         {/* 2. Bar Chart: معدل الغياب خلال آخر 7 أيام */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200/90 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-400 flex items-center justify-center shadow-sm">
                 <BarChart3 className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
-                <h3 className="text-sm md:text-base font-bold text-slate-900">
+                <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-slate-100">
                   معدل الغياب خلال آخر 7 أيام
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   تتبع حالات الغياب اليومية لكافة المعلمات
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-slate-600 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/80">
-              <Calendar className="w-3.5 h-3.5 text-[#137a85]" />
+            <div className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-700">
+              <Calendar className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400" />
               <span>{isMobile ? "آخر 5 أيام" : "آخر 7 أيام"}</span>
             </div>
           </div>
 
           {!hasBarAbsences ? (
-            <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center">
+            <div className="h-64 flex flex-col items-center justify-center text-center p-6 space-y-3 bg-slate-50/50 dark:bg-slate-850/50 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
+              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center">
                 <AlertCircle className="w-6 h-6" aria-hidden="true" />
               </div>
-              <p className="text-sm font-bold text-slate-700">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 لا توجد بيانات غياب في الأيام الماضية
               </p>
-              <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
+              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-xs leading-relaxed">
                 يتم تحديث المخطط البياني اليومي فورياً بمجرد إدراج تاريخ الغياب في
                 استمارة المساءلة.
               </p>
@@ -352,17 +352,17 @@ export const AbsenceCharts: React.FC = () => {
                       : { top: 22, right: 10, left: 10, bottom: 5 }
                   }
                 >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.15} vertical={false} />
                   <XAxis
                     dataKey="dayName"
-                    tick={{ fill: "#64748b", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}
-                    axisLine={{ stroke: "#e2e8f0" }}
+                    tick={{ fill: "#94a3b8", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}
+                    axisLine={{ stroke: "#475569", strokeOpacity: 0.3 }}
                     tickLine={false}
                   />
                   <YAxis
                     orientation="right"
                     allowDecimals={false}
-                    tick={{ fill: "#64748b", fontSize: 11, fontFamily: "monospace" }}
+                    tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "monospace" }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -418,17 +418,17 @@ export const AbsenceCharts: React.FC = () => {
 
       {/* 3. تنبيهات التأخر والانصراف */}
       {stats.totalDelayNotices > 0 && (
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-sm">
                 <Clock className="w-5 h-5" aria-hidden="true" />
               </div>
               <div>
-                <h3 className="text-sm md:text-base font-bold text-slate-900">
+                <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-slate-100">
                   توزيع مخالفات تنبيهات التأخر والانصراف
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   تصنيف حالات التأخر الصباحي، عدم التواجد، والانصراف المبكر (نموذج و.م.ع.ن - ٠٢ - ٠٢)
                 </p>
               </div>
@@ -436,7 +436,7 @@ export const AbsenceCharts: React.FC = () => {
 
             <Link
               href="/procedures/delay-notice"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors self-start sm:self-center cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/60 transition-colors self-start sm:self-center cursor-pointer"
             >
               <span>إدارة تنبيهات التأخر ({stats.totalDelayNotices})</span>
               <ArrowLeft className="w-3.5 h-3.5 rotate-180" aria-hidden="true" />
@@ -444,42 +444,42 @@ export const AbsenceCharts: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
-                <LogIn className="w-3.5 h-3.5 text-amber-600" />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 font-medium">
+                <LogIn className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>تأخر صباحي</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900">
+              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[0]?.count ?? 0}
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
-                <Clock className="w-3.5 h-3.5 text-amber-600" />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 font-medium">
+                <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>عدم تواجد أثناء الدوام</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900">
+              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[1]?.count ?? 0}
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
-                <LogOut className="w-3.5 h-3.5 text-amber-600" />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 font-medium">
+                <LogOut className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>انصراف مبكر</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900">
+              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[2]?.count ?? 0}
               </span>
             </div>
 
-            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-1.5 text-slate-500 text-xs mb-1 font-medium">
-                <DoorOpen className="w-3.5 h-3.5 text-amber-600" />
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 text-xs mb-1 font-medium">
+                <DoorOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>خروج وعودة</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900">
+              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[3]?.count ?? 0}
               </span>
             </div>

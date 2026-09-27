@@ -115,22 +115,22 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-xl w-full overflow-hidden text-right flex flex-col max-h-[92vh]"
+          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-xl w-full overflow-hidden text-right flex flex-col max-h-[92vh]"
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/70 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
                 <ShieldCheck className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <span>قرار مديرة المدرسة</span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                     المرحلة الثالثة (النهائية)
                   </span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                   فحص إفادة المعلمة وإصدار التوجيه الإداري النهائي
                 </p>
               </div>
@@ -140,7 +140,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="إغلاق النافذة"
-              className="w-8 h-8 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -149,29 +149,29 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
           {/* Form Body */}
           <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar">
             {errorMsg && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* Notice Summary Card */}
-            <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+            <div className="bg-slate-50/80 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
               <div>
-                <span className="text-slate-400 block text-[11px]">المعلمة</span>
-                <span className="font-bold text-slate-900 mt-0.5 block truncate">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">المعلمة</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100 mt-0.5 block truncate">
                   {notice.teacherName}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">رقم الإشعار</span>
-                <span className="font-bold text-[#137a85] mt-0.5 block font-mono">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">رقم الإشعار</span>
+                <span className="font-bold text-[#137a85] dark:text-teal-400 mt-0.5 block font-mono">
                   {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
                 </span>
               </div>
               <div>
-                <span className="text-slate-400 block text-[11px]">تاريخ الواقعة</span>
-                <span className="font-bold text-slate-800 mt-0.5 block font-mono">
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px]">تاريخ الواقعة</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 block font-mono">
                   {notice.noticeDate || notice.date}
                 </span>
               </div>
@@ -179,23 +179,23 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
 
             {/* Teacher's Statement Display */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-sky-600" />
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                 <span>إفادة ومبرر المعلمة المسجلة:</span>
                 {(notice.teacherSignatureDate || notice.teacherSignedAt) && (
-                  <span className="text-[11px] text-slate-400 font-normal ms-auto">
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-normal ms-auto">
                     بتاريخ: {notice.teacherSignatureDate || notice.teacherSignedAt}
                   </span>
                 )}
               </label>
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-800 leading-relaxed font-sans">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
                 {notice.teacherReason || "لا توجد إفادة مسجلة بعد."}
               </div>
             </div>
 
             {/* Decision Radio Cards */}
             <div className="space-y-2.5 pt-1">
-              <label className="block text-xs font-bold text-slate-800">
+              <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
                 رأي وتوجيه مديرة المدرسة <span className="text-rose-500">*</span>
               </label>
 
@@ -206,13 +206,13 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                   className={cn(
                     "p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 select-none",
                     directorOpinion === "accepted"
-                      ? "bg-emerald-50/70 border-emerald-300 ring-2 ring-emerald-400/30"
-                      : "bg-white border-slate-200 hover:border-slate-300"
+                      ? "bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 ring-2 ring-emerald-400/30 dark:ring-emerald-800/40"
+                      : "bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                      <Check className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>قبول العذر</span>
                     </span>
                     <span
@@ -220,7 +220,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                         "w-4 h-4 rounded-full border flex items-center justify-center",
                         directorOpinion === "accepted"
                           ? "border-emerald-600 bg-emerald-600"
-                          : "border-slate-300 bg-white"
+                          : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
                       )}
                     >
                       {directorOpinion === "accepted" && (
@@ -228,7 +228,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                       )}
                     </span>
                   </div>
-                  <p className="text-[11px] text-emerald-800 leading-relaxed">
+                  <p className="text-[11px] text-emerald-800 dark:text-emerald-400 leading-relaxed">
                     قبول عذر المعلمة وحفظ التنبيه في ملفها الإداري دون إجراء حسم من الراتب.
                   </p>
                 </div>
@@ -239,13 +239,13 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                   className={cn(
                     "p-4 rounded-2xl border cursor-pointer transition-all flex flex-col justify-between space-y-2 select-none",
                     directorOpinion === "rejected_with_deduction"
-                      ? "bg-rose-50/70 border-rose-300 ring-2 ring-rose-400/30"
-                      : "bg-white border-slate-200 hover:border-slate-300"
+                      ? "bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 ring-2 ring-rose-400/30 dark:ring-rose-800/40"
+                      : "bg-white dark:bg-slate-850 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
-                      <Ban className="w-4 h-4 text-rose-600" />
+                    <span className="text-xs font-bold text-rose-900 dark:text-rose-300 flex items-center gap-1.5">
+                      <Ban className="w-4 h-4 text-rose-600 dark:text-rose-400" />
                       <span>عدم قبول العذر والحسم</span>
                     </span>
                     <span
@@ -253,7 +253,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                         "w-4 h-4 rounded-full border flex items-center justify-center",
                         directorOpinion === "rejected_with_deduction"
                           ? "border-rose-600 bg-rose-600"
-                          : "border-slate-300 bg-white"
+                          : "border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800"
                       )}
                     >
                       {directorOpinion === "rejected_with_deduction" && (
@@ -261,7 +261,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                       )}
                     </span>
                   </div>
-                  <p className="text-[11px] text-rose-800 leading-relaxed">
+                  <p className="text-[11px] text-rose-800 dark:text-rose-400 leading-relaxed">
                     عدم قبول العذر، والحسم من راتب المعلمة بمقدار ساعات التأخر / الانصراف.
                   </p>
                 </div>
@@ -272,7 +272,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor={`${formId}-notes`}
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 توجيهات أو ملاحظات إضافية (اختياري)
               </label>
@@ -282,7 +282,7 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                 value={directorNotes}
                 onChange={(e) => setDirectorNotes(e.target.value)}
                 placeholder="توجيه المعلمة بالالتزام، تحويل لشؤون الموظفين، أو توثيق ساعات التأخر المجمعة..."
-                className="w-full p-3 rounded-xl border border-slate-200 text-xs bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all resize-none shadow-sm"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all resize-none shadow-sm"
               />
             </div>
 
@@ -290,13 +290,13 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor={`${formId}-sig-date`}
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 تاريخ توقيع واعتماد المديرة <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <Calendar
-                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
                   aria-hidden="true"
                 />
                 <input
@@ -304,19 +304,19 @@ export const DirectorDecisionModal: React.FC<DirectorDecisionModalProps> = ({
                   type="date"
                   value={directorSignedAt}
                   onChange={(e) => setDirectorSignedAt(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
                 />
               </div>
             </div>
           </form>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 py-4 bg-slate-50/70 dark:bg-slate-850/70 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={isProcessing}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               إلغاء
             </button>

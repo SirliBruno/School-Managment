@@ -17,7 +17,7 @@ export const Label: React.FC<LabelProps> = ({
   return (
     <label
       className={cn(
-        "block text-xs md:text-sm font-bold text-slate-700 mb-1.5 select-none",
+        "block text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200 mb-1.5 select-none",
         className
       )}
       {...props}

@@ -51,29 +51,29 @@ const KpiCard: React.FC<KpiCardProps> = ({
       variants={cardItemVariants}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-200 hover:border-slate-300/80 flex flex-col justify-between group"
+      className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-200 dark:border-slate-800 hover:border-slate-300/80 dark:hover:border-slate-700 flex flex-col justify-between group"
     >
       <div>
         <div className="flex items-start justify-between gap-2">
           <div className="space-y-1.5">
-            <p className="text-xs md:text-sm font-semibold text-slate-500">
+            <p className="text-xs md:text-sm font-semibold text-slate-500 dark:text-slate-400">
               {title}
             </p>
             {loading ? (
-              <div className="h-9 w-20 bg-slate-200/70 rounded-lg animate-pulse my-1" />
+              <div className="h-9 w-20 bg-slate-200/70 dark:bg-slate-800 rounded-lg animate-pulse my-1" />
             ) : (
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight tabular-nums font-mono">
+                <span className="text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight tabular-nums font-mono">
                   {value}
                 </span>
                 {unit && (
-                  <span className="text-xs text-slate-400 font-medium">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                     {unit}
                   </span>
                 )}
               </div>
             )}
-            <p className="text-xs text-slate-500 leading-relaxed">{subtitle}</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{subtitle}</p>
           </div>
 
           <div
@@ -88,24 +88,24 @@ const KpiCard: React.FC<KpiCardProps> = ({
       </div>
 
       {badgeText && (
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px]">
+        <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
           <span
             className={cn(
               "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-semibold border transition-colors",
               badgeType === "danger" &&
-                "bg-rose-50 text-rose-700 border-rose-200",
+                "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/60",
               badgeType === "warning" &&
-                "bg-amber-50 text-amber-700 border-amber-200",
+                "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60",
               badgeType === "info" &&
-                "bg-teal-50 text-[#137a85] border-teal-200",
+                "bg-teal-50 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-300 border-teal-200 dark:border-teal-800/60",
               badgeType === "success" &&
-                "bg-emerald-50 text-emerald-700 border-emerald-200"
+                "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60"
             )}
           >
             <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
             {badgeText}
           </span>
-          <span className="text-slate-400 font-medium">محدّث لحظياً</span>
+          <span className="text-slate-400 dark:text-slate-500 font-medium">محدّث لحظياً</span>
         </div>
       )}
     </motion.div>
@@ -141,8 +141,8 @@ export const KpiCards: React.FC = () => {
         unit="معلمة غائبة"
         subtitle="حالات الغياب المسجلة بتاريخ اليوم"
         icon={UserX}
-        iconBgColor="bg-rose-50"
-        iconColor="text-rose-600"
+        iconBgColor="bg-rose-50 dark:bg-rose-950/50"
+        iconColor="text-rose-600 dark:text-rose-400"
         badgeText={
           stats.todayAbsences === 0
             ? "انضباط تام اليوم"
@@ -163,8 +163,8 @@ export const KpiCards: React.FC = () => {
             : "مساءلات وملاحظات بانتظار الإفادة أو الاعتماد"
         }
         icon={AlertCircle}
-        iconBgColor="bg-amber-50"
-        iconColor="text-amber-600"
+        iconBgColor="bg-amber-50 dark:bg-amber-950/50"
+        iconColor="text-amber-600 dark:text-amber-400"
         badgeText={
           stats.pendingProcedures === 0
             ? "جميع الإجراءات مكتملة"
@@ -181,8 +181,8 @@ export const KpiCards: React.FC = () => {
         unit="حالة غياب"
         subtitle="مجموع أيام الغياب خلال الشهر الحالي"
         icon={CalendarDays}
-        iconBgColor="bg-indigo-50"
-        iconColor="text-indigo-600"
+        iconBgColor="bg-indigo-50 dark:bg-indigo-950/50"
+        iconColor="text-indigo-600 dark:text-indigo-400"
         badgeText={
           stats.monthAbsences === 0
             ? "لا يوجد غياب هذا الشهر"
@@ -199,8 +199,8 @@ export const KpiCards: React.FC = () => {
         unit="معلمة"
         subtitle="المعلمات المسجلات بنظام المدرسة"
         icon={Users}
-        iconBgColor="bg-teal-50"
-        iconColor="text-[#137a85]"
+        iconBgColor="bg-teal-50 dark:bg-teal-950/50"
+        iconColor="text-[#137a85] dark:text-teal-400"
         badgeText={
           stats.totalTeachers > 0
             ? `${stats.totalTeachers} معلمة نشطة`

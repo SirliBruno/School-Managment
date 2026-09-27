@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xs mt-4">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs mt-4">
         <UnderDevelopment
           title="الصفحة قيد التطوير"
           subtitle="غير متوفرة حالياً"

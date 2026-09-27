@@ -34,14 +34,14 @@ export const colors = {
 } as const;
 
 export const typography = {
-  pageTitle: "text-xl lg:text-2xl font-bold text-slate-900 tracking-tight",
-  sectionTitle: "text-base lg:text-lg font-bold text-slate-800",
-  cardTitle: "text-sm lg:text-base font-bold text-slate-800",
-  kpiLabel: "text-xs font-semibold text-slate-500",
-  kpiValue: "text-xl lg:text-2xl font-extrabold text-slate-900",
-  body: "text-xs md:text-sm text-slate-700 leading-relaxed",
-  caption: "text-[11px] md:text-xs text-slate-500",
-  label: "text-xs md:text-sm font-bold text-slate-700",
+  pageTitle: "text-xl lg:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight",
+  sectionTitle: "text-base lg:text-lg font-bold text-slate-800 dark:text-slate-100",
+  cardTitle: "text-sm lg:text-base font-bold text-slate-800 dark:text-slate-100",
+  kpiLabel: "text-xs font-semibold text-slate-500 dark:text-slate-400",
+  kpiValue: "text-xl lg:text-2xl font-extrabold text-slate-900 dark:text-slate-100",
+  body: "text-xs md:text-sm text-slate-700 dark:text-slate-300 leading-relaxed",
+  caption: "text-[11px] md:text-xs text-slate-500 dark:text-slate-400",
+  label: "text-xs md:text-sm font-bold text-slate-700 dark:text-slate-200",
 } as const;
 
 export const spacing = {

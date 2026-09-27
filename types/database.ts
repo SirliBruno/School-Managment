@@ -23,8 +23,12 @@ export interface DbTeacherRow {
   teaching_field: string | null;
   specialty: string | null;
   total_absences: number;
+  total_delay_notices?: number;
   created_at?: string;
   updated_at?: string;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+  archive_reason?: string | null;
 }
 
 export interface DbAbsenceRecordRow {
@@ -41,6 +45,10 @@ export interface DbAbsenceRecordRow {
   attachment_url: string | null;
   timestamp: string;
   created_at?: string;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+  archived_by_cascade?: boolean | null;
 }
 
 export interface DbDelayNoticeRow {
@@ -75,6 +83,10 @@ export interface DbDelayNoticeRow {
   teacher_ip_address: string | null;
   link_shared_at: string | null;
   created_at: string;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+  archived_by_cascade?: boolean | null;
 }
 
 export interface DbAbsenceInquiryRow {
@@ -98,6 +110,10 @@ export interface DbAbsenceInquiryRow {
   admin_notes: string | null;
   submitted_at: string | null;
   created_at: string;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+  archive_reason?: string | null;
+  archived_by_cascade?: boolean | null;
 }
 
 export interface DbAdminCredentialRow {
@@ -111,7 +127,11 @@ export interface DbAdminCredentialRow {
 
 export interface DbEmployeePermissionRow {
   id: string;
-  teacher_id: string;
+  teacher_id: string | null;
+  teacher_name?: string | null;
+  national_id?: string | null;
+  job_number?: string | null;
+  specialty?: string | null;
   permission_date: string;
   exit_time: string;
   return_time: string;
@@ -119,6 +139,7 @@ export interface DbEmployeePermissionRow {
   reason: string;
   notes?: string | null;
   created_by?: string | null;
+  created_by_name?: string | null;
   created_at: string;
   updated_at?: string | null;
   is_archived?: boolean | null;

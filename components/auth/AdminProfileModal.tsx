@@ -125,7 +125,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 z-10 select-none text-right"
+          className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 z-10 select-none text-right"
         >
           {/* Header */}
           <div className="px-6 py-5 bg-gradient-to-r from-teal-800 to-[#137a85] text-white flex items-center justify-between">
@@ -160,9 +160,9 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2"
+                  className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2"
                 >
-                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                   <span>{errorMsg}</span>
                 </motion.div>
               )}
@@ -172,9 +172,9 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2"
+                  className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2"
                 >
-                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span className="font-bold">{successMsg}</span>
                 </motion.div>
               )}
@@ -182,11 +182,11 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
 
             {/* تنبيه البريد الإلكتروني المرتبط في Supabase */}
             {user?.email && (
-              <div className="p-3 rounded-xl bg-teal-50/80 border border-teal-200/80 flex items-center justify-between text-xs">
-                <span className="text-teal-900 font-bold">
+              <div className="p-3 rounded-xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-between text-xs">
+                <span className="text-teal-900 dark:text-teal-200 font-bold">
                   البريد الإلكتروني في Supabase:
                 </span>
-                <span className="font-mono text-teal-800 font-semibold" dir="ltr">
+                <span className="font-mono text-teal-800 dark:text-teal-300 font-semibold" dir="ltr">
                   {user.email}
                 </span>
               </div>
@@ -194,7 +194,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
 
             {/* الاسم الكامل المعروض */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 اللقب / الاسم المعروض
               </label>
               <input
@@ -202,22 +202,22 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder={DEFAULT_ADMIN_NAME}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all font-medium"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-850 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all font-medium"
               />
             </div>
 
             {/* اسم المستخدم */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-700">
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                   اسم المستخدم للدخول (Username)
                 </label>
-                <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-2 py-0.5 rounded-md">
+                <span className="text-[10px] text-teal-700 dark:text-teal-300 font-semibold bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-200/60 dark:border-teal-800/60">
                   مطلوب للدخول
                 </span>
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -227,23 +227,23 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="wakila"
                   required
-                  className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono font-bold"
+                  className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-850 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono font-bold"
                 />
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-100">
-              <span className="text-xs font-bold text-slate-700 block mb-2">
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
                 تغيير كلمة المرور (اختياري)
               </span>
-              <p className="text-[11px] text-slate-400 mb-3">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 mb-3">
                 اترك الحقول أدناه فارغة إذا كنت ترغب في الاحتفاظ بكلمة المرور الحالية.
               </p>
 
               <div className="space-y-3">
                 {/* كلمة المرور الجديدة */}
                 <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                  <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
@@ -252,12 +252,12 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     placeholder="كلمة مرور جديدة (6 خانات فأكثر)"
-                    className="w-full pr-10 pl-11 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono"
+                    className="w-full pr-10 pl-11 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-850 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 focus:outline-none"
                     tabIndex={-1}
                   >
                     {showPassword ? (
@@ -275,7 +275,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                     animate={{ opacity: 1, height: "auto" }}
                     className="relative"
                   >
-                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                    <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                       <KeyRound className="w-4 h-4" />
                     </div>
                     <input
@@ -284,7 +284,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="تأكيد كلمة المرور الجديدة"
-                      className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono"
+                      className="w-full pr-10 pl-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm focus:bg-white dark:focus:bg-slate-850 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-mono"
                     />
                   </motion.div>
                 )}
@@ -292,11 +292,11 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
             </div>
 
             {/* أزرار الإجراء */}
-            <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100">
+            <div className="pt-4 flex items-center justify-end gap-2.5 border-t border-slate-100 dark:border-slate-800">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                className="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               >
                 إلغاء
               </button>

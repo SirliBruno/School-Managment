@@ -342,26 +342,26 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden text-right flex flex-col max-h-[92vh]"
+          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full overflow-hidden text-right flex flex-col max-h-[92vh]"
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 shrink-0">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/70 dark:bg-slate-850/70 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center shadow-sm">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <span>
                     {isEditing
                       ? "تعديل تنبيه تأخر / انصراف"
                       : "إنشاء تنبيه عن تأخر / انصراف"}
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
                     نموذج و.م.ع.ن - ٠٢ - ٠٢
                   </span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                   المرحلة الأولى: إدخال بيانات المخالفة بواسطة وكيلة المدرسة
                 </p>
               </div>
@@ -371,7 +371,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="إغلاق النافذة"
-              className="w-8 h-8 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -384,14 +384,14 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             className="p-6 overflow-y-auto space-y-5 flex-1 custom-scrollbar"
           >
             {errorMsg && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 animate-in fade-in">
+              <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2 animate-in fade-in">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {/* Stage 1 Helper Notice */}
-            <div className="p-3.5 rounded-2xl bg-teal-50/60 border border-teal-200/80 text-teal-900 text-xs flex items-start gap-2.5">
+            <div className="p-3.5 rounded-2xl bg-teal-50/60 dark:bg-teal-950/20 border border-teal-200/80 dark:border-teal-900/40 text-teal-900 dark:text-teal-200 text-xs flex items-start gap-2.5">
               <div className="w-5 h-5 rounded-lg bg-[#137a85] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5 shadow-sm">
                 1
               </div>
@@ -416,13 +416,13 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             <div className="space-y-1.5">
               <label
                 htmlFor={`${formId}-date`}
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 تاريخ حدوث المخالفة <span className="text-rose-500">*</span>
               </label>
               <div className="relative">
                 <Calendar
-                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
                   aria-hidden="true"
                 />
                 <input
@@ -430,7 +430,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                   type="date"
                   value={noticeDate}
                   onChange={(e) => setNoticeDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs"
                 />
               </div>
             </div>
@@ -439,9 +439,9 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             <div className="space-y-2 pt-1">
               <label
                 htmlFor={`${formId}-violation-type`}
-                className="block text-xs font-bold text-slate-800 flex items-center gap-1.5"
+                className="block text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
               >
-                <AlertTriangle className="w-4 h-4 text-amber-600" />
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 <span>نوع التأخر أو المخالفة المسجلة</span>
                 <span className="text-rose-500">*</span>
               </label>
@@ -455,24 +455,24 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                       e.target.value as ViolationTypeKey
                     )
                   }
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 bg-white text-xs md:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all appearance-none cursor-pointer shadow-2xs hover:border-slate-300"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs md:text-sm font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all appearance-none cursor-pointer shadow-2xs hover:border-slate-300 dark:hover:border-slate-600"
                 >
                   {VIOLATION_TYPE_OPTIONS.map((opt) => (
                     <option
                       key={opt.id}
                       value={opt.id}
-                      className="py-2 text-slate-800 font-medium"
+                      className="py-2 text-slate-800 dark:text-slate-200 font-medium"
                     >
                       {opt.title}
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <ChevronDown className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
 
               {/* Selected Type Description Badge */}
-              <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600">
-                <div className="w-6 h-6 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-400">
+                <div className="w-6 h-6 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
                   <activeOption.icon className="w-3.5 h-3.5" />
                 </div>
                 <span className="leading-normal">{activeOption.subtitle}</span>
@@ -480,13 +480,13 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             </div>
 
             {/* Time Selection & Automatic Duration Calculation Box */}
-            <div className="p-4 rounded-2xl bg-amber-50/40 border border-amber-300/80 space-y-4 shadow-2xs">
-              <div className="flex items-center justify-between border-b border-amber-200/60 pb-2.5">
-                <span className="text-xs font-bold text-amber-900 flex items-center gap-1.5">
-                  <Timer className="w-4 h-4 text-amber-600" />
+            <div className="p-4 rounded-2xl bg-amber-50/40 dark:bg-amber-950/10 border border-amber-300/80 dark:border-amber-900/50 space-y-4 shadow-2xs">
+              <div className="flex items-center justify-between border-b border-amber-200/60 dark:border-amber-900/40 pb-2.5">
+                <span className="text-xs font-bold text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                  <Timer className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   <span>تحديد أوقات التأخر واحتساب المدة</span>
                 </span>
-                <span className="text-[11px] text-amber-700 font-medium bg-amber-100/80 px-2 py-0.5 rounded-full border border-amber-200">
+                <span className="text-[11px] text-amber-700 dark:text-amber-300 font-medium bg-amber-100/80 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/60">
                   {activeOption.badgeLabel}
                 </span>
               </div>
@@ -497,12 +497,12 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`${formId}-from-time`}
-                    className="block text-xs font-semibold text-slate-700"
+                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300"
                   >
                     {activeOption.fromLabel} <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
                     <input
                       id={`${formId}-from-time`}
                       type="time"
@@ -511,7 +511,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                         setFromTime(e.target.value);
                         setErrorMsg(null);
                       }}
-                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-amber-300 text-xs sm:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30 font-mono shadow-2xs"
+                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800/80 text-xs sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 font-mono shadow-2xs"
                     />
                   </div>
                 </div>
@@ -520,12 +520,12 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 <div className="space-y-1.5">
                   <label
                     htmlFor={`${formId}-to-time`}
-                    className="block text-xs font-semibold text-slate-700"
+                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300"
                   >
                     {activeOption.toLabel} <span className="text-rose-500">*</span>
                   </label>
                   <div className="relative">
-                    <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <Clock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none" />
                     <input
                       id={`${formId}-to-time`}
                       type="time"
@@ -534,7 +534,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                         setToTime(e.target.value);
                         setErrorMsg(null);
                       }}
-                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-amber-300 text-xs sm:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30 font-mono shadow-2xs"
+                      className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800/80 text-xs sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-400/30 font-mono shadow-2xs"
                     />
                   </div>
                 </div>
@@ -542,10 +542,10 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
 
               {/* Extra input for Left School */}
               {selectedViolationType === "left_school" && (
-                <div className="space-y-1.5 pt-1 border-t border-amber-200/60 animate-in fade-in">
+                <div className="space-y-1.5 pt-1 border-t border-amber-200/60 dark:border-amber-900/40 animate-in fade-in">
                   <label
                     htmlFor={`${formId}-left-school-details`}
-                    className="block text-xs font-semibold text-slate-700"
+                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300"
                   >
                     تفاصيل انصرافكم من غير المدرسة:{" "}
                     <span className="text-rose-500">*</span>
@@ -556,7 +556,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                     value={leftSchoolDetails}
                     onChange={(e) => setLeftSchoolDetails(e.target.value)}
                     placeholder="مثال: الخروج لظرف طارئ أو مراجعة جهة رسمية والعودة الساعة..."
-                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 text-xs bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 shadow-2xs"
+                    className="w-full px-3.5 py-2 rounded-xl border border-amber-300 dark:border-amber-800/80 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30 shadow-2xs"
                   />
                 </div>
               )}
@@ -566,8 +566,8 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 className={cn(
                   "p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-all",
                   timeResult.isValid
-                    ? "bg-white border-teal-300 ring-1 ring-teal-300/30"
-                    : "bg-rose-50 border-rose-200"
+                    ? "bg-white dark:bg-slate-800 border-teal-300 dark:border-teal-800 ring-1 ring-teal-300/30 dark:ring-teal-800/30"
+                    : "bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/60"
                 )}
               >
                 <div className="flex items-center gap-3">
@@ -582,13 +582,13 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-[11px] font-bold text-slate-500 flex items-center gap-1.5">
+                    <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
                       <span>إجمالي مدة التأخر المحتسبة بالساعات والدقائق:</span>
                     </div>
                     <div
                       className={cn(
                         "text-sm sm:text-base font-extrabold mt-0.5",
-                        timeResult.isValid ? "text-teal-900" : "text-rose-700"
+                        timeResult.isValid ? "text-teal-900 dark:text-teal-300" : "text-rose-700 dark:text-rose-400"
                       )}
                     >
                       {timeResult.isValid
@@ -599,8 +599,8 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 </div>
 
                 {timeResult.isValid && (
-                  <div className="self-end sm:self-center px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200 font-mono font-bold text-xs text-[#137a85] flex items-center gap-1.5 shadow-2xs">
-                    <Sparkles className="w-3.5 h-3.5 text-teal-600" />
+                  <div className="self-end sm:self-center px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 font-mono font-bold text-xs text-[#137a85] dark:text-teal-400 flex items-center gap-1.5 shadow-2xs">
+                    <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                     <span>{timeResult.totalMinutes} دقيقة إجمالاً</span>
                   </div>
                 )}
@@ -611,7 +611,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             <div className="space-y-1.5 pt-1">
               <label
                 htmlFor={`${formId}-notes`}
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 ملاحظات وتوجيه وكيلة المدرسة (اختياري)
               </label>
@@ -621,18 +621,18 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="أي ملاحظات إدارية، رقم الحصة المتأخر عنها، أو سوابق التنبيهات..."
-                className="w-full p-3 rounded-xl border border-slate-200 text-xs bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all resize-none shadow-sm"
+                className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all resize-none shadow-sm"
               />
             </div>
           </form>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 py-4 bg-slate-50/70 dark:bg-slate-850/70 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onClose}
               disabled={isProcessing}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               إلغاء
             </button>

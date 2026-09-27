@@ -244,7 +244,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       cell: ({ row }) => {
         if (row.status === "pending") {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
               <Clock className="w-3 h-3" />
               <span>بانتظار الرد</span>
             </span>
@@ -253,8 +253,8 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
 
         if (row.status === "submitted") {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 animate-pulse">
-              <CheckCircle2 className="w-3 h-3 text-sky-600" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60 animate-pulse">
+              <CheckCircle2 className="w-3 h-3 text-sky-600 dark:text-sky-400" />
               <span>تم الرد (بانتظار الاعتماد)</span>
             </span>
           );
@@ -262,16 +262,16 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
 
         if (row.status === "approved") {
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
               <span>معتمدة</span>
             </span>
           );
         }
 
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-            <XCircle className="w-3 h-3 text-rose-600" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+            <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
             <span>مرفوضة</span>
           </span>
         );
@@ -319,7 +319,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                 <button
                   type="button"
                   onClick={() => handleResendWhatsApp(row)}
-                  className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 transition-colors cursor-pointer"
                   title="إرسال تذكير عبر الواتساب"
                 >
                   <Send className="w-3.5 h-3.5" />
@@ -327,11 +327,11 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                 <button
                   type="button"
                   onClick={() => handleCopyLink(row)}
-                  className="p-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
                   title="نسخ الرابط"
                 >
                   {copyFeedbackId === row.id ? (
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   ) : (
                     <Copy className="w-3.5 h-3.5" />
                   )}
@@ -341,7 +341,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
               <button
                 type="button"
                 onClick={() => handleOpenReview(row)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#137a85] text-white hover:bg-teal-700 font-bold text-xs shadow-2xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#137a85] dark:bg-teal-600 text-white hover:bg-teal-700 dark:hover:bg-teal-500 font-bold text-xs shadow-2xs transition-colors cursor-pointer"
               >
                 <FileCheck2 className="w-3 h-3" />
                 <span>{row.status === "submitted" ? "اعتماد" : "عرض"}</span>
@@ -360,11 +360,11 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       {/* Top Header & New Inquiry Trigger */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <MessageCircle className="w-4 h-4 text-emerald-600" />
+          <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>سجل مساءلات الغياب عبر الواتساب</span>
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             متابعة المساءلات الإلكترونية المرسلة، ردود المعلمات، وفحص التقارير الطبية
           </p>
         </div>
@@ -387,8 +387,8 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           className={cn(
             "px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer",
             statusFilter === "all"
-              ? "bg-slate-900 text-white shadow-2xs"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xs"
+              : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
           )}
         >
           الكل ({counts.all})
@@ -400,12 +400,12 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           className={cn(
             "px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5",
             statusFilter === "submitted"
-              ? "bg-sky-600 text-white shadow-2xs"
-              : "bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200"
+              ? "bg-sky-600 dark:bg-sky-500 text-white shadow-2xs"
+              : "bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/50 border border-sky-200 dark:border-sky-800/60"
           )}
         >
           <span>تم الرد</span>
-          <span className="bg-sky-200/60 px-1.5 py-0.2 rounded-md text-[10px]">
+          <span className="bg-sky-200/60 dark:bg-sky-800/60 px-1.5 py-0.2 rounded-md text-[10px]">
             {counts.submitted}
           </span>
         </button>
@@ -416,12 +416,12 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           className={cn(
             "px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5",
             statusFilter === "pending"
-              ? "bg-amber-600 text-white shadow-2xs"
-              : "bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200"
+              ? "bg-amber-600 dark:bg-amber-500 text-white shadow-2xs"
+              : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 border border-amber-200 dark:border-amber-800/60"
           )}
         >
           <span>بانتظار الرد</span>
-          <span className="bg-amber-200/60 px-1.5 py-0.2 rounded-md text-[10px]">
+          <span className="bg-amber-200/60 dark:bg-amber-800/60 px-1.5 py-0.2 rounded-md text-[10px]">
             {counts.pending}
           </span>
         </button>
@@ -432,12 +432,12 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           className={cn(
             "px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5",
             statusFilter === "approved"
-              ? "bg-emerald-600 text-white shadow-2xs"
-              : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200"
+              ? "bg-emerald-600 dark:bg-emerald-500 text-white shadow-2xs"
+              : "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60"
           )}
         >
           <span>معتمدة</span>
-          <span className="bg-emerald-200/60 px-1.5 py-0.2 rounded-md text-[10px]">
+          <span className="bg-emerald-200/60 dark:bg-emerald-800/60 px-1.5 py-0.2 rounded-md text-[10px]">
             {counts.approved}
           </span>
         </button>
@@ -490,61 +490,61 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           const isPending = inq.status === "pending";
 
           return (
-            <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs space-y-3">
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs space-y-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0">
                     {inq.teacherName.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">{inq.teacherName}</h4>
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{inq.teacherName}</h4>
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                       {inq.nationalId || inq.jobNumber || "—"}
                     </span>
                   </div>
                 </div>
 
                 {isPending ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
                     بانتظار الرد
                   </span>
                 ) : inq.status === "submitted" ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
                     تم الرد
                   </span>
                 ) : inq.status === "approved" ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60">
                     معتمدة
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
                     مرفوضة
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center justify-between text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-1 font-mono">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                   <span>{inq.absenceDate}</span>
                 </div>
-                <span className="font-mono text-[11px] text-slate-500" dir="ltr">
+                <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400" dir="ltr">
                   {inq.mobile || "—"}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
                 {inq.attachmentUrl ? (
                   <button
                     type="button"
                     onClick={() => handleOpenReview(inq)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-teal-700"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-teal-700 dark:text-teal-400"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>معاينة المرفق</span>
                   </button>
                 ) : (
-                  <span className="text-[11px] text-slate-400">بدون مرفق</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500">بدون مرفق</span>
                 )}
 
                 <div className="flex items-center gap-1.5">
@@ -553,7 +553,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                       <button
                         type="button"
                         onClick={() => handleResendWhatsApp(inq)}
-                        className="p-1.5 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60"
                         title="إعادة إرسال واتساب"
                       >
                         <Send className="w-3.5 h-3.5" />
@@ -561,7 +561,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                       <button
                         type="button"
                         onClick={() => handleCopyLink(inq)}
-                        className="p-1.5 rounded-lg bg-slate-50 text-slate-600 border border-slate-200"
+                        className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                         title="نسخ الرابط"
                       >
                         <Copy className="w-3.5 h-3.5" />
@@ -571,7 +571,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                     <button
                       type="button"
                       onClick={() => handleOpenReview(inq)}
-                      className="px-2.5 py-1 rounded-lg bg-[#137a85] text-white font-bold text-xs"
+                      className="px-2.5 py-1 rounded-lg bg-[#137a85] dark:bg-teal-600 text-white font-bold text-xs"
                     >
                       مراجعة
                     </button>
@@ -579,7 +579,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                   <button
                     type="button"
                     onClick={() => setInquiryToDelete(inq)}
-                    className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 border border-rose-200"
+                    className="p-1.5 rounded-lg text-rose-500 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 border border-rose-200 dark:border-rose-800/60"
                     title="أرشفة"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

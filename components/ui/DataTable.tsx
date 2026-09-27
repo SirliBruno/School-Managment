@@ -187,17 +187,17 @@ export function DataTable<T>({
   };
 
   return (
-    <div className={cn("bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden", className)}>
+    <div className={cn("bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs overflow-hidden", className)}>
       {/* Top Header & Toolbar Area */}
-      <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col gap-4">
+      <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col gap-4">
         {/* Toolbar Content */}
         {title || subtitle ? (
           <>
             {/* Title & Actions Row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                {title && <h2 className="text-base font-bold text-slate-900 tracking-tight">{title}</h2>}
-                {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+                {title && <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight">{title}</h2>}
+                {subtitle && <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
@@ -205,9 +205,9 @@ export function DataTable<T>({
                   <button
                     type="button"
                     onClick={onExportExcel}
-                    className="inline-flex flex-row items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
+                    className="inline-flex flex-row items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span className="whitespace-nowrap">{exportLabel}</span>
                   </button>
                 )}
@@ -217,10 +217,10 @@ export function DataTable<T>({
                   <button
                     type="button"
                     onClick={() => setIsColumnManagerOpen((prev) => !prev)}
-                    className="inline-flex flex-row items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
+                    className="inline-flex flex-row items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                     title="تخصيص الأعمدة"
                   >
-                    <SlidersHorizontal className="w-4 h-4 text-slate-500 shrink-0" />
+                    <SlidersHorizontal className="w-4 h-4 text-slate-500 dark:text-slate-400 shrink-0" />
                     <span className="whitespace-nowrap">الأعمدة</span>
                   </button>
 
@@ -231,13 +231,13 @@ export function DataTable<T>({
                         onClick={() => setIsColumnManagerOpen(false)}
                         aria-hidden="true"
                       />
-                      <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-2xl p-3 z-50 space-y-2 text-xs">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
+                      <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-50 space-y-2 text-xs">
+                        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 font-bold text-slate-800 dark:text-slate-200">
                           <span>إظهار الأعمدة</span>
                           <button
                             type="button"
                             onClick={() => setIsColumnManagerOpen(false)}
-                            className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -246,7 +246,7 @@ export function DataTable<T>({
                           {columns
                             .filter((c) => c.hideable !== false)
                             .map((col) => (
-                              <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                              <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300 select-none">
                                 <input
                                   type="checkbox"
                                   checked={visibleColumnIds.has(col.id)}
@@ -278,7 +278,7 @@ export function DataTable<T>({
                     setCurrentPage(1);
                   }}
                   placeholder={searchPlaceholder}
-                  className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
+                  className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 focus:bg-white dark:focus:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
                 />
                 {searchQuery && (
                   <button
@@ -287,7 +287,7 @@ export function DataTable<T>({
                       setSearchQuery("");
                       setCurrentPage(1);
                     }}
-                    className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                    className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg cursor-pointer"
                     aria-label="مسح البحث"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -319,7 +319,7 @@ export function DataTable<T>({
                   setCurrentPage(1);
                 }}
                 placeholder={searchPlaceholder}
-                className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 hover:bg-slate-50 focus:bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
+                className="w-full pr-10 pl-8 py-2 text-xs sm:text-sm bg-slate-50/80 dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-900 focus:bg-white dark:focus:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
               />
               {searchQuery && (
                 <button
@@ -328,7 +328,7 @@ export function DataTable<T>({
                     setSearchQuery("");
                     setCurrentPage(1);
                   }}
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-lg cursor-pointer"
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 rounded-lg cursor-pointer"
                   aria-label="مسح البحث"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -342,9 +342,9 @@ export function DataTable<T>({
                 <button
                   type="button"
                   onClick={onExportExcel}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <span className="whitespace-nowrap">{exportLabel}</span>
                 </button>
               )}
@@ -354,10 +354,10 @@ export function DataTable<T>({
                 <button
                   type="button"
                   onClick={() => setIsColumnManagerOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                   title="تخصيص الأعمدة"
                 >
-                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                  <SlidersHorizontal className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0" />
                   <span className="whitespace-nowrap">الأعمدة</span>
                 </button>
 
@@ -368,13 +368,13 @@ export function DataTable<T>({
                       onClick={() => setIsColumnManagerOpen(false)}
                       aria-hidden="true"
                     />
-                    <div className="absolute left-0 mt-1 w-48 bg-white rounded-xl border border-slate-200 shadow-2xl p-3 z-50 space-y-2 text-xs">
-                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 font-bold text-slate-800">
+                    <div className="absolute left-0 mt-1 w-48 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xl p-3 z-50 space-y-2 text-xs">
+                      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5 font-bold text-slate-800 dark:text-slate-200">
                         <span>إظهار الأعمدة</span>
                         <button
                           type="button"
                           onClick={() => setIsColumnManagerOpen(false)}
-                          className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                          className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-0.5 cursor-pointer"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -383,7 +383,7 @@ export function DataTable<T>({
                         {columns
                           .filter((c) => c.hideable !== false)
                           .map((col) => (
-                            <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 select-none">
+                            <label key={col.id} className="flex items-center gap-2 cursor-pointer text-slate-700 dark:text-slate-300 select-none">
                               <input
                                 type="checkbox"
                                 checked={visibleColumnIds.has(col.id)}
@@ -423,7 +423,7 @@ export function DataTable<T>({
         <>
           {/* Mobile Card View (if renderer provided, visible on mobile only) */}
           {mobileCardRenderer && (
-            <div className="block md:hidden divide-y divide-slate-100 p-2 space-y-2">
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-800 p-2 space-y-2">
               {paginatedData.map((item, index) => (
                 <div key={keyExtractor(item, index)} className="p-1">
                   {mobileCardRenderer(item, index)}
@@ -436,7 +436,7 @@ export function DataTable<T>({
           <div className={cn("overflow-x-auto", mobileCardRenderer && "hidden md:block")}>
             <table className="w-full text-right border-collapse text-xs sm:text-sm">
               <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 font-bold select-none">
+                <tr className="bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold select-none">
                   {activeColumns.map((col) => {
                     const isSorted = sortColumnId === col.id;
                     return (
@@ -446,7 +446,7 @@ export function DataTable<T>({
                         style={{ width: col.width }}
                         className={cn(
                           "py-3.5 px-4 text-xs font-bold tracking-tight whitespace-nowrap",
-                          col.sortable && "cursor-pointer hover:bg-slate-100/80 hover:text-slate-900 transition-colors",
+                          col.sortable && "cursor-pointer hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100 transition-colors",
                           col.align === "center" && "text-center",
                           col.align === "left" && "text-left"
                         )}
@@ -461,12 +461,12 @@ export function DataTable<T>({
                         >
                           <span>{col.header}</span>
                           {col.sortable && (
-                            <span className="text-slate-400">
+                            <span className="text-slate-400 dark:text-slate-500">
                               {isSorted ? (
                                 sortDirection === "asc" ? (
-                                  <ArrowUp className="w-3.5 h-3.5 text-[#137a85]" />
+                                  <ArrowUp className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400" />
                                 ) : (
-                                  <ArrowDown className="w-3.5 h-3.5 text-[#137a85]" />
+                                  <ArrowDown className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400" />
                                 )
                               ) : (
                                 <ArrowUpDown className="w-3 h-3 opacity-40 hover:opacity-100" />
@@ -479,11 +479,11 @@ export function DataTable<T>({
                   })}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
                 {paginatedData.map((row, index) => (
                   <tr
                     key={keyExtractor(row, index)}
-                    className="hover:bg-slate-50/80 transition-colors duration-150 group"
+                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors duration-150 group"
                   >
                     {activeColumns.map((col) => {
                       let cellVal: any;
@@ -497,7 +497,7 @@ export function DataTable<T>({
                         <td
                           key={col.id}
                           className={cn(
-                            "py-3.5 px-4 text-slate-700 align-middle",
+                            "py-3.5 px-4 text-slate-700 dark:text-slate-300 align-middle",
                             col.align === "center" && "text-center",
                             col.align === "left" && "text-left"
                           )}
@@ -513,7 +513,7 @@ export function DataTable<T>({
           </div>
 
           {/* Pagination & Summary Footer */}
-          <div className="px-4 py-3.5 bg-slate-50/60 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="px-4 py-3.5 bg-slate-50/60 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
             <div className="flex items-center gap-2">
               <span>عرض</span>
               <select
@@ -522,7 +522,7 @@ export function DataTable<T>({
                   setPageSize(Number(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#137a85] cursor-pointer"
+                className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-1 focus:ring-[#137a85] cursor-pointer"
               >
                 {pageSizeOptions.map((opt) => (
                   <option key={opt} value={opt}>
@@ -530,7 +530,7 @@ export function DataTable<T>({
                   </option>
                 ))}
               </select>
-              <span>من أصل <strong className="font-bold text-slate-800">{totalItems}</strong> سجل</span>
+              <span>من أصل <strong className="font-bold text-slate-800 dark:text-slate-100">{totalItems}</strong> سجل</span>
             </div>
 
             {totalPages > 1 && (
@@ -540,13 +540,13 @@ export function DataTable<T>({
                   size="sm"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={safePage <= 1}
-                  className="px-2"
+                  className="px-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   aria-label="الصفحة السابقة"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </Button>
 
-                <span className="font-bold text-slate-700 px-2 font-mono">
+                <span className="font-bold text-slate-700 dark:text-slate-200 px-2 font-mono">
                   {safePage} / {totalPages}
                 </span>
 
@@ -555,7 +555,7 @@ export function DataTable<T>({
                   size="sm"
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={safePage >= totalPages}
-                  className="px-2"
+                  className="px-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                   aria-label="الصفحة التالية"
                 >
                   <ChevronLeft className="w-4 h-4" />

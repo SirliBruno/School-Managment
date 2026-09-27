@@ -192,11 +192,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     const collapsed = isCollapsed && !isDrawer;
 
     return (
-      <div className="flex flex-col h-full bg-white text-slate-800 select-none border-l border-slate-200/80">
+      <div className="flex flex-col h-full bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 select-none border-l border-slate-200/80 dark:border-slate-800">
         {/* Brand Header */}
         <div
           className={cn(
-            "py-4.5 border-b border-slate-100 flex items-center transition-all bg-gradient-to-b from-slate-50/50 to-white",
+            "py-4.5 border-b border-slate-100 dark:border-slate-800 flex items-center transition-all bg-gradient-to-b from-slate-50/50 to-white dark:from-slate-900 dark:to-slate-900",
             collapsed ? "px-3 justify-center" : "px-5 justify-between"
           )}
         >
@@ -214,16 +214,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             >
               <GraduationCap className="w-5 h-5 stroke-[2.2]" aria-hidden="true" />
               <span
-                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-white animate-pulse"
+                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse"
                 aria-hidden="true"
               />
             </motion.div>
             {!collapsed && (
               <div className="min-w-0">
-                <span className="font-extrabold text-[15px] tracking-tight text-slate-900 block truncate">
+                <span className="font-extrabold text-[15px] tracking-tight text-slate-900 dark:text-slate-100 block truncate">
                   منصة الإدارة المدرسية
                 </span>
-                <span className="text-[11px] text-teal-700 font-semibold block truncate">
+                <span className="text-[11px] text-teal-700 dark:text-teal-400 font-semibold block truncate">
                   الثانوية الخامسة مسارات
                 </span>
               </div>
@@ -235,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             <button
               type="button"
               onClick={() => setIsMobileOpen(false)}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] cursor-pointer"
               aria-label="إغلاق القائمة الجانبية"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -251,7 +251,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           {navGroups.map((group) => (
             <div key={group.id} className="space-y-1">
               {!collapsed && group.title && (
-                <div className="px-3 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                <div className="px-3 pt-2 pb-1 text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                   {group.title}
                 </div>
               )}
@@ -271,22 +271,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                       "relative flex items-center rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
                       collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
                       isCurrentRoute
-                        ? "bg-teal-50/90 text-[#0c5961] font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
-                        : "text-slate-700 hover:text-slate-950 hover:bg-slate-50 font-bold"
+                        ? "bg-teal-50/90 dark:bg-teal-950/60 text-[#0c5961] dark:text-teal-300 font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
+                        : "text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/60 font-bold"
                     )}
                   >
                     <div className="relative shrink-0">
                       <Icon
                         className={cn(
                           "w-5 h-5 shrink-0 stroke-[2] transition-colors",
-                          isCurrentRoute ? "text-[#137a85]" : "text-slate-400 group-hover:text-slate-800"
+                          isCurrentRoute ? "text-[#137a85] dark:text-teal-400" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-800 dark:group-hover:text-slate-200"
                         )}
                         aria-hidden="true"
                       />
                       {collapsed && item.badgeCount !== undefined && item.badgeCount > 0 && (
                         <span
                           className={cn(
-                            "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white",
+                            "absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ring-2 ring-white dark:ring-slate-900",
                             item.badgeVariant === "rose" && "bg-rose-500 animate-pulse",
                             item.badgeVariant === "amber" && "bg-amber-500",
                             (!item.badgeVariant || item.badgeVariant === "slate") && "bg-slate-400"
@@ -303,9 +303,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
                       <span
                         className={cn(
                           "px-2 py-0.5 rounded-full text-[11px] font-mono font-bold shrink-0",
-                          item.badgeVariant === "rose" && "bg-rose-100 text-rose-800 border border-rose-200 animate-pulse",
-                          item.badgeVariant === "amber" && "bg-amber-100 text-amber-800 border border-amber-200",
-                          (!item.badgeVariant || item.badgeVariant === "slate") && "bg-slate-100 text-slate-600 border border-slate-200"
+                          item.badgeVariant === "rose" && "bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800 animate-pulse",
+                          item.badgeVariant === "amber" && "bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800",
+                          (!item.badgeVariant || item.badgeVariant === "slate") && "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
                         )}
                       >
                         {item.badgeCount}
@@ -320,29 +320,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
         {/* Footer Admin User Identity Card & System State */}
         {!collapsed && (
-          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-right space-y-2.5">
+          <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 text-right space-y-2.5">
             {/* Identity Card */}
-            <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
-              <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+            <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/80 border border-teal-200/80 dark:border-teal-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                 {user?.fullName?.trim().charAt(0) || DEFAULT_ADMIN_NAME.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-900 truncate">
+                <p className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
                   {user?.fullName || DEFAULT_ADMIN_NAME}
                 </p>
-                <p className="text-[10px] text-teal-700 font-semibold truncate">
+                <p className="text-[10px] text-teal-700 dark:text-teal-400 font-semibold truncate">
                   {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
                 </p>
               </div>
             </div>
 
             {/* System Status Pill */}
-            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
+            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium px-1">
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[10px] text-emerald-800 font-bold">النظام متصل ومحدث</span>
+                <span className="text-[10px] text-emerald-800 dark:text-emerald-400 font-bold">النظام متصل ومحدث</span>
               </div>
-              <span className="font-mono text-[10px] bg-slate-200/60 px-1.5 py-0.5 rounded text-slate-700 font-bold">
+              <span className="font-mono text-[10px] bg-slate-200/60 dark:bg-slate-800 px-1.5 py-0.5 rounded text-slate-700 dark:text-slate-300 font-bold">
                 v2.5
               </span>
             </div>
@@ -350,10 +350,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             {/* Quick Support / Procedures Link */}
             <Link
               href="/procedures/list"
-              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100/90 text-slate-700 hover:text-[#137a85] text-xs font-bold transition-all border border-slate-200 shadow-2xs flex items-center justify-center gap-2 group whitespace-nowrap cursor-pointer"
+              className="w-full py-2 px-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100/90 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:text-[#137a85] dark:hover:text-teal-300 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center justify-center gap-2 group whitespace-nowrap cursor-pointer"
               title="دليل الإجراءات والدعم الفني"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-[#137a85] shrink-0 group-hover:scale-110 transition-transform" />
+              <HelpCircle className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400 shrink-0 group-hover:scale-110 transition-transform" />
               <span className="whitespace-nowrap">دليل العمليات الإدارية</span>
             </Link>
           </div>
@@ -367,7 +367,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       {/* Desktop Persistent Sidebar (Right side in RTL) */}
       <aside
         className={cn(
-          "hidden lg:block h-screen sticky top-0 shrink-0 shadow-xs border-l border-slate-200/80 z-30 bg-white self-start transition-all duration-300",
+          "hidden lg:block h-screen sticky top-0 shrink-0 shadow-xs border-l border-slate-200/80 dark:border-slate-800 z-30 bg-white dark:bg-slate-900 self-start transition-all duration-300",
           isCollapsed ? "w-20" : "w-64",
           className
         )}

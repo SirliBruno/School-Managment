@@ -73,60 +73,60 @@ export default function AbsenceProcedurePage() {
             title="إجمالي الغيابات المسجلة"
             value={totalAbsences}
             icon={<FileText className="w-5 h-5" />}
-            iconBgColor="bg-teal-50"
-            iconColor="text-[#137a85]"
+            iconBgColor="bg-teal-50 dark:bg-teal-950/60"
+            iconColor="text-[#137a85] dark:text-teal-400"
           />
 
           <KpiCard
             title="مساءلات الواتساب"
             value={whatsappSent}
-            valueColor="text-emerald-600"
+            valueColor="text-emerald-600 dark:text-emerald-400"
             subtitle={
               (pendingInquiriesCount > 0 || submittedInquiriesCount > 0) && (
-                <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded-md">
+                <span className="text-[10px] text-amber-600 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded-md">
                   {submittedInquiriesCount} رد جديد
                 </span>
               )
             }
             icon={<MessageCircle className="w-5 h-5" />}
-            iconBgColor="bg-emerald-50"
-            iconColor="text-emerald-600"
+            iconBgColor="bg-emerald-50 dark:bg-emerald-950/60"
+            iconColor="text-emerald-600 dark:text-emerald-400"
           />
 
           <KpiCard
             title="معلمات شملتهن المساءلة"
             value={teachersWithAbsences}
-            valueColor="text-amber-600"
+            valueColor="text-amber-600 dark:text-amber-400"
             icon={<AlertTriangle className="w-5 h-5" />}
-            iconBgColor="bg-amber-50"
-            iconColor="text-amber-600"
+            iconBgColor="bg-amber-50 dark:bg-amber-950/60"
+            iconColor="text-amber-600 dark:text-amber-400"
           />
 
           <KpiCard
             title="الكادر التعليمي المتاح"
             value={availableTeachers}
             icon={<CalendarCheck className="w-5 h-5" />}
-            iconBgColor="bg-slate-100"
-            iconColor="text-slate-600"
+            iconBgColor="bg-slate-100 dark:bg-slate-800"
+            iconColor="text-slate-600 dark:text-slate-400"
           />
         </div>
 
         {/* View Selection Tabs */}
-        <div className="bg-slate-100/90 p-1.5 rounded-2xl flex items-center gap-1 border border-slate-200/80 max-w-md">
+        <div className="bg-slate-100/90 dark:bg-slate-900 p-1.5 rounded-2xl flex items-center gap-1 border border-slate-200/80 dark:border-slate-800 max-w-md">
           <button
             type="button"
             onClick={() => setActiveTab("whatsapp")}
             className={cn(
               "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
               activeTab === "whatsapp"
-                ? "bg-white text-emerald-700 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 shadow-2xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             )}
           >
-            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+            <MessageCircle className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
             <span>مساءلات الواتساب والمرفقات</span>
             {whatsappSent > 0 && (
-              <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">
+              <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[10px]">
                 {whatsappSent}
               </span>
             )}
@@ -138,11 +138,11 @@ export default function AbsenceProcedurePage() {
             className={cn(
               "flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
               activeTab === "manual"
-                ? "bg-white text-slate-900 shadow-2xs"
-                : "text-slate-600 hover:text-slate-900"
+                ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 shadow-2xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
             )}
           >
-            <ClipboardList className="w-3.5 h-3.5 text-slate-500" />
+            <ClipboardList className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
             <span>التسجيل والتوثيق المباشر</span>
           </button>
         </div>

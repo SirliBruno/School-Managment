@@ -38,7 +38,7 @@ export default function TeachersPage() {
         ]}
         description="استعراض وإدارة بيانات الكادر التعليمي، التخصصات، واستيراد ملفات الإكسل المعتمدة"
         actionButtons={
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 border border-teal-200/70 text-xs text-[#137a85] font-bold shadow-2xs">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200/70 dark:border-teal-900/60 text-xs text-[#137a85] dark:text-teal-300 font-bold shadow-2xs">
             <GraduationCap className="w-4 h-4" />
             <span>الكادر التعليمي للعام الدراسي {currentHijriYear} هـ</span>
           </div>
@@ -52,44 +52,44 @@ export default function TeachersPage() {
           <KpiCard
             title="إجمالي المعلمات المسجلات"
             value={totalTeachers}
-            subtitle={<span className="text-xs text-slate-400 font-medium">كادر المدرسة المعتمد</span>}
+            subtitle={<span className="text-xs text-slate-400 dark:text-slate-500 font-medium">كادر المدرسة المعتمد</span>}
             icon={<Users className="w-5 h-5" />}
-            iconBgColor="bg-teal-50"
-            iconColor="text-[#137a85]"
+            iconBgColor="bg-teal-50 dark:bg-teal-950/60"
+            iconColor="text-[#137a85] dark:text-teal-400"
           />
 
           <KpiCard
             title="معلمات بدون غياب"
             value={teachersRegular}
-            subtitle={<span className="text-xs text-emerald-600 font-bold">سجل انضباط تام</span>}
-            valueColor="text-emerald-600"
+            subtitle={<span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold">سجل انضباط تام</span>}
+            valueColor="text-emerald-600 dark:text-emerald-400"
             icon={<UserCheck className="w-5 h-5" />}
-            iconBgColor="bg-emerald-50"
-            iconColor="text-emerald-600"
+            iconBgColor="bg-emerald-50 dark:bg-emerald-950/60"
+            iconColor="text-emerald-600 dark:text-emerald-400"
           />
 
           <KpiCard
             title="معلمات لديهن سجل غياب"
             value={teachersWithAbsence}
-            subtitle={<span className="text-xs text-amber-600 font-bold">مساءلات أو إجازات مسجلة</span>}
-            valueColor="text-amber-600"
+            subtitle={<span className="text-xs text-amber-600 dark:text-amber-400 font-bold">مساءلات أو إجازات مسجلة</span>}
+            valueColor="text-amber-600 dark:text-amber-400"
             icon={<Calendar className="w-5 h-5" />}
-            iconBgColor="bg-amber-50"
-            iconColor="text-amber-600"
+            iconBgColor="bg-amber-50 dark:bg-amber-950/60"
+            iconColor="text-amber-600 dark:text-amber-400"
           />
         </div>
 
         {/* Section: Compact Horizontal Import & Tools Banner */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-3 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#137a85] flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200/80 dark:border-teal-900/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center shrink-0">
               <FileSpreadsheet className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-xs sm:text-sm font-bold text-slate-900">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                 استيراد وتحديث كادر المدرسة
               </h2>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
                 رفع ومطابقة ملفات Excel المعتمدة وحفظها فورياً مع الحفاظ التام على السجلات السابقة
               </p>
             </div>
@@ -103,10 +103,10 @@ export default function TeachersPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-sm md:text-base font-bold text-slate-800">
+              <h2 className="text-sm md:text-base font-bold text-slate-800 dark:text-slate-200">
                 قائمة وسجلات المعلمات
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 استعراض البيانات الوظيفية والتخصص وعدد أيام الغياب المسجلة
               </p>
             </div>

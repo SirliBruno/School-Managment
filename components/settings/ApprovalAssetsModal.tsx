@@ -169,7 +169,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 z-10 text-right my-8"
+          className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 z-10 text-right my-8"
         >
           {/* Header */}
           <div className="px-6 py-4 bg-gradient-to-r from-teal-800 to-[#137a85] text-white flex items-center justify-between">
@@ -189,7 +189,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg text-teal-100 hover:text-white hover:bg-white/10 transition-colors"
+              className="p-1.5 rounded-lg text-teal-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -202,9 +202,9 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-semibold flex items-center gap-2"
+                className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-semibold flex items-center gap-2"
               >
-                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <span>{successMsg}</span>
               </motion.div>
             )}
@@ -213,18 +213,18 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-semibold flex items-center gap-2"
+                className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300 rounded-xl text-xs font-semibold flex items-center gap-2"
               >
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span>{errorMsg}</span>
               </motion.div>
             )}
 
             {/* Information Banner */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl flex items-start gap-3 text-xs text-slate-600 leading-relaxed">
-              <Info className="w-4 h-4 text-teal-700 shrink-0 mt-0.5" />
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700 rounded-2xl flex items-start gap-3 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              <Info className="w-4 h-4 text-teal-700 dark:text-teal-400 shrink-0 mt-0.5" />
               <div>
-                <span className="font-bold text-slate-800 block mb-0.5">ضوابط الاعتماد والختم الآلي:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100 block mb-0.5">ضوابط الاعتماد والختم الآلي:</span>
                 تُدرج هذه الأصول تلقائياً في النماذج الرسمية (تقارير الغياب، قرارات الحسم، أذونات الاستئذان، وإشعارات التأخر)، وتُستثنى تماماً من التقارير الإحصائية والعروض الداخلية لحفظ الرسمية.
               </div>
             </div>
@@ -232,25 +232,25 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
             {/* Assets Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {/* Section 1: School Stamp */}
-              <div className="border border-slate-200 rounded-2xl p-4.5 bg-white shadow-2xs space-y-3.5">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 bg-white dark:bg-slate-850 shadow-2xs space-y-3.5">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <ShieldCheck className="w-4 h-4 text-teal-700" />
-                    <span className="font-bold text-sm text-slate-900">ختم المدرسة الرسمي</span>
+                    <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">ختم المدرسة الرسمي</span>
                   </div>
-                  <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
                     <span>تفعيل</span>
                     <input
                       type="checkbox"
                       checked={stampEnabled}
                       onChange={(e) => setStampEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300"
+                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-600"
                     />
                   </label>
                 </div>
 
                 {/* Stamp Preview Box */}
-                <div className="h-36 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center p-3 relative group overflow-hidden">
+                <div className="h-36 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-3 relative group overflow-hidden">
                   {previewStamp ? (
                     <img
                       src={previewStamp}
@@ -260,8 +260,8 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                       }`}
                     />
                   ) : (
-                    <div className="text-center text-slate-400 text-xs flex flex-col items-center gap-1.5">
-                      <FileImage className="w-8 h-8 text-slate-300" />
+                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1.5">
+                      <FileImage className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                       <span>لا يوجد ختم مرفوع</span>
                     </div>
                   )}
@@ -285,7 +285,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => stampInputRef.current?.click()}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 rounded-xl transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl transition-colors cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>{previewStamp ? "استبدال الختم" : "رفع الختم"}</span>
@@ -294,7 +294,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                     <button
                       type="button"
                       onClick={handleDeleteStamp}
-                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                      className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
                       title="حذف الختم"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -304,25 +304,25 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
               </div>
 
               {/* Section 2: Vice Principal Signature */}
-              <div className="border border-slate-200 rounded-2xl p-4.5 bg-white shadow-2xs space-y-3.5">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 bg-white dark:bg-slate-850 shadow-2xs space-y-3.5">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-teal-700" />
-                    <span className="font-bold text-sm text-slate-900">توقيع وكيلة المدرسة</span>
+                    <Award className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">توقيع وكيلة المدرسة</span>
                   </div>
-                  <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+                  <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
                     <span>تفعيل</span>
                     <input
                       type="checkbox"
                       checked={signatureEnabled}
                       onChange={(e) => setSignatureEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300"
+                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-600"
                     />
                   </label>
                 </div>
 
                 {/* Signature Preview Box */}
-                <div className="h-36 rounded-xl border border-dashed border-slate-200 bg-slate-50/50 flex flex-col items-center justify-center p-3 relative group overflow-hidden">
+                <div className="h-36 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-3 relative group overflow-hidden">
                   {previewSig ? (
                     <img
                       src={previewSig}
@@ -332,8 +332,8 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                       }`}
                     />
                   ) : (
-                    <div className="text-center text-slate-400 text-xs flex flex-col items-center gap-1.5">
-                      <FileImage className="w-8 h-8 text-slate-300" />
+                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1.5">
+                      <FileImage className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                       <span>لا يوجد توقيع مرفوع</span>
                     </div>
                   )}
@@ -357,7 +357,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => sigInputRef.current?.click()}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 rounded-xl transition-colors"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl transition-colors cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5" />
                     <span>{previewSig ? "استبدال التوقيع" : "رفع التوقيع"}</span>
@@ -366,7 +366,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                     <button
                       type="button"
                       onClick={handleDeleteSig}
-                      className="p-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                      className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
                       title="حذف التوقيع"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -378,11 +378,11 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+          <div className="px-6 py-4 bg-slate-50 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
             <button
               type="button"
               onClick={handleResetToDefaults}
-              className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900 transition-colors font-medium"
+              className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition-colors font-medium cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>استعادة الأصول الرسمية المعتمدة</span>
@@ -392,14 +392,14 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200/60 rounded-xl transition-colors"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               >
                 إلغاء
               </button>
               <button
                 type="button"
                 onClick={handleSave}
-                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-teal-700 to-[#137a85] hover:opacity-95 rounded-xl shadow-sm transition-opacity"
+                className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-teal-700 to-[#137a85] hover:opacity-95 rounded-xl shadow-sm transition-opacity cursor-pointer"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>حفظ التعديلات</span>

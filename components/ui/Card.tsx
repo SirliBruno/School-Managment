@@ -24,9 +24,9 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     ref
   ) => {
     const variantClasses = {
-      default: "bg-white border-slate-200/90 shadow-xs",
-      subtle: "bg-slate-50/70 border-slate-200/80 shadow-none",
-      elevated: "bg-white border-slate-200/80 shadow-md",
+      default: "bg-white dark:bg-slate-900 border-slate-200/90 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-xs",
+      subtle: "bg-slate-50/70 dark:bg-slate-800/50 border-slate-200/80 dark:border-slate-800/80 text-slate-800 dark:text-slate-200 shadow-none",
+      elevated: "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-900 dark:text-slate-100 shadow-md",
     };
 
     return (
@@ -36,7 +36,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
           "rounded-2xl border transition-all duration-200",
           variantClasses[variant] || variantClasses.default,
           compact ? "p-4" : "p-5 md:p-6",
-          hover && "hover:shadow-md hover:border-slate-300",
+          hover && "hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700",
           interactive && "cursor-pointer active:scale-[0.995]",
           className
         )}
@@ -69,7 +69,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
   ...props
 }) => (
   <h3
-    className={cn("text-sm md:text-base font-bold text-slate-800", className)}
+    className={cn("text-sm md:text-base font-bold text-slate-800 dark:text-slate-100", className)}
     {...props}
   >
     {children}
@@ -79,7 +79,7 @@ export const CardTitle: React.FC<React.HTMLAttributes<HTMLHeadingElement>> = ({
 export const CardDescription: React.FC<
   React.HTMLAttributes<HTMLParagraphElement>
 > = ({ className, children, ...props }) => (
-  <p className={cn("text-xs text-slate-500 mt-0.5", className)} {...props}>
+  <p className={cn("text-xs text-slate-500 dark:text-slate-400 mt-0.5", className)} {...props}>
     {children}
   </p>
 );

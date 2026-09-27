@@ -129,14 +129,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row select-none bg-slate-50">
+    <div className="min-h-screen w-full flex flex-col md:flex-row select-none bg-slate-50 dark:bg-slate-950">
       {/* 1. Right Side: Login Form (نموذج الدخول) */}
-      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 sm:p-10 lg:p-16 bg-slate-50/70 relative z-10">
+      <div className="w-full md:w-1/2 min-h-screen flex items-center justify-center p-6 sm:p-10 lg:p-16 bg-slate-50/70 dark:bg-slate-950/80 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: "easeOut" }}
-          className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-9 shadow-xl shadow-slate-200/60 border border-slate-200/90"
+          className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-7 sm:p-9 shadow-xl shadow-slate-200/60 dark:shadow-slate-950/80 border border-slate-200/90 dark:border-slate-800"
         >
           {/* ترويسة الشعار والمنصة */}
           <div className="flex items-center gap-3.5 mb-8">
@@ -144,20 +144,20 @@ export default function LoginPage() {
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-black text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
                 منصة الغياب الإدارية
               </h1>
-              <p className="text-xs font-bold text-teal-700 mt-0.5">
+              <p className="text-xs font-bold text-teal-700 dark:text-teal-400 mt-0.5">
                 بوابة الدخول الموحدة • وكيلة الشؤون التعليمية
               </p>
             </div>
           </div>
 
           <div className="mb-6 text-right">
-            <h2 className="text-lg font-bold text-slate-800">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-200">
               تسجيل الدخول للنظام
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               يرجى إدخال بيانات الاعتماد الإدارية للمتابعة
             </p>
           </div>
@@ -169,9 +169,9 @@ export default function LoginPage() {
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
-                className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2.5 leading-relaxed"
+                className="mb-5 p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/80 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2.5 leading-relaxed"
               >
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span className="font-medium">{errorMsg}</span>
               </motion.div>
             )}
@@ -181,11 +181,11 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* حقل اسم المستخدم أو البريد الإلكتروني */}
             <div className="space-y-1.5 text-right">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 البريد الإلكتروني أو اسم المستخدم
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -199,18 +199,18 @@ export default function LoginPage() {
                   placeholder="admin@school.com أو wakila"
                   autoComplete="username email"
                   required
-                  className="w-full pr-10 pl-4 py-3 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-medium"
+                  className="w-full pr-10 pl-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-medium"
                 />
               </div>
             </div>
 
             {/* حقل كلمة المرور */}
             <div className="space-y-1.5 text-right">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 كلمة المرور
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400">
+                <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -224,12 +224,12 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   autoComplete="current-password"
                   required
-                  className="w-full pr-10 pl-11 py-3 rounded-xl border border-slate-300 bg-slate-50/50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-medium"
+                  className="w-full pr-10 pl-11 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-sm focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all text-left font-medium"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                  className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 focus:outline-none cursor-pointer"
                   tabIndex={-1}
                   aria-label={
                     showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"

@@ -446,23 +446,23 @@ export default function ArchivePage() {
         </div>
 
           {/* Filter Tabs + Search + Select All Controls */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
               {/* 6 Horizontal Scrollable Tabs */}
-              <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
                 <button
                   type="button"
                   onClick={() => setActiveTab("all")}
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
                     activeTab === "all"
-                      ? "bg-white text-slate-900 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   )}
                 >
-                  <Layers className="w-3.5 h-3.5 text-[#137a85]" />
+                  <Layers className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400" />
                   <span>الكل</span>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-mono">
                     {allUnifiedItems.length}
                   </span>
                 </button>
@@ -473,13 +473,13 @@ export default function ArchivePage() {
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
                     activeTab === "teachers"
-                      ? "bg-white text-[#137a85] shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-[#137a85] dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   )}
                 >
                   <Users className="w-3.5 h-3.5" />
                   <span>المعلمات</span>
-                  <span className="px-2 py-0.5 rounded-full bg-teal-50 text-[#137a85] text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 text-[10px] font-mono">
                     {archivedTeachers.length}
                   </span>
                 </button>
@@ -490,13 +490,13 @@ export default function ArchivePage() {
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
                     activeTab === "absences"
-                      ? "bg-white text-blue-700 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-blue-700 dark:text-blue-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   )}
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>سجلات الغياب</span>
-                  <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-[10px] font-mono">
                     {archivedAbsences.length}
                   </span>
                 </button>
@@ -507,13 +507,13 @@ export default function ArchivePage() {
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
                     activeTab === "delays"
-                      ? "bg-white text-amber-700 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-amber-700 dark:text-amber-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   )}
                 >
                   <Clock className="w-3.5 h-3.5" />
                   <span>تنبيهات التأخر</span>
-                  <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-mono">
                     {archivedDelayNotices.length}
                   </span>
                 </button>
@@ -524,13 +524,13 @@ export default function ArchivePage() {
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
                     activeTab === "deductions"
-                      ? "bg-white text-rose-700 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   )}
                 >
                   <FileCheck className="w-3.5 h-3.5" />
                   <span>قرارات الحسم</span>
-                  <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-[10px] font-mono">
                     {archivedDeductionDecisions.length}
                   </span>
                 </button>
@@ -541,13 +541,13 @@ export default function ArchivePage() {
                   className={cn(
                     "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
                     activeTab === "permissions"
-                      ? "bg-white text-purple-700 shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-900 text-purple-700 dark:text-purple-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
                   )}
                 >
                   <DoorOpen className="w-3.5 h-3.5" />
                   <span>سجلات الاستئذان</span>
-                  <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-mono">
+                  <span className="px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 text-[10px] font-mono">
                     {archivedPermissions.length}
                   </span>
                 </button>
@@ -561,29 +561,29 @@ export default function ArchivePage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="بحث باسم المعلمة، رقم الهوية، التاريخ، السبب..."
-                  className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50/70 focus:bg-white text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
+                  className="w-full pl-3 pr-10 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs bg-slate-50/70 dark:bg-slate-800/80 focus:bg-white dark:focus:bg-slate-800 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all"
                 />
               </div>
             </div>
 
             {/* Select All Bar when items exist */}
             {filteredItems.length > 0 && (
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
                 <button
                   type="button"
                   onClick={handleToggleSelectAll}
-                  className="inline-flex items-center gap-2 font-bold text-slate-700 hover:text-[#137a85] transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300 hover:text-[#137a85] dark:hover:text-teal-400 transition-colors cursor-pointer"
                 >
                   {isAllFilteredSelected ? (
-                    <CheckSquare className="w-4 h-4 text-[#137a85]" />
+                    <CheckSquare className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                   ) : (
-                    <Square className="w-4 h-4 text-slate-400" />
+                    <Square className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                   )}
                   <span>تحديد الكل ({filteredItems.length})</span>
                 </button>
 
                 {selectedUids.size > 0 && (
-                  <span className="text-xs font-bold text-[#137a85]">
+                  <span className="text-xs font-bold text-[#137a85] dark:text-teal-400">
                     تم تحديد {selectedUids.size} عنصر
                   </span>
                 )}
@@ -593,14 +593,14 @@ export default function ArchivePage() {
 
           {/* Archive Cards List or Empty State */}
           {filteredItems.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 shadow-xs">
-              <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-12 text-center space-y-3 shadow-xs">
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center mx-auto">
                 <Archive className="w-8 h-8" />
               </div>
-              <h3 className="text-base font-bold text-slate-800">
+              <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
                 الأرشيف فارغ حالياً
               </h3>
-              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+              <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed">
                 أي معلمة أو سجل يتم حذفه سيظهر هنا تلقائياً لتتمكني من استعادته عند الحاجة.
               </p>
             </div>
@@ -614,35 +614,35 @@ export default function ArchivePage() {
                     item.type === "teacher"
                       ? {
                           label: "معلمة",
-                          bg: "bg-teal-50 text-[#137a85] border-teal-200",
-                          iconBg: "bg-teal-50 text-[#137a85] border-teal-100",
+                          bg: "bg-teal-50 dark:bg-teal-950/40 text-[#137a85] dark:text-teal-400 border-teal-200 dark:border-teal-800/60",
+                          iconBg: "bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 border-teal-100 dark:border-teal-800",
                           Icon: Users,
                         }
                       : item.type === "absence"
                       ? {
                           label: "سجل غياب",
-                          bg: "bg-blue-50 text-blue-700 border-blue-200",
-                          iconBg: "bg-blue-50 text-blue-600 border-blue-100",
+                          bg: "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800/60",
+                          iconBg: "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800",
                           Icon: FileText,
                         }
                       : item.type === "delay"
                       ? {
                           label: "تنبيه تأخر",
-                          bg: "bg-amber-50 text-amber-800 border-amber-200",
-                          iconBg: "bg-amber-50 text-amber-600 border-amber-100",
+                          bg: "bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border-amber-200 dark:border-amber-800/60",
+                          iconBg: "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-100 dark:border-amber-800",
                           Icon: Clock,
                         }
                       : item.type === "permission"
                       ? {
                           label: "سجل استئذان",
-                          bg: "bg-purple-50 text-purple-700 border-purple-200",
-                          iconBg: "bg-purple-50 text-purple-600 border-purple-100",
+                          bg: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60",
+                          iconBg: "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800",
                           Icon: DoorOpen,
                         }
                       : {
                           label: "قرار حسم ساعات",
-                          bg: "bg-rose-50 text-rose-700 border-rose-200",
-                          iconBg: "bg-rose-50 text-rose-600 border-rose-100",
+                          bg: "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60",
+                          iconBg: "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-800",
                           Icon: FileCheck,
                         };
 
@@ -656,10 +656,10 @@ export default function ArchivePage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.97 }}
                       className={cn(
-                        "bg-white rounded-2xl border p-5 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs",
+                        "bg-white dark:bg-slate-900 rounded-2xl border p-5 transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xs",
                         isSelected
-                          ? "border-[#137a85] bg-teal-50/20 ring-1 ring-[#137a85]/20"
-                          : "border-slate-200 hover:border-slate-300"
+                          ? "border-[#137a85] bg-teal-50/20 dark:bg-teal-950/20 ring-1 ring-[#137a85]/20"
+                          : "border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                       )}
                     >
                       <div className="flex items-start gap-3.5 min-w-0 flex-1">
@@ -667,11 +667,11 @@ export default function ArchivePage() {
                         <button
                           type="button"
                           onClick={() => toggleSelectItem(item.uid)}
-                          className="mt-2 text-slate-400 hover:text-[#137a85] transition-colors cursor-pointer shrink-0"
+                          className="mt-2 text-slate-400 dark:text-slate-500 hover:text-[#137a85] dark:hover:text-teal-400 transition-colors cursor-pointer shrink-0"
                           aria-label={`تحديد ${item.title}`}
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-5 h-5 text-[#137a85]" />
+                            <CheckSquare className="w-5 h-5 text-[#137a85] dark:text-teal-400" />
                           ) : (
                             <Square className="w-5 h-5" />
                           )}
@@ -700,44 +700,44 @@ export default function ArchivePage() {
                             </span>
 
                             {item.archivedByCascade && (
-                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                                 أُرشف تلقائياً
                               </span>
                             )}
 
-                            <h3 className="text-sm font-bold text-slate-900 truncate">
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                               {item.title}
                             </h3>
                           </div>
 
-                          <p className="text-xs text-slate-600 leading-relaxed">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                             {item.subtitle}
                           </p>
 
                           {item.details && (
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               {item.details}
                             </p>
                           )}
 
                           {/* Archive Metadata Row */}
-                          <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-500">
+                          <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
                             <span className="inline-flex items-center gap-1 font-medium">
-                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                               <span>
                                 أُرشف في: {formatArabicArchiveDate(item.archivedAt)}
                               </span>
                             </span>
 
                             {item.archivedBy && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
                                 <span>بواسطة: {item.archivedBy}</span>
                               </span>
                             )}
 
                             {item.archiveReason && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium">
-                                <Info className="w-3 h-3 text-[#137a85]" />
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium">
+                                <Info className="w-3 h-3 text-[#137a85] dark:text-teal-400" />
                                 <span>سبب الأرشفة: {item.archiveReason}</span>
                               </span>
                             )}
@@ -746,7 +746,7 @@ export default function ArchivePage() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
                         <button
                           type="button"
                           onClick={() => handleRestoreItem(item)}
@@ -759,7 +759,7 @@ export default function ArchivePage() {
                         <button
                           type="button"
                           onClick={() => setItemToDeletePermanently(item)}
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-rose-600 bg-rose-50/60 hover:bg-rose-600 hover:text-white border border-rose-200 transition-all cursor-pointer"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/40 hover:bg-rose-600 dark:hover:bg-rose-600 hover:text-white dark:hover:text-white border border-rose-200 dark:border-rose-800 transition-all cursor-pointer"
                         >
                           <Trash2 className="w-4 h-4" />
                           <span>حذف نهائي</span>

@@ -210,6 +210,7 @@ export interface DeductionDecision {
   // Archive (Soft Delete) metadata
   isArchived?: boolean;
   archivedAt?: string;
+  archivedBy?: string;
   archiveReason?: string;
   archivedByCascade?: boolean;
 }

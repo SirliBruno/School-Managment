@@ -214,19 +214,19 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
           transition={{ duration: 0.2 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden text-right flex flex-col max-h-[92vh] z-10"
+          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full overflow-hidden text-right flex flex-col max-h-[92vh] z-10"
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60 shrink-0">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/80 shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-teal-50 border border-teal-200 text-[#137a85] flex items-center justify-center shadow-2xs shrink-0">
+              <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center shadow-2xs shrink-0">
                 <DoorOpen className="w-5 h-5" />
               </div>
               <div>
-                <h2 id={titleId} className="text-base sm:text-lg font-black text-slate-900">
+                <h2 id={titleId} className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100">
                   {permissionToEdit ? "تعديل سجل استئذان" : "تسجيل استئذان موظفة جديد"}
                 </h2>
-                <p id={descId} className="text-xs text-slate-500 mt-0.5">
+                <p id={descId} className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                   توثيق خروج وعودة الموظفة أثناء الدوام الرسمي واحتساب المدة
                 </p>
               </div>
@@ -235,7 +235,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200/80 transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-colors cursor-pointer"
               aria-label="إغلاق"
             >
               <X className="w-4 h-4" />
@@ -246,8 +246,8 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
           <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-6 flex-1">
             {/* Step 1: Teacher Selection */}
             <div className="space-y-3">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <User className="w-4 h-4 text-[#137a85]" />
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <User className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                 <span>اختيار الموظفة المعنية</span>
                 <span className="text-rose-500">*</span>
               </label>
@@ -271,14 +271,14 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
 
               {/* Selected Teacher Quick Badge */}
               {selectedTeacher && (
-                <div className="p-3 rounded-2xl bg-teal-50/70 border border-teal-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="p-3 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/80 flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="space-y-0.5">
-                    <span className="font-black text-slate-900 block">{selectedTeacher.fullName}</span>
-                    <span className="text-slate-500 font-mono text-[11px] block">
+                    <span className="font-black text-slate-900 dark:text-slate-100 block">{selectedTeacher.fullName}</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px] block">
                       هوية: {selectedTeacher.nationalId} • التخصص: {selectedTeacher.specialty || "عام"}
                     </span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-lg bg-teal-100/80 text-[#137a85] font-bold text-[11px]">
+                  <span className="px-2.5 py-1 rounded-lg bg-teal-100/80 dark:bg-teal-900/60 text-[#137a85] dark:text-teal-300 font-bold text-[11px]">
                     {selectedTeacher.jobTitle || "معلم"}
                   </span>
                 </div>
@@ -289,8 +289,8 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* Date */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                   <span>تاريخ الاستئذان</span>
                   <span className="text-rose-500">*</span>
                 </label>
@@ -298,17 +298,17 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                   type="date"
                   value={permissionDate}
                   onChange={(e) => setPermissionDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+                  className="w-full px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
                 />
                 {formErrors.date && (
-                  <p className="text-[11px] text-rose-600 font-bold">{formErrors.date}</p>
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.date}</p>
                 )}
               </div>
 
               {/* Exit Time */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-500" />
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                   <span>وقت الخروج (HH:MM)</span>
                   <span className="text-rose-500">*</span>
                 </label>
@@ -316,18 +316,18 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                   type="time"
                   value={exitTime}
                   onChange={(e) => setExitTime(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-bold font-mono text-center bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+                  className="w-full px-3 py-2 text-xs font-bold font-mono text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
                 />
                 {formErrors.exitTime && (
-                  <p className="text-[11px] text-rose-600 font-bold">{formErrors.exitTime}</p>
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.exitTime}</p>
                 )}
               </div>
 
               {/* Return Time */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-500" />
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
                     <span>وقت العودة (HH:MM)</span>
                     <span className="text-rose-500">*</span>
                   </label>
@@ -337,7 +337,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                       setReturnTime("13:30");
                       if (!notes) setNotes("استئذان حتى نهاية الدوام الرسمي (بدون عودة)");
                     }}
-                    className="text-[10px] font-bold text-[#137a85] hover:underline cursor-pointer bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200"
+                    className="text-[10px] font-bold text-[#137a85] dark:text-teal-400 hover:underline cursor-pointer bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800"
                     title="تعبئة تلقائية لنهاية الدوام الرسمي"
                   >
                     بدون عودة (13:30)
@@ -347,10 +347,10 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                   type="time"
                   value={returnTime}
                   onChange={(e) => setReturnTime(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-bold font-mono text-center bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+                  className="w-full px-3 py-2 text-xs font-bold font-mono text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
                 />
                 {formErrors.returnTime && (
-                  <p className="text-[11px] text-rose-600 font-bold">{formErrors.returnTime}</p>
+                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.returnTime}</p>
                 )}
               </div>
             </div>
@@ -361,32 +361,32 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                 "p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2 transition-all",
                 durationCalc.isValid
                   ? durationCalc.totalMinutes >= 420
-                    ? "bg-amber-50/80 border-amber-300 text-amber-950"
-                    : "bg-emerald-50/70 border-emerald-200 text-emerald-900"
-                  : "bg-rose-50/70 border-rose-200 text-rose-900"
+                    ? "bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200"
+                    : "bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/80 text-emerald-900 dark:text-emerald-200"
+                  : "bg-rose-50/70 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800/80 text-rose-900 dark:text-rose-200"
               )}
             >
               <div className="flex items-center gap-2">
                 {durationCalc.isValid ? (
                   durationCalc.totalMinutes >= 420 ? (
-                    <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   ) : (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   )
                 ) : (
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <AlertCircle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                 )}
                 <div className="text-xs font-bold">
                   {durationCalc.isValid ? (
                     <div>
                       <span>
                         مدة الاستئذان المحتسبة:{" "}
-                        <strong className="text-emerald-800 text-sm font-black underline">
+                        <strong className="text-emerald-800 dark:text-emerald-400 text-sm font-black underline">
                           {durationCalc.text}
                         </strong>
                       </span>
                       {durationCalc.totalMinutes >= 420 && (
-                        <p className="text-[11px] text-amber-800 font-semibold mt-0.5">
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300 font-semibold mt-0.5">
                           تنبيه نظامي: بلغت المدة يوم عمل كامل (420 دقيقة / 7 ساعات)، وفق اللائحة يفضل توثيقها كإجازة أو غياب.
                         </p>
                       )}
@@ -398,7 +398,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
               </div>
 
               {durationCalc.isValid && (
-                <span className="font-mono text-xs font-black bg-white px-2 py-0.5 rounded-md border border-emerald-200 text-emerald-700 shrink-0 self-start sm:self-auto">
+                <span className="font-mono text-xs font-black bg-white dark:bg-slate-800 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 shrink-0 self-start sm:self-auto">
                   {durationCalc.totalMinutes} دقيقة
                 </span>
               )}
@@ -406,8 +406,8 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
 
             {/* Step 3: Reason & Justifications */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-[#137a85]" />
+              <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                 <span>مبررات وسبب الخروج</span>
                 <span className="text-rose-500">*</span>
               </label>
@@ -425,16 +425,16 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                   }
                 }}
                 placeholder="مثال: مراجعة مستشفى حكومي، ظرف عائلي طارئ، مهمة تدريبية خارجية..."
-                className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+                className="w-full p-3 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
               />
               {formErrors.reason && (
-                <p className="text-[11px] text-rose-600 font-bold">{formErrors.reason}</p>
+                <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.reason}</p>
               )}
             </div>
 
             {/* Step 4: Notes (Optional) */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
                 ملاحظات إضافية من الإدارة (اختياري)
               </label>
               <input
@@ -442,17 +442,17 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="مثال: تم إسناد حصص الانتظار للزميلة أمل..."
-                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+                className="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
               />
             </div>
           </form>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
+          <div className="px-6 py-4 bg-slate-50/70 dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-200/80 transition-colors whitespace-nowrap cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
             >
               إلغاء
             </button>

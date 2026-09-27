@@ -292,18 +292,18 @@ export default function PublicTeacherResponsePage() {
   // 1. Loading State Screen
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3 bg-white p-8 rounded-3xl shadow-2xs border border-slate-200 max-w-sm w-full text-center">
-          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-[#137a85] flex items-center justify-center animate-pulse">
+      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3 bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xs border border-slate-200 dark:border-slate-800 max-w-sm w-full text-center">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center animate-pulse border border-teal-200/60 dark:border-teal-800/60">
             <Clock className="w-6 h-6" />
           </div>
-          <h3 className="font-bold text-slate-800 text-sm">
+          <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm">
             جاري جلب بيانات إشعار التنبيه...
           </h3>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-400 dark:text-slate-500">
             يرجى الانتظار لحظات للتحقق من أمان الرابط
           </p>
-          <Loader2 className="w-5 h-5 text-[#137a85] animate-spin mt-2" />
+          <Loader2 className="w-5 h-5 text-[#137a85] dark:text-teal-400 animate-spin mt-2" />
         </div>
       </div>
     );
@@ -312,28 +312,28 @@ export default function PublicTeacherResponsePage() {
   // 2. Error State Screen
   if (errorMessage) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-2xs border border-rose-200 max-w-md w-full text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xs border border-rose-200 dark:border-rose-800/80 max-w-md w-full text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mx-auto border border-rose-200/60 dark:border-rose-800/60">
             <AlertCircle className="w-8 h-8" />
           </div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-800">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
             تعذر فتح الرابط
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             {errorMessage}
           </p>
           <div className="pt-2 flex flex-col gap-2">
             <button
               onClick={() => window.location.reload()}
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 text-white font-medium text-xs sm:text-sm hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-slate-900 dark:bg-slate-700 text-white font-medium text-xs sm:text-sm hover:bg-slate-800 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
               <RefreshCw className="w-4 h-4" />
               إعادة المحاولة
             </button>
           </div>
-          <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
+          <div className="pt-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
             نظام الإدارة المدرسية الموحد — منصة الغياب والمتابعة الإدارية
           </div>
         </div>
@@ -344,18 +344,18 @@ export default function PublicTeacherResponsePage() {
   // 3. Expired Link State Screen
   if (isExpired) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-2xs border border-amber-200 max-w-md w-full text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto">
+      <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-4">
+        <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xs border border-amber-200 dark:border-amber-800/80 max-w-md w-full text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto border border-amber-200/60 dark:border-amber-800/60">
             <Clock className="w-8 h-8" />
           </div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-800">
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
             انتهت صلاحية هذا الرابط
           </h2>
-          <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             عذراً أستاذة ({notice?.teacherName || "المعلمة"})، لقد انقضت المهلة المحددة للرد على إشعار التنبيه (48 ساعة من تاريخ الإرسال). يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك.
           </p>
-          <div className="pt-2 text-xs text-slate-400 border-t border-slate-100">
+          <div className="pt-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
             نظام الإدارة المدرسية الموحد — منصة المتابعة الإدارية
           </div>
         </div>
@@ -366,63 +366,63 @@ export default function PublicTeacherResponsePage() {
   // 4. Already Submitted Screen / Immediate Success Screen
   if (alreadySubmitted || submitSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50/40 via-slate-50 to-slate-100 flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="min-h-screen bg-gradient-to-b from-teal-50/40 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-4 sm:p-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          className="bg-white p-7 sm:p-9 rounded-3xl shadow-sm border border-emerald-200 max-w-lg w-full text-center space-y-6 relative overflow-hidden"
+          className="bg-white dark:bg-slate-900 p-7 sm:p-9 rounded-3xl shadow-sm border border-emerald-200 dark:border-emerald-800/80 max-w-lg w-full text-center space-y-6 relative overflow-hidden"
         >
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-emerald-500 to-teal-500" />
 
-          <div className="w-16 h-16 rounded-3xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-2xs">
+          <div className="w-16 h-16 rounded-3xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-2xs border border-emerald-200/60 dark:border-emerald-800/60">
             <CheckCircle2 className="w-8 h-8" />
           </div>
 
           <div>
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100/80 text-emerald-800 mb-2">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100/80 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60 mb-2">
               {alreadySubmitted && !submitSuccess
                 ? "تم استلام الإفادة مسبقاً"
                 : "تم استلام الإفادة بنجاح"}
             </span>
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 dark:text-slate-100">
               شكراً لكِ، أستاذة {notice?.teacherName}
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               تم توثيق إفادتكِ الإدارية في النظام وأُحيلت لمديرة المدرسة للمراجعة والاعتماد.
             </p>
           </div>
 
           {/* Details Card */}
-          <div className="bg-slate-50 rounded-2xl p-4 text-right text-xs space-y-2.5 border border-slate-100">
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-              <span className="text-slate-500">رقم التنبيه:</span>
-              <span className="font-mono font-bold text-[#137a85]">
+          <div className="bg-slate-50 dark:bg-slate-850 rounded-2xl p-4 text-right text-xs space-y-2.5 border border-slate-100 dark:border-slate-800">
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">رقم التنبيه:</span>
+              <span className="font-mono font-bold text-[#137a85] dark:text-teal-400">
                 {notice?.noticeNumber || "مسجل بالنظام"}
               </span>
             </div>
-            <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-              <span className="text-slate-500">تاريخ التنبيه:</span>
-              <span className="font-bold text-slate-800 font-mono">
+            <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400">تاريخ التنبيه:</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
                 {notice?.noticeDate || notice?.date}
               </span>
             </div>
             {violationsList.length > 0 && (
-              <div className="py-1 border-b border-slate-200/60">
-                <span className="text-slate-500 block mb-1">المخالفات المسجلة بالإشعار:</span>
+              <div className="py-1 border-b border-slate-200/60 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400 block mb-1">المخالفات المسجلة بالإشعار:</span>
                 <div className="space-y-1 mt-1">
                   {violationsList.map((v, i) => (
                     <div
                       key={i}
-                      className="text-[11px] font-bold text-slate-700 bg-white p-2.5 rounded-xl border border-slate-200/70 flex items-center justify-between gap-2"
+                      className="text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200/70 dark:border-slate-700 flex items-center justify-between gap-2"
                     >
                       <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
                         <span>{v.title}</span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] font-normal text-slate-500 font-mono">
+                      <div className="flex items-center gap-1.5 text-[10px] font-normal text-slate-500 dark:text-slate-400 font-mono">
                         <span>({v.time})</span>
                         {v.duration && (
-                          <span className="text-teal-700 font-bold bg-teal-50 px-1.5 py-0.5 rounded border border-teal-200">
+                          <span className="text-teal-700 dark:text-teal-300 font-bold bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded border border-teal-200 dark:border-teal-800">
                             {v.duration}
                           </span>
                         )}
@@ -432,15 +432,15 @@ export default function PublicTeacherResponsePage() {
                 </div>
               </div>
             )}
-            <div className="py-1 border-b border-slate-200/60">
-              <span className="text-slate-500 block mb-1">سبب ومبرر التأخر أو الانصراف:</span>
-              <p className="font-medium text-slate-800 bg-white p-3 rounded-xl border border-slate-200 whitespace-pre-line leading-relaxed">
+            <div className="py-1 border-b border-slate-200/60 dark:border-slate-800">
+              <span className="text-slate-500 dark:text-slate-400 block mb-1">سبب ومبرر التأخر أو الانصراف:</span>
+              <p className="font-medium text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 whitespace-pre-line leading-relaxed">
                 {notice?.teacherReason || teacherReason || "لا يوجد نص مسجل"}
               </p>
             </div>
             <div className="flex justify-between items-center py-1">
-              <span className="text-slate-500">حالة المعاملة:</span>
-              <span className="font-bold px-2.5 py-0.5 rounded-lg bg-teal-50 text-[#137a85] border border-teal-200 text-[11px]">
+              <span className="text-slate-500 dark:text-slate-400">حالة المعاملة:</span>
+              <span className="font-bold px-2.5 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 border border-teal-200 dark:border-teal-800 text-[11px]">
                 {notice?.status === "completed"
                   ? "معتمدة ومكتملة من مديرة المدرسة"
                   : "قيد مراجعة واعتماد مديرة المدرسة"}
@@ -458,8 +458,8 @@ export default function PublicTeacherResponsePage() {
             <span>تحميل أو طباعة استمارة التنبيه الرسمية (PDF)</span>
           </button>
 
-          <div className="pt-2 text-[11px] text-slate-400 flex items-center justify-center gap-1.5">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <div className="pt-2 text-[11px] text-slate-400 dark:text-slate-500 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>معاملة رسمية موثقة إلكترونياً برمز تحقق فريد</span>
           </div>
         </motion.div>
@@ -469,68 +469,68 @@ export default function PublicTeacherResponsePage() {
 
   // 5. Active Submission Form Screen (Teacher Stage 2 Entry)
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 py-8 px-4 sm:px-6">
+    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-slate-50 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 py-8 px-4 sm:px-6">
       <div className="max-w-xl mx-auto space-y-6">
 
         {/* Top Header Card */}
-        <header className="bg-white rounded-3xl p-6 shadow-2xs border border-slate-200 text-center relative overflow-hidden">
+        <header className="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xs border border-slate-200 dark:border-slate-800 text-center relative overflow-hidden">
           <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#137a85] to-teal-500" />
           
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#137a85] mb-2">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#137a85] dark:text-teal-400 mb-2">
             <Building2 className="w-4 h-4" />
             <span>المملكة العربية السعودية — وزارة التعليم</span>
           </div>
 
-          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900">
+          <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-slate-100">
             نموذج تنبيه عن تأخر / انصراف
           </h1>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             إفادة المعلمة عن سبب ومبررات التأخر أو الانصراف وتوثيق الرد نظامياً
           </p>
 
           {notice?.noticeNumber && (
-            <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 text-slate-600 font-mono text-[11px] font-bold border border-slate-200/80">
+            <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px] font-bold border border-slate-200/80 dark:border-slate-700">
               <span>رقم التنبيه:</span>
-              <span className="text-[#137a85]">{notice.noticeNumber}</span>
+              <span className="text-[#137a85] dark:text-teal-400">{notice.noticeNumber}</span>
             </div>
           )}
         </header>
 
         {/* Teacher Details Card (2x2 Grid matching Inquiry Page) */}
-        <section className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-slate-200 space-y-3">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-            <User className="w-4 h-4 text-[#137a85]" />
+        <section className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 shadow-2xs border border-slate-200 dark:border-slate-800 space-y-3">
+          <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+            <User className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
             <span>بيانات المكرمة المعلمة</span>
           </h2>
 
           <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-              <span className="text-slate-400 block text-[11px]">اسم المعلمة</span>
-              <span className="font-bold text-slate-900 text-sm mt-0.5 block">
+            <div className="bg-slate-50 dark:bg-slate-850 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">اسم المعلمة</span>
+              <span className="font-bold text-slate-900 dark:text-slate-100 text-sm mt-0.5 block">
                 {notice?.teacherName}
               </span>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-              <span className="text-slate-400 block text-[11px]">الرقم الوظيفي / السجل</span>
-              <span className="font-bold text-slate-800 text-sm mt-0.5 block font-mono">
+            <div className="bg-slate-50 dark:bg-slate-850 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">الرقم الوظيفي / السجل</span>
+              <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block font-mono">
                 {notice?.jobNumber}
               </span>
             </div>
 
-            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-              <span className="text-slate-400 block text-[11px]">التخصص / الكادر</span>
-              <span className="font-semibold text-slate-700 mt-0.5 block">
+            <div className="bg-slate-50 dark:bg-slate-850 p-3.5 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-slate-400 dark:text-slate-500 block text-[11px]">التخصص / الكادر</span>
+              <span className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5 block">
                 {notice?.specialty || "الكادر التعليمي"}
               </span>
             </div>
 
-            <div className="bg-teal-50/70 p-3.5 rounded-2xl border border-teal-200">
-              <span className="text-[#137a85] block text-[11px] font-semibold flex items-center gap-1">
+            <div className="bg-teal-50/70 dark:bg-teal-950/40 p-3.5 rounded-2xl border border-teal-200 dark:border-teal-800/60">
+              <span className="text-[#137a85] dark:text-teal-400 block text-[11px] font-semibold flex items-center gap-1">
                 <Calendar className="w-3 h-3" />
                 <span>تاريخ التنبيه</span>
               </span>
-              <span className="font-extrabold text-[#137a85] text-sm mt-0.5 block font-mono">
+              <span className="font-extrabold text-[#137a85] dark:text-teal-300 text-sm mt-0.5 block font-mono">
                 {notice?.noticeDate || notice?.date}
               </span>
             </div>
@@ -538,31 +538,31 @@ export default function PublicTeacherResponsePage() {
         </section>
 
         {/* Section 1: Stage 1 Delay Notice Excerpt Card (READ-ONLY) */}
-        <section className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-slate-200 space-y-3.5 text-right">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-            <h2 className="text-xs font-bold text-[#137a85] uppercase tracking-wider flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-[#137a85]" />
+        <section className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-6 shadow-2xs border border-slate-200 dark:border-slate-800 space-y-3.5 text-right">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+            <h2 className="text-xs font-bold text-[#137a85] dark:text-teal-400 uppercase tracking-wider flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
               <span>( ١ ) وقائع التنبيه المسجلة من إدارة المدرسة</span>
             </h2>
-            <span className="text-xs font-mono text-slate-500 font-medium">
+            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-medium">
               {notice?.noticeDate || notice?.date} م
             </span>
           </div>
 
           {/* Teacher Greeting */}
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed space-y-1">
-            <p className="font-semibold text-slate-800">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-100 dark:border-slate-800 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
+            <p className="font-semibold text-slate-800 dark:text-slate-200">
               المكرمة المعلمة /{" "}
-              <span className="text-slate-900 font-extrabold">
+              <span className="text-slate-900 dark:text-slate-100 font-extrabold">
                 {notice?.teacherName}
               </span>{" "}
               وفقها الله،
             </p>
-            <p className="text-slate-500 text-xs">
+            <p className="text-slate-500 dark:text-slate-400 text-xs">
               السلام عليكم ورحمة الله وبركاته، وبعد:
             </p>
-            <p className="text-slate-700 text-xs pt-1">
-              إنه في تاريخ (<span className="font-mono font-bold text-[#137a85]">{notice?.noticeDate || notice?.date}</span>) اتضح ما يلي:
+            <p className="text-slate-700 dark:text-slate-300 text-xs pt-1">
+              إنه في تاريخ (<span className="font-mono font-bold text-[#137a85] dark:text-teal-400">{notice?.noticeDate || notice?.date}</span>) اتضح ما يلي:
             </p>
           </div>
 
@@ -573,23 +573,23 @@ export default function PublicTeacherResponsePage() {
               return (
                 <div
                   key={i}
-                  className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 flex items-start gap-3 transition-all"
+                  className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 flex items-start gap-3 transition-all"
                 >
-                  <div className="w-8 h-8 rounded-xl bg-amber-100/90 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                  <div className="w-8 h-8 rounded-xl bg-amber-100/90 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300 flex items-center justify-center shrink-0 mt-0.5">
                     <IconComponent className="w-4 h-4" />
                   </div>
-                  <div className="text-xs sm:text-sm text-slate-800 flex-1">
+                  <div className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 flex-1">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <strong className="font-bold text-amber-950">
+                      <strong className="font-bold text-amber-950 dark:text-amber-200">
                         • {v.title}
                       </strong>
                       {v.duration && (
-                        <span className="text-[11px] font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800">
                           المدة: {v.duration}
                         </span>
                       )}
                     </div>
-                    <span className="text-slate-600 font-medium text-xs mt-1 block">
+                    <span className="text-slate-600 dark:text-slate-400 font-medium text-xs mt-1 block">
                       {v.time}
                     </span>
                   </div>
@@ -599,13 +599,13 @@ export default function PublicTeacherResponsePage() {
           </div>
 
           {notice?.additionalNotes && (
-            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
-              <strong className="text-slate-800 block mb-1 font-bold">ملاحظات إضافية من الإدارة:</strong>
-              <p className="text-slate-700 leading-relaxed">{notice.additionalNotes}</p>
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-850 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300">
+              <strong className="text-slate-800 dark:text-slate-200 block mb-1 font-bold">ملاحظات إضافية من الإدارة:</strong>
+              <p className="text-slate-700 dark:text-slate-300 leading-relaxed">{notice.additionalNotes}</p>
             </div>
           )}
 
-          <p className="text-xs text-slate-500 pt-1">
+          <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">
             عليه نأمل منكم توضيح أسباب ومبررات ذلك وتعبئة النموذج أدناه ،،، ولكم تحياتنا ..
           </p>
         </section>
@@ -613,20 +613,20 @@ export default function PublicTeacherResponsePage() {
         {/* Section 2: Teacher Input Form (Stage 2) */}
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-3xl p-6 sm:p-7 shadow-xs border border-slate-200 space-y-6 text-right"
+          className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-7 shadow-xs border border-slate-200 dark:border-slate-800 space-y-6 text-right"
         >
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <span className="text-xs font-bold text-[#137a85] flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-[#137a85]" />
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <span className="text-xs font-bold text-[#137a85] dark:text-teal-400 flex items-center gap-1.5">
+              <CheckCircle2 className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
               <span>( ٢ ) إفادة المعلمة وتدوين الأسباب</span>
             </span>
-            <span className="text-[11px] font-semibold text-rose-500 bg-rose-50 px-2.5 py-0.5 rounded-lg border border-rose-100">
+            <span className="text-[11px] font-semibold text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2.5 py-0.5 rounded-lg border border-rose-100 dark:border-rose-800">
               * حقول إلزامية
             </span>
           </div>
 
           {formError && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{formError}</span>
             </div>
@@ -637,11 +637,11 @@ export default function PublicTeacherResponsePage() {
             <div className="flex items-center justify-between">
               <label
                 htmlFor={`${formId}-reason`}
-                className="block text-xs font-bold text-slate-800"
+                className="block text-xs font-bold text-slate-800 dark:text-slate-200"
               >
                 أسباب ومبررات التأخر / الانصراف بالتفصيل <span className="text-rose-500">*</span>
               </label>
-              <span className="text-[11px] text-slate-400 font-mono">
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
                 {teacherReason.length}/400
               </span>
             </div>
@@ -657,14 +657,14 @@ export default function PublicTeacherResponsePage() {
               }}
               placeholder="اكتبي هنا مبرراتكِ وأسباب التأخر أو الانصراف بالتفصيل ليتم النظر فيها من قبل إدارة المدرسة..."
               className={cn(
-                "w-full p-3.5 rounded-2xl border text-xs sm:text-sm bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
+                "w-full p-3.5 rounded-2xl border text-xs sm:text-sm bg-white dark:bg-slate-850 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 transition-all shadow-2xs resize-none",
                 formError && !teacherReason.trim()
                   ? "border-rose-400 focus:ring-rose-200"
-                  : "border-slate-200 focus:border-[#137a85] focus:ring-[#137a85]/20"
+                  : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-500 focus:ring-[#137a85]/20"
               )}
               required
             />
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500">
               يرجى تحري الدقة في ذكر التفاصيل والأوقات الداعمة لمبرركِ.
             </p>
           </div>
@@ -672,10 +672,10 @@ export default function PublicTeacherResponsePage() {
           {/* Teacher Name & Date Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 اسم المعلمة (المقرّة بالإفادة)
               </label>
-              <div className="h-12 flex items-center px-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-800">
+              <div className="h-12 flex items-center px-3.5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200">
                 {notice?.teacherName}
               </div>
             </div>
@@ -683,7 +683,7 @@ export default function PublicTeacherResponsePage() {
             <div className="space-y-1.5">
               <label
                 htmlFor={`${formId}-date`}
-                className="block text-xs font-bold text-slate-700"
+                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
               >
                 تاريخ تقديم الإفادة
               </label>
@@ -692,14 +692,14 @@ export default function PublicTeacherResponsePage() {
                 type="date"
                 value={signatureDate}
                 onChange={(e) => setSignatureDate(e.target.value)}
-                className="w-full h-12 px-3.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition shadow-2xs"
+                className="w-full h-12 px-3.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] dark:focus:border-teal-500 transition shadow-2xs"
               />
             </div>
           </div>
 
           {/* Legal Pledge / Consent Checkbox */}
           <div className="pt-2">
-            <label className="flex items-start gap-3 p-4 rounded-2xl bg-teal-50/70 border border-teal-200 cursor-pointer hover:bg-teal-50 transition select-none">
+            <label className="flex items-start gap-3 p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 cursor-pointer hover:bg-teal-50 dark:hover:bg-teal-950/60 transition select-none">
               <input
                 type="checkbox"
                 checked={hasConsent}
@@ -707,16 +707,16 @@ export default function PublicTeacherResponsePage() {
                   setHasConsent(e.target.checked);
                   setFormError(null);
                 }}
-                className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85] cursor-pointer"
+                className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-slate-600 text-[#137a85] focus:ring-[#137a85] cursor-pointer"
               />
-              <span className="text-xs text-slate-700 leading-relaxed font-medium">
+              <span className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                 أقر بصحة البيانات والمبررات المسجلة أعلاه، وأتحمل المسؤولية الإدارية والنظامية عن صحتها أمام إدارة المدرسة.
               </span>
             </label>
           </div>
 
           {/* Submit Button */}
-          <div className="pt-4 border-t border-slate-100">
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             <button
               type="submit"
               disabled={isSubmitting || !hasConsent || !teacherReason.trim()}
@@ -736,14 +736,14 @@ export default function PublicTeacherResponsePage() {
             </button>
           </div>
 
-          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 pt-1 text-center">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 pt-1 text-center">
+            <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             <span>معاملة رسمية موثقة إلكترونياً وتُحال مباشرة إلى الإدارة المدرسية</span>
           </div>
         </form>
 
         {/* Footer */}
-        <footer className="text-center text-xs text-slate-400 pb-6">
+        <footer className="text-center text-xs text-slate-400 dark:text-slate-500 pb-6">
           نظام الإدارة المدرسية الموحد — منصة المتابعة الإدارية
         </footer>
       </div>

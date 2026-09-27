@@ -261,19 +261,19 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
           initial={{ opacity: 0, scale: 0.96, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 10 }}
-          className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-lg w-full overflow-hidden text-right"
+          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-lg w-full overflow-hidden text-right"
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/60">
+          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-850/70">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shadow-sm">
                 <MessageCircle className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-slate-900">
+                <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
                   إرسال مساءلة غياب عبر الواتساب
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                   توليد رابط تفاعلي للمعلمة لتقديم إفادتها ورفع المرفق
                 </p>
               </div>
@@ -283,7 +283,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="إغلاق النافذة"
-              className="w-8 h-8 rounded-xl bg-white text-slate-400 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+              className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
@@ -292,15 +292,15 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
           {/* Body */}
           <div className="p-6 space-y-5">
             {errorMsg && (
-              <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {copiedSuccess && (
-              <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>تم نسخ نص الرسالة ورابط المساءلة بنجاح!</span>
               </div>
             )}
@@ -318,18 +318,18 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
 
             {/* Absence Duration Type Toggle */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-700">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
                 نوع ومدة الغياب <span className="text-rose-500">*</span>
               </label>
-              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setDurationMode("single")}
                   className={cn(
                     "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
                     durationMode === "single"
-                      ? "bg-white text-[#137a85] shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-[#137a85] dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
                   <Calendar className="w-3.5 h-3.5" />
@@ -348,11 +348,11 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   className={cn(
                     "py-2 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5",
                     durationMode === "multiple"
-                      ? "bg-white text-[#137a85] shadow-xs"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "bg-white dark:bg-slate-700 text-[#137a85] dark:text-teal-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
                   )}
                 >
-                  <Calendar className="w-3.5 h-3.5 text-teal-600" />
+                  <Calendar className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                   <span>عدة أيام (فترة غياب)</span>
                 </button>
               </div>
@@ -363,13 +363,13 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
               <div className="space-y-1.5">
                 <label
                   htmlFor={`${formId}-date`}
-                  className="block text-xs font-bold text-slate-700"
+                  className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                 >
                   تاريخ الغياب المعني بالمساءلة <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <Calendar
-                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
                     aria-hidden="true"
                   />
                   <input
@@ -377,23 +377,23 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                     type="date"
                     value={absenceDate}
                     onChange={(e) => setAbsenceDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
                   />
                 </div>
               </div>
             ) : (
-              <div className="space-y-2.5 p-3.5 rounded-2xl bg-teal-50/40 border border-teal-100">
+              <div className="space-y-2.5 p-3.5 rounded-2xl bg-teal-50/40 dark:bg-teal-950/20 border border-teal-100 dark:border-teal-900/40">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`${formId}-start-date`}
-                      className="block text-xs font-bold text-slate-700"
+                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                     >
                       من تاريخ (بداية الغياب) <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
                       <Calendar
-                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
                         aria-hidden="true"
                       />
                       <input
@@ -406,7 +406,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                             setAbsenceEndDate(e.target.value);
                           }
                         }}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
                       />
                     </div>
                   </div>
@@ -414,13 +414,13 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   <div className="space-y-1.5">
                     <label
                       htmlFor={`${formId}-end-date`}
-                      className="block text-xs font-bold text-slate-700"
+                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                     >
                       إلى تاريخ (نهاية الغياب) <span className="text-rose-500">*</span>
                     </label>
                     <div className="relative">
                       <Calendar
-                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
                         aria-hidden="true"
                       />
                       <input
@@ -429,18 +429,18 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                         min={absenceDate}
                         value={absenceEndDate}
                         onChange={(e) => setAbsenceEndDate(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* Days Count Badge */}
-                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white border border-teal-200 text-xs">
-                  <span className="text-slate-600 font-medium">إجمالي مدة الغياب المحسوبة:</span>
-                  <span className="font-bold text-[#137a85] flex items-center gap-1.5 font-mono">
+                <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-teal-200 dark:border-teal-800/60 text-xs">
+                  <span className="text-slate-600 dark:text-slate-400 font-medium">إجمالي مدة الغياب المحسوبة:</span>
+                  <span className="font-bold text-[#137a85] dark:text-teal-400 flex items-center gap-1.5 font-mono">
                     <span>{daysLabel}</span>
-                    <span className="text-[11px] text-teal-700 font-sans">({calculatedDays} يوم)</span>
+                    <span className="text-[11px] text-teal-700 dark:text-teal-400 font-sans">({calculatedDays} يوم)</span>
                   </span>
                 </div>
               </div>
@@ -451,19 +451,19 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
               <div className="flex items-center justify-between">
                 <label
                   htmlFor={`${formId}-mobile`}
-                  className="block text-xs font-bold text-slate-700"
+                  className="block text-xs font-bold text-slate-700 dark:text-slate-300"
                 >
                   رقم جوال المعلمة (واتساب) <span className="text-rose-500">*</span>
                 </label>
                 {formattedMobile && (
-                  <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                  <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60 px-2 py-0.5 rounded-md border">
                     +{formattedMobile}
                   </span>
                 )}
               </div>
               <div className="relative">
                 <Phone
-                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
                   aria-hidden="true"
                 />
                 <input
@@ -473,7 +473,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   placeholder="9665XXXXXXXX"
                   value={manualMobile}
                   onChange={(e) => setManualMobile(normalizeSaudiMobileInput(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs md:text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm font-mono font-medium"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm font-mono font-medium"
                 />
               </div>
               {selectedTeacher && (
@@ -482,9 +482,9 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                     type="checkbox"
                     checked={saveMobileToProfile}
                     onChange={(e) => setSaveMobileToProfile(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded border-slate-300 text-[#137a85] focus:ring-[#137a85]"
+                    className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-600 text-[#137a85] focus:ring-[#137a85]"
                   />
-                  <span className="text-[11px] text-slate-500">
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
                     تحديث هذا الرقم في الملف الدائم للمعلمة
                   </span>
                 </label>
@@ -492,32 +492,32 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
             </div>
 
             {/* Live Message Preview Box */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-600 dark:text-slate-400">
                 <span>معاينة نص الرسالة المرسلة:</span>
-                <span className="text-[10px] text-slate-400">صلاحية الرابط: 7 أيام</span>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">صلاحية الرابط: 7 أيام</span>
               </div>
-              <div className="bg-white p-3 rounded-xl border border-slate-200 text-xs text-slate-700 leading-relaxed font-sans">
+              <div className="bg-white dark:bg-slate-850 p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-sans">
                 <p>
                   المكرمة الأستاذة /{" "}
-                  <span className="font-bold text-slate-900">
+                  <span className="font-bold text-slate-900 dark:text-slate-100">
                     {selectedTeacher?.fullName || selectedTeacher?.name || "..."}
                   </span>
                 </p>
-                <p className="mt-1 text-slate-600">
+                <p className="mt-1 text-slate-600 dark:text-slate-400">
                   السلام عليكم ورحمة الله وبركاته،، نأمل منكِ التكرم بتقديم الإفادة عن سبب الغياب{" "}
                   {durationMode === "multiple" && absenceEndDate !== absenceDate ? (
-                    <span className="font-bold text-slate-900">
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
                       للفترة من ({absenceDate}) إلى ({absenceEndDate}) ولمدة ({daysLabel})
                     </span>
                   ) : (
                     <span>
-                      ليوم (<strong className="font-bold text-slate-900">{absenceDate}</strong>)
+                      ليوم (<strong className="font-bold text-slate-900 dark:text-slate-100">{absenceDate}</strong>)
                     </span>
                   )}{" "}
                   مع إرفاق التقرير الطبي أو ما يعادله عبر الرابط:
                 </p>
-                <p className="mt-1 text-[#137a85] font-mono text-[11px] underline">
+                <p className="mt-1 text-[#137a85] dark:text-teal-400 font-mono text-[11px] underline">
                   [رابط الاستمارة الآمن الخاص بالمعلمة]
                 </p>
               </div>
@@ -525,12 +525,12 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50/70 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-end gap-2.5">
+          <div className="px-6 py-4 bg-slate-50/70 dark:bg-slate-850/70 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
               disabled={isProcessing}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               إلغاء
             </button>
@@ -539,9 +539,9 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
               type="button"
               onClick={handleCopyLink}
               disabled={isProcessing}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 border border-slate-200 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
             >
-              <Copy className="w-3.5 h-3.5 text-slate-500" />
+              <Copy className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               <span>نسخ الرسالة والرابط</span>
             </button>
 
