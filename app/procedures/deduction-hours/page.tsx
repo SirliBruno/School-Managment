@@ -28,6 +28,8 @@ import {
   AlertCircle,
   HelpCircle,
 } from "lucide-react";
+import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { SCHOOL_CONFIG } from "@/lib/appConfig";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { Teacher, DeductionDecision, DelayNotice } from "@/types/teacher";
@@ -78,8 +80,8 @@ function DeductionHoursContent() {
     () => `١٩/${new Date().getFullYear() % 100}/${Math.floor(100 + Math.random() * 900)}`
   );
   const [decisionDate, setDecisionDate] = useState<string>(() => getSaudiToday());
-  const [schoolName, setSchoolName] = useState<string>("مدرسة الثانوية الخامسة مسارات");
-  const [principalName, setPrincipalName] = useState<string>("أ. فاطمة بنت محمد الحربي");
+  const [schoolName, setSchoolName] = useState<string>(SCHOOL_CONFIG.schoolName || "مدرسة الثانوية الخامسة مسارات");
+  const [principalName, setPrincipalName] = useState<string>(DEFAULT_ADMIN_NAME);
   const [rank, setRank] = useState<string>("معلم ممارس");
   const [currentAction, setCurrentAction] = useState<string>("معلمة");
   const [errors, setErrors] = useState<Record<string, string>>({});

@@ -4,6 +4,9 @@ import {
   renderOfficialHeader,
   renderSchoolInfoTable,
 } from "@/lib/pdfTemplateBase";
+import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
+import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { SCHOOL_CONFIG } from "@/lib/appConfig";
 
 export interface AbsencePdfData {
   teacherName: string;
@@ -17,6 +20,8 @@ export interface AbsencePdfData {
   absenceType: string;
   absenceReason: string;
   directManagerName?: string;
+  principalName?: string;
+  schoolName?: string;
 }
 
 const ARABIC_DAYS = [
@@ -73,6 +78,22 @@ function buildHtml(data: AbsencePdfData): string {
   const aType = esc(data.absenceType || "مرضي");
   const rawReason = data.absenceReason?.trim() || "";
 
+  const settings = getSchoolApprovalSettings();
+  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
+  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+
+  const principalName = esc(data.principalName || DEFAULT_ADMIN_NAME);
+  const directManagerName = esc(data.directManagerName || DEFAULT_ADMIN_NAME);
+  const schoolName = esc(data.schoolName || SCHOOL_CONFIG.schoolName);
+
+  const stampHtml = showStamp
+    ? `<img src="${settings.schoolStampUrl}" alt="الختم الرسمي" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
+    : "";
+
+  const sigHtml = showSig
+    ? `<img src="${settings.principalSignatureUrl}" alt="التوقيع" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+    : "........................";
+
   const reasonHtml = rawReason
     ? `<span style="font-weight:bold">${esc(rawReason)}</span>`
     : `<span style="color:#94a3b8">......................................................................................................................................................................</span>`;
@@ -83,7 +104,7 @@ function buildHtml(data: AbsencePdfData): string {
     dateFormatted: dateDMY,
   });
 
-  const schoolTableHtml = renderSchoolInfoTable(uname);
+  const schoolTableHtml = renderSchoolInfoTable(uname, schoolName);
 
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -141,10 +162,14 @@ ${schoolTableHtml}
   <div class="sb" style="margin-top:4px">
     من خلال متابعة سجل الدوام والعمل تبين غيابكم خلال اليوم الموضح بعاليه، آمل الإفادة عن أسباب ذلك مع إرفاق ما يؤيد عذركم ،،، ولكم تحياتي ..
   </div>
-  <div class="sig">
-    <div style="width:40%;text-align:right">اسم الرئيسة المباشرة : <strong>فاطمة فلاتة</strong></div>
-    <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ${dateDMY} م</div>
+  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${principalName}</strong></div>
+    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      <span>التوقيع :</span>
+      <span>${sigHtml}</span>
+    </div>
+    ${showStamp ? `<div style="width: 55px; text-align: center;">${stampHtml}</div>` : ""}
+    <div style="flex: 0.8; text-align: left">التاريخ : ${dateDMY} م</div>
   </div>
 </div>
 
@@ -185,10 +210,14 @@ ${schoolTableHtml}
       <span>يعتمد الحسم لعدم قبول عذرها .</span>
     </div>
   </div>
-  <div class="sig">
-    <div style="width:40%;text-align:right">اسم الرئيسة المباشرة : <strong>${esc(data.directManagerName || "أحلام صالح الضبيبي")}</strong></div>
-    <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
+  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+    <div style="flex: 1.2; text-align: right">المسؤول المعتمد : <strong>${directManagerName} (وكيلة المدرسة)</strong></div>
+    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      <span>التوقيع :</span>
+      <span>${sigHtml}</span>
+    </div>
+    ${showStamp ? `<div style="width: 55px; text-align: center;">${stampHtml}</div>` : ""}
+    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
   </div>
 </div>
 

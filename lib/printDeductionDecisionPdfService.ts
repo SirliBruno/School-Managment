@@ -4,6 +4,8 @@ import {
 } from "@/lib/pdfTemplateBase";
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
+import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { SCHOOL_CONFIG } from "@/lib/appConfig";
 
 export interface DeductionDecisionPdfData {
   teacherName: string;
@@ -37,8 +39,8 @@ export function buildDeductionDecisionHtml(data: DeductionDecisionPdfData): stri
   const rank = esc(data.rank || "معلم ممارس");
   const jobNumber = esc(data.jobNumber || civilId || "—");
   const currentAction = esc(data.currentAction || "معلم");
-  const schoolName = esc(data.schoolName || "مدرسة الثانوية الخامسة مسارات");
-  const principalName = esc(data.principalName || "......................................................................");
+  const schoolName = esc(data.schoolName || SCHOOL_CONFIG.schoolName || "مدرسة الثانوية الخامسة مسارات");
+  const principalName = esc(data.principalName || DEFAULT_ADMIN_NAME);
   const delayHours = esc(String(data.delayHours));
   const deductionDays = esc(String(data.deductionDays));
   const decisionNumber = esc(data.decisionNumber || "....................");

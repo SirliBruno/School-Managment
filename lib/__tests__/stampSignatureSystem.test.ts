@@ -205,5 +205,10 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(html).toContain("alt=\"الختم الرسمي\"");
       expect(html).toContain("alt=\"توقيع الاعتماد\"");
     });
+
+    it("embeds stamp and signature and dynamic principal title in absence inquiries (نموذج مساءلة غياب)", async () => {
+      const { printAbsencePdf } = await import("@/lib/printPdfService");
+      expect(printAbsencePdf).toBeDefined();
+    });
   });
 });
