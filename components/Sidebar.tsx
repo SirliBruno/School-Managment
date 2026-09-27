@@ -21,6 +21,11 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useSwipe } from "@/hooks/useSwipe";
 import { useSidebar } from "@/context/SidebarContext";
+import {
+  useAuth,
+  DEFAULT_ADMIN_NAME,
+  DEFAULT_ADMIN_ROLE_LABEL,
+} from "@/context/AuthContext";
 
 export interface SubNavItem {
   id: string;
@@ -112,6 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   className,
 }) => {
   const pathname = usePathname();
+  const { user } = useAuth();
   const stats = useDashboardStats();
   const {
     archivedTeachers,
@@ -208,8 +214,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="font-bold text-base tracking-tight text-slate-900 block truncate">
                   نظام الإدارة المدرسية
                 </span>
-                <span className="text-[11px] text-slate-500 font-medium block truncate">
-                  بوابة وكيلة الشؤون التعليمية
+                <span className="text-[11px] text-teal-700 font-semibold block truncate">
+                  {user?.fullName ? `أ. ${user.fullName}` : `بوابة ${DEFAULT_ADMIN_ROLE_LABEL}`}
                 </span>
               </div>
             )}
@@ -401,9 +407,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 
 
-        {/* Footer Branding & Official Technical Support */}
+        {/* Footer Admin User Identity Card & Branding */}
         {!collapsed && (
-          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-center space-y-2">
+          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-right space-y-2">
+            <div className="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+                {user?.fullName?.trim().charAt(0) || DEFAULT_ADMIN_NAME.charAt(0)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-slate-800 truncate">
+                  {user?.fullName || DEFAULT_ADMIN_NAME}
+                </p>
+                <p className="text-[10px] text-teal-700 font-semibold truncate">
+                  {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
+                </p>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
               <span>نظام الإدارة المدرسية</span>
               <span className="font-mono text-[10px] bg-slate-200/60 px-1.5 py-0.2 rounded text-slate-700">v2.4</span>

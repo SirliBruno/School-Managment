@@ -14,7 +14,7 @@ import {
   KeyRound,
   Shield,
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 
 interface AdminProfileModalProps {
   isOpen: boolean;
@@ -40,7 +40,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
   useEffect(() => {
     if (isOpen && user) {
       setUsername(user.username);
-      setFullName(user.fullName || "وكيلة الشؤون التعليمية");
+      setFullName(user.fullName || DEFAULT_ADMIN_NAME);
       setNewPassword("");
       setConfirmPassword("");
       setErrorMsg(null);
@@ -201,7 +201,7 @@ export const AdminProfileModal: React.FC<AdminProfileModalProps> = ({
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                placeholder="وكيلة الشؤون التعليمية"
+                placeholder={DEFAULT_ADMIN_NAME}
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition-all font-medium"
               />
             </div>

@@ -86,7 +86,7 @@ function esc(s: string | number | undefined | null): string {
 export function buildReportHtml(payload: PdfReportPayload): string {
   const schoolName = esc(payload.schoolName || "الثانوية الخامسة مسارات");
   const principalName = esc(payload.principalName || "مديرة المدرسة");
-  const creatorName = esc(payload.creatorName || "وكيلة الشؤون التعليمية");
+  const creatorName = esc(payload.creatorName || "أحلام صالح الضبيبي");
   const reportTitle = esc(payload.reportTitle);
   const reportCode = esc(payload.reportCode);
   const dateFormatted = esc(payload.dateFormatted);
@@ -201,7 +201,7 @@ ${REPORT_CSS}
     <!-- Signatures -->
     <div class="sig-container">
       <div class="sig-box">
-        <div class="sig-title">وكيلة الشؤون التعليمية والمدرسية</div>
+        <div class="sig-title">وكيلة المدرسة</div>
         <div class="sig-name">${creatorName}</div>
       </div>
       <div class="sig-box">

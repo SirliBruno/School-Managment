@@ -16,6 +16,7 @@ export interface AbsencePdfData {
   absenceDate: string;
   absenceType: string;
   absenceReason: string;
+  directManagerName?: string;
 }
 
 const ARABIC_DAYS = [
@@ -185,7 +186,7 @@ ${schoolTableHtml}
     </div>
   </div>
   <div class="sig">
-    <div style="width:40%;text-align:right">اسم الرئيسة المباشرة : <strong>فاطمة فلاتة</strong></div>
+    <div style="width:40%;text-align:right">اسم الرئيسة المباشرة : <strong>${esc(data.directManagerName || "أحلام صالح الضبيبي")}</strong></div>
     <div style="width:32%;text-align:center">التوقيع : ........................</div>
     <div style="width:28%;text-align:left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
   </div>

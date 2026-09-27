@@ -112,10 +112,15 @@ export const formatAuthErrorMessage = (err: unknown): string => {
   return rawMsg;
 };
 
+export const DEFAULT_ADMIN_NAME = "أحلام صالح الضبيبي";
+export const DEFAULT_ADMIN_ROLE = "vice_principal";
+export const DEFAULT_ADMIN_ROLE_LABEL = "وكيلة المدرسة";
+export const DEFAULT_ADMIN_SCHOOL = "الثانوية الخامسة مسارات";
+
 /**
  * استخراج بيانات المستخدم الإدارية من كائن مستخدم Supabase
  */
-const extractAdminUser = (sbUser: User): AdminUser => {
+export const extractAdminUser = (sbUser: User): AdminUser => {
   const metadata = sbUser.user_metadata || {};
   const email = sbUser.email || "";
   const fallbackUsername = email ? email.split("@")[0] : "wakila";
@@ -129,9 +134,9 @@ const extractAdminUser = (sbUser: User): AdminUser => {
     (metadata.full_name as string) ||
     (metadata.fullName as string) ||
     (metadata.name as string) ||
-    "وكيلة الشؤون التعليمية";
+    DEFAULT_ADMIN_NAME;
 
-  const role = (metadata.role as string) || "vice_principal";
+  const role = (metadata.role as string) || DEFAULT_ADMIN_ROLE;
 
   return {
     id: sbUser.id,
@@ -363,7 +368,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         const currentMeta = user || ({} as Partial<AdminUser>);
         const updatedUsername = cleanUser || currentMeta.username || "wakila";
         const updatedFullName =
-          newFullName?.trim() || currentMeta.fullName || "وكيلة الشؤون التعليمية";
+          newFullName?.trim() || currentMeta.fullName || DEFAULT_ADMIN_NAME;
 
         updatePayload.data = {
           username: updatedUsername,

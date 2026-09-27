@@ -25,7 +25,7 @@ export function generatePermissionPdfHtml({
   teacher,
   schoolName = "الثانوية الخامسة مسارات",
   principalName = "منى محمد الغامدي",
-  vicePrincipalName = "وكيلة الشؤون التعليمية",
+  vicePrincipalName = "أحلام صالح الضبيبي",
 }: PrintPermissionPdfOptions): string {
   const teacherName = esc(teacher?.fullName || permission.teacherName || "الموظفة");
   const nationalId = esc(teacher?.nationalId || permission.nationalId || "—");
@@ -387,7 +387,7 @@ export function generatePermissionPdfHtml({
           <div class="sig-name">${teacherName}</div>
         </div>
         <div class="sig-block">
-          <div class="sig-role">وكيلة الشؤون التعليمية</div>
+          <div class="sig-role">وكيلة المدرسة</div>
           <div class="sig-name">${vicePrincipalName}</div>
         </div>
         <div class="sig-block">

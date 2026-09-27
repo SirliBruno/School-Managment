@@ -58,7 +58,7 @@ export function generateReportData(
   absenceRecords: AbsenceRecord[],
   delayNotices: DelayNotice[],
   deductionDecisions: DeductionDecision[],
-  creatorName: string = "وكيلة الشؤون التعليمية",
+  creatorName: string = "أحلام صالح الضبيبي",
   permissions: EmployeePermission[] = []
 ): ReportGeneratedData {
   const saudiToday = getSaudiToday();

@@ -40,6 +40,7 @@ import { printPermissionPdf } from "@/lib/printPermissionPdfService";
 import { generateReportData } from "@/lib/reportsEngine";
 import { printReportPdf } from "@/lib/reportPdfService";
 import { getTeacherDelaySummary } from "@/lib/delayDeductionIntegration";
+import { useAuth, DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
 interface TeacherProfileModalProps {
@@ -78,6 +79,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   onClose,
 }) => {
   const router = useRouter();
+  const { user } = useAuth();
   const {
     teachers,
     absenceRecords,
@@ -275,7 +277,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         absenceRecords,
         delayNotices,
         deductionDecisions,
-        "وكيلة الشؤون التعليمية",
+        user?.fullName || DEFAULT_ADMIN_NAME,
         permissions
       );
       printReportPdf(data.payload);
@@ -306,7 +308,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         absenceRecords,
         delayNotices,
         deductionDecisions,
-        "وكيلة الشؤون التعليمية",
+        user?.fullName || DEFAULT_ADMIN_NAME,
         permissions
       );
       printReportPdf(data.payload);

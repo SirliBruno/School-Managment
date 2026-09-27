@@ -37,6 +37,7 @@ import {
 } from "@/lib/teacherDeduplication";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import {
   DbAbsenceRecordRow,
   DbDelayNoticeRow,
@@ -4966,7 +4967,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const now = new Date().toISOString();
       const reason = archiveReason || "حذف يدوي بواسطة الإدارة";
-      const actor = archivedBy || "وكيلة الشؤون التعليمية";
+      const actor = archivedBy || DEFAULT_ADMIN_NAME;
 
       const archivedItem: ArchivedEmployeePermission = {
         permission: {

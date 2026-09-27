@@ -24,7 +24,11 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTeachers } from "@/context/TeacherContext";
-import { useAuth } from "@/context/AuthContext";
+import {
+  useAuth,
+  DEFAULT_ADMIN_NAME,
+  DEFAULT_ADMIN_ROLE_LABEL,
+} from "@/context/AuthContext";
 import { ReportType, ReportFilterOptions, ReportHistoryItem } from "@/types/report";
 import { generateReportData, ReportGeneratedData } from "@/lib/reportsEngine";
 import { printReportPdf } from "@/lib/reportPdfService";
@@ -214,7 +218,7 @@ export default function ReportsCenterPage() {
       absenceRecords,
       delayNotices,
       deductionDecisions,
-      user?.fullName || "وكيلة الشؤون التعليمية",
+      user?.fullName || DEFAULT_ADMIN_NAME,
       permissions
     );
   }, [
@@ -257,7 +261,7 @@ export default function ReportsCenterPage() {
           id: `rep_${Date.now()}`,
           reportType: selectedType,
           reportTitle: reportData.payload.reportTitle,
-          createdByName: user?.fullName || "وكيلة الشؤون التعليمية",
+          createdByName: user?.fullName || DEFAULT_ADMIN_NAME,
           createdAt: new Date().toISOString(),
           filters: { ...filters },
           retentionPeriod: "عام دراسي كامل",
@@ -859,7 +863,9 @@ export default function ReportsCenterPage() {
                 {/* Official Signatures */}
                 <div className="pt-6 border-t border-slate-200 flex justify-between items-end text-xs text-center">
                   <div className="space-y-6">
-                    <span className="font-bold text-[#0f766e] block">وكيلة الشؤون التعليمية والمدرسية</span>
+                    <span className="font-bold text-[#0f766e] block">
+                      {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
+                    </span>
                     <span className="font-bold text-slate-800 block">{reportData.payload.creatorName}</span>
                   </div>
                   <div className="w-24 h-24 border border-dashed border-slate-300 rounded-full flex items-center justify-center text-[10px] text-slate-400">

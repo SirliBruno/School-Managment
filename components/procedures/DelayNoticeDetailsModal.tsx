@@ -109,7 +109,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                 </div>
                 <div className="min-w-0">
                   <span className="text-[11px] font-bold text-slate-900 block truncate">
-                    1. إدخال الوكيلة
+                    1. إدخال وكيلة المدرسة
                   </span>
                   <span className="text-[10px] text-teal-600 font-semibold block">
                     مكتمل وموثق
@@ -236,7 +236,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                   <AlertTriangle className="w-4 h-4 text-amber-600" />
-                  <span>المرحلة الأولى: المخالفات المسجلة من قبل الوكيلة</span>
+                  <span>المرحلة الأولى: المخالفات المسجلة من قبل وكيلة المدرسة</span>
                 </span>
                 {notice.status === "pending_teacher" && (
                   <button
@@ -336,7 +336,7 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
 
                 {notice.notes && (
                   <div className="mt-2 text-slate-500 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs">
-                    <strong className="text-slate-700 block mb-0.5">ملاحظات الوكيلة:</strong>
+                    <strong className="text-slate-700 block mb-0.5">ملاحظات وكيلة المدرسة:</strong>
                     <span>{notice.notes}</span>
                   </div>
                 )}

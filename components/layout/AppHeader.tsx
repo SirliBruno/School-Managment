@@ -26,7 +26,11 @@ import {
   DoorOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/context/AuthContext";
+import {
+  useAuth,
+  DEFAULT_ADMIN_NAME,
+  DEFAULT_ADMIN_ROLE_LABEL,
+} from "@/context/AuthContext";
 import { useTeachers } from "@/context/TeacherContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { Button } from "@/components/ui/Button";
@@ -359,14 +363,14 @@ export const AppHeader: React.FC = () => {
               aria-expanded={isUserMenuOpen}
             >
               <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#137a85] to-[#15828e] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
-                {user?.fullName?.charAt(0) || "و"}
+                {user?.fullName?.trim().charAt(0) || DEFAULT_ADMIN_NAME.charAt(0)}
               </div>
               <div className="hidden md:block text-right">
-                <span className="font-bold text-xs text-slate-800 block truncate max-w-[120px]">
-                  {user?.fullName || "وكيلة الشؤون التعليمية"}
+                <span className="font-bold text-xs text-slate-800 block truncate max-w-[140px]">
+                  {user?.fullName || DEFAULT_ADMIN_NAME}
                 </span>
                 <span className="text-[10px] text-teal-700 font-medium block">
-                  صلاحيات الإدارة
+                  {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
                 </span>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
@@ -383,11 +387,16 @@ export const AppHeader: React.FC = () => {
                 >
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-xs font-bold text-slate-800 truncate">
-                      {user?.fullName || "وكيلة الشؤون التعليمية"}
+                      {user?.fullName || DEFAULT_ADMIN_NAME}
                     </p>
-                    <p className="text-[10px] text-slate-400">
-                      @{user?.username || "admin"}
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] text-teal-700 font-semibold bg-teal-50 px-1.5 py-0.5 rounded border border-teal-100">
+                        {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        @{user?.username || "wakila"}
+                      </span>
+                    </div>
                   </div>
 
                   <button

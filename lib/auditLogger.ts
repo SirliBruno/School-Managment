@@ -36,8 +36,8 @@ export function logAuditEvent(params: LogAuditParams): AuditLog {
   const logEntry: AuditLog = {
     id,
     userId: params.userId || "admin",
-    userName: params.userName || "وكيلة الشؤون التعليمية",
-    userRole: params.userRole || "vice_principal",
+    userName: params.userName || "أحلام صالح الضبيبي",
+    userRole: params.userRole || "وكيلة المدرسة",
     action: params.action,
     entityType: params.entityType,
     entityId: params.entityId,

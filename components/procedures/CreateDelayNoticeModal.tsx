@@ -362,7 +362,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  المرحلة الأولى: إدخال بيانات المخالفة بواسطة وكيلة الشؤون التعليمية
+                  المرحلة الأولى: إدخال بيانات المخالفة بواسطة وكيلة المدرسة
                 </p>
               </div>
             </div>
@@ -613,7 +613,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 htmlFor={`${formId}-notes`}
                 className="block text-xs font-bold text-slate-700"
               >
-                ملاحظات وتوجيه الوكيلة (اختياري)
+                ملاحظات وتوجيه وكيلة المدرسة (اختياري)
               </label>
               <textarea
                 id={`${formId}-notes`}

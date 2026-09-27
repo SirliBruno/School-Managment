@@ -29,6 +29,7 @@ import {
   Filter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth, DEFAULT_ADMIN_NAME, DEFAULT_ADMIN_ROLE_LABEL } from "@/context/AuthContext";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
@@ -99,6 +100,7 @@ const TYPE_STYLES: Record<
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const {
     teachers,
     absenceRecords,
@@ -108,6 +110,10 @@ export default function DashboardPage() {
     deleteAbsenceRecord,
   } = useTeachers();
   const { showToast } = useToast();
+
+  const adminDisplayName = user?.fullName || DEFAULT_ADMIN_NAME;
+  const adminRoleTitle =
+    user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL;
 
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [selectedTeacherForProfile, setSelectedTeacherForProfile] =
@@ -491,15 +497,23 @@ export default function DashboardPage() {
 
           <div className="relative z-10 flex flex-col xl:flex-row xl:items-center justify-between gap-6">
             <div className="space-y-2.5 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-teal-100 text-xs font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>مؤشر الانضباط المدرسي اليوم: {todayPulse.disciplineRate}%</span>
-                <span className="text-white/40">|</span>
-                <span>
-                  {todayPulse.todayAbsences === 0
-                    ? "انضباط كلي مسجل اليوم ✨"
-                    : `${todayPulse.todayAbsences} حالات غياب`}
-                </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm border border-white/20 text-white text-xs font-bold shadow-2xs">
+                  <span>مرحباً، أ. {adminDisplayName}</span>
+                  <span className="text-white/40">|</span>
+                  <span className="text-teal-200">{adminRoleTitle}</span>
+                </div>
+
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-teal-100 text-xs font-semibold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>الانضباط اليوم: {todayPulse.disciplineRate}%</span>
+                  <span className="text-white/40">|</span>
+                  <span>
+                    {todayPulse.todayAbsences === 0
+                      ? "انضباط كلي مسجل ✨"
+                      : `${todayPulse.todayAbsences} حالات غياب`}
+                  </span>
+                </div>
               </div>
 
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">

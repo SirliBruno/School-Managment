@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
+import { useAuth, DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { Teacher, EmployeePermission } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { calculateTimeDifference, getSaudiToday } from "@/lib/timeUtils";
@@ -33,6 +34,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
   permissionToEdit,
   preselectedTeacherId,
 }) => {
+  const { user } = useAuth();
   const { teachers, createPermission, updatePermission } = useTeachers();
   const { showToast } = useToast();
 
@@ -163,7 +165,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
           durationMinutes: durationCalc.totalMinutes,
           reason: reason.trim(),
           notes: notes.trim() || undefined,
-          createdByName: "وكيلة الشؤون التعليمية",
+          createdByName: user?.fullName || DEFAULT_ADMIN_NAME,
         });
 
         if (!res.success) {
