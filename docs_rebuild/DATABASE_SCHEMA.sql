@@ -198,7 +198,7 @@ CREATE TABLE IF NOT EXISTS public.admin_credentials (
     id VARCHAR(50) PRIMARY KEY DEFAULT 'vice_principal',
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(128) NOT NULL,
-    full_name VARCHAR(150) NOT NULL DEFAULT 'وكيلة الشؤون التعليمية والمدرسية',
+    full_name VARCHAR(150) NOT NULL DEFAULT 'أحلام صالح الضبيبي',
     role VARCHAR(50) NOT NULL DEFAULT 'vice_principal',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -209,7 +209,7 @@ VALUES (
     'vice_principal',
     'wakila',
     'b70712d928b2a236fb29eaed2cd9d9720885bb65609b4063e15df5d4ca28019c', -- تجزئة كلمة المرور: 123456
-    'وكيلة الشؤون التعليمية والمدرسية',
+    'أحلام صالح الضبيبي',
     'vice_principal'
 )
 ON CONFLICT (id) DO NOTHING;

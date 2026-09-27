@@ -96,18 +96,18 @@ CREATE TABLE IF NOT EXISTS public.admin_credentials (
     id TEXT PRIMARY KEY DEFAULT 'vice_principal',
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
-    full_name TEXT DEFAULT 'وكيلة الشؤون التعليمية',
+    full_name TEXT DEFAULT 'أحلام صالح الضبيبي',
     role TEXT DEFAULT 'vice_principal',
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- إدراج الحساب الافتراضي للوكيلة (اسم المستخدم: wakila / كلمة المرور: 123456) إذا لم يكن موجوداً
+-- إدراج الحساب الافتراضي للوكيلة (أ. أحلام صالح الضبيبي - وكيلة المدرسة) إذا لم يكن موجوداً
 INSERT INTO public.admin_credentials (id, username, password_hash, full_name, role)
 VALUES (
     'vice_principal',
     'wakila',
     'b70712d928b2a236fb29eaed2cd9d9720885bb65609b4063e15df5d4ca28019c',
-    'وكيلة الشؤون التعليمية',
+    'أحلام صالح الضبيبي',
     'vice_principal'
 )
 ON CONFLICT (id) DO NOTHING;

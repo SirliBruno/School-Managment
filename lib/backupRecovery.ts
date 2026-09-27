@@ -152,6 +152,8 @@ export function createDatabaseBackupSnapshot(
   return snapshot;
 }
 
+export const generateDatabaseBackupSnapshot = createDatabaseBackupSnapshot;
+
 /**
  * التحقق الصارم من سلامة وهيكل النسخة الاحتياطية
  */
