@@ -259,99 +259,106 @@ export const AppHeader: React.FC = () => {
 
             <AnimatePresence>
               {isQuickActionsOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute left-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-slate-200 p-1.5 z-50 text-right"
-                >
-                  <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 border-b border-slate-100 mb-1">
-                    إجراءات إدارية سريعة
-                  </div>
-
-                  <Link
-                    href="/procedures/absence"
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
                     onClick={() => setIsQuickActionsOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                    aria-hidden="true"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 mt-2 w-56 rounded-2xl bg-white shadow-2xl border border-slate-200 p-1.5 z-50 text-right"
                   >
-                    <div className="w-7 h-7 rounded-lg bg-teal-100/60 text-[#137a85] flex items-center justify-center shrink-0">
-                      <FileText className="w-4 h-4" />
+                    <div className="px-3 py-1.5 text-[11px] font-bold text-slate-400 border-b border-slate-100 mb-1">
+                      إجراءات إدارية سريعة
                     </div>
-                    <div className="min-w-0">
-                      <p className="truncate">مساءلة غياب</p>
-                      <p className="text-[10px] text-slate-400 font-normal">
-                        تسجيل غياب وإرسال رابط
-                      </p>
-                    </div>
-                  </Link>
 
-                  <Link
-                    href="/procedures/delay-notice"
-                    onClick={() => setIsQuickActionsOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-amber-100/60 text-amber-700 flex items-center justify-center shrink-0">
-                      <Clock className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate">تنبيه على تأخر</p>
-                      <p className="text-[10px] text-slate-400 font-normal">
-                        تسجيل تأخر صباحي أو انصراف
-                      </p>
-                    </div>
-                  </Link>
+                    <Link
+                      href="/procedures/absence"
+                      onClick={() => setIsQuickActionsOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-teal-100/60 text-[#137a85] flex items-center justify-center shrink-0">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate">مساءلة غياب</p>
+                        <p className="text-[10px] text-slate-400 font-normal">
+                          تسجيل غياب وإرسال رابط
+                        </p>
+                      </div>
+                    </Link>
 
-                  <Link
-                    href="/procedures/permissions"
-                    onClick={() => setIsQuickActionsOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-teal-100/60 text-[#137a85] flex items-center justify-center shrink-0">
-                      <DoorOpen className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate">استئذان موظفة</p>
-                      <p className="text-[10px] text-slate-400 font-normal">
-                        توثيق خروج وعودة أثناء الدوام
-                      </p>
-                    </div>
-                  </Link>
+                    <Link
+                      href="/procedures/delay-notice"
+                      onClick={() => setIsQuickActionsOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-amber-100/60 text-amber-700 flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate">تنبيه على تأخر</p>
+                        <p className="text-[10px] text-slate-400 font-normal">
+                          تسجيل تأخر صباحي أو انصراف
+                        </p>
+                      </div>
+                    </Link>
 
-                  <Link
-                    href="/procedures/deduction-hours"
-                    onClick={() => setIsQuickActionsOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-rose-100/60 text-rose-700 flex items-center justify-center shrink-0">
-                      <Scale className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate">قرار حسم ساعات</p>
-                      <p className="text-[10px] text-slate-400 font-normal">
-                        احتساب وإصدار قرار نظامي
-                      </p>
-                    </div>
-                  </Link>
+                    <Link
+                      href="/procedures/permissions"
+                      onClick={() => setIsQuickActionsOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-teal-100/60 text-[#137a85] flex items-center justify-center shrink-0">
+                        <DoorOpen className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate">استئذان موظفة</p>
+                        <p className="text-[10px] text-slate-400 font-normal">
+                          توثيق خروج وعودة أثناء الدوام
+                        </p>
+                      </div>
+                    </Link>
 
-                  <div className="my-1 border-t border-slate-100" />
+                    <Link
+                      href="/procedures/deduction-hours"
+                      onClick={() => setIsQuickActionsOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-rose-100/60 text-rose-700 flex items-center justify-center shrink-0">
+                        <Scale className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate">قرار حسم ساعات</p>
+                        <p className="text-[10px] text-slate-400 font-normal">
+                          احتساب وإصدار قرار نظامي
+                        </p>
+                      </div>
+                    </Link>
 
-                  <Link
-                    href="/teachers"
-                    onClick={() => setIsQuickActionsOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
-                  >
-                    <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                      <UserPlus className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate">إضافة معلمة جديدة</p>
-                      <p className="text-[10px] text-slate-400 font-normal">
-                        تحديث سجل الهيئة التعليمية
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
+                    <div className="my-1 border-t border-slate-100" />
+
+                    <Link
+                      href="/teachers"
+                      onClick={() => setIsQuickActionsOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                    >
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                        <UserPlus className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate">إضافة معلمة جديدة</p>
+                        <p className="text-[10px] text-slate-400 font-normal">
+                          تحديث سجل الهيئة التعليمية
+                        </p>
+                      </div>
+                    </Link>
+                  </motion.div>
+                </>
               )}
             </AnimatePresence>
           </div>
@@ -381,13 +388,19 @@ export const AppHeader: React.FC = () => {
 
             <AnimatePresence>
               {isUserMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute left-0 mt-2 w-56 rounded-2xl bg-white shadow-xl border border-slate-200 p-1.5 z-50 text-right"
-                >
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute left-0 mt-2 w-56 rounded-2xl bg-white shadow-2xl border border-slate-200 p-1.5 z-50 text-right"
+                  >
                   <div className="px-3 py-2 border-b border-slate-100 mb-1">
                     <p className="text-xs font-bold text-slate-800 truncate">
                       {user?.fullName || DEFAULT_ADMIN_NAME}
@@ -440,7 +453,8 @@ export const AppHeader: React.FC = () => {
                     <span className="whitespace-nowrap">تسجيل الخروج</span>
                   </button>
                 </motion.div>
-              )}
+              </>
+            )}
             </AnimatePresence>
           </div>
         </div>

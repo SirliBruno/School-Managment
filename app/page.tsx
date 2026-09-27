@@ -732,7 +732,7 @@ export default function DashboardPage() {
       {/* Main Container */}
       <div className="flex-1 p-3.5 sm:p-6 lg:p-7 space-y-5 max-w-7xl w-full mx-auto">
         {/* Section 1: Compact, Elegant Welcome Header */}
-        <header className="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-xs overflow-hidden">
+        <header className="relative bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-5 shadow-xs z-20">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             {/* User Greeting & Realtime Smart Summary */}
             <div className="space-y-2">
@@ -803,7 +803,7 @@ export default function DashboardPage() {
                 aria-haspopup="menu"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
-                <span>+ إجراء إداري جديد</span>
+                <span>إجراء إداري جديد</span>
                 <ChevronDown
                   className={cn(
                     "w-4 h-4 text-teal-200 transition-transform duration-200",
@@ -815,14 +815,20 @@ export default function DashboardPage() {
               {/* Dropdown Menu */}
               <AnimatePresence>
                 {isQuickActionsDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                    transition={{ duration: 0.15 }}
-                    role="menu"
-                    className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200/90 shadow-2xl p-2 z-50 space-y-1 text-right text-xs"
-                  >
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsQuickActionsDropdownOpen(false)}
+                      aria-hidden="true"
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ duration: 0.15 }}
+                      role="menu"
+                      className="absolute left-0 top-full mt-2 w-64 rounded-2xl bg-white border border-slate-200/90 shadow-2xl p-2 z-50 space-y-1 text-right text-xs"
+                    >
                     <button
                       type="button"
                       role="menuitem"
@@ -915,7 +921,8 @@ export default function DashboardPage() {
                       </div>
                     </button>
                   </motion.div>
-                )}
+                </>
+              )}
               </AnimatePresence>
             </div>
           </div>
