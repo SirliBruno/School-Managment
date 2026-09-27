@@ -220,4 +220,17 @@ describe("Employee Permission Module - Unit & Integration Tests", () => {
       expect(report.payload.tableRows[1][5]).toBe("45 دقيقة");
     });
   });
+
+  describe("Arabic Permission Duration Phrasing & BiDi Formatting", () => {
+    it("formats minutes and dual hours naturally in Arabic without trailing numbers", async () => {
+      const { formatArabicPermissionDuration } = await import("@/lib/printPermissionPdfService");
+      expect(formatArabicPermissionDuration(120)).toBe("ساعتان (120 دقيقة)");
+      expect(formatArabicPermissionDuration(60)).toBe("ساعة واحدة (60 دقيقة)");
+      expect(formatArabicPermissionDuration(90)).toBe("ساعة واحدة و 30 دقيقة (90 دقيقة)");
+      expect(formatArabicPermissionDuration(45)).toBe("45 دقيقة");
+      expect(formatArabicPermissionDuration(150)).toBe("ساعتان و 30 دقيقة (150 دقيقة)");
+      expect(formatArabicPermissionDuration(180)).toBe("3 ساعات (180 دقيقة)");
+      expect(formatArabicPermissionDuration(240)).toBe("4 ساعات (240 دقيقة)");
+    });
+  });
 });

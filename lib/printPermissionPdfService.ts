@@ -21,6 +21,28 @@ function esc(s: string | number | undefined | null): string {
     .replace(/'/g, "&#039;");
 }
 
+export function formatArabicPermissionDuration(totalMinutes: number): string {
+  if (!totalMinutes || totalMinutes <= 0) return "0 دقيقة";
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  if (hours === 0) {
+    return `${minutes} دقيقة`;
+  }
+
+  let hourText = "";
+  if (hours === 1) hourText = "ساعة واحدة";
+  else if (hours === 2) hourText = "ساعتان";
+  else if (hours >= 3 && hours <= 10) hourText = `${hours} ساعات`;
+  else hourText = `${hours} ساعة`;
+
+  if (minutes === 0) {
+    return `${hourText} (${totalMinutes} دقيقة)`;
+  }
+
+  return `${hourText} و ${minutes} دقيقة (${totalMinutes} دقيقة)`;
+}
+
 export function generatePermissionPdfHtml({
   permission,
   teacher,
@@ -35,12 +57,7 @@ export function generatePermissionPdfHtml({
   const jobTitle = esc(teacher?.jobTitle || "معلم");
   const employmentStatus = esc(teacher?.employmentStatus || "دائم");
 
-  const durationHours = Math.floor(permission.durationMinutes / 60);
-  const remainingMins = permission.durationMinutes % 60;
-  let durationText = `${permission.durationMinutes} دقيقة`;
-  if (durationHours > 0) {
-    durationText = `${durationHours} ساعة و ${remainingMins} دقيقة (${permission.durationMinutes} دقيقة)`;
-  }
+  const durationText = formatArabicPermissionDuration(permission.durationMinutes);
 
   // Format Day of week from permissionDate
   let dayName = "—";
@@ -370,7 +387,7 @@ export function generatePermissionPdfHtml({
           <div style="font-size: 16pt; color: #0d9488; font-weight: bold;">=</div>
           <div class="time-badge">
             <span class="time-badge-lbl">إجمالي مدة الاستئذان</span>
-            <span class="time-badge-val" style="color: #0f766e; font-size: 12pt;">${durationText}</span>
+            <span class="time-badge-val" dir="rtl" style="color: #0f766e; font-size: 11pt; font-weight: 800; unicode-bidi: embed;">${durationText}</span>
           </div>
         </div>
 
