@@ -1013,20 +1013,20 @@ function DeductionHoursContent() {
                 type="button"
                 variant="primary"
                 onClick={handleSaveDecision}
-                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 shadow-sm"
+                className="flex-1 h-10 px-4 inline-flex flex-row items-center justify-center gap-2 bg-teal-600 hover:bg-teal-700 text-white font-bold shadow-sm whitespace-nowrap"
               >
-                <Save className="w-4 h-4 ml-2" />
-                حفظ القرار وتسوية التنبيهات
+                <Save className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">حفظ القرار وتسوية التنبيهات</span>
               </Button>
 
               <Button
                 type="button"
                 variant="outline"
                 onClick={handlePrintPdf}
-                className="flex-1 border-teal-600 text-teal-700 hover:bg-teal-50 font-bold py-2.5"
+                className="flex-1 h-10 px-4 inline-flex flex-row items-center justify-center gap-2 border-teal-600 text-teal-700 hover:bg-teal-50 font-bold whitespace-nowrap"
               >
-                <Printer className="w-4 h-4 ml-2 text-teal-700" />
-                معاينة وطباعة قرار الحسم (PDF)
+                <Printer className="w-4 h-4 shrink-0 text-teal-700" />
+                <span className="whitespace-nowrap">معاينة وطباعة قرار الحسم (PDF)</span>
               </Button>
             </div>
           </Card>

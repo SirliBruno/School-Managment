@@ -75,7 +75,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         type={type}
         disabled={disabled || isLoading}
         className={cn(
-          "group inline-flex items-center justify-center font-bold whitespace-nowrap transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50",
+          "group inline-flex flex-row items-center justify-center font-bold whitespace-nowrap transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500/50 shrink-0",
           sizeClasses[size],
           variantClasses[variant],
           className
@@ -85,11 +85,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <Loader2 className="w-4 h-4 animate-spin shrink-0" />
         ) : leadIcon ? (
-          <span className="shrink-0 transition-transform duration-200 ease-out group-hover:scale-110">{leadIcon}</span>
+          <span className="inline-flex flex-row items-center justify-center shrink-0 transition-transform duration-200 ease-out group-hover:scale-110">
+            {leadIcon}
+          </span>
         ) : null}
-        {children && <span className="whitespace-nowrap truncate">{children}</span>}
+        {typeof children === "string" || typeof children === "number" ? (
+          <span className="whitespace-nowrap truncate">{children}</span>
+        ) : (
+          children
+        )}
         {rightIcon && !isLoading && (
-          <span className="shrink-0 transition-transform duration-200 ease-out group-hover:scale-110">{rightIcon}</span>
+          <span className="inline-flex flex-row items-center justify-center shrink-0 transition-transform duration-200 ease-out group-hover:scale-110">
+            {rightIcon}
+          </span>
         )}
       </button>
     );

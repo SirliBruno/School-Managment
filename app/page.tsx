@@ -452,10 +452,10 @@ export default function DashboardPage() {
             size="sm"
             variant="outline"
             onClick={() => handleExportPdf(item)}
-            className="text-xs py-1 h-8"
+            className="inline-flex flex-row items-center gap-1.5 text-xs py-1 h-8 whitespace-nowrap"
           >
-            <FileText className="w-3.5 h-3.5 text-teal-700" />
-            <span>طباعة المساءلة</span>
+            <FileText className="w-3.5 h-3.5 text-teal-700 shrink-0" />
+            <span className="whitespace-nowrap">طباعة المساءلة</span>
           </Button>
 
           <ActionMenu
@@ -776,9 +776,13 @@ export default function DashboardPage() {
                 }
                 actionsSlot={
                   <Link href="/procedures/absence">
-                    <Button variant="primary" size="sm" className="gap-1.5 text-xs font-bold shadow-2xs">
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>مساءلة جديدة</span>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="inline-flex flex-row items-center gap-2 px-4 py-2 text-xs font-bold shadow-2xs whitespace-nowrap"
+                    >
+                      <Plus className="w-4 h-4 shrink-0" />
+                      <span className="whitespace-nowrap">مساءلة جديدة</span>
                     </Button>
                   </Link>
                 }

@@ -21,6 +21,27 @@ body {
   touch-action: manipulation;
 }
 
+/* Universal Button Flex Alignment (Prevents Vertical Icon Stacking) */
+@layer base {
+  button,
+  [type='button'],
+  [type='reset'],
+  [type='submit'] {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+button svg,
+.btn svg,
+[role="button"] svg {
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* Prevent accidental horizontal swipe on mobile while preserving desktop position:sticky */
 @media (max-width: 1023px) {
   html,

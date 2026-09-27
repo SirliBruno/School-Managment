@@ -789,10 +789,10 @@ export const TeacherTable: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => setIsAddModalOpen(true)}
-              className="gap-1.5 text-xs"
+              className="inline-flex flex-row items-center gap-2 px-4 py-2 text-xs font-bold whitespace-nowrap shadow-2xs"
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>إضافة معلمة</span>
+              <UserPlus className="w-4 h-4 shrink-0" />
+              <span className="whitespace-nowrap">إضافة معلمة</span>
             </Button>
 
             {activeTeachers.length === 0 && (
@@ -801,10 +801,10 @@ export const TeacherTable: React.FC = () => {
                 size="sm"
                 onClick={handleLoadOfficialTeachers}
                 disabled={isImportingOfficial}
-                className="gap-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50"
+                className="inline-flex flex-row items-center gap-2 px-3.5 py-2 text-xs font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50 whitespace-nowrap shadow-2xs"
               >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span>
+                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span className="whitespace-nowrap">
                   {isImportingOfficial ? "جاري الاستيراد..." : "استيراد الكادر المعتمد"}
                 </span>
               </Button>
