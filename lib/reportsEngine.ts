@@ -3,6 +3,7 @@ import {
   AbsenceRecord,
   DelayNotice,
   DeductionDecision,
+  EmployeePermission,
 } from "@/types/teacher";
 import { ReportType, ReportFilterOptions } from "@/types/report";
 import { PdfReportPayload } from "@/lib/reportPdfService";
@@ -57,7 +58,8 @@ export function generateReportData(
   absenceRecords: AbsenceRecord[],
   delayNotices: DelayNotice[],
   deductionDecisions: DeductionDecision[],
-  creatorName: string = "وكيلة الشؤون التعليمية"
+  creatorName: string = "وكيلة الشؤون التعليمية",
+  permissions: EmployeePermission[] = []
 ): ReportGeneratedData {
   const saudiToday = getSaudiToday();
   const schoolName = "الثانوية الخامسة مسارات";
@@ -68,6 +70,7 @@ export function generateReportData(
   const activeAbsences = absenceRecords.filter((a) => !a.isArchived);
   const activeDelays = delayNotices.filter((d) => !d.isArchived);
   const activeDeductions = deductionDecisions.filter((dd) => !dd.isArchived);
+  const activePermissions = permissions.filter((p) => !p.isArchived);
 
   // الخريطة المرجعية للمعلمات النشطات
   const teachersMap = new Map<string, Teacher>();
@@ -522,6 +525,287 @@ export function generateReportData(
       summaryHighlights: [
         { label: "إجمالي القرارات", value: filteredDecisions.length },
         { label: "أيام الحسم", value: totalDays },
+      ],
+    };
+  }
+
+  // 5. تقرير حصر سجل استئذان الموظفين (سجل استئذان الشهر / الفترة)
+  if (reportType === "permissions_summary") {
+    const filteredPermissions = activePermissions.filter((p) => {
+      if (
+        !filterByDateRange(
+          p.permissionDate,
+          filters.startDate,
+          filters.endDate,
+          filters.month,
+          filters.year
+        )
+      ) {
+        return false;
+      }
+
+      if (filters.teacherId && filters.teacherId !== "all" && p.teacherId !== filters.teacherId) {
+        return false;
+      }
+
+      const teacher = teachersMap.get(p.teacherId);
+      if (filters.specialty && filters.specialty !== "all" && teacher?.specialty !== filters.specialty) {
+        return false;
+      }
+
+      if (
+        filters.employmentStatus &&
+        filters.employmentStatus !== "all" &&
+        teacher?.employmentStatus !== filters.employmentStatus
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const totalMinutes = filteredPermissions.reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
+    const uniqueTeachersCount = new Set(filteredPermissions.map((p) => p.teacherId)).size;
+    const avgMinutes = filteredPermissions.length > 0 ? Math.round(totalMinutes / filteredPermissions.length) : 0;
+
+    const summaryCards = [
+      { label: "إجمالي الاستئذانات", value: `${filteredPermissions.length} حالة` },
+      { label: "الموظفات المستأذنات", value: `${uniqueTeachersCount} موظفة` },
+      { label: "إجمالي دقائق الاستئذان", value: `${totalMinutes} دقيقة` },
+      { label: "متوسط مدة الاستئذان", value: `${avgMinutes} دقيقة` },
+    ];
+
+    const tableHeaders = [
+      "م",
+      "اسم الموظفة",
+      "السجل المدني",
+      "التخصص",
+      "التاريخ",
+      "وقت الخروج",
+      "وقت العودة",
+      "المدة",
+      "مبررات الخروج",
+      "ملاحظات",
+    ];
+
+    const tableRows = filteredPermissions.map((p, idx) => {
+      const teacher = teachersMap.get(p.teacherId);
+      return [
+        idx + 1,
+        teacher?.fullName || p.teacherName || "—",
+        teacher?.nationalId || p.nationalId || "—",
+        teacher?.specialty || p.specialty || "—",
+        p.permissionDate,
+        p.exitTime,
+        p.returnTime,
+        `${p.durationMinutes} دقيقة`,
+        p.reason,
+        p.notes || "—",
+      ];
+    });
+
+    return {
+      payload: {
+        reportTitle: "سجل حصر استئذان الموظفين الرسمي",
+        reportCode: "تق-استئذان-٠١",
+        schoolName,
+        principalName,
+        creatorName,
+        dateFormatted: saudiToday,
+        periodText,
+        summaryCards,
+        tableHeaders,
+        tableRows,
+      },
+      rawRowsCount: filteredPermissions.length,
+      summaryHighlights: [
+        { label: "إجمالي الاستئذانات", value: filteredPermissions.length },
+        { label: "إجمالي الدقائق", value: totalMinutes },
+        { label: "الموظفات المستأذنات", value: uniqueTeachersCount },
+      ],
+    };
+  }
+
+  // 6. سجل استئذان موظفة فردي مفصل (سجل استئذان معلمة محددة)
+  if (reportType === "teacher_permissions_record") {
+    const targetTeacherId = filters.teacherId && filters.teacherId !== "all"
+      ? filters.teacherId
+      : activeTeachers[0]?.id || "";
+
+    const teacher = teachersMap.get(targetTeacherId);
+    const teacherPerms = activePermissions
+      .filter((p) => p.teacherId === targetTeacherId)
+      .filter((p) =>
+        filterByDateRange(
+          p.permissionDate,
+          filters.startDate,
+          filters.endDate,
+          filters.month,
+          filters.year
+        )
+      );
+
+    const totalMinutes = teacherPerms.reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
+    const avgMinutes = teacherPerms.length > 0 ? Math.round(totalMinutes / teacherPerms.length) : 0;
+
+    const summaryCards = [
+      { label: "عدد مرات الاستئذان", value: `${teacherPerms.length} مرة` },
+      { label: "إجمالي الدقائق", value: `${totalMinutes} دقيقة` },
+      { label: "ما يعادل بالساعات", value: `${(totalMinutes / 60).toFixed(1)} ساعة` },
+      { label: "متوسط مدة الخروج", value: `${avgMinutes} دقيقة` },
+    ];
+
+    const tableHeaders = [
+      "م",
+      "التاريخ",
+      "اليوم",
+      "زمن الخروج",
+      "زمن العودة",
+      "مدة الاستئذان",
+      "مبررات الخروج",
+      "التوقيع",
+      "ملاحظات",
+    ];
+
+    const tableRows = teacherPerms.map((p, idx) => {
+      let dayName = "—";
+      try {
+        dayName = new Date(p.permissionDate).toLocaleDateString("ar-SA", { weekday: "long" });
+      } catch {}
+      return [
+        idx + 1,
+        p.permissionDate,
+        dayName,
+        p.exitTime,
+        p.returnTime,
+        `${p.durationMinutes} دقيقة`,
+        p.reason,
+        "معتمد إلكترونياً",
+        p.notes || "—",
+      ];
+    });
+
+    return {
+      payload: {
+        reportTitle: `سجل استئذان الموظفة: ${teacher?.fullName || "—"}`,
+        reportCode: "تق-استئذان-فردي-٠٢",
+        schoolName,
+        principalName,
+        creatorName,
+        dateFormatted: saudiToday,
+        periodText,
+        teacherDetailsCard: teacher
+          ? {
+              name: teacher.fullName,
+              nationalId: teacher.nationalId || "—",
+              specialty: teacher.specialty || "—",
+              jobTitle: teacher.jobTitle || "معلم",
+            }
+          : undefined,
+        summaryCards,
+        tableHeaders,
+        tableRows,
+      },
+      rawRowsCount: teacherPerms.length,
+      summaryHighlights: [
+        { label: "مرات الاستئذان", value: teacherPerms.length },
+        { label: "إجمالي الدقائق", value: totalMinutes },
+      ],
+    };
+  }
+
+  // 7. تقرير إحصائي تحليلي للاستئذان (أكثر الموظفات استئذاناً ومتوسط المدد)
+  if (reportType === "permissions_statistics") {
+    const filteredPermissions = activePermissions.filter((p) =>
+      filterByDateRange(
+        p.permissionDate,
+        filters.startDate,
+        filters.endDate,
+        filters.month,
+        filters.year
+      )
+    );
+
+    const totalMinutes = filteredPermissions.reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0);
+    const totalCases = filteredPermissions.length;
+    const avgMinutes = totalCases > 0 ? Math.round(totalMinutes / totalCases) : 0;
+
+    // Group by teacher
+    const teacherStatsMap = new Map<string, { count: number; minutes: number }>();
+    filteredPermissions.forEach((p) => {
+      const existing = teacherStatsMap.get(p.teacherId) || { count: 0, minutes: 0 };
+      teacherStatsMap.set(p.teacherId, {
+        count: existing.count + 1,
+        minutes: existing.minutes + p.durationMinutes,
+      });
+    });
+
+    const sortedStats = Array.from(teacherStatsMap.entries())
+      .map(([teacherId, stat]) => ({
+        teacher: teachersMap.get(teacherId),
+        ...stat,
+      }))
+      .sort((a, b) => b.minutes - a.minutes);
+
+    const summaryCards = [
+      { label: "إجمالي الحالات", value: `${totalCases} استئذان` },
+      { label: "إجمالي الدقائق", value: `${totalMinutes} دقيقة` },
+      { label: "الموظفات المستفيدات", value: `${sortedStats.length} موظفة` },
+      { label: "متوسط مدة الاستئذان", value: `${avgMinutes} دقيقة` },
+    ];
+
+    const tableHeaders = [
+      "م",
+      "اسم الموظفة",
+      "السجل المدني",
+      "التخصص",
+      "عدد الاستئذانات",
+      "إجمالي الدقائق",
+      "ما يعادل بالساعات",
+      "متوسط المدة لكل خروج",
+      "مستوى المؤشر",
+    ];
+
+    const tableRows = sortedStats.map((item, idx) => {
+      const avg = Math.round(item.minutes / item.count);
+      let level = "طبيعي";
+      if (item.minutes >= 300 || item.count >= 5) {
+        level = "مرتفع جداً";
+      } else if (item.minutes >= 180 || item.count >= 3) {
+        level = "متوسط";
+      }
+
+      return [
+        idx + 1,
+        item.teacher?.fullName || "—",
+        item.teacher?.nationalId || "—",
+        item.teacher?.specialty || "—",
+        `${item.count} مرات`,
+        `${item.minutes} دقيقة`,
+        `${(item.minutes / 60).toFixed(1)} س`,
+        `${avg} دقيقة`,
+        level,
+      ];
+    });
+
+    return {
+      payload: {
+        reportTitle: "التقرير التحليلي والإحصائي لاستئذان الموظفين",
+        reportCode: "تق-استئذان-تحليلي-٠٣",
+        schoolName,
+        principalName,
+        creatorName,
+        dateFormatted: saudiToday,
+        periodText,
+        summaryCards,
+        tableHeaders,
+        tableRows,
+      },
+      rawRowsCount: sortedStats.length,
+      summaryHighlights: [
+        { label: "الحالات الموثقة", value: totalCases },
+        { label: "إجمالي الدقائق", value: totalMinutes },
+        { label: "الموظفات المستأذنات", value: sortedStats.length },
       ],
     };
   }

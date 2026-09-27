@@ -204,6 +204,39 @@ export interface DeductionDecision {
   archivedByCascade?: boolean;
 }
 
+// === Employee Permission Types (نظام استئذان الموظفين) ===
+export interface EmployeePermission {
+  id: string;
+  teacherId: string;
+  teacherName?: string;
+  nationalId?: string;
+  jobNumber?: string;
+  specialty?: string;
+  permissionDate: string; // YYYY-MM-DD
+  exitTime: string;       // HH:MM
+  returnTime: string;     // HH:MM
+  durationMinutes: number; // calculated (returnTime - exitTime)
+  reason: string;         // مبررات الخروج
+  notes?: string;         // ملاحظات إضافية
+  createdBy?: string;
+  createdByName?: string;
+  createdAt: string;      // ISO
+  updatedAt?: string;
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
+}
+
+export interface ArchivedEmployeePermission {
+  permission: EmployeePermission;
+  archivedAt: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
+}
+
 // === Archive Types (نظام الأرشيف) ===
 export interface ArchivedTeacher {
   teacher: Teacher;
@@ -211,6 +244,7 @@ export interface ArchivedTeacher {
   associatedInquiries: AbsenceInquiry[];
   associatedDelayNotices: DelayNotice[];
   associatedDeductionDecisions?: DeductionDecision[];
+  associatedPermissions?: EmployeePermission[];
   archivedAt: string;
   archiveReason?: string;
 }

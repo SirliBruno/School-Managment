@@ -18,6 +18,7 @@
 .DS_Store
 *.pem
 *.pptx
+*.pdf
 
 # debug
 npm-debug.log*

@@ -3,6 +3,9 @@ export type ReportType =
   | "delay_departure_summary"
   | "deduction_decisions_summary"
   | "teacher_detailed_record"
+  | "permissions_summary"
+  | "teacher_permissions_record"
+  | "permissions_statistics"
   | "school_comprehensive"
   | "custom_period";
 

@@ -22,8 +22,9 @@ import {
   Zap,
   ShieldAlert,
   MessageCircle,
+  DoorOpen,
 } from "lucide-react";
-import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision } from "@/types/teacher";
+import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision, EmployeePermission } from "@/types/teacher";
 import { formatSaudiMobileDisplay, normalizeSaudiMobile } from "@/lib/teacherDeduplication";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -32,6 +33,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { printDeductionDecisionPdf } from "@/lib/printDeductionDecisionPdfService";
+import { printPermissionPdf } from "@/lib/printPermissionPdfService";
 import { getTeacherDelaySummary } from "@/lib/delayDeductionIntegration";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +78,9 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     absenceRecords,
     delayNotices,
     deductionDecisions,
+    permissions,
     deleteAbsenceRecord,
+    deletePermission,
   } = useTeachers();
   const { showToast } = useToast();
 
@@ -87,7 +91,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   }, [teachers, teacher]);
 
   const [activeHistoryTab, setActiveHistoryTab] = useState<
-    "absences" | "delays" | "deductions"
+    "absences" | "delays" | "deductions" | "permissions"
   >("absences");
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
@@ -166,6 +170,25 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
       (dec) => dec.teacherId === currentTeacher.id && !dec.isArchived
     );
   }, [deductionDecisions, currentTeacher]);
+
+  // Filter permissions strictly by immutable teacherId
+  const teacherPermissions = useMemo(() => {
+    if (!currentTeacher) return [];
+    return (permissions || []).filter(
+      (perm) => perm.teacherId === currentTeacher.id && !perm.isArchived
+    );
+  }, [permissions, currentTeacher]);
+
+  const totalPermissionMinutes = useMemo(
+    () => teacherPermissions.reduce((acc, curr) => acc + (curr.durationMinutes || 0), 0),
+    [teacherPermissions]
+  );
+
+  const lastPermissionDate = useMemo(() => {
+    if (teacherPermissions.length === 0) return "لا يوجد";
+    const sorted = [...teacherPermissions].sort((a, b) => b.permissionDate.localeCompare(a.permissionDate));
+    return sorted[0].permissionDate;
+  }, [teacherPermissions]);
 
   const totalDeductionDays = useMemo(
     () => teacherDeductions.reduce((acc, curr) => acc + (curr.deductionDays || 0), 0),
@@ -591,14 +614,28 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                     type="button"
                     onClick={() => setActiveHistoryTab("deductions")}
                     className={cn(
-                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5",
+                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
                       activeHistoryTab === "deductions"
                         ? "bg-rose-600 text-white shadow-sm"
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     )}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>قرارات حسم الساعات ({teacherDeductions.length})</span>
+                    <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span>قرارات الحسم ({teacherDeductions.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveHistoryTab("permissions")}
+                    className={cn(
+                      "py-1.5 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap",
+                      activeHistoryTab === "permissions"
+                        ? "bg-[#137a85] text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    )}
+                  >
+                    <DoorOpen className="w-3.5 h-3.5 shrink-0" />
+                    <span>سجل الاستئذان ({teacherPermissions.length})</span>
                   </button>
                 </div>
 
@@ -927,6 +964,82 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                   >
                                     <FileDown className="w-3.5 h-3.5" />
                                     <span>طباعة نموذج 19</span>
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 4: Permissions */}
+              {activeHistoryTab === "permissions" && (
+                <div>
+                  {teacherPermissions.length === 0 ? (
+                    <div className="p-8 rounded-xl bg-slate-50/80 border border-dashed border-slate-200 text-center space-y-2">
+                      <div className="w-10 h-10 rounded-full bg-teal-50 text-[#137a85] flex items-center justify-center mx-auto">
+                        <DoorOpen className="w-5 h-5" aria-hidden="true" />
+                      </div>
+                      <p className="text-xs md:text-sm font-bold text-slate-700">
+                        لا توجد أي استئذانات مسجلة
+                      </p>
+                      <p className="text-[11px] text-slate-400 max-w-sm mx-auto">
+                        لم تقم المعلمة بأي عملية خروج أثناء الدوام الرسمي مسجلة في المنصة.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-right text-xs">
+                          <thead className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
+                            <tr>
+                              <th scope="col" className="py-3 px-4">التاريخ</th>
+                              <th scope="col" className="py-3 px-4">وقت الخروج</th>
+                              <th scope="col" className="py-3 px-4">وقت العودة</th>
+                              <th scope="col" className="py-3 px-4">المدة</th>
+                              <th scope="col" className="py-3 px-4">مبررات الخروج</th>
+                              <th scope="col" className="py-3 px-4 text-center">الإجراءات</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {teacherPermissions.map((perm) => (
+                              <tr
+                                key={perm.id}
+                                className="hover:bg-slate-50/80 transition-colors duration-150"
+                              >
+                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 whitespace-nowrap">
+                                  {perm.permissionDate}
+                                </td>
+                                <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
+                                  {perm.exitTime}
+                                </td>
+                                <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
+                                  {perm.returnTime}
+                                </td>
+                                <td className="py-3.5 px-4 font-mono font-bold text-teal-800 whitespace-nowrap">
+                                  {perm.durationMinutes} دقيقة
+                                </td>
+                                <td className="py-3.5 px-4 text-slate-700 max-w-xs truncate" title={perm.reason}>
+                                  {perm.reason}
+                                </td>
+                                <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      printPermissionPdf({
+                                        permission: perm,
+                                        teacher: currentTeacher,
+                                      })
+                                    }
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200/80 transition-all cursor-pointer"
+                                    title="طباعة استمارة الاستئذان الرسمية"
+                                  >
+                                    <FileDown className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="whitespace-nowrap">استمارة الاستئذان</span>
                                   </button>
                                 </td>
                               </tr>

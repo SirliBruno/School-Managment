@@ -109,6 +109,22 @@ export interface DbAdminCredentialRow {
   updated_at: string;
 }
 
+export interface DbEmployeePermissionRow {
+  id: string;
+  teacher_id: string;
+  permission_date: string;
+  exit_time: string;
+  return_time: string;
+  duration_minutes: number;
+  reason: string;
+  notes?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at?: string | null;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+}
+
 export interface RealtimeDbPayload<T extends Record<string, unknown>> {
   schema: string;
   table: string;

@@ -65,19 +65,24 @@ export const NAV_ITEMS: NavItem[] = [
     hasChildren: true,
     children: [
       {
+        id: "absence-inquiry",
+        label: "مساءلة غياب",
+        href: "/procedures/absence",
+      },
+      {
         id: "delay-warning",
         label: "تنبيه على تأخر",
         href: "/procedures/delay-notice",
       },
       {
+        id: "permissions",
+        label: "استئذان الموظفين",
+        href: "/procedures/permissions",
+      },
+      {
         id: "deduction-hours",
         label: "قرار حسم مجموع ساعات",
         href: "/procedures/deduction-hours",
-      },
-      {
-        id: "absence-inquiry",
-        label: "مساءلة غياب",
-        href: "/procedures/absence",
       },
       {
         id: "procedures-list",

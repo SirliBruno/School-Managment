@@ -19,6 +19,8 @@ import {
   Search,
   Sparkles,
   Download,
+  LogOut,
+  BarChart3,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTeachers } from "@/context/TeacherContext";
@@ -72,6 +74,30 @@ const REPORT_CARDS: ReportCardDef[] = [
     accentColor: "border-indigo-500 text-indigo-600 bg-indigo-50",
   },
   {
+    type: "permissions_summary",
+    title: "حصر سجل استئذان الموظفين",
+    description: "توثيق رسمي شامل لحالات خروج الموظفات أثناء الدوام، دقائق الاستئذان المعتمدة، وأسباب الخروج.",
+    icon: LogOut,
+    badge: "استئذان شهري",
+    accentColor: "border-teal-600 text-teal-700 bg-teal-50",
+  },
+  {
+    type: "teacher_permissions_record",
+    title: "سجل استئذان موظفة فردي",
+    description: "نموذج استئذان رسمي مفصل لموظفة محددة بكافة تواريخ وأوقات الخروج والعودة وحساب المدة الإجمالية.",
+    icon: User,
+    badge: "استئذان فردي",
+    accentColor: "border-cyan-600 text-cyan-700 bg-cyan-50",
+  },
+  {
+    type: "permissions_statistics",
+    title: "تقرير إحصائي للاستئذان",
+    description: "تحليل إحصائي لمؤشرات الاستئذان بالمدرسة: إجمالي الدقائق، أكثر الموظفات استئذاناً، ومتوسط المدة.",
+    icon: BarChart3,
+    badge: "مؤشرات تحليلية",
+    accentColor: "border-violet-500 text-violet-600 bg-violet-50",
+  },
+  {
     type: "school_comprehensive",
     title: "التقرير الشامل للمدرسة",
     description: "تقرير إداري شامل لمديرة المدرسة يجمع المؤشرات العامة لجميع المعلمات ومستوى الانضباط.",
@@ -98,6 +124,7 @@ export default function ReportsCenterPage() {
     absenceRecords,
     delayNotices,
     deductionDecisions,
+    permissions,
     isLoading: isDataLoading,
   } = useTeachers();
 
@@ -169,7 +196,8 @@ export default function ReportsCenterPage() {
       absenceRecords,
       delayNotices,
       deductionDecisions,
-      user?.fullName || "وكيلة الشؤون التعليمية"
+      user?.fullName || "وكيلة الشؤون التعليمية",
+      permissions
     );
   }, [
     selectedType,
@@ -178,13 +206,18 @@ export default function ReportsCenterPage() {
     absenceRecords,
     delayNotices,
     deductionDecisions,
+    permissions,
     user?.fullName,
     step,
   ]);
 
   const handleStartBuilder = (type: ReportType) => {
     setSelectedType(type);
-    if (type === "teacher_detailed_record" && filters.teacherId === "all" && teachers.length > 0) {
+    if (
+      (type === "teacher_detailed_record" || type === "teacher_permissions_record") &&
+      filters.teacherId === "all" &&
+      teachers.length > 0
+    ) {
       setFilters((prev) => ({ ...prev, teacherId: teachers[0].id }));
     }
     setStep(2);
@@ -476,14 +509,18 @@ export default function ReportsCenterPage() {
 
               {/* Filters Form */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs font-bold text-slate-700">
-                {/* Specific Teacher (for teacher_detailed_record or others) */}
+                {/* Specific Teacher (for teacher_detailed_record, teacher_permissions_record or others) */}
                 {(selectedType === "teacher_detailed_record" ||
+                  selectedType === "teacher_permissions_record" ||
                   selectedType === "absence_summary" ||
                   selectedType === "delay_departure_summary" ||
+                  selectedType === "permissions_summary" ||
                   selectedType === "deduction_decisions_summary") && (
                   <div className="space-y-1.5">
                     <label className="text-slate-700">
-                      {selectedType === "teacher_detailed_record" ? "المعلمة المعنية (إلزامي)" : "تحديد معلمة معينة"}
+                      {selectedType === "teacher_detailed_record" || selectedType === "teacher_permissions_record"
+                        ? "المعلمة المعنية (إلزامي)"
+                        : "تحديد معلمة معينة"}
                     </label>
                     <select
                       value={filters.teacherId}

@@ -23,6 +23,7 @@ import {
   PanelRightOpen,
   Building2,
   Bell,
+  DoorOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -290,6 +291,22 @@ export const AppHeader: React.FC = () => {
                       <p className="truncate">تنبيه على تأخر</p>
                       <p className="text-[10px] text-slate-400 font-normal">
                         تسجيل تأخر صباحي أو انصراف
+                      </p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    href="/procedures/permissions"
+                    onClick={() => setIsQuickActionsOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-100/60 text-[#137a85] flex items-center justify-center shrink-0">
+                      <DoorOpen className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate">استئذان موظفة</p>
+                      <p className="text-[10px] text-slate-400 font-normal">
+                        توثيق خروج وعودة أثناء الدوام
                       </p>
                     </div>
                   </Link>

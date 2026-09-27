@@ -21,6 +21,8 @@ import {
   ArchivedDelayNotice,
   DeductionDecision,
   ArchivedDeductionDecision,
+  EmployeePermission,
+  ArchivedEmployeePermission,
   ExcelTeacherRow,
   TeacherImportPlan,
   TeacherImportResult,
@@ -67,20 +69,22 @@ interface TeacherContextType {
   inquiries: AbsenceInquiry[];
   delayNotices: DelayNotice[];
   deductionDecisions: DeductionDecision[];
+  permissions: EmployeePermission[];
   // === Archive System (نظام الأرشيف) ===
   archivedTeachers: ArchivedTeacher[];
   archivedAbsences: ArchivedAbsenceRecord[];
   archivedDelayNotices: ArchivedDelayNotice[];
   archivedDeductionDecisions: ArchivedDeductionDecision[];
+  archivedPermissions: ArchivedEmployeePermission[];
   restoreFromArchive: (
-    type: "teacher" | "absence" | "delay" | "deduction",
+    type: "teacher" | "absence" | "delay" | "deduction" | "permission",
     id: string
   ) => { success: boolean; error?: string; message?: string };
   permanentDeleteFromArchive: (
-    type: "teacher" | "absence" | "delay" | "deduction",
+    type: "teacher" | "absence" | "delay" | "deduction" | "permission",
     id: string
   ) => boolean;
-  clearArchive: (type?: "teacher" | "absence" | "delay" | "deduction") => void;
+  clearArchive: (type?: "teacher" | "absence" | "delay" | "deduction" | "permission") => void;
   isLoading: boolean;
   isCloudConnected: boolean;
   pendingSyncCount: number;
@@ -185,6 +189,19 @@ interface TeacherContextType {
     archiveReason?: string
   ) => { deletedDecision?: DeductionDecision };
   restoreDeductionDecision: (decision: DeductionDecision) => void;
+  // === Employee Permissions (نظام الاستئذان) ===
+  createPermission: (
+    data: Omit<EmployeePermission, "id" | "createdAt">
+  ) => { success: boolean; permission?: EmployeePermission; error?: string };
+  updatePermission: (
+    id: string,
+    updates: Partial<EmployeePermission>
+  ) => { success: boolean; permission?: EmployeePermission; error?: string };
+  deletePermission: (
+    id: string,
+    archiveReason?: string
+  ) => { deletedPermission?: EmployeePermission };
+  restorePermission: (permission: EmployeePermission) => void;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
@@ -192,10 +209,12 @@ const ABSENCES_STORAGE_KEY = "school_admin_absences_v1";
 const INQUIRIES_STORAGE_KEY = "school_admin_inquiries_v1";
 const DELAY_NOTICES_STORAGE_KEY = "school_admin_delay_notices_v1";
 const DEDUCTION_DECISIONS_STORAGE_KEY = "school_admin_deductions_v1";
+const PERMISSIONS_STORAGE_KEY = "school_admin_permissions_v1";
 const ARCHIVED_TEACHERS_STORAGE_KEY = "school_admin_archived_teachers_v1";
 const ARCHIVED_ABSENCES_STORAGE_KEY = "school_admin_archived_absences_v1";
 const ARCHIVED_DELAYS_STORAGE_KEY = "school_admin_archived_delays_v1";
 const ARCHIVED_DEDUCTIONS_STORAGE_KEY = "school_admin_archived_deductions_v1";
+const ARCHIVED_PERMISSIONS_STORAGE_KEY = "school_admin_archived_permissions_v1";
 const PENDING_SYNC_STORAGE_KEY = "school_admin_pending_sync_v1";
 
 export interface PendingSyncOperation {
@@ -573,11 +592,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [inquiries, setInquiries] = useState<AbsenceInquiry[]>([]);
   const [delayNotices, setDelayNotices] = useState<DelayNotice[]>([]);
   const [deductionDecisions, setDeductionDecisions] = useState<DeductionDecision[]>([]);
+  const [permissions, setPermissions] = useState<EmployeePermission[]>([]);
   // Archive States
   const [archivedTeachers, setArchivedTeachers] = useState<ArchivedTeacher[]>([]);
   const [archivedAbsences, setArchivedAbsences] = useState<ArchivedAbsenceRecord[]>([]);
   const [archivedDelayNotices, setArchivedDelayNotices] = useState<ArchivedDelayNotice[]>([]);
   const [archivedDeductionDecisions, setArchivedDeductionDecisions] = useState<ArchivedDeductionDecision[]>([]);
+  const [archivedPermissions, setArchivedPermissions] = useState<ArchivedEmployeePermission[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
@@ -670,10 +691,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         let localInquiries: AbsenceInquiry[] = [];
         let localDelayNotices: DelayNotice[] = [];
         let localDeductions: DeductionDecision[] = [];
+        let localPermissions: EmployeePermission[] = [];
         let parsedArchTeachers: ArchivedTeacher[] = [];
         let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
         let parsedArchDelays: ArchivedDelayNotice[] = [];
         let parsedArchDeductions: ArchivedDeductionDecision[] = [];
+        let parsedArchPermissions: ArchivedEmployeePermission[] = [];
 
         // One-time total wipe per explicit user instruction
         const WIPE_FLAG_KEY = "school_admin_wipe_all_teachers_2026";
@@ -761,6 +784,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             } catch {}
           }
 
+          const storedPermissions = localStorage.getItem(PERMISSIONS_STORAGE_KEY);
+          if (storedPermissions) {
+            try {
+              const parsed = JSON.parse(storedPermissions);
+              if (Array.isArray(parsed)) {
+                localPermissions = parsed;
+              }
+            } catch {}
+          }
+
         // Load Archives from LocalStorage with cascade auto-migration
         const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
         if (storedArchTeachers) {
@@ -788,6 +821,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           try {
             const parsed = JSON.parse(storedArchDeductions);
             if (Array.isArray(parsed)) parsedArchDeductions = parsed;
+          } catch {}
+        }
+        const storedArchPermissions = localStorage.getItem(ARCHIVED_PERMISSIONS_STORAGE_KEY);
+        if (storedArchPermissions) {
+          try {
+            const parsed = JSON.parse(storedArchPermissions);
+            if (Array.isArray(parsed)) parsedArchPermissions = parsed;
           } catch {}
         }
 
@@ -944,10 +984,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       setInquiries(localInquiries);
       setDelayNotices(localDelayNotices);
       setDeductionDecisions(localDeductions);
+      setPermissions(localPermissions);
       setArchivedTeachers(parsedArchTeachers);
       setArchivedAbsences(parsedArchAbsences);
       setArchivedDelayNotices(parsedArchDelays);
       setArchivedDeductionDecisions(parsedArchDeductions);
+      setArchivedPermissions(parsedArchPermissions);
 
       // Cloud Sync if Supabase is Configured
       if (isSupabaseConfigured() && supabase) {
@@ -3478,7 +3520,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // === Archive Management Methods ===
   const restoreFromArchive = useCallback(
     (
-      type: "teacher" | "absence" | "delay" | "deduction",
+      type: "teacher" | "absence" | "delay" | "deduction" | "permission",
       id: string
     ): { success: boolean; error?: string; message?: string } => {
       if (type === "teacher") {
@@ -3822,24 +3864,78 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               ? "تم استعادة قرار الحسم مع استعادة المعلمة المرتبطة به"
               : "تم استعادة قرار الحسم بنجاح",
         };
+      } else if (type === "permission") {
+        const found = archivedPermissions.find((a) => a.permission.id === id);
+        if (!found) {
+          return { success: false, error: "سجل الاستئذان غير موجود في الأرشيف." };
+        }
+
+        const teacherId = found.permission.teacherId;
+        const activeTeacher = teachers.find((t) => t.id === teacherId);
+        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+
+        if (!activeTeacher && !archivedTeacher) {
+          return {
+            success: false,
+            error: "لا يمكن استعادة الاستئذان لأن المعلمة المرتبطة به محذوفة نهائياً",
+          };
+        }
+
+        const cleanPermission: EmployeePermission = {
+          ...found.permission,
+          isArchived: false,
+          archivedAt: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        };
+
+        if (!activeTeacher && archivedTeacher) {
+          const restoredTeacher: Teacher = {
+            ...archivedTeacher.teacher,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            totalAbsences: 0,
+            totalDelayNotices: 0,
+          };
+          setTeachers((prev) =>
+            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+          );
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+        }
+
+        setPermissions((prev) =>
+          prev.some((p) => p.id === id) ? prev : [cleanPermission, ...prev]
+        );
+
+        setArchivedPermissions((prev) => prev.filter((a) => a.permission.id !== id));
+        return {
+          success: true,
+          message:
+            !activeTeacher && archivedTeacher
+              ? "تم استعادة سجل الاستئذان مع استعادة المعلمة المرتبطة به"
+              : "تم استعادة سجل الاستئذان بنجاح",
+        };
       }
 
       return { success: false, error: "نوع العنصر غير معروف." };
     },
-    [teachers, absenceRecords, delayNotices, deductionDecisions, archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions]
+    [teachers, absenceRecords, delayNotices, deductionDecisions, permissions, archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, archivedPermissions]
   );
 
   const permanentDeleteFromArchive = useCallback(
-    (type: "teacher" | "absence" | "delay" | "deduction", id: string): boolean => {
+    (type: "teacher" | "absence" | "delay" | "deduction" | "permission", id: string): boolean => {
       if (type === "teacher") {
         // Edge Case 4: Permanently deleting a teacher removes all her associated records (active or archived)
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
         setArchivedAbsences((prev) => prev.filter((a) => a.record.teacherId !== id));
         setArchivedDelayNotices((prev) => prev.filter((d) => d.notice.teacherId !== id));
         setArchivedDeductionDecisions((prev) => prev.filter((d) => d.decision.teacherId !== id));
+        setArchivedPermissions((prev) => prev.filter((p) => p.permission.teacherId !== id));
         setAbsenceRecords((prev) => prev.filter((r) => r.teacherId !== id));
         setDelayNotices((prev) => prev.filter((d) => d.teacherId !== id));
         setDeductionDecisions((prev) => prev.filter((d) => d.teacherId !== id));
+        setPermissions((prev) => prev.filter((p) => p.teacherId !== id));
         setInquiries((prev) => prev.filter((i) => i.teacherId !== id));
         return true;
       } else if (type === "absence") {
@@ -3875,6 +3971,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           }))
         );
         return true;
+      } else if (type === "permission") {
+        setArchivedPermissions((prev) => prev.filter((a) => a.permission.id !== id));
+        setArchivedTeachers((prev) =>
+          prev.map((at) => ({
+            ...at,
+            associatedPermissions: (at.associatedPermissions || []).filter(
+              (p) => p.id !== id
+            ),
+          }))
+        );
+        return true;
       }
       return false;
     },
@@ -3882,11 +3989,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const clearArchive = useCallback(
-    (type?: "teacher" | "absence" | "delay" | "deduction") => {
+    (type?: "teacher" | "absence" | "delay" | "deduction" | "permission") => {
       if (!type || type === "teacher") setArchivedTeachers([]);
       if (!type || type === "absence") setArchivedAbsences([]);
       if (!type || type === "delay") setArchivedDelayNotices([]);
       if (!type || type === "deduction") setArchivedDeductionDecisions([]);
+      if (!type || type === "permission") setArchivedPermissions([]);
     },
     []
   );
@@ -4068,6 +4176,189 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  // 24. Employee Permissions (نظام الاستئذان)
+  const createPermission = useCallback(
+    (
+      data: Omit<EmployeePermission, "id" | "createdAt">
+    ): { success: boolean; permission?: EmployeePermission; error?: string } => {
+      try {
+        const id = `perm-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+        const newPermission: EmployeePermission = {
+          ...data,
+          id,
+          createdAt: new Date().toISOString(),
+          isArchived: false,
+        };
+
+        setPermissions((prev) => {
+          const next = [newPermission, ...prev];
+          try {
+            localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch (e) {
+            console.warn("فشل حفظ الاستئذان في التخزين المحلي:", e);
+          }
+          return next;
+        });
+
+        // Sync to Supabase if table exists
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("employee_permissions")
+            .insert({
+              id: newPermission.id,
+              teacher_id: newPermission.teacherId,
+              permission_date: newPermission.permissionDate,
+              exit_time: newPermission.exitTime,
+              return_time: newPermission.returnTime,
+              duration_minutes: newPermission.durationMinutes,
+              reason: newPermission.reason,
+              notes: newPermission.notes || null,
+              created_by: newPermission.createdBy || null,
+              created_at: newPermission.createdAt,
+              is_archived: false,
+            })
+            .then(() => {}, () => {});
+        }
+
+        return { success: true, permission: newPermission };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "حدث خطأ غير متوقع",
+        };
+      }
+    },
+    []
+  );
+
+  const updatePermission = useCallback(
+    (
+      id: string,
+      updates: Partial<EmployeePermission>
+    ): { success: boolean; permission?: EmployeePermission; error?: string } => {
+      try {
+        let updatedItem: EmployeePermission | undefined;
+        setPermissions((prev) => {
+          const next = prev.map((p) => {
+            if (p.id === id) {
+              updatedItem = {
+                ...p,
+                ...updates,
+                updatedAt: new Date().toISOString(),
+              };
+              return updatedItem;
+            }
+            return p;
+          });
+          try {
+            localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+
+        if (updatedItem && isSupabaseConfigured() && supabase) {
+          supabase
+            .from("employee_permissions")
+            .update({
+              exit_time: updatedItem.exitTime,
+              return_time: updatedItem.returnTime,
+              duration_minutes: updatedItem.durationMinutes,
+              reason: updatedItem.reason,
+              notes: updatedItem.notes || null,
+              updated_at: updatedItem.updatedAt,
+            })
+            .eq("id", id)
+            .then(() => {}, () => {});
+        }
+
+        return { success: true, permission: updatedItem };
+      } catch (err) {
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : "تعذر تحديث الاستئذان",
+        };
+      }
+    },
+    []
+  );
+
+  const deletePermission = useCallback(
+    (id: string, archiveReason?: string): { deletedPermission?: EmployeePermission } => {
+      const permissionToDelete = permissions.find((p) => p.id === id);
+      if (!permissionToDelete) return {};
+
+      const now = new Date().toISOString();
+      const reason = archiveReason || "حذف يدوي بواسطة الإدارة";
+
+      const archivedItem: ArchivedEmployeePermission = {
+        permission: {
+          ...permissionToDelete,
+          isArchived: true,
+          archivedAt: now,
+          archiveReason: reason,
+        },
+        archivedAt: now,
+        archiveReason: reason,
+      };
+
+      setPermissions((prev) => {
+        const next = prev.filter((p) => p.id !== id);
+        try {
+          localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setArchivedPermissions((prev) => {
+        const next = [archivedItem, ...prev.filter((p) => p.permission.id !== id)];
+        try {
+          localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("employee_permissions")
+          .delete()
+          .eq("id", id)
+          .then(() => {}, () => {});
+      }
+
+      return { deletedPermission: permissionToDelete };
+    },
+    [permissions]
+  );
+
+  const restorePermission = useCallback((permission: EmployeePermission) => {
+    const restored: EmployeePermission = {
+      ...permission,
+      isArchived: false,
+      archivedAt: undefined,
+      archiveReason: undefined,
+      archivedByCascade: undefined,
+    };
+
+    setPermissions((prev) => {
+      const exists = prev.some((p) => p.id === restored.id);
+      const next = exists
+        ? prev.map((p) => (p.id === restored.id ? restored : p))
+        : [restored, ...prev];
+      try {
+        localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    setArchivedPermissions((prev) => {
+      const next = prev.filter((p) => p.permission.id !== permission.id);
+      try {
+        localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }, []);
+
   const contextValue = useMemo<TeacherContextType>(
     () => ({
       teachers,
@@ -4075,10 +4366,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       inquiries,
       delayNotices,
       deductionDecisions,
+      permissions,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
       archivedDeductionDecisions,
+      archivedPermissions,
       restoreFromArchive,
       permanentDeleteFromArchive,
       clearArchive,
@@ -4117,6 +4410,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       createDeductionDecision,
       deleteDeductionDecision,
       restoreDeductionDecision,
+      createPermission,
+      updatePermission,
+      deletePermission,
+      restorePermission,
       pendingSyncCount,
       flushSyncQueue,
     }),
@@ -4126,10 +4423,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       inquiries,
       delayNotices,
       deductionDecisions,
+      permissions,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
       archivedDeductionDecisions,
+      archivedPermissions,
       restoreFromArchive,
       permanentDeleteFromArchive,
       clearArchive,
@@ -4170,6 +4469,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       createDeductionDecision,
       deleteDeductionDecision,
       restoreDeductionDecision,
+      createPermission,
+      updatePermission,
+      deletePermission,
+      restorePermission,
     ]
   );
 
