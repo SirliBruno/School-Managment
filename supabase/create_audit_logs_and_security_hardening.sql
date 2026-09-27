@@ -116,6 +116,17 @@ DO $$
 BEGIN
     -- teachers
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'teachers') THEN
+        -- ضمان وجود عمود national_id
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'teachers' AND column_name = 'national_id') THEN
+            ALTER TABLE public.teachers ADD COLUMN national_id TEXT;
+            IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'teachers' AND column_name = 'job_number') THEN
+                UPDATE public.teachers SET national_id = job_number WHERE national_id IS NULL;
+            ELSE
+                UPDATE public.teachers SET national_id = id WHERE national_id IS NULL;
+            END IF;
+        END IF;
+
+        -- أعمدة الأرشفة
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'teachers' AND column_name = 'is_archived') THEN
             ALTER TABLE public.teachers ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT FALSE;
             ALTER TABLE public.teachers ADD COLUMN archived_at TIMESTAMPTZ;
@@ -165,11 +176,18 @@ BEGIN
     END IF;
 END $$;
 
--- 5. فهارس منع الازدواجية للسجلات النشطة (Unique Partial Indexes)
-CREATE UNIQUE INDEX IF NOT EXISTS idx_teachers_national_id_active 
-ON public.teachers (national_id) 
-WHERE is_archived = FALSE;
+-- 5. فهارس منع الازدواجية للسجلات النشطة بأمان
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'teachers' AND column_name = 'national_id') THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_teachers_national_id_active 
+        ON public.teachers (national_id) 
+        WHERE is_archived = FALSE;
+    END IF;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_absence_teacher_date_active 
-ON public.absence_records (teacher_id, date) 
-WHERE is_archived = FALSE;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'absence_records' AND column_name = 'teacher_id') THEN
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_absence_teacher_date_active 
+        ON public.absence_records (teacher_id, date) 
+        WHERE is_archived = FALSE;
+    END IF;
+END $$;
