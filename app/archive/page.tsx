@@ -19,6 +19,7 @@ import {
   Info,
   Layers,
   FileCheck,
+  DoorOpen,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -26,8 +27,8 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-type ArchiveTab = "all" | "teachers" | "absences" | "delays" | "deductions";
-type ArchiveEntityType = "teacher" | "absence" | "delay" | "deduction";
+type ArchiveTab = "all" | "teachers" | "absences" | "delays" | "deductions" | "permissions";
+type ArchiveEntityType = "teacher" | "absence" | "delay" | "deduction" | "permission";
 
 interface UnifiedArchiveItem {
   uid: string; // `${type}:${entityId}`
@@ -37,6 +38,7 @@ interface UnifiedArchiveItem {
   subtitle: string;
   details: string;
   archivedAt: string;
+  archivedBy?: string;
   archiveReason?: string;
   archivedByCascade?: boolean;
   cascadedCount?: number;
@@ -67,6 +69,7 @@ export default function ArchivePage() {
     archivedAbsences,
     archivedDelayNotices,
     archivedDeductionDecisions,
+    archivedPermissions,
     restoreFromArchive,
     permanentDeleteFromArchive,
   } = useTeachers();
@@ -104,12 +107,16 @@ export default function ArchivePage() {
       const cascadedDeductions = archivedDeductionDecisions.filter(
         (d) => d.decision.teacherId === t.id
       ).length;
-      const totalCascaded = cascadedAbs + cascadedDelays + cascadedDeductions;
+      const cascadedPerms = archivedPermissions.filter(
+        (p) => p.permission.teacherId === t.id
+      ).length;
+      const totalCascaded = cascadedAbs + cascadedDelays + cascadedDeductions + cascadedPerms;
 
       const subCounts = [
         cascadedAbs > 0 ? `${cascadedAbs} سجل غياب` : "",
         cascadedDelays > 0 ? `${cascadedDelays} تنبيه تأخر` : "",
         cascadedDeductions > 0 ? `${cascadedDeductions} قرار حسم` : "",
+        cascadedPerms > 0 ? `${cascadedPerms} سجل استئذان` : "",
       ].filter(Boolean);
 
       items.push({
@@ -188,11 +195,33 @@ export default function ArchivePage() {
       });
     }
 
+    // 5. Archived Permissions
+    for (const ap of archivedPermissions) {
+      const perm = ap.permission;
+      const isCascade = Boolean(ap.archivedByCascade || perm.archivedByCascade);
+      const actor = ap.archivedBy || perm.archivedBy || "وكيلة الشؤون التعليمية";
+
+      items.push({
+        uid: `permission:${perm.id}`,
+        type: "permission",
+        entityId: perm.id,
+        title: `${perm.teacherName || "معلمة"} — سجل استئذان رسمي`,
+        subtitle: `التاريخ: ${perm.permissionDate} • وقت الخروج: ${perm.exitTime} • وقت العودة: ${perm.returnTime} • مدة الاستئذان: ${perm.durationMinutes} دقيقة`,
+        details: perm.notes
+          ? `مبررات الخروج: ${perm.reason} • ملاحظات: ${perm.notes}`
+          : `مبررات الخروج: ${perm.reason}`,
+        archivedAt: ap.archivedAt || perm.archivedAt || new Date().toISOString(),
+        archivedBy: actor,
+        archiveReason: ap.archiveReason || perm.archiveReason || "تم نقل سجل الاستئذان إلى الأرشيف الإداري",
+        archivedByCascade: isCascade,
+      });
+    }
+
     return items.sort(
       (a, b) =>
         new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime()
     );
-  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions]);
+  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, archivedPermissions]);
 
   // Filter by activeTab and searchQuery
   const filteredItems = useMemo(() => {
@@ -202,6 +231,7 @@ export default function ArchivePage() {
       if (activeTab === "absences" && item.type !== "absence") return false;
       if (activeTab === "delays" && item.type !== "delay") return false;
       if (activeTab === "deductions" && item.type !== "deduction") return false;
+      if (activeTab === "permissions" && item.type !== "permission") return false;
 
       if (!q) return true;
       return (
@@ -362,8 +392,8 @@ export default function ArchivePage() {
 
       {/* Main Body */}
       <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto pb-28">
-        {/* 4 KPI Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 5 KPI Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
           <div onClick={() => setActiveTab("teachers")} className="cursor-pointer">
             <KpiCard
               title="المعلمات المؤرشفة"
@@ -403,12 +433,22 @@ export default function ArchivePage() {
               className={activeTab === "deductions" ? "ring-2 ring-rose-600" : ""}
             />
           </div>
+
+          <div onClick={() => setActiveTab("permissions")} className="cursor-pointer">
+            <KpiCard
+              title="سجلات الاستئذان المؤرشفة"
+              value={archivedPermissions.length}
+              variant="purple"
+              icon={<DoorOpen className="w-5 h-5" />}
+              className={activeTab === "permissions" ? "ring-2 ring-purple-600" : ""}
+            />
+          </div>
         </div>
 
           {/* Filter Tabs + Search + Select All Controls */}
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-              {/* 5 Horizontal Scrollable Tabs */}
+              {/* 6 Horizontal Scrollable Tabs */}
               <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl overflow-x-auto no-scrollbar">
                 <button
                   type="button"
@@ -494,6 +534,23 @@ export default function ArchivePage() {
                     {archivedDeductionDecisions.length}
                   </span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("permissions")}
+                  className={cn(
+                    "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
+                    activeTab === "permissions"
+                      ? "bg-white text-purple-700 shadow-xs"
+                      : "text-slate-600 hover:text-slate-900"
+                  )}
+                >
+                  <DoorOpen className="w-3.5 h-3.5" />
+                  <span>سجلات الاستئذان</span>
+                  <span className="px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-mono">
+                    {archivedPermissions.length}
+                  </span>
+                </button>
               </div>
 
               {/* Search Input */}
@@ -574,6 +631,13 @@ export default function ArchivePage() {
                           bg: "bg-amber-50 text-amber-800 border-amber-200",
                           iconBg: "bg-amber-50 text-amber-600 border-amber-100",
                           Icon: Clock,
+                        }
+                      : item.type === "permission"
+                      ? {
+                          label: "سجل استئذان",
+                          bg: "bg-purple-50 text-purple-700 border-purple-200",
+                          iconBg: "bg-purple-50 text-purple-600 border-purple-100",
+                          Icon: DoorOpen,
                         }
                       : {
                           label: "قرار حسم ساعات",
@@ -664,6 +728,12 @@ export default function ArchivePage() {
                                 أُرشف في: {formatArabicArchiveDate(item.archivedAt)}
                               </span>
                             </span>
+
+                            {item.archivedBy && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium">
+                                <span>بواسطة: {item.archivedBy}</span>
+                              </span>
+                            )}
 
                             {item.archiveReason && (
                               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium">

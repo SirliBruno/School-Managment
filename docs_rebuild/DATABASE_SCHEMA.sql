@@ -369,4 +369,6 @@ CREATE POLICY "Allow anon write teachers for management" ON public.teachers FOR 
 CREATE POLICY "Allow anon full access absence_records" ON public.absence_records FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "Allow anon full access delay_notices" ON public.delay_notices FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "Allow anon full access deduction_decisions" ON public.deduction_decisions FOR ALL TO anon USING (true) WITH CHECK (true);
+CREATE POLICY "Allow anon full access employee_permissions" ON public.employee_permissions FOR ALL TO anon USING (true) WITH CHECK (true);
 CREATE POLICY "Allow anon check admin credentials" ON public.admin_credentials FOR SELECT TO anon USING (true);
+

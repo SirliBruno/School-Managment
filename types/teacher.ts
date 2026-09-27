@@ -226,6 +226,7 @@ export interface EmployeePermission {
   // Archive (Soft Delete) metadata
   isArchived?: boolean;
   archivedAt?: string;
+  archivedBy?: string;
   archiveReason?: string;
   archivedByCascade?: boolean;
 }
@@ -233,6 +234,7 @@ export interface EmployeePermission {
 export interface ArchivedEmployeePermission {
   permission: EmployeePermission;
   archivedAt: string;
+  archivedBy?: string;
   archiveReason?: string;
   archivedByCascade?: boolean;
 }

@@ -123,6 +123,9 @@ export interface DbEmployeePermissionRow {
   updated_at?: string | null;
   is_archived?: boolean | null;
   archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
+  archived_by_cascade?: boolean | null;
 }
 
 export interface RealtimeDbPayload<T extends Record<string, unknown>> {

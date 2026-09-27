@@ -194,5 +194,44 @@ CREATE POLICY "Allow anon all on delay_notices"
     USING (true)
     WITH CHECK (true);
 
+-- 8. جدول استئذان الموظفين (employee_permissions)
+CREATE TABLE IF NOT EXISTS public.employee_permissions (
+    id TEXT PRIMARY KEY,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_name TEXT,
+    national_id TEXT,
+    job_number TEXT,
+    specialty TEXT,
+    permission_date DATE NOT NULL,
+    exit_time TEXT NOT NULL,
+    return_time TEXT NOT NULL,
+    duration_minutes INTEGER NOT NULL DEFAULT 0,
+    reason TEXT NOT NULL,
+    notes TEXT,
+    created_by TEXT,
+    created_by_name TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    archived_at TIMESTAMPTZ,
+    archived_by TEXT,
+    archive_reason TEXT,
+    archived_by_cascade BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE INDEX IF NOT EXISTS idx_permissions_teacher_id ON public.employee_permissions(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_permissions_date ON public.employee_permissions(permission_date);
+CREATE INDEX IF NOT EXISTS idx_permissions_is_archived ON public.employee_permissions(is_archived);
+
+ALTER TABLE public.employee_permissions ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow anon all on employee_permissions" ON public.employee_permissions;
+CREATE POLICY "Allow anon all on employee_permissions"
+    ON public.employee_permissions FOR ALL
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);
+
+
 
 
