@@ -1,5 +1,6 @@
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { UNIFIED_PRINT_SCRIPT } from "@/lib/pdfTemplateBase";
+import { renderOfficialApprovalFooterHtml } from "@/lib/stampSignatureManager";
 
 export interface PdfReportPayload {
   reportTitle: string;
@@ -20,6 +21,8 @@ export interface PdfReportPayload {
   };
   additionalSectionsHtml?: string;
   notes?: string;
+  isStatisticalOnly?: boolean;
+  isInternalOnly?: boolean;
 }
 
 const REPORT_CSS = `
@@ -198,21 +201,22 @@ ${REPORT_CSS}
 
     ${payload.additionalSectionsHtml || ""}
 
-    <!-- Signatures -->
-    <div class="sig-container">
-      <div class="sig-box">
-        <div class="sig-title">وكيلة المدرسة</div>
-        <div class="sig-name">${creatorName}</div>
-      </div>
-      <div class="sig-box">
-        <div class="sig-title">الختم الإداري للمدرسة</div>
-        <div style="font-size:7pt; color:#94a3b8; border:1px dashed #cbd5e1; border-radius:50%; width:70px; height:70px; margin:0 auto; display:flex; align-items:center; justify-content:center;">ختم المنشأة</div>
-      </div>
-      <div class="sig-box">
-        <div class="sig-title">مديرة المدرسة / القائدة</div>
-        <div class="sig-name">${principalName}</div>
-      </div>
-    </div>
+    <!-- Official Approval Footer / Signatures -->
+    ${
+      payload.isStatisticalOnly || payload.isInternalOnly
+        ? `
+    <div style="margin-top: 14px; padding: 8px 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 4px; text-align: center; color: #64748b; font-size: 8pt;">
+      تقرير إحصائي داخلي للأغراض الإدارية والتحليلية المدرسية — لا يتطلب اعتمادات أو أختام رسمية خارجية.
+    </div>`
+        : renderOfficialApprovalFooterHtml({
+            schoolName,
+            officialTitle: "وكيلة المدرسة",
+            officialName: creatorName,
+            secondaryTitle: "مديرة المدرسة / القائدة",
+            secondaryName: principalName,
+            date: payload.dateFormatted,
+          })
+    }
 
     <!-- Official Footer -->
     <div class="official-footer">

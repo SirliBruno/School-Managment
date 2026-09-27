@@ -3,6 +3,7 @@ import {
   UNIFIED_PRINT_SCRIPT,
 } from "@/lib/pdfTemplateBase";
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
+import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
 
 export interface DeductionDecisionPdfData {
   teacherName: string;
@@ -42,6 +43,18 @@ export function buildDeductionDecisionHtml(data: DeductionDecisionPdfData): stri
   const deductionDays = esc(String(data.deductionDays));
   const decisionNumber = esc(data.decisionNumber || "....................");
   const decisionDate = esc(data.decisionDate || "..../..../١٤.. هـ");
+
+  const settings = getSchoolApprovalSettings();
+  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
+  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+
+  const stampElementHtml = showStamp
+    ? `<img src="${settings.schoolStampUrl}" alt="الختم الرسمي" style="max-height: 75px; max-width: 75px; object-fit: contain; margin: 0 auto; display: block;" />`
+    : `الختم الرسمي`;
+
+  const sigElementHtml = showSig
+    ? `<img src="${settings.principalSignatureUrl}" alt="توقيع الاعتماد" style="max-height: 44px; max-width: 140px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+    : `....................................................`;
 
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -286,16 +299,21 @@ ${UNIFIED_PDF_CSS}
       </div>
 
       <!-- Signatures & Stamp -->
-      <div class="signatures-section">
-        <div class="sig-box">
-          <div style="font-weight:800;font-size:10pt;color:#0f766e;margin-bottom:6px;">الرئيس المباشر</div>
+      <div class="signatures-section" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px;">
+        <div class="sig-box" style="flex: 1;">
+          <div style="font-weight:800;font-size:10pt;color:#0f766e;margin-bottom:6px;">الرئيس المباشر / وكيلة المدرسة</div>
           <div>الاسم : ${principalName}</div>
-          <div style="margin-top:4px;">التوقيع : ....................................................</div>
+          <div style="margin-top:4px; min-height: 44px; display: flex; align-items: center; gap: 8px;">
+            <span>التوقيع :</span>
+            <div>${sigElementHtml}</div>
+          </div>
           <div style="margin-top:4px;">التاريخ : ${decisionDate}</div>
         </div>
 
         <div>
-          <div class="stamp-box">الختم الرسمي</div>
+          <div class="stamp-box" style="display: flex; align-items: center; justify-content: center; width: 110px; height: 110px; padding: 4px;">
+            ${stampElementHtml}
+          </div>
         </div>
       </div>
     </div>

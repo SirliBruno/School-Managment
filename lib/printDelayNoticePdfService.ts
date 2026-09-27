@@ -5,6 +5,8 @@ import {
   renderOfficialHeader,
   renderSchoolInfoTable,
 } from "@/lib/pdfTemplateBase";
+import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
+import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 
 export interface DelayNoticePdfData {
   notice: DelayNotice;
@@ -110,6 +112,18 @@ function buildHtml(data: DelayNoticePdfData): string {
 
   const isAccepted = notice.directorOpinion === "accepted";
   const isRejected = notice.directorOpinion === "rejected_with_deduction";
+
+  const settings = getSchoolApprovalSettings();
+  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
+  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+
+  const stampHtml = showStamp
+    ? `<img src="${settings.schoolStampUrl}" alt="ختم المدرسة" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
+    : "";
+
+  const sigHtml = showSig
+    ? `<img src="${settings.principalSignatureUrl}" alt="التوقيع" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+    : "........................";
 
   const headerHtml = renderOfficialHeader({
     formTitle: "تنبيه عن تأخر / انصراف",
@@ -239,10 +253,14 @@ ${schoolTableHtml}
       <span>عذره غير مقبول ويحسم عليه .</span>
     </div>
   </div>
-  <div class="sig">
-    <div style="width:40%;text-align:right">قائدة المدرسة : <strong>فاطمة فلاتة</strong></div>
-    <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ${directorSigDate}</div>
+  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+    <div style="flex: 1.2; text-align: right;">المسؤول المعتمد : <strong>${DEFAULT_ADMIN_NAME} (وكيلة المدرسة)</strong></div>
+    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      <span>التوقيع :</span>
+      <span>${sigHtml}</span>
+    </div>
+    ${showStamp ? `<div style="width: 60px; text-align: center;">${stampHtml}</div>` : ""}
+    <div style="flex: 0.8; text-align: left;">التاريخ : ${directorSigDate}</div>
   </div>
 </div>
 

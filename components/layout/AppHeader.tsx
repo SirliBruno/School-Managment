@@ -24,6 +24,7 @@ import {
   Building2,
   Bell,
   DoorOpen,
+  Award,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -35,6 +36,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { Button } from "@/components/ui/Button";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
+import { ApprovalAssetsModal } from "@/components/settings/ApprovalAssetsModal";
 import { cn } from "@/lib/utils";
 
 export const AppHeader: React.FC = () => {
@@ -52,6 +54,7 @@ export const AppHeader: React.FC = () => {
   } = useSidebar();
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
 
@@ -411,6 +414,18 @@ export const AppHeader: React.FC = () => {
                     <span className="whitespace-nowrap">تعديل كلمة المرور والبيانات</span>
                   </button>
 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setIsApprovalModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium whitespace-nowrap text-slate-700 hover:text-teal-700 hover:bg-teal-50/80 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <Award className="w-4 h-4 text-teal-600 shrink-0" />
+                    <span className="whitespace-nowrap">بيانات الاعتماد والختم</span>
+                  </button>
+
                   <div className="my-1 border-t border-slate-100" />
 
                   <button
@@ -435,6 +450,12 @@ export const AppHeader: React.FC = () => {
       <AdminProfileModal
         isOpen={isProfileModalOpen}
         onClose={() => setIsProfileModalOpen(false)}
+      />
+
+      {/* School Stamp & Signature Modal */}
+      <ApprovalAssetsModal
+        isOpen={isApprovalModalOpen}
+        onClose={() => setIsApprovalModalOpen(false)}
       />
     </>
   );

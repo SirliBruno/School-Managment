@@ -334,8 +334,10 @@ export type AuditLogAction =
   | "EXPORT_REPORT"
   | "BACKUP_CREATED"
   | "BACKUP_RESTORED"
+  | "APPROVAL_ASSETS_UPDATED"
   | "LOGIN"
-  | "LOGOUT";
+  | "LOGOUT"
+  | (string & {});
 
 export type AuditLogEntityType =
   | "teacher"
@@ -347,6 +349,7 @@ export type AuditLogEntityType =
   | "deduction"
   | "report"
   | "backup"
+  | "settings"
   | "system";
 
 export interface AuditLog {

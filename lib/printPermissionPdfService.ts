@@ -1,6 +1,7 @@
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { UNIFIED_PRINT_SCRIPT } from "@/lib/pdfTemplateBase";
 import { EmployeePermission, Teacher } from "@/types/teacher";
+import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
 
 export interface PrintPermissionPdfOptions {
   permission: EmployeePermission;
@@ -47,6 +48,18 @@ export function generatePermissionPdfHtml({
     const d = new Date(permission.permissionDate);
     dayName = d.toLocaleDateString("ar-SA", { weekday: "long" });
   } catch {}
+
+  const settings = getSchoolApprovalSettings();
+  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
+  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+
+  const stampHtml = showStamp
+    ? `<img src="${settings.schoolStampUrl}" alt="ختم المدرسة" style="max-height: 70px; max-width: 70px; object-fit: contain; margin: 0 auto; display: block;" />`
+    : `<div style="font-size: 7pt; color: #94a3b8; border: 1px dashed #cbd5e1; border-radius: 50%; width: 55px; height: 55px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">ختم المنشأة</div>`;
+
+  const sigHtml = showSig
+    ? `<img src="${settings.principalSignatureUrl}" alt="التوقيع" style="max-height: 42px; max-width: 120px; object-fit: contain; margin: 2px auto 0 auto; display: block;" />`
+    : `<div style="height: 35px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>`;
 
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -379,20 +392,27 @@ export function generatePermissionPdfHtml({
       </div>
     </div>
 
-    <!-- Signatures -->
+    <!-- Signatures & Stamp -->
     <div>
-      <div class="sig-section">
-        <div class="sig-block">
-          <div class="sig-role">الموظفة المستأذنة</div>
+      <div class="sig-section" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+        <div class="sig-block" style="flex: 1; text-align: center;">
+          <div class="sig-role" style="margin-bottom: 4px;">الموظفة المستأذنة</div>
           <div class="sig-name">${teacherName}</div>
+          <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>
         </div>
-        <div class="sig-block">
-          <div class="sig-role">وكيلة المدرسة</div>
+        <div class="sig-block" style="flex: 1; text-align: center;">
+          <div class="sig-role" style="margin-bottom: 4px;">وكيلة المدرسة</div>
           <div class="sig-name">${vicePrincipalName}</div>
+          <div style="min-height: 42px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
         </div>
-        <div class="sig-block">
-          <div class="sig-role">مديرة المدرسة</div>
+        <div class="sig-block" style="width: 110px; text-align: center;">
+          <div class="sig-role" style="margin-bottom: 4px;">الختم الرسمي</div>
+          <div style="min-height: 70px; display: flex; align-items: center; justify-content: center;">${stampHtml}</div>
+        </div>
+        <div class="sig-block" style="flex: 1; text-align: center;">
+          <div class="sig-role" style="margin-bottom: 4px;">مديرة المدرسة</div>
           <div class="sig-name">${principalName}</div>
+          <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>
         </div>
       </div>
 
