@@ -21,6 +21,7 @@ import { useToast } from "@/context/ToastContext";
 import { EmployeePermission, Teacher } from "@/types/teacher";
 import { DataTable, ColumnDef } from "@/components/ui/DataTable";
 import { ActionMenu, ActionMenuItem } from "@/components/ui/ActionMenu";
+import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { CreatePermissionModal } from "@/components/procedures/CreatePermissionModal";
 import { printPermissionPdf } from "@/lib/printPermissionPdfService";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -245,15 +246,15 @@ export default function PermissionsManagementPage() {
 
         return (
           <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-            <button
-              type="button"
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<FileDown className="w-3.5 h-3.5" />}
               onClick={() => handlePrint(row)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap bg-teal-50 text-[#137a85] hover:bg-[#137a85] hover:text-white border border-teal-200 transition-all cursor-pointer shadow-2xs"
               title="طباعة الاستمارة الرسمية A4"
             >
-              <FileDown className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline whitespace-nowrap">طباعة</span>
-            </button>
+              طباعة
+            </Button>
 
             <ActionMenu items={menuItems} align="left" />
           </div>
@@ -263,107 +264,66 @@ export default function PermissionsManagementPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50/60 p-4 md:p-8 space-y-6 max-w-7xl mx-auto" dir="rtl">
-      {/* Top Banner Header */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#137a85] text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>نظام الانضباط وخروج الموظفين</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-            سجل استئذان الموظفين
-          </h1>
-          <p className="text-sm text-slate-600 max-w-2xl">
-            إدارة ومتابعة حالات خروج الموظفات أثناء الدوام الرسمي، وتوثيق أوقات الخروج والعودة وحساب المدد بدقة.
-          </p>
-        </div>
+    <div className="flex-1 flex flex-col min-h-screen">
+      <PageHeader
+        title="سجل استئذان الموظفين"
+        breadcrumbs={[
+          { label: "نظام الإدارة المدرسية", href: "/" },
+          { label: "الإجراءات الإدارية" },
+          { label: "استئذان الموظفين" },
+        ]}
+        description="إدارة ومتابعة حالات خروج الموظفات أثناء الدوام الرسمي، وتوثيق أوقات الخروج والعودة وحساب المدد بدقة"
+        actionButtons={
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4 stroke-[2.5]" />}
+            onClick={() => {
+              setPermissionToEdit(null);
+              setIsCreateModalOpen(true);
+            }}
+          >
+            تسجيل استئذان جديد
+          </Button>
+        }
+      />
 
-        <button
-          type="button"
-          onClick={() => {
-            setPermissionToEdit(null);
-            setIsCreateModalOpen(true);
-          }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 active:scale-[0.98] shadow-2xs hover:shadow-xs transition-all cursor-pointer self-start md:self-auto"
-        >
-          <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
-          <span className="whitespace-nowrap">تسجيل استئذان جديد</span>
-        </button>
-      </div>
-
-      {/* KPI Cards Dashboard */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Total Month Permissions */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between transition-all hover:shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500">إجمالي استئذانات الشهر</span>
-            <div className="w-8 h-8 rounded-xl bg-teal-50 text-[#137a85] flex items-center justify-center">
-              <Calendar className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900 font-mono">
-              {totalMonthPermissionsCount}
-            </span>
-            <span className="text-xs font-bold text-slate-400">حالة خروج</span>
-          </div>
-          <p className="text-[11px] text-teal-700 mt-2 font-medium">الشهر الحالي</p>
+      <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto" dir="rtl">
+        {/* KPI Cards Dashboard */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            title="إجمالي استئذانات الشهر"
+            value={totalMonthPermissionsCount}
+            subtitle={<span className="text-xs text-teal-700 font-medium">الشهر الحالي</span>}
+            icon={<Calendar className="w-5 h-5" />}
+            iconBgColor="bg-teal-50"
+            iconColor="text-[#137a85]"
+          />
+          <KpiCard
+            title="الموظفات المستأذنات"
+            value={uniqueMonthTeachersCount}
+            subtitle={<span className="text-xs text-slate-400 font-medium">من أصل {teachers.length} موظفة</span>}
+            icon={<Users className="w-5 h-5" />}
+            iconBgColor="bg-cyan-50"
+            iconColor="text-cyan-700"
+          />
+          <KpiCard
+            title="إجمالي دقائق الاستئذان"
+            value={totalMonthMinutes}
+            subtitle={<span className="text-xs text-amber-700 font-medium">تعادل {(totalMonthMinutes / 60).toFixed(1)} ساعة</span>}
+            icon={<Clock className="w-5 h-5" />}
+            iconBgColor="bg-amber-50"
+            iconColor="text-amber-700"
+          />
+          <KpiCard
+            title="متوسط مدة الاستئذان"
+            value={averageDurationMinutes}
+            subtitle={<span className="text-xs text-indigo-700 font-medium">دقيقة / حالة</span>}
+            icon={<Timer className="w-5 h-5" />}
+            iconBgColor="bg-indigo-50"
+            iconColor="text-indigo-700"
+          />
         </div>
-
-        {/* Card 2: Unique Teachers Count */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between transition-all hover:shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500">الموظفات المستأذنات</span>
-            <div className="w-8 h-8 rounded-xl bg-cyan-50 text-cyan-700 flex items-center justify-center">
-              <Users className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900 font-mono">
-              {uniqueMonthTeachersCount}
-            </span>
-            <span className="text-xs font-bold text-slate-400">من أصل {teachers.length}</span>
-          </div>
-          <p className="text-[11px] text-slate-500 mt-2 font-medium">موظفة مستفيدة</p>
-        </div>
-
-        {/* Card 3: Total Minutes */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between transition-all hover:shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500">إجمالي دقائق الاستئذان</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900 font-mono">
-              {totalMonthMinutes}
-            </span>
-            <span className="text-xs font-bold text-slate-400">دقيقة</span>
-          </div>
-          <p className="text-[11px] text-amber-700 mt-2 font-medium">
-            تعادل {(totalMonthMinutes / 60).toFixed(1)} ساعة تقريباً
-          </p>
-        </div>
-
-        {/* Card 4: Average Duration */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between transition-all hover:shadow-xs">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold text-slate-500">متوسط مدة الاستئذان</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
-              <Timer className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-black text-slate-900 font-mono">
-              {averageDurationMinutes}
-            </span>
-            <span className="text-xs font-bold text-slate-400">دقيقة / حالة</span>
-          </div>
-          <p className="text-[11px] text-indigo-700 mt-2 font-medium">متوسط زمن الخروج</p>
-        </div>
-      </div>
 
       {/* Main Table Container */}
       <DataTable<EmployeePermission>
@@ -397,6 +357,8 @@ export default function PermissionsManagementPage() {
           </div>
         }
       />
+
+      </main>
 
       {/* Create / Edit Permission Modal */}
       <CreatePermissionModal

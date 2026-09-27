@@ -29,6 +29,7 @@ import { ReportType, ReportFilterOptions, ReportHistoryItem } from "@/types/repo
 import { generateReportData, ReportGeneratedData } from "@/lib/reportsEngine";
 import { printReportPdf } from "@/lib/reportPdfService";
 import { getSaudiToday } from "@/lib/timeUtils";
+import { PageHeader, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
 interface ReportCardDef {
@@ -280,57 +281,44 @@ export default function ReportsCenterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/60 p-4 md:p-8 space-y-6 max-w-7xl mx-auto" dir="rtl">
-      {/* Top Banner Header */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-teal-50 border border-teal-200 text-[#137a85] text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>نظام الحصر والتوثيق الحكومي الموحد</span>
+    <div className="flex-1 flex flex-col min-h-screen">
+      <PageHeader
+        title="مركز التقارير والحصر الإداري"
+        breadcrumbs={[
+          { label: "نظام الإدارة المدرسية", href: "/" },
+          { label: "مركز التقارير" },
+        ]}
+        description="إنشاء وطباعة التقارير الرسمية المعتمدة لبيانات الغياب، تنبيهات التأخر، وقرارات الحسم بصيغة PDF فورية للرفع والأرشفة المدرسية"
+        actionButtons={
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl border border-slate-200">
+            <Button
+              variant={activeTab === "builder" ? "primary" : "ghost"}
+              size="sm"
+              icon={<Layers className="w-4 h-4 shrink-0" />}
+              onClick={() => setActiveTab("builder")}
+            >
+              منشئ التقارير
+            </Button>
+            <Button
+              variant={activeTab === "history" ? "primary" : "ghost"}
+              size="sm"
+              icon={<History className="w-4 h-4 shrink-0" />}
+              onClick={() => setActiveTab("history")}
+              rightIcon={
+                historyItems.length > 0 ? (
+                  <span className="w-4 h-4 rounded-full bg-[#137a85]/20 text-[10px] flex items-center justify-center font-mono font-bold">
+                    {historyItems.length}
+                  </span>
+                ) : undefined
+              }
+            >
+              سجل التقارير
+            </Button>
           </div>
-          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-            مركز التقارير والحصر الإداري
-          </h1>
-          <p className="text-sm text-slate-600 max-w-2xl">
-            إنشاء وطباعة التقارير الرسمية المعتمدة لبيانات الغياب، تنبيهات التأخر، وقرارات الحسم بصيغة PDF فورية للرفع والأرشفة المدرسية.
-          </p>
-        </div>
+        }
+      />
 
-        {/* Tab Toggle */}
-        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 self-start md:self-auto">
-          <button
-            type="button"
-            onClick={() => setActiveTab("builder")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
-              activeTab === "builder"
-                ? "bg-white text-[#137a85] shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            )}
-          >
-            <Layers className="w-4 h-4 shrink-0" />
-            <span className="whitespace-nowrap">منشئ التقارير</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("history")}
-            className={cn(
-              "px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 cursor-pointer whitespace-nowrap",
-              activeTab === "history"
-                ? "bg-white text-[#137a85] shadow-xs"
-                : "text-slate-600 hover:text-slate-900"
-            )}
-          >
-            <History className="w-4 h-4 shrink-0" />
-            <span className="whitespace-nowrap">سجل التقارير السابقة</span>
-            {historyItems.length > 0 && (
-              <span className="w-5 h-5 rounded-full bg-teal-100 text-[#137a85] text-[10px] flex items-center justify-center font-mono font-bold shrink-0">
-                {historyItems.length}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
+      <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto" dir="rtl">
 
       {/* Main Content Area */}
       {activeTab === "history" ? (
@@ -887,6 +875,7 @@ export default function ReportsCenterPage() {
           )}
         </div>
       )}
+      </main>
     </div>
   );
 }

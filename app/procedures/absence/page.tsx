@@ -52,12 +52,14 @@ export default function AbsenceProcedurePage() {
               إرسال مساءلة واتساب
             </Button>
 
-            <Link
-              href="/teachers"
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors shadow-2xs"
-            >
-              <Users className="w-4 h-4 text-[#137a85]" />
-              <span>سجل المعلمات ({availableTeachers})</span>
+            <Link href="/teachers">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Users className="w-4 h-4 text-[#137a85]" />}
+              >
+                سجل المعلمات ({availableTeachers})
+              </Button>
             </Link>
           </>
         }
