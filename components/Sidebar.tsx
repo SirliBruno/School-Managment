@@ -10,10 +10,16 @@ import {
   ChevronDown,
   X,
   LayoutDashboard,
-  MessageCircle,
   Archive,
   HelpCircle,
   FileBarChart,
+  FileText,
+  Clock,
+  DoorOpen,
+  ShieldAlert,
+  ListTodo,
+  CheckCircle2,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,7 +37,15 @@ export interface SubNavItem {
   id: string;
   label: string;
   href: string;
-  isActive?: boolean;
+  icon?: LucideIcon;
+  badgeCount?: number;
+  badgeVariant?: "rose" | "amber" | "teal" | "slate";
+}
+
+export interface NavGroup {
+  id: string;
+  title?: string;
+  items: NavItem[];
 }
 
 export interface NavItem {
@@ -41,76 +55,13 @@ export interface NavItem {
   href?: string;
   hasChildren?: boolean;
   children?: SubNavItem[];
+  badgeCount?: number;
 }
 
 export interface SidebarProps {
   activeSubItemHref?: string;
   className?: string;
 }
-
-export const NAV_ITEMS: NavItem[] = [
-  {
-    id: "dashboard",
-    label: "لوحة التحكم والإحصائيات",
-    icon: LayoutDashboard,
-    href: "/",
-    hasChildren: false,
-  },
-  {
-    id: "teachers",
-    label: "المعلمات",
-    icon: Users,
-    href: "/teachers",
-    hasChildren: false,
-  },
-  {
-    id: "admin-procedures",
-    label: "الإجراءات الإدارية",
-    icon: Settings,
-    hasChildren: true,
-    children: [
-      {
-        id: "absence-inquiry",
-        label: "مساءلة غياب",
-        href: "/procedures/absence",
-      },
-      {
-        id: "delay-warning",
-        label: "تنبيه على تأخر",
-        href: "/procedures/delay-notice",
-      },
-      {
-        id: "permissions",
-        label: "استئذان الموظفين",
-        href: "/procedures/permissions",
-      },
-      {
-        id: "deduction-hours",
-        label: "قرار حسم مجموع ساعات",
-        href: "/procedures/deduction-hours",
-      },
-      {
-        id: "procedures-list",
-        label: "قائمة الإجراءات",
-        href: "/procedures/list",
-      },
-    ],
-  },
-  {
-    id: "reports",
-    label: "مركز التقارير والحصر",
-    icon: FileBarChart,
-    href: "/reports",
-    hasChildren: false,
-  },
-  {
-    id: "archive",
-    label: "الأرشيف الإداري",
-    icon: Archive,
-    href: "/archive",
-    hasChildren: false,
-  },
-];
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeSubItemHref,
@@ -123,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     archivedTeachers,
     archivedAbsences,
     archivedDelayNotices,
+    inquiries,
   } = useTeachers();
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
 
@@ -133,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     (archivedAbsences?.length || 0) +
     (archivedDelayNotices?.length || 0);
 
-  // "الإجراءات الإدارية" is EXPANDED by default
+  // Accordion state - "admin-procedures" expanded by default
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({
     "admin-procedures": true,
   });
@@ -179,43 +131,135 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }));
   };
 
+  const navGroups: NavGroup[] = [
+    {
+      id: "general",
+      title: "الرئيسية والكادر",
+      items: [
+        {
+          id: "dashboard",
+          label: "مركز القيادة والتحكم",
+          icon: LayoutDashboard,
+          href: "/",
+          hasChildren: false,
+        },
+        {
+          id: "teachers",
+          label: "سجل المعلمات",
+          icon: Users,
+          href: "/teachers",
+          hasChildren: false,
+        },
+      ],
+    },
+    {
+      id: "procedures",
+      title: "الإجراءات والعمليات",
+      items: [
+        {
+          id: "admin-procedures",
+          label: "الإجراءات الإدارية",
+          icon: Settings,
+          hasChildren: true,
+          children: [
+            {
+              id: "absence-inquiry",
+              label: "مساءلة غياب",
+              href: "/procedures/absence",
+              icon: FileText,
+              badgeCount: pendingAbsencesCount,
+              badgeVariant: "amber",
+            },
+            {
+              id: "delay-warning",
+              label: "تنبيه على تأخر",
+              href: "/procedures/delay-notice",
+              icon: Clock,
+              badgeCount: pendingDirectorDelayCount,
+              badgeVariant: "rose",
+            },
+            {
+              id: "permissions",
+              label: "استئذان الموظفين",
+              href: "/procedures/permissions",
+              icon: DoorOpen,
+            },
+            {
+              id: "deduction-hours",
+              label: "قرار حسم مجموع ساعات",
+              href: "/procedures/deduction-hours",
+              icon: ShieldAlert,
+            },
+            {
+              id: "procedures-list",
+              label: "سجل الإجراءات الشامل",
+              href: "/procedures/list",
+              icon: ListTodo,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "records",
+      title: "التقارير والأرشيف",
+      items: [
+        {
+          id: "reports",
+          label: "مركز التقارير والحصر",
+          icon: FileBarChart,
+          href: "/reports",
+          hasChildren: false,
+        },
+        {
+          id: "archive",
+          label: "الأرشيف الإداري",
+          icon: Archive,
+          href: "/archive",
+          hasChildren: false,
+          badgeCount: totalArchivedCount,
+        },
+      ],
+    },
+  ];
+
   const renderSidebarContent = (isDrawer: boolean = false) => {
     const collapsed = isCollapsed && !isDrawer;
 
     return (
-      <div className="flex flex-col h-full bg-white text-slate-800 select-none">
-        {/* Top Header / Brand Section */}
+      <div className="flex flex-col h-full bg-white text-slate-800 select-none border-l border-slate-200/80">
+        {/* Brand Header */}
         <div
           className={cn(
-            "py-5 border-b border-slate-100 flex items-center transition-all",
+            "py-4.5 border-b border-slate-100 flex items-center transition-all bg-gradient-to-b from-slate-50/50 to-white",
             collapsed ? "px-3 justify-center" : "px-5 justify-between"
           )}
         >
           <Link
             href="/"
             onClick={() => setIsMobileOpen(false)}
-            className="flex items-center gap-3 hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40 rounded-xl p-1 group"
+            className="flex items-center gap-3 hover:opacity-95 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40 rounded-2xl p-1 group"
             aria-label="الانتقال إلى لوحة التحكم الرئيسية"
-            title={collapsed ? "نظام الإدارة المدرسية" : undefined}
+            title={collapsed ? "منصة الإدارة المدرسية - الثانوية الخامسة مسارات" : undefined}
           >
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative p-2.5 rounded-xl bg-teal-50 text-[#137a85] border border-teal-100 flex items-center justify-center shadow-2xs group-hover:bg-teal-100/60 transition-colors shrink-0"
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-[#137a85] to-[#0d5961] text-white flex items-center justify-center shadow-sm shadow-[#137a85]/20 shrink-0"
             >
-              <Users className="w-5 h-5" aria-hidden="true" />
+              <GraduationCap className="w-5 h-5 stroke-[2.2]" aria-hidden="true" />
               <span
-                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"
+                className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full ring-2 ring-white animate-pulse"
                 aria-hidden="true"
               />
             </motion.div>
             {!collapsed && (
               <div className="min-w-0">
-                <span className="font-bold text-base tracking-tight text-slate-900 block truncate">
-                  نظام الإدارة المدرسية
+                <span className="font-extrabold text-[15px] tracking-tight text-slate-900 block truncate">
+                  منصة الإدارة المدرسية
                 </span>
                 <span className="text-[11px] text-teal-700 font-semibold block truncate">
-                  {user?.fullName ? `أ. ${user.fullName}` : `بوابة ${DEFAULT_ADMIN_ROLE_LABEL}`}
+                  الثانوية الخامسة مسارات
                 </span>
               </div>
             )}
@@ -226,7 +270,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               type="button"
               onClick={() => setIsMobileOpen(false)}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] cursor-pointer"
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85] cursor-pointer"
               aria-label="إغلاق القائمة الجانبية"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -234,188 +278,208 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Navigation Accordion List */}
+        {/* Navigation Groups List */}
         <nav
-          className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar"
+          className="flex-1 px-3 py-3 space-y-4 overflow-y-auto custom-scrollbar"
           aria-label="قائمة التصفح الرئيسية"
         >
-          {NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isAccordion = Boolean(item.hasChildren && item.children?.length);
-            const isOpen = Boolean(openMenus[item.id]);
-            const isCurrentRoute = pathname === item.href;
+          {navGroups.map((group) => (
+            <div key={group.id} className="space-y-1">
+              {!collapsed && group.title && (
+                <div className="px-3 pt-1 pb-1 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                  {group.title}
+                </div>
+              )}
 
-            if (isAccordion) {
-              return (
-                <div key={item.id} className="space-y-1">
-                  {/* Accordion Trigger Header */}
-                  <button
-                    type="button"
-                    onClick={() => toggleMenu(item.id)}
-                    aria-expanded={isOpen}
-                    aria-controls={`sub-menu-${item.id}`}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isAccordion = Boolean(item.hasChildren && item.children?.length);
+                const isOpen = Boolean(openMenus[item.id]);
+                const isCurrentRoute = pathname === item.href;
+
+                if (isAccordion) {
+                  const hasPendingInAccordion =
+                    pendingDirectorDelayCount > 0 || pendingAbsencesCount > 0;
+
+                  return (
+                    <div key={item.id} className="space-y-1">
+                      {/* Accordion Trigger */}
+                      <button
+                        type="button"
+                        onClick={() => toggleMenu(item.id)}
+                        aria-expanded={isOpen}
+                        aria-controls={`sub-menu-${item.id}`}
+                        title={collapsed ? item.label : undefined}
+                        className={cn(
+                          "w-full flex items-center rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40 select-none",
+                          collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5",
+                          isOpen
+                            ? "bg-slate-100/80 text-slate-900"
+                            : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"
+                        )}
+                      >
+                        <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+                          <Icon
+                            className={cn(
+                              "w-5 h-5 transition-colors shrink-0 stroke-[2]",
+                              isOpen ? "text-[#137a85]" : "text-slate-400 group-hover:text-slate-700"
+                            )}
+                            aria-hidden="true"
+                          />
+                          {!collapsed && (
+                            <div className="flex items-center gap-2">
+                              <span>{item.label}</span>
+                              {hasPendingInAccordion && (
+                                <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse shrink-0" />
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {!collapsed && (
+                          <motion.div
+                            animate={{ rotate: isOpen ? 180 : 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="shrink-0"
+                          >
+                            <ChevronDown
+                              className="w-4 h-4 text-slate-400 group-hover:text-slate-600"
+                              aria-hidden="true"
+                            />
+                          </motion.div>
+                        )}
+                      </button>
+
+                      {/* Accordion Submenu Items */}
+                      <AnimatePresence initial={false}>
+                        {isOpen && !collapsed && (
+                          <motion.div
+                            id={`sub-menu-${item.id}`}
+                            role="region"
+                            aria-label={`عناصر فرعية لقسم ${item.label}`}
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            transition={{ duration: 0.2, ease: "easeOut" }}
+                            className="overflow-hidden pe-3 ps-2 py-1 space-y-1 border-r-2 border-slate-200 ms-3 mr-3"
+                          >
+                            {item.children?.map((subItem) => {
+                              const isSubActive =
+                                pathname === subItem.href ||
+                                activeSubItemHref === subItem.href;
+                              const SubIcon = subItem.icon;
+
+                              return (
+                                <Link
+                                  key={subItem.id}
+                                  href={subItem.href}
+                                  onClick={() => setIsMobileOpen(false)}
+                                  aria-current={isSubActive ? "page" : undefined}
+                                  className={cn(
+                                    "group/sub relative flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
+                                    isSubActive
+                                      ? "bg-teal-50 text-[#0c5961] font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
+                                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 font-semibold"
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    {SubIcon && (
+                                      <SubIcon
+                                        className={cn(
+                                          "w-3.5 h-3.5 shrink-0 stroke-[2.2] transition-colors",
+                                          isSubActive ? "text-[#137a85]" : "text-slate-400 group-hover/sub:text-slate-700"
+                                        )}
+                                      />
+                                    )}
+                                    <span className="truncate">{subItem.label}</span>
+                                  </div>
+
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    {subItem.badgeCount !== undefined && subItem.badgeCount > 0 && (
+                                      <span
+                                        className={cn(
+                                          "px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold shadow-2xs",
+                                          subItem.badgeVariant === "rose" && "bg-rose-500 text-white animate-pulse",
+                                          subItem.badgeVariant === "amber" && "bg-amber-500 text-white",
+                                          (!subItem.badgeVariant || subItem.badgeVariant === "teal") && "bg-teal-600 text-white"
+                                        )}
+                                      >
+                                        {subItem.badgeCount}
+                                      </span>
+                                    )}
+                                    {isSubActive && (
+                                      <motion.span
+                                        layoutId="active-sub-indicator"
+                                        className="w-1.5 h-1.5 rounded-full bg-[#137a85]"
+                                        aria-hidden="true"
+                                      />
+                                    )}
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                }
+
+                // Standard Single Link Item (Dashboard, Teachers, Reports, Archive)
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href || "#"}
+                    onClick={() => setIsMobileOpen(false)}
+                    aria-current={isCurrentRoute ? "page" : undefined}
                     title={collapsed ? item.label : undefined}
                     className={cn(
-                      "w-full flex items-center rounded-xl text-sm font-bold transition-all duration-200 group cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
-                      collapsed ? "justify-center p-2.5" : "justify-between px-3 py-2.5",
-                      isOpen
-                        ? "bg-slate-100/90 text-slate-950 font-bold"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                      "relative flex items-center rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
+                      collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
+                      isCurrentRoute
+                        ? "bg-teal-50 text-[#0c5961] font-extrabold border-r-3 border-r-[#137a85] shadow-2xs"
+                        : "text-slate-700 hover:text-slate-950 hover:bg-slate-50 font-bold"
                     )}
                   >
-                    <div className={cn("flex items-center gap-3", collapsed && "justify-center")}>
+                    <div className="relative shrink-0">
                       <Icon
                         className={cn(
-                          "w-5 h-5 transition-colors shrink-0",
-                          isOpen ? "text-[#137a85]" : "text-slate-500 group-hover:text-slate-800"
+                          "w-5 h-5 shrink-0 stroke-[2] transition-colors",
+                          isCurrentRoute ? "text-[#137a85]" : "text-slate-400 group-hover:text-slate-800"
                         )}
                         aria-hidden="true"
                       />
-                      {!collapsed && (
-                        <div className="flex items-center gap-2">
-                          <span>{item.label}</span>
-                          {item.id === "admin-procedures" &&
-                            (pendingDirectorDelayCount > 0 || pendingAbsencesCount > 0) && (
-                              <span className="w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white animate-pulse shrink-0" />
-                            )}
-                        </div>
+                      {collapsed && item.badgeCount !== undefined && item.badgeCount > 0 && (
+                        <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-teal-600 rounded-full ring-2 ring-white" />
                       )}
                     </div>
 
                     {!collapsed && (
-                      <motion.div
-                        animate={{ rotate: isOpen ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="shrink-0"
-                      >
-                        <ChevronDown
-                          className="w-4 h-4 text-slate-400 group-hover:text-slate-600"
-                          aria-hidden="true"
-                        />
-                      </motion.div>
+                      <span className="flex-1 whitespace-nowrap truncate">{item.label}</span>
                     )}
-                  </button>
 
-                  {/* Accordion Submenu Items */}
-                  <AnimatePresence initial={false}>
-                    {isOpen && !collapsed && (
-                      <motion.div
-                        id={`sub-menu-${item.id}`}
-                        role="region"
-                        aria-label={`عناصر فرعية لقسم ${item.label}`}
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.22, ease: [0.25, 1, 0.5, 1] }}
-                        className="overflow-hidden pe-7 ps-2 py-1 space-y-1 border-s-2 border-slate-300 ms-3"
-                      >
-                        {item.children?.map((subItem) => {
-                          const isSubActive =
-                            pathname === subItem.href ||
-                            activeSubItemHref === subItem.href;
-
-                          return (
-                            <Link
-                              key={subItem.id}
-                              href={subItem.href}
-                              onClick={() => setIsMobileOpen(false)}
-                              aria-current={isSubActive ? "page" : undefined}
-                              className={cn(
-                                "relative block px-3 py-2 rounded-lg text-xs transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
-                                isSubActive
-                                  ? "bg-teal-50 text-[#0f666e] font-extrabold border-r-2 border-r-[#137a85] border-teal-200/90 shadow-2xs"
-                                  : "text-slate-600 hover:text-slate-950 hover:bg-slate-100/80 font-medium"
-                              )}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                  <span>{subItem.label}</span>
-                                  {subItem.id === "delay-warning" && pendingDirectorDelayCount > 0 && (
-                                    <span className="px-1.5 py-0.2 rounded-full bg-rose-500 text-white text-[10px] font-bold shadow-2xs animate-pulse">
-                                      {pendingDirectorDelayCount}
-                                    </span>
-                                  )}
-                                  {subItem.id === "absence-inquiry" && pendingAbsencesCount > 0 && (
-                                    <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold shadow-2xs">
-                                      {pendingAbsencesCount}
-                                    </span>
-                                  )}
-                                </div>
-                                {isSubActive && (
-                                  <motion.span
-                                    layoutId="active-sub-dot"
-                                    className="w-1.5 h-1.5 rounded-full bg-[#137a85]"
-                                    aria-hidden="true"
-                                  />
-                                )}
-                              </div>
-                            </Link>
-                          );
-                        })}
-                      </motion.div>
+                    {!collapsed && item.badgeCount !== undefined && item.badgeCount > 0 && (
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-mono font-bold border border-slate-200 shrink-0">
+                        {item.badgeCount}
+                      </span>
                     )}
-                  </AnimatePresence>
-                </div>
-              );
-            }
-
-            // Standard Single Link Item (e.g. Dashboard, Teachers)
-            return (
-              <Link
-                key={item.id}
-                href={item.href || "#"}
-                onClick={() => setIsMobileOpen(false)}
-                aria-current={isCurrentRoute ? "page" : undefined}
-                title={collapsed ? item.label : undefined}
-                className={cn(
-                  "relative flex items-center rounded-xl text-sm font-bold whitespace-nowrap transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#137a85]/40",
-                  collapsed ? "justify-center p-2.5" : "gap-3 px-3 py-2.5",
-                  isCurrentRoute
-                    ? "bg-teal-50 text-[#0f666e] font-extrabold border-r-2 border-r-[#137a85] border-teal-200/90 shadow-2xs"
-                    : "text-slate-700 hover:text-slate-950 hover:bg-slate-50 font-bold"
-                )}
-              >
-                {isCurrentRoute && (
-                  <motion.div
-                    layoutId="active-nav-indicator"
-                    className="absolute end-0 top-1.5 bottom-1.5 w-1 bg-[#137a85] rounded-l-full"
-                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                  />
-                )}
-                <div className="relative shrink-0">
-                  <Icon
-                    className={cn(
-                      "w-5 h-5 shrink-0 transition-colors",
-                      isCurrentRoute ? "text-[#137a85]" : "text-slate-500 group-hover:text-slate-800"
-                    )}
-                    aria-hidden="true"
-                  />
-                  {collapsed && item.id === "archive" && totalArchivedCount > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-slate-400 rounded-full ring-2 ring-white" />
-                  )}
-                </div>
-                {!collapsed && <span className="flex-1 whitespace-nowrap truncate">{item.label}</span>}
-                {!collapsed && item.id === "archive" && totalArchivedCount > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold font-mono border border-slate-200 shrink-0">
-                    {totalArchivedCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
-
-
-        {/* Footer Admin User Identity Card & Branding */}
+        {/* Footer Admin User Identity Card & System State */}
         {!collapsed && (
-          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-right space-y-2">
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-white border border-slate-200/80 shadow-2xs">
-              <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0">
+          <div className="p-3 border-t border-slate-100 bg-slate-50/70 text-right space-y-2.5">
+            {/* Identity Card */}
+            <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs">
+              <div className="w-9 h-9 rounded-xl bg-teal-50 border border-teal-200/80 text-[#137a85] flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                 {user?.fullName?.trim().charAt(0) || DEFAULT_ADMIN_NAME.charAt(0)}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-800 truncate">
+                <p className="text-xs font-bold text-slate-900 truncate">
                   {user?.fullName || DEFAULT_ADMIN_NAME}
                 </p>
                 <p className="text-[10px] text-teal-700 font-semibold truncate">
@@ -424,18 +488,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
+            {/* System Status Pill */}
             <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium px-1">
-              <span>نظام الإدارة المدرسية</span>
-              <span className="font-mono text-[10px] bg-slate-200/60 px-1.5 py-0.2 rounded text-slate-700">v2.4</span>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-[10px] text-emerald-800 font-bold">النظام متصل ومحدث</span>
+              </div>
+              <span className="font-mono text-[10px] bg-slate-200/60 px-1.5 py-0.5 rounded text-slate-700 font-bold">
+                v2.5
+              </span>
             </div>
 
+            {/* Quick Support / Procedures Link */}
             <Link
               href="/procedures/list"
-              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100 text-slate-700 hover:text-[#137a85] text-xs font-bold transition-all border border-slate-200/90 shadow-2xs flex items-center justify-center gap-2 group whitespace-nowrap"
-              title="الانتقال إلى قائمة الإجراءات والدعم الإداري"
+              className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-100/90 text-slate-700 hover:text-[#137a85] text-xs font-bold transition-all border border-slate-200 shadow-2xs flex items-center justify-center gap-2 group whitespace-nowrap cursor-pointer"
+              title="دليل الإجراءات والدعم الفني"
             >
-              <HelpCircle className="w-4 h-4 text-[#137a85] shrink-0 group-hover:scale-110 transition-transform" />
-              <span className="whitespace-nowrap">الدعم الفني والمساعدة</span>
+              <HelpCircle className="w-3.5 h-3.5 text-[#137a85] shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="whitespace-nowrap">دليل العمليات الإدارية</span>
             </Link>
           </div>
         )}
@@ -491,7 +562,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
       </AnimatePresence>
-
     </>
   );
 };
