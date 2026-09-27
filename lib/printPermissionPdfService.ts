@@ -420,7 +420,7 @@ export function generatePermissionPdfHtml({
         <div class="sig-block" style="flex: 1; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">وكيلة المدرسة</div>
           <div class="sig-name">${vicePrincipalName}</div>
-          <div style="min-height: 42px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+          <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>
         </div>
         <div class="sig-block" style="width: 110px; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">الختم الرسمي</div>
@@ -429,7 +429,7 @@ export function generatePermissionPdfHtml({
         <div class="sig-block" style="flex: 1; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">مديرة المدرسة</div>
           <div class="sig-name">${principalName}</div>
-          <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>
+          <div style="min-height: 42px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
         </div>
       </div>
 

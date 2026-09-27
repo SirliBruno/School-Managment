@@ -88,7 +88,7 @@ function esc(s: string | number | undefined | null): string {
 
 export function buildReportHtml(payload: PdfReportPayload): string {
   const schoolName = esc(payload.schoolName || "الثانوية الخامسة مسارات");
-  const principalName = esc(payload.principalName || "مديرة المدرسة");
+  const principalName = esc(payload.principalName || "فاطمة فلاتة");
   const creatorName = esc(payload.creatorName || "أحلام صالح الضبيبي");
   const reportTitle = esc(payload.reportTitle);
   const reportCode = esc(payload.reportCode);

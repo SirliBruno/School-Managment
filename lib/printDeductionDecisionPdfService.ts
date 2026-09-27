@@ -304,7 +304,7 @@ ${UNIFIED_PDF_CSS}
       <!-- Signatures & Stamp -->
       <div class="signatures-section" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 12px;">
         <div class="sig-box" style="flex: 1;">
-          <div style="font-weight:800;font-size:10pt;color:#0f766e;margin-bottom:6px;">وكيلة الشؤون التعليمية : <span style="color:#0f172a;">${vicePrincipalName}</span></div>
+          <div style="font-weight:800;font-size:10pt;color:#0f766e;margin-bottom:6px;">مديرة المدرسة : <span style="color:#0f172a;">${principalName}</span></div>
           <div style="margin-top:4px; min-height: 44px; display: flex; align-items: center; gap: 8px;">
             <span>التوقيع :</span>
             <div>${sigElementHtml}</div>

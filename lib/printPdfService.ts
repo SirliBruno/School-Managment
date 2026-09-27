@@ -207,7 +207,7 @@ ${schoolTableHtml}
     </div>
   </div>
   <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-    <div style="flex: 1.3; text-align: right">وكيلة الشؤون التعليمية : <strong>${directManagerName}</strong></div>
+    <div style="flex: 1.3; text-align: right">مديرة المدرسة : <strong>${principalName}</strong></div>
     <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
       <span>التوقيع :</span>
       <span>${sigHtml}</span>
