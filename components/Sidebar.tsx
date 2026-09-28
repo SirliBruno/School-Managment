@@ -17,6 +17,7 @@ import {
   ListTodo,
   GraduationCap,
   X,
+  MessageCircle,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -319,7 +320,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         </nav>
 
         {/* Footer Admin User Identity Card & System State */}
-        {!collapsed && (
+        {!collapsed ? (
           <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 text-right space-y-2.5">
             {/* Identity Card */}
             <div className="flex items-center gap-2.5 p-2.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/90 dark:border-slate-700 shadow-2xs">
@@ -347,15 +348,46 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               </span>
             </div>
 
+            {/* Developer Card & WhatsApp Inquiries */}
+            <div className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-2xs space-y-2">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">تطوير المنصة:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-100">محمد هارون</span>
+              </div>
+              <a
+                href="https://wa.me/966557013720"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2 px-3 rounded-lg bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/70 text-emerald-800 dark:text-emerald-300 text-xs font-bold transition-all border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-center gap-2 group cursor-pointer shadow-2xs"
+                title="للاستفسارات والملاحظات عبر الواتساب (0557013720)"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+                <span>للاستفسارات والملاحظات (واتساب)</span>
+              </a>
+            </div>
+
             {/* Quick Support / Procedures Link */}
             <Link
               href="/procedures/list"
-              className="w-full py-2 px-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100/90 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-200 hover:text-[#137a85] dark:hover:text-teal-300 text-xs font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-2xs flex items-center justify-center gap-2 group whitespace-nowrap cursor-pointer"
-              title="دليل الإجراءات والدعم الفني"
+              className="w-full py-1.5 px-3 rounded-xl bg-slate-100/80 hover:bg-slate-200/80 dark:bg-slate-800/60 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-[#137a85] dark:hover:text-teal-300 text-[11px] font-semibold transition-all border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center gap-1.5 group whitespace-nowrap cursor-pointer"
+              title="دليل العمليات والإجراءات الإدارية"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-[#137a85] dark:text-teal-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <HelpCircle className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#137a85] dark:group-hover:text-teal-300 shrink-0 group-hover:scale-110 transition-transform" />
               <span className="whitespace-nowrap">دليل العمليات الإدارية</span>
             </Link>
+          </div>
+        ) : (
+          /* Collapsed Mode Footer */
+          <div className="p-2 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-2">
+            <a
+              href="https://wa.me/966557013720"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-10 h-10 rounded-xl bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200 dark:border-emerald-800 transition-all group"
+              title="تواصل مع المطور: محمد هارون (0557013720)"
+            >
+              <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            </a>
           </div>
         )}
       </div>

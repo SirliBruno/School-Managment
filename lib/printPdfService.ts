@@ -186,14 +186,6 @@ ${schoolTableHtml}
   <div class="sb" style="margin-top:4px">
     من خلال متابعة سجل الدوام والعمل تبين غيابكم خلال اليوم الموضح بعاليه، آمل الإفادة عن أسباب ذلك مع إرفاق ما يؤيد عذركم ،،، ولكم تحياتي ..
   </div>
-  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${principalName}</strong></div>
-    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
-      <span>التوقيع :</span>
-      <span>${principalSigHtml}</span>
-    </div>
-    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
-  </div>
 </div>
 
 <!-- Stage 2 Body: رد وإفادة المعلمة -->
@@ -234,29 +226,38 @@ ${schoolTableHtml}
       <span>يعتمد الحسم لعدم قبول عذرها .</span>
     </div>
   </div>
-  <!-- Stage 3 Signatures: Principal, Vice-Principal, and Stamp at Bottom -->
-  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${principalName}</strong></div>
-    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
-      <span>التوقيع :</span>
-      <span>${principalSigHtml}</span>
-    </div>
-    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
-  </div>
 
-  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-    <div style="flex: 1.2; text-align: right">وكيلة الشؤون التعليمية : <strong>${directManagerName}</strong></div>
-    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
-      <span>التوقيع :</span>
-      <span>${wakilaSigHtml}</span>
+  <!-- Stage 3 Signatures & Official Stamp: وكيلة المدرسة (يمين) | الختم الرسمي (وسط) | مديرة المدرسة (يسار) -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 10px; padding-top: 8px;">
+    <!-- Right Column: وكيلة المدرسة -->
+    <div style="flex: 1; text-align: center;">
+      <div style="font-weight: 800; color: #0f766e; margin-bottom: 4px; font-size: 9.5pt;">وكيلة المدرسة</div>
+      <div style="border-top: 1.5px dashed #0f766e; margin-bottom: 4px; width: 85%; margin-left: auto; margin-right: auto;"></div>
+      <div style="font-weight: 700; color: #1e293b; font-size: 9pt; margin-bottom: 2px;">${directManagerName}</div>
+      <div style="min-height: 44px; display: flex; align-items: center; justify-content: center;">
+        ${wakilaSigHtml}
+      </div>
     </div>
-    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
-  </div>
 
-  ${showStamp ? `
-  <div style="display: flex; justify-content: center; align-items: center; margin-top: 4px;">
-    ${stampHtml}
-  </div>` : ""}
+    <!-- Center Column: الختم الرسمي -->
+    ${showStamp ? `
+    <div style="width: 120px; text-align: center; display: flex; flex-direction: column; align-items: center;">
+      <div style="font-weight: 800; color: #0f766e; margin-bottom: 4px; font-size: 9.5pt;">الختم الرسمي</div>
+      <div style="min-height: 55px; display: flex; align-items: center; justify-content: center;">
+        ${stampHtml}
+      </div>
+    </div>` : `<div style="width: 120px;"></div>`}
+
+    <!-- Left Column: مديرة المدرسة -->
+    <div style="flex: 1; text-align: center;">
+      <div style="font-weight: 800; color: #0f766e; margin-bottom: 4px; font-size: 9.5pt;">مديرة المدرسة</div>
+      <div style="border-top: 1.5px dashed #0f766e; margin-bottom: 4px; width: 85%; margin-left: auto; margin-right: auto;"></div>
+      <div style="font-weight: 700; color: #1e293b; font-size: 9pt; margin-bottom: 2px;">${principalName}</div>
+      <div style="min-height: 44px; display: flex; align-items: center; justify-content: center;">
+        ${principalSigHtml}
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="spacer"></div>

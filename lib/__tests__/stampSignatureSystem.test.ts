@@ -219,7 +219,7 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
     });
 
-    it("embeds principal signature in Stage 1, vice principal signature & stamp in Stage 3, and Cairo font in absence inquiries", () => {
+    it("removes principal signature from Stage 1 and aligns Stage 3 to 3-column layout (Wakila, Stamp, Principal) in absence inquiries", () => {
       const html = buildAbsencePdfHtml({
         teacherName: "فاطمة أحمد",
         username: "1098765432",
@@ -232,30 +232,35 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
         absenceReason: "ظرف عائلي طارئ",
       });
 
-      // Stage 1: Principal Name & Principal Signature
-      expect(html).toContain("مديرة المدرسة : <strong>فاطمة فلاتة</strong>");
-      expect(html).toContain("alt=\"توقيع المديرة\"");
+      // Stage 1: No Principal signature
+      const stage1Idx = html.indexOf("( ١ ) طلب الإفادة عن الغياب");
+      const stage2Idx = html.indexOf("( ٢ ) رد وإفادة المعلمة");
+      const stage1Content = html.substring(stage1Idx, stage2Idx);
+      expect(stage1Content).not.toContain("مديرة المدرسة");
+      expect(stage1Content).not.toContain("alt=\"توقيع المديرة\"");
 
-      // Stage 3 Ordering: Principal -> Vice Principal -> Stamp at bottom
+      // Stage 3 3-Column Ordering: Wakila (Right) -> Stamp (Middle) -> Principal (Left)
       const stage3Idx = html.indexOf("( ٣ ) قرار مديرة المدرسة");
       expect(stage3Idx).toBeGreaterThan(0);
 
-      const stage3PrincipalIdx = html.indexOf("مديرة المدرسة : <strong>فاطمة فلاتة</strong>", stage3Idx);
-      const stage3WakilaIdx = html.indexOf("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>", stage3Idx);
-      const stage3StampIdx = html.indexOf("alt=\"الختم الرسمي\"", stage3Idx);
+      const stage3WakilaIdx = html.indexOf("وكيلة المدرسة", stage3Idx);
+      const stage3StampIdx = html.indexOf("الختم الرسمي", stage3Idx);
+      const stage3PrincipalIdx = html.indexOf("مديرة المدرسة", stage3StampIdx);
 
-      expect(stage3PrincipalIdx).toBeGreaterThan(stage3Idx);
-      expect(stage3WakilaIdx).toBeGreaterThan(stage3PrincipalIdx);
+      expect(stage3WakilaIdx).toBeGreaterThan(stage3Idx);
       expect(stage3StampIdx).toBeGreaterThan(stage3WakilaIdx);
+      expect(stage3PrincipalIdx).toBeGreaterThan(stage3StampIdx);
 
       expect(html).toContain("alt=\"توقيع الوكيلة\"");
+      expect(html).toContain("alt=\"توقيع المديرة\"");
+      expect(html).toContain("alt=\"الختم الرسمي\"");
 
       // Font & Encoding
       expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
       expect(html).toContain("font-family: 'Cairo'");
     });
 
-    it("embeds principal and vice-principal signatures in delay notices (تنبيه عن تأخر / انصراف)", () => {
+    it("removes principal signature from Stage 1 and aligns Stage 3 to 3-column layout in delay notices (تنبيه عن تأخر / انصراف)", () => {
       const mockTeacher: Teacher = {
         id: "tch-10",
         name: "منى المحمدي",
@@ -281,23 +286,28 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
         teacher: mockTeacher,
       });
 
-      // Stage 1: Principal signature
-      expect(html).toContain("مديرة المدرسة : <strong>فاطمة فلاتة</strong>");
-      expect(html).toContain("alt=\"توقيع المديرة\"");
+      // Stage 1: No Principal signature
+      const stage1Idx = html.indexOf("( ١ ) تنبيه عن مخالفة مواعيد الدوام الرسمي");
+      const stage2Idx = html.indexOf("( ٢ ) رد وإفادة المعلمة");
+      const stage1Content = html.substring(stage1Idx, stage2Idx);
+      expect(stage1Content).not.toContain("مديرة المدرسة");
+      expect(stage1Content).not.toContain("alt=\"توقيع المديرة\"");
 
-      // Stage 3 Ordering: Principal -> Vice Principal -> Stamp at bottom
+      // Stage 3 3-Column Ordering: Wakila (Right) -> Stamp (Middle) -> Principal (Left)
       const stage3Idx = html.indexOf("( ٣ ) رأي مديرة المدرسة");
       expect(stage3Idx).toBeGreaterThan(0);
 
-      const stage3PrincipalIdx = html.indexOf("مديرة المدرسة : <strong>فاطمة فلاتة</strong>", stage3Idx);
-      const stage3WakilaIdx = html.indexOf("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>", stage3Idx);
-      const stage3StampIdx = html.indexOf("alt=\"الختم الرسمي\"", stage3Idx);
+      const stage3WakilaIdx = html.indexOf("وكيلة المدرسة", stage3Idx);
+      const stage3StampIdx = html.indexOf("الختم الرسمي", stage3Idx);
+      const stage3PrincipalIdx = html.indexOf("مديرة المدرسة", stage3StampIdx);
 
-      expect(stage3PrincipalIdx).toBeGreaterThan(stage3Idx);
-      expect(stage3WakilaIdx).toBeGreaterThan(stage3PrincipalIdx);
+      expect(stage3WakilaIdx).toBeGreaterThan(stage3Idx);
       expect(stage3StampIdx).toBeGreaterThan(stage3WakilaIdx);
+      expect(stage3PrincipalIdx).toBeGreaterThan(stage3StampIdx);
 
       expect(html).toContain("alt=\"توقيع الوكيلة\"");
+      expect(html).toContain("alt=\"توقيع المديرة\"");
+      expect(html).toContain("alt=\"الختم الرسمي\"");
 
       // Font verification
       expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
