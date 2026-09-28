@@ -1,6 +1,7 @@
 -- ==============================================================================
--- مخطط قاعدة بيانات منصة الغياب والمساءلات الإدارية المدرسية (الإصدار المعاد بناؤه)
+-- مخطط قاعدة بيانات منصة الغياب والمساءلات الإدارية المدرسية (المُحدّث بالكامل)
 -- School Administrative Absence Platform - Production PostgreSQL / Supabase Schema
+-- المحدث وفق متطلبات Sprint 10 للأمان والنسخ الاحتياطي ونظام الاستئذان والأختام
 -- ==============================================================================
 
 -- تفعيل الامتدادات الضرورية لتوليد المعرفات الفريدة
@@ -29,7 +30,6 @@ CREATE TABLE IF NOT EXISTS public.teachers (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- فهارس جدول المعلمات
 CREATE INDEX IF NOT EXISTS idx_teachers_national_id ON public.teachers(national_id);
 CREATE INDEX IF NOT EXISTS idx_teachers_full_name ON public.teachers(full_name);
 CREATE INDEX IF NOT EXISTS idx_teachers_is_archived ON public.teachers(is_archived);
@@ -37,10 +37,11 @@ CREATE INDEX IF NOT EXISTS idx_teachers_specialty ON public.teachers(specialty);
 
 -- ==============================================================================
 -- 2. جدول سجلات الغياب المباشر (absence_records)
+-- مع قيد ON DELETE RESTRICT لحماية السجلات القانونية من الحذف العرضي
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.absence_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE RESTRICT,
     date DATE NOT NULL,
     type VARCHAR(30) NOT NULL CONSTRAINT chk_absences_type CHECK (type IN ('اضطراري', 'مرضي', 'مرافق', 'أخرى')),
     reason TEXT NOT NULL,
@@ -54,7 +55,6 @@ CREATE TABLE IF NOT EXISTS public.absence_records (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- فهارس سجلات الغياب
 CREATE INDEX IF NOT EXISTS idx_absences_teacher_id ON public.absence_records(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_absences_date ON public.absence_records(date);
 CREATE INDEX IF NOT EXISTS idx_absences_type ON public.absence_records(type);
@@ -65,7 +65,7 @@ CREATE INDEX IF NOT EXISTS idx_absences_is_archived ON public.absence_records(is
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.absence_inquiries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE RESTRICT,
     absence_date DATE NOT NULL,
     absence_end_date DATE,
     days_count INTEGER NOT NULL DEFAULT 1 CONSTRAINT chk_inquiries_days_count CHECK (days_count >= 1),
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.absence_inquiries (
     expires_at TIMESTAMPTZ NOT NULL,
     absence_type VARCHAR(30) CONSTRAINT chk_inquiries_absence_type CHECK (absence_type IS NULL OR absence_type IN ('مرضي', 'اضطراري', 'مرافق', 'أخرى')),
     teacher_reason TEXT,
-    attachment_url TEXT, -- يخزن مصفوفة المرفقات بصيغة JSON أو رابط مباشر
+    attachment_url TEXT,
     admin_notes TEXT,
     submitted_at TIMESTAMPTZ,
     teacher_ip_address VARCHAR(45),
@@ -87,7 +87,6 @@ CREATE TABLE IF NOT EXISTS public.absence_inquiries (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- فهارس مساءلات الغياب
 CREATE INDEX IF NOT EXISTS idx_inquiries_token ON public.absence_inquiries(token);
 CREATE INDEX IF NOT EXISTS idx_inquiries_teacher_id ON public.absence_inquiries(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_inquiries_status ON public.absence_inquiries(status);
@@ -101,7 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_inquiries_is_archived ON public.absence_inquiries
 CREATE TABLE IF NOT EXISTS public.delay_notices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     notice_number VARCHAR(50),
-    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE RESTRICT,
     notice_date DATE NOT NULL,
     -- المخالفة 1: تأخر بداية الدوام
     violation_delay_start BOOLEAN NOT NULL DEFAULT FALSE,
@@ -148,7 +147,6 @@ CREATE TABLE IF NOT EXISTS public.delay_notices (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- فهارس تنبيهات التأخر
 CREATE INDEX IF NOT EXISTS idx_delays_share_token ON public.delay_notices(share_token);
 CREATE INDEX IF NOT EXISTS idx_delays_teacher_id ON public.delay_notices(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_delays_status ON public.delay_notices(status);
@@ -157,7 +155,39 @@ CREATE INDEX IF NOT EXISTS idx_delays_director_opinion ON public.delay_notices(d
 CREATE INDEX IF NOT EXISTS idx_delays_is_archived ON public.delay_notices(is_archived);
 
 -- ==============================================================================
--- 5. جدول قرارات حسم ساعات التأخر - نموذج 19 (deduction_decisions)
+-- 5. جدول استئذان الموظفين (employee_permissions)
+-- نظام توثيق ومتابعة خروج المعلمات أثناء الدوام الرسمي
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.employee_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    teacher_id UUID NOT NULL REFERENCES public.teachers(id) ON DELETE RESTRICT,
+    teacher_name VARCHAR(255) NOT NULL,
+    national_id VARCHAR(10),
+    job_number VARCHAR(50),
+    specialty VARCHAR(100),
+    permission_date DATE NOT NULL,
+    time_from TIME NOT NULL,
+    time_to TIME NOT NULL,
+    duration_minutes INTEGER NOT NULL DEFAULT 0 CONSTRAINT chk_permission_duration CHECK (duration_minutes >= 0),
+    reason TEXT NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'approved' CONSTRAINT chk_permission_status CHECK (status IN ('approved', 'rejected', 'pending')),
+    school_action TEXT,
+    notes TEXT,
+    is_archived BOOLEAN NOT NULL DEFAULT FALSE,
+    archived_at TIMESTAMPTZ,
+    archive_reason TEXT,
+    archived_by_cascade BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_permissions_teacher_id ON public.employee_permissions(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_permissions_date ON public.employee_permissions(permission_date);
+CREATE INDEX IF NOT EXISTS idx_permissions_status ON public.employee_permissions(status);
+CREATE INDEX IF NOT EXISTS idx_permissions_is_archived ON public.employee_permissions(is_archived);
+
+-- ==============================================================================
+-- 6. جدول قرارات حسم ساعات التأخر - نموذج 19 (deduction_decisions)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.deduction_decisions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -184,7 +214,6 @@ CREATE TABLE IF NOT EXISTS public.deduction_decisions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- فهارس قرارات الحسم
 CREATE INDEX IF NOT EXISTS idx_deductions_teacher_id ON public.deduction_decisions(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_deductions_decision_number ON public.deduction_decisions(decision_number);
 CREATE INDEX IF NOT EXISTS idx_deductions_civil_id ON public.deduction_decisions(civil_id);
@@ -192,33 +221,77 @@ CREATE INDEX IF NOT EXISTS idx_deductions_is_archived ON public.deduction_decisi
 CREATE INDEX IF NOT EXISTS idx_deductions_settled_notices ON public.deduction_decisions USING GIN(settled_notice_ids);
 
 -- ==============================================================================
--- 6. جدول بيانات اعتماد حساب إدارة المدرسة (admin_credentials)
+-- 7. جدول سجل التدقيق والرقابة الإدارية (audit_logs)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    action VARCHAR(50) NOT NULL,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id TEXT,
+    details JSONB DEFAULT '{}'::jsonb,
+    user_id TEXT DEFAULT 'admin'
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON public.audit_logs(timestamp);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON public.audit_logs(action);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON public.audit_logs(entity_type, entity_id);
+
+-- ==============================================================================
+-- 8. جدول إعدادات المدرسة والأختام والتواقيع (school_settings)
+-- المصدر السحابي الموحد (SSOT) لترويسات التقارير والأختام والتواقيع المعتمدة
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.school_settings (
+    id VARCHAR(50) PRIMARY KEY DEFAULT 'current',
+    school_name VARCHAR(150) NOT NULL DEFAULT 'الثانوية الخامسة مسارات',
+    school_gender VARCHAR(50) DEFAULT 'بنات',
+    principal_name VARCHAR(150) NOT NULL DEFAULT 'فاطمة فلاتة',
+    vice_principal_name VARCHAR(150) NOT NULL DEFAULT 'أحلام صالح الضبيبي',
+    educational_region VARCHAR(150) DEFAULT 'منطقة مكة المكرمة',
+    educational_office VARCHAR(150) DEFAULT 'مكتب تعليم وسط جدة',
+    school_code VARCHAR(50) DEFAULT '12345',
+    school_logo TEXT,
+    stamp_url TEXT,
+    signature_url TEXT,
+    stamp_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    signature_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- إدراج الإعدادات الافتراضية للثانوية الخامسة مسارات
+INSERT INTO public.school_settings (id, school_name, principal_name, vice_principal_name)
+VALUES ('current', 'الثانوية الخامسة مسارات', 'فاطمة فلاتة', 'أحلام صالح الضبيبي')
+ON CONFLICT (id) DO UPDATE SET
+    school_name = EXCLUDED.school_name,
+    principal_name = EXCLUDED.principal_name,
+    vice_principal_name = EXCLUDED.vice_principal_name;
+
+-- ==============================================================================
+-- 9. جدول بيانات اعتماد حساب إدارة المدرسة (admin_credentials)
 -- ==============================================================================
 CREATE TABLE IF NOT EXISTS public.admin_credentials (
     id VARCHAR(50) PRIMARY KEY DEFAULT 'vice_principal',
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(128) NOT NULL,
-    full_name VARCHAR(150) NOT NULL DEFAULT 'أحلام صالح الضبيبي',
+    full_name VARCHAR(150) NOT NULL DEFAULT 'وكيلة الشؤون التعليمية والمدرسية',
     role VARCHAR(50) NOT NULL DEFAULT 'vice_principal',
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- إدراج الحساب الافتراضي لوكيلة المدرسة إذا لم يكن موجوداً
 INSERT INTO public.admin_credentials (id, username, password_hash, full_name, role)
 VALUES (
     'vice_principal',
     'wakila',
-    'b70712d928b2a236fb29eaed2cd9d9720885bb65609b4063e15df5d4ca28019c', -- تجزئة كلمة المرور: 123456
-    'أحلام صالح الضبيبي',
+    'b70712d928b2a236fb29eaed2cd9d9720885bb65609b4063e15df5d4ca28019c',
+    'وكيلة الشؤون التعليمية والمدرسية',
     'vice_principal'
 )
 ON CONFLICT (id) DO NOTHING;
 
 -- ==============================================================================
--- 7. الدوال التلقائية والمشغلات (Triggers & Automatic Counter Synchronization)
+-- 10. المشغلات والدوال التلقائية (Triggers & Automatic Counter Synchronization)
 -- ==============================================================================
 
--- 7.1 دالة تحديث حقل updated_at تلقائياً
 CREATE OR REPLACE FUNCTION public.fn_set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -231,9 +304,11 @@ CREATE TRIGGER trg_teachers_updated_at BEFORE UPDATE ON public.teachers FOR EACH
 CREATE TRIGGER trg_absences_updated_at BEFORE UPDATE ON public.absence_records FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
 CREATE TRIGGER trg_inquiries_updated_at BEFORE UPDATE ON public.absence_inquiries FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
 CREATE TRIGGER trg_delays_updated_at BEFORE UPDATE ON public.delay_notices FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
+CREATE TRIGGER trg_permissions_updated_at BEFORE UPDATE ON public.employee_permissions FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
 CREATE TRIGGER trg_deductions_updated_at BEFORE UPDATE ON public.deduction_decisions FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
+CREATE TRIGGER trg_settings_updated_at BEFORE UPDATE ON public.school_settings FOR EACH ROW EXECUTE FUNCTION public.fn_set_updated_at();
 
--- 7.2 دالة مزامنة عداد الغياب النشط للمعلمة (Active Total Absences)
+-- دالة مزامنة عداد الغياب النشط للمعلمة
 CREATE OR REPLACE FUNCTION public.fn_sync_teacher_absences_counter()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -262,7 +337,7 @@ CREATE TRIGGER trg_sync_absences_count
 AFTER INSERT OR UPDATE OR DELETE ON public.absence_records
 FOR EACH ROW EXECUTE FUNCTION public.fn_sync_teacher_absences_counter();
 
--- 7.3 دالة مزامنة عداد تنبيهات التأخر النشطة للمعلمة
+-- دالة مزامنة عداد تنبيهات التأخر النشطة للمعلمة
 CREATE OR REPLACE FUNCTION public.fn_sync_teacher_delays_counter()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -292,83 +367,135 @@ AFTER INSERT OR UPDATE OR DELETE ON public.delay_notices
 FOR EACH ROW EXECUTE FUNCTION public.fn_sync_teacher_delays_counter();
 
 -- ==============================================================================
--- 8. إعداد حاوية التخزين السحابي للمرفقات (Supabase Storage Bucket)
+-- 11. إعداد حاويات التخزين السحابي (Supabase Storage Buckets)
 -- ==============================================================================
+
+-- 11.1 حاوية المرفقات الطبية (absence-attachments) - تخزين خاص وآمن
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
     'absence-attachments',
     'absence-attachments',
-    true,
-    10485760, -- الحد الأقصى: 10 ميجابايت
+    false,
+    10485760, -- 10MB
     ARRAY['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 )
 ON CONFLICT (id) DO UPDATE SET
-    public = true,
+    public = false,
     file_size_limit = 10485760,
     allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 
--- سياسات تخزين المرفقات
-DROP POLICY IF EXISTS "Public Upload to absence-attachments" ON storage.objects;
-CREATE POLICY "Public Upload to absence-attachments"
-    ON storage.objects FOR INSERT
-    TO anon, authenticated
-    WITH CHECK (bucket_id = 'absence-attachments');
-
-DROP POLICY IF EXISTS "Public Read from absence-attachments" ON storage.objects;
-CREATE POLICY "Public Read from absence-attachments"
-    ON storage.objects FOR SELECT
-    TO anon, authenticated
-    USING (bucket_id = 'absence-attachments');
+-- 11.2 حاوية أصول المدرسة والأختام (school-assets) - قراءة عامة للتقارير، كتابة محمية
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('school-assets', 'school-assets', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- ==============================================================================
--- 9. سياسات الحماية المتقدمة على مستوى الصفوف (Row Level Security - RLS)
+-- 12. سياسات الحماية المتقدمة على مستوى الصفوف (Row Level Security - RLS)
+-- مطابقة لمعايير الإنتاج الآمنة Sprint 10
 -- ==============================================================================
 ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.absence_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.absence_inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.delay_notices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.employee_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.deduction_decisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.school_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_credentials ENABLE ROW LEVEL SECURITY;
 
--- 9.1 الوصول الكامل لحساب الإدارة الموثق (Authenticated Admin / Staff)
-CREATE POLICY "Admin full access on teachers" ON public.teachers FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access on absences" ON public.absence_records FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access on inquiries" ON public.absence_inquiries FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access on delay notices" ON public.delay_notices FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access on deduction decisions" ON public.deduction_decisions FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Admin full access on admin credentials" ON public.admin_credentials FOR ALL TO authenticated USING (true) WITH CHECK (true);
+-- 12.1 وصول الإدارة الموثقة الكامل (Authenticated Full Access)
+CREATE POLICY "Admin full access to teachers" ON public.teachers FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to absence_records" ON public.absence_records FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to absence_inquiries" ON public.absence_inquiries FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to delay_notices" ON public.delay_notices FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to employee_permissions" ON public.employee_permissions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to deduction_decisions" ON public.deduction_decisions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to audit_logs" ON public.audit_logs FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to school_settings" ON public.school_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Admin full access to admin_credentials" ON public.admin_credentials FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
--- 9.2 الوصول العام المقيد لروابط المعلمات (Public Token-Based Access)
--- للمعلمة قراءة وتحديث مساءلتها فقط عبر الرمز الصالح وغير المنتهي:
-CREATE POLICY "Public teacher view inquiry by token"
+-- 12.2 قراءة عامة محدودة لبيانات الهوية المدرسية في التقارير
+CREATE POLICY "Public read school_settings branding" ON public.school_settings FOR SELECT TO anon USING (true);
+
+-- 12.3 وصول المعلمات المقيد بالرمز الأمني (Token-Based Access for Anon)
+-- مساءلات الغياب:
+CREATE POLICY "Anon token-based view inquiry"
     ON public.absence_inquiries FOR SELECT
     TO anon
-    USING (token IS NOT NULL AND expires_at > NOW());
+    USING (token IS NOT NULL AND status IN ('pending', 'submitted'));
 
-CREATE POLICY "Public teacher submit inquiry by token"
+CREATE POLICY "Anon token-based submit inquiry"
     ON public.absence_inquiries FOR UPDATE
     TO anon
-    USING (token IS NOT NULL AND expires_at > NOW() AND status = 'pending')
-    WITH CHECK (token IS NOT NULL AND status IN ('submitted', 'pending'));
+    USING (token IS NOT NULL AND status = 'pending')
+    WITH CHECK (status = 'submitted');
 
--- للمعلمة قراءة وتحديث تنبيه التأخر فقط عبر الرمز الصالح:
-CREATE POLICY "Public teacher view delay notice by token"
+-- تنبيهات التأخر:
+CREATE POLICY "Anon token-based view delay notice"
     ON public.delay_notices FOR SELECT
     TO anon
-    USING (share_token IS NOT NULL AND token_expires_at > NOW());
+    USING (share_token IS NOT NULL);
 
-CREATE POLICY "Public teacher submit delay notice by token"
+CREATE POLICY "Anon token-based submit delay notice response"
     ON public.delay_notices FOR UPDATE
     TO anon
-    USING (share_token IS NOT NULL AND token_expires_at > NOW() AND status = 'pending_teacher')
-    WITH CHECK (share_token IS NOT NULL AND status IN ('pending_director', 'pending_teacher'));
+    USING (share_token IS NOT NULL AND status = 'pending_teacher')
+    WITH CHECK (status = 'pending_director');
 
--- سماح مؤقت للقراءة الإدارية في حالة الاتصال المباشر بمفتاح anon
-CREATE POLICY "Allow anon read teachers for management" ON public.teachers FOR SELECT TO anon USING (true);
-CREATE POLICY "Allow anon write teachers for management" ON public.teachers FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anon full access absence_records" ON public.absence_records FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anon full access delay_notices" ON public.delay_notices FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anon full access deduction_decisions" ON public.deduction_decisions FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anon full access employee_permissions" ON public.employee_permissions FOR ALL TO anon USING (true) WITH CHECK (true);
-CREATE POLICY "Allow anon check admin credentials" ON public.admin_credentials FOR SELECT TO anon USING (true);
+-- 12.4 سياسات التخزين السحابي (Storage RLS)
+-- حاوية المرفقات الطبية:
+DROP POLICY IF EXISTS "Allow restricted uploads to absence-attachments" ON storage.objects;
+CREATE POLICY "Allow restricted uploads to absence-attachments"
+    ON storage.objects FOR INSERT
+    TO anon, authenticated
+    WITH CHECK (bucket_id = 'absence-attachments');
 
+DROP POLICY IF EXISTS "Allow authenticated read from absence-attachments" ON storage.objects;
+CREATE POLICY "Allow authenticated read from absence-attachments"
+    ON storage.objects FOR SELECT
+    TO authenticated
+    USING (bucket_id = 'absence-attachments');
+
+-- حاوية أصول المدرسة (الختم والشعار والتوقيع):
+DROP POLICY IF EXISTS "Allow public read from school-assets" ON storage.objects;
+CREATE POLICY "Allow public read from school-assets"
+    ON storage.objects FOR SELECT
+    TO anon, authenticated
+    USING (bucket_id = 'school-assets');
+
+DROP POLICY IF EXISTS "Allow authenticated uploads to school-assets" ON storage.objects;
+CREATE POLICY "Allow authenticated uploads to school-assets"
+    ON storage.objects FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'school-assets');
+
+DROP POLICY IF EXISTS "Allow authenticated update to school-assets" ON storage.objects;
+CREATE POLICY "Allow authenticated update to school-assets"
+    ON storage.objects FOR UPDATE
+    TO authenticated
+    USING (bucket_id = 'school-assets');
+
+DROP POLICY IF EXISTS "Allow authenticated delete from school-assets" ON storage.objects;
+CREATE POLICY "Allow authenticated delete from school-assets"
+    ON storage.objects FOR DELETE
+    TO authenticated
+    USING (bucket_id = 'school-assets');
+
+-- ==============================================================================
+-- 13. تفعيل البث المباشر (Supabase Realtime CDC Publication)
+-- ==============================================================================
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_publication WHERE pubname = 'supabase_realtime') THEN
+        CREATE PUBLICATION supabase_realtime;
+    END IF;
+END $$;
+
+ALTER PUBLICATION supabase_realtime ADD TABLE 
+    public.teachers,
+    public.absence_records,
+    public.absence_inquiries,
+    public.delay_notices,
+    public.employee_permissions,
+    public.deduction_decisions,
+    public.school_settings;

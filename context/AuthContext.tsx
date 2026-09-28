@@ -157,6 +157,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  /**
+   * مزامنة كوكي الجلسة لتأمين المسارات الإدارية عبر Next.js Middleware
+   */
+  const syncAuthCookie = useCallback((sess: Session | null) => {
+    if (typeof document === "undefined") return;
+    if (sess?.access_token) {
+      const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+      document.cookie = `school_admin_token=${sess.access_token}; path=/; max-age=604800; SameSite=Lax${isHttps ? "; Secure" : ""}`;
+    } else {
+      document.cookie = "school_admin_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+    }
+  }, []);
+
   // إدارة الجلسة الحقيقية عبر Supabase Auth حصراً (بدون أي Mock أو LocalStorage للمصادقة)
   useEffect(() => {
     let isMounted = true;
@@ -178,10 +191,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (!error && data.session) {
           setSession(data.session);
           setUser(extractAdminUser(data.session.user));
+          syncAuthCookie(data.session);
           console.info("[Supabase Auth] تم استعادة الجلسة بنجاح للمستخدم:", data.session.user.email);
         } else {
           setSession(null);
           setUser(null);
+          syncAuthCookie(null);
         }
       })
       .catch((err) => {
@@ -202,9 +217,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (newSession && newSession.user) {
         setSession(newSession);
         setUser(extractAdminUser(newSession.user));
+        syncAuthCookie(newSession);
       } else {
         setSession(null);
         setUser(null);
+        syncAuthCookie(null);
       }
       setIsLoading(false);
     });
@@ -213,7 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       isMounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [syncAuthCookie]);
 
   /**
    * تسجيل الدخول الفعلي عبر supabase.auth.signInWithPassword
@@ -451,4 +468,8 @@ export const useAuth = (): AuthContextType => {
     throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
+};
+
+export const useOptionalAuth = (): AuthContextType | null => {
+  return useContext(AuthContext) || null;
 };

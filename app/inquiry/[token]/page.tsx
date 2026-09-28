@@ -34,6 +34,7 @@ import {
   InquiryAttachmentItem,
   MAX_FALLBACK_DATA_URL_BYTES,
 } from "@/lib/attachments";
+import { validateSecureUpload } from "@/lib/fileValidation";
 import {
   calculateDaysBetween,
   formatDaysCountArabic,
@@ -245,33 +246,27 @@ export default function TeacherInquiryPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const isPdf =
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf");
+    const isPdfExpected =
+      file.name.toLowerCase().endsWith(".pdf") || file.type === "application/pdf";
+    const maxSizeBytes = isPdfExpected ? 3 * 1024 * 1024 : 20 * 1024 * 1024;
 
-    // 1. فحص ملفات الـ PDF (حد أقصى 3 ميغابايت)
-    if (isPdf) {
-      const MAX_PDF_SIZE = 3 * 1024 * 1024; // 3MB
-      if (file.size > MAX_PDF_SIZE) {
-        setFormErrors((prev) => ({
-          ...prev,
-          [`slot_${slotId}`]: `حجم ملف الـ PDF كبير (${(
-            file.size /
-            (1024 * 1024)
-          ).toFixed(1)} ميغابايت). الحد الأقصى لملفات PDF هو 3 ميغابايت.`,
-        }));
-        return;
-      }
-    }
+    const validation = await validateSecureUpload(file, {
+      allowedExtensions: ["png", "jpg", "jpeg", "pdf"],
+      allowedMimes: ["image/png", "image/jpeg", "application/pdf"],
+      maxSizeBytes,
+      allowPdf: true,
+    });
 
-    // 2. فحص الصور (يُسمح حتى 20 ميغابايت)
-    if (!isPdf && file.size > 20 * 1024 * 1024) {
+    if (!validation.valid) {
       setFormErrors((prev) => ({
         ...prev,
-        [`slot_${slotId}`]: "حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 20 ميغابايت.",
+        [`slot_${slotId}`]: validation.error || "الملف المحدد غير صالح أمنياً.",
       }));
+      e.target.value = "";
       return;
     }
+
+    const isPdf = validation.detectedType === "pdf";
 
     setFormErrors((prev) => ({ ...prev, [`slot_${slotId}`]: "" }));
 
@@ -456,10 +451,10 @@ export default function TeacherInquiryPage() {
         submittedAt,
       };
 
-      // 2. Update Supabase
+      // 2. Update Supabase with Data Loss Prevention
       if (isSupabaseConfigured() && supabase) {
         try {
-          await supabase
+          const { error: dbUpdateErr } = await supabase
             .from("absence_inquiries")
             .update({
               status: "submitted",
@@ -469,8 +464,27 @@ export default function TeacherInquiryPage() {
               submitted_at: submittedAt,
             })
             .eq("id", inquiry.id);
-        } catch (dbUpdateErr) {
-          console.warn("خطأ تحديث سوبابيز:", dbUpdateErr);
+
+          if (dbUpdateErr) {
+            console.error("فشل تسجيل الإفادة في سوبابيز:", dbUpdateErr);
+            setFormErrors((prev) => ({
+              ...prev,
+              general: `تعذر إرسال الإفادة إلى النظام السحابي للمدرسة (${dbUpdateErr.message || "خطأ في الاتصال"}). تم الحفاظ على مسودة ردك ومرفقاتك، يرجى إعادة المحاولة.`,
+            }));
+            setIsSubmitting(false);
+            setUploadProgress(null);
+            return;
+          }
+        } catch (dbUpdateErr: unknown) {
+          console.error("استثناء أثناء تحديث سوبابيز:", dbUpdateErr);
+          const errObj = dbUpdateErr as { message?: string };
+          setFormErrors((prev) => ({
+            ...prev,
+            general: `تعذر إرسال الإفادة إلى النظام السحابي للمدرسة (${errObj?.message || "خطأ في الشبكة"}). تم الحفاظ على مسودة ردك، يرجى إعادة المحاولة.`,
+          }));
+          setIsSubmitting(false);
+          setUploadProgress(null);
+          return;
         }
       }
 

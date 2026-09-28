@@ -38,7 +38,8 @@ import {
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { fetchSchoolSettingsFromCloud } from "@/lib/schoolSettingsService";
-import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { DEFAULT_ADMIN_NAME, useOptionalAuth } from "@/context/AuthContext";
+import type { SystemBackupData } from "@/lib/backupRecovery";
 import {
   DbTeacherRow,
   DbAbsenceRecordRow,
@@ -210,6 +211,9 @@ interface TeacherContextType {
     archivedBy?: string
   ) => { deletedPermission?: EmployeePermission };
   restorePermission: (permission: EmployeePermission) => void;
+  restoreFullSystemSnapshot: (
+    snapshotData: SystemBackupData
+  ) => Promise<{ success: boolean; message: string; error?: string }>;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
@@ -817,6 +821,16 @@ const TeacherContext = createContext<TeacherContextType | undefined>(undefined);
 export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const authContext = useOptionalAuth();
+  const isAuthenticated = authContext ? authContext.isAuthenticated : false;
+  const isAuthLoading = authContext ? authContext.isLoading : false;
+
+  const isPublicRoute =
+    typeof window !== "undefined" &&
+    (window.location.pathname === "/login" ||
+      window.location.pathname.startsWith("/inquiry/") ||
+      window.location.pathname.startsWith("/teacher-response/"));
+
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [absenceRecords, setAbsenceRecords] = useState<AbsenceRecord[]>([]);
   const [inquiries, setInquiries] = useState<AbsenceInquiry[]>([]);
@@ -914,6 +928,16 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // 1. Initial Load: Load fast from localStorage with auto-migration, then hydrate from Supabase if configured
   useEffect(() => {
+    // Security Guard: wait for auth loading to finish if auth context is present
+    if (authContext && isAuthLoading) return;
+
+    // Security Guard: If on a public route and unauthenticated, do NOT fetch or populate admin data
+    if (isPublicRoute && !isAuthenticated) {
+      setIsLoading(false);
+      isMountedRef.current = true;
+      return;
+    }
+
     const loadInitialData = async () => {
       try {
         let localTeachers: Teacher[] = [];
@@ -1547,7 +1571,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
     loadInitialData();
-  }, [flushSyncQueue]);
+  }, [flushSyncQueue, isAuthenticated, isAuthLoading, isPublicRoute]);
 
   // 2. Persist to localStorage whenever state changes
   useEffect(() => {
@@ -1673,6 +1697,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // Realtime Subscriptions via Supabase Channels (Live Cross-Device Sync)
   useEffect(() => {
     if (!isSupabaseConfigured() || !supabase) return;
+    if (isPublicRoute && !isAuthenticated) return;
 
     const channel = supabase
       .channel("school-platform-realtime-sync")
@@ -2053,7 +2078,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       supabase?.removeChannel(channel);
     };
-  }, []);
+  }, [isAuthenticated, isPublicRoute]);
 
   // 3.a Plan Import (computes dry-run preview and validates all rows)
   const planImport = useCallback(
@@ -4914,14 +4939,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         setInquiries((prev) => prev.filter((i) => i.teacherId !== id));
 
         if (isSupabaseConfigured() && supabase) {
-          Promise.all([
-            supabase.from("teachers").delete().eq("id", id),
-            supabase.from("absence_records").delete().eq("teacher_id", id),
-            supabase.from("delay_notices").delete().eq("teacher_id", id),
-            supabase.from("deduction_decisions").delete().eq("teacher_id", id),
-            supabase.from("employee_permissions").delete().eq("teacher_id", id),
-            supabase.from("absence_inquiries").delete().eq("teacher_id", id),
-          ]).catch((err) => {
+          (async () => {
+            // Delete dependent child records first to respect ON DELETE RESTRICT
+            await Promise.all([
+              supabase.from("absence_records").delete().eq("teacher_id", id),
+              supabase.from("delay_notices").delete().eq("teacher_id", id),
+              supabase.from("deduction_decisions").delete().eq("teacher_id", id),
+              supabase.from("employee_permissions").delete().eq("teacher_id", id),
+              supabase.from("absence_inquiries").delete().eq("teacher_id", id),
+            ]);
+            await supabase.from("teachers").delete().eq("id", id);
+          })().catch((err) => {
             console.warn("Permanent delete teacher cloud error:", err);
             queueSyncOperation({ table: "teachers", action: "delete", data: { id } });
           });
@@ -5147,10 +5175,19 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             .eq("share_token", token);
 
           if (error) {
-            console.warn("تنبيه تحديث الرد في سوبابيز:", error.message);
+            console.error("تنبيه تحديث الرد في سوبابيز:", error.message);
+            return {
+              success: false,
+              error: `تعذر حفظ الرد في قاعدة البيانات (${error.message}). يرجى إعادة المحاولة.`,
+            };
           }
-        } catch (err) {
-          console.warn("فشل الاتصال بسوبابيز لتسجيل الرد:", err);
+        } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          console.error("فشل الاتصال بسوبابيز لتسجيل الرد:", err);
+          return {
+            success: false,
+            error: `تعذر الاتصال بقاعدة البيانات السحابية (${errMsg}). تم الحفاظ على مسودة ردك، يرجى إعادة المحاولة.`,
+          };
         }
       }
 
@@ -5664,6 +5701,118 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  // 26. Restore Full System Snapshot (Point-in-Time Disaster Recovery)
+  const restoreFullSystemSnapshot = useCallback(
+    async (
+      snapshotData: SystemBackupData
+    ): Promise<{ success: boolean; message: string; error?: string }> => {
+      try {
+        if (!snapshotData || !Array.isArray(snapshotData.teachers)) {
+          return {
+            success: false,
+            message: "فشل التحقق",
+            error: "بيانات النسخة الاحتياطية غير صالحة",
+          };
+        }
+
+        setTeachers(snapshotData.teachers);
+        setAbsenceRecords(snapshotData.absenceRecords || []);
+        setDelayNotices(snapshotData.delayNotices || []);
+        setInquiries(snapshotData.inquiries || []);
+        setDeductionDecisions(snapshotData.deductionDecisions || []);
+        setPermissions(snapshotData.permissions || []);
+        setArchivedTeachers(snapshotData.archivedTeachers || []);
+        setArchivedAbsences(snapshotData.archivedAbsences || []);
+        setArchivedDelayNotices(snapshotData.archivedDelayNotices || []);
+        setArchivedDeductionDecisions(snapshotData.archivedDeductionDecisions || []);
+        setArchivedPermissions(snapshotData.archivedPermissions || []);
+
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(TEACHERS_STORAGE_KEY, JSON.stringify(snapshotData.teachers));
+            localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(snapshotData.absenceRecords || []));
+            localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(snapshotData.inquiries || []));
+            localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(snapshotData.delayNotices || []));
+            localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(snapshotData.permissions || []));
+            localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(snapshotData.deductionDecisions || []));
+            localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(snapshotData.archivedTeachers || []));
+            localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(snapshotData.archivedAbsences || []));
+            localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(snapshotData.archivedDelayNotices || []));
+            localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(snapshotData.archivedPermissions || []));
+            localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(snapshotData.archivedDeductionDecisions || []));
+          } catch (storageErr) {
+            console.warn("تنبيه تخزين محلي أثناء استعادة النسخة الاحتياطية:", storageErr);
+          }
+        }
+
+        if (isSupabaseConfigured() && supabase) {
+          try {
+            // 1. First restore teachers (active + archived) so foreign keys exist
+            const allTeachers = [
+              ...snapshotData.teachers,
+              ...(snapshotData.archivedTeachers?.map((at) => at.teacher) || []),
+            ];
+            if (allTeachers.length > 0) {
+              const teacherRows = allTeachers.map(mapTeacherToDbRow);
+              await supabase.from("teachers").upsert(teacherRows);
+            }
+
+            // 2. Next restore dependent operational tables in parallel
+            const allAbsences = [
+              ...(snapshotData.absenceRecords || []),
+              ...(snapshotData.archivedAbsences?.map((aa) => aa.record) || []),
+            ];
+            const allDelays = [
+              ...(snapshotData.delayNotices || []),
+              ...(snapshotData.archivedDelayNotices?.map((ad) => ad.notice) || []),
+            ];
+            const allDeductions = [
+              ...(snapshotData.deductionDecisions || []),
+              ...(snapshotData.archivedDeductionDecisions?.map((ad) => ad.decision) || []),
+            ];
+            const allPermissions = [
+              ...(snapshotData.permissions || []),
+              ...(snapshotData.archivedPermissions?.map((ap) => ap.permission) || []),
+            ];
+            const allInquiries = snapshotData.inquiries || [];
+
+            await Promise.all([
+              allAbsences.length > 0
+                ? supabase.from("absence_records").upsert(allAbsences.map(mapAbsenceToDbRow))
+                : Promise.resolve(),
+              allDelays.length > 0
+                ? supabase.from("delay_notices").upsert(allDelays.map(mapDelayToDbRow))
+                : Promise.resolve(),
+              allDeductions.length > 0
+                ? supabase.from("deduction_decisions").upsert(allDeductions.map(mapDecisionToDbRow))
+                : Promise.resolve(),
+              allPermissions.length > 0
+                ? supabase.from("employee_permissions").upsert(allPermissions.map(mapPermissionToDbRow))
+                : Promise.resolve(),
+              allInquiries.length > 0
+                ? supabase.from("absence_inquiries").upsert(allInquiries.map(mapInquiryToDbRow))
+                : Promise.resolve(),
+            ]);
+          } catch (syncErr) {
+            console.warn("تنبيه مزامنة سحابية بعد الاستعادة:", syncErr);
+          }
+        }
+
+        return {
+          success: true,
+          message: `تم استعادة النظام بنجاح (${snapshotData.teachers.length} معلمة، ${(snapshotData.absenceRecords || []).length} سجل غياب)`,
+        };
+      } catch (err) {
+        return {
+          success: false,
+          message: "حدث خطأ أثناء تطبيق النسخة الاحتياطية",
+          error: err instanceof Error ? err.message : String(err),
+        };
+      }
+    },
+    []
+  );
+
   const contextValue = useMemo<TeacherContextType>(
     () => ({
       teachers,
@@ -5672,6 +5821,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       delayNotices,
       deductionDecisions,
       permissions,
+      restoreFullSystemSnapshot,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
@@ -5778,6 +5928,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       updatePermission,
       deletePermission,
       restorePermission,
+      restoreFullSystemSnapshot,
     ]
   );
 

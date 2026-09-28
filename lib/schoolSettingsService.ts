@@ -11,6 +11,7 @@ import {
   DEFAULT_SIGNATURE_BASE64,
 } from "./defaultApprovalAssets";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { validateSecureUpload } from "@/lib/fileValidation";
 
 export interface SchoolSettingsData {
   id: string;
@@ -145,11 +146,26 @@ export async function uploadSchoolAsset(
   file: File,
   type: "stamp" | "signature" | "logo"
 ): Promise<{ success: boolean; url?: string; error?: string }> {
+  const validation = await validateSecureUpload(file, {
+    allowedExtensions: ["png", "jpg", "jpeg", "webp"],
+    allowedMimes: ["image/png", "image/jpeg", "image/webp"],
+    maxSizeBytes: 10 * 1024 * 1024,
+  });
+
+  if (!validation.valid) {
+    return {
+      success: false,
+      error: validation.error || "الملف المحدد غير صالح أمنياً.",
+    };
+  }
+
+  const fileName = (file.name || "").toLowerCase();
+  const fileExt = fileName.split(".").pop()?.toLowerCase() || "png";
+
   if (isSupabaseConfigured() && supabase) {
     try {
-      const fileExt = file.name.split(".").pop() || "png";
-      const fileName = `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${fileExt}`;
-      const filePath = `${type}s/${fileName}`;
+      const uniqueFileName = `${type}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${fileExt}`;
+      const filePath = `${type}s/${uniqueFileName}`;
 
       const { data: uploadData, error: uploadErr } = await supabase.storage
         .from("school-assets")
@@ -175,17 +191,28 @@ export async function uploadSchoolAsset(
   }
 
   // في حال تعذر التخزين السحابي المؤقت، نقرأ كـ Data URL كحل بديل آمن
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const base64 = e.target?.result as string;
-      resolve({ success: true, url: base64 });
-    };
-    reader.onerror = () => {
-      resolve({ success: false, error: "تعذر قراءة ملف الصورة" });
-    };
-    reader.readAsDataURL(file);
-  });
+  if (typeof FileReader !== "undefined") {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64 = e.target?.result as string;
+        resolve({ success: true, url: base64 });
+      };
+      reader.onerror = () => {
+        resolve({ success: false, error: "تعذر قراءة ملف الصورة" });
+      };
+      reader.readAsDataURL(file);
+    });
+  } else {
+    try {
+      const buffer = await file.arrayBuffer();
+      const base64 = Buffer.from(buffer).toString("base64");
+      const mime = file.type || "image/png";
+      return { success: true, url: `data:${mime};base64,${base64}` };
+    } catch {
+      return { success: false, error: "تعذر قراءة ملف الصورة" };
+    }
+  }
 }
 
 function broadcastSettingsChange(settings: SchoolSettingsData) {

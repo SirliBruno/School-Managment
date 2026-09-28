@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { getAppBaseUrl } from "@/lib/appConfig";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Health Check API Endpoint (Sanitized for Production Security)
+ * Confirms system liveness and service availability without leaking internal
+ * server memory statistics, heap allocations, or infrastructure paths.
+ */
 export async function GET() {
   const timestamp = new Date().toISOString();
   const dbConnected = isSupabaseConfigured();
@@ -11,24 +15,13 @@ export async function GET() {
   const healthPayload = {
     status: dbConnected ? "healthy" : "degraded",
     version: "1.0.0",
-    release: "Sprint-5-Production",
+    release: "Sprint-10-Production",
     timestamp,
-    environment: process.env.NODE_ENV || "production",
     services: {
       frontend: "operational",
       database: dbConnected ? "connected" : "offline_local_storage_mode",
       storage: dbConnected ? "ready" : "local_fallback",
       securityAuth: "enforced",
-    },
-    systemMetrics: {
-      uptimeSeconds: process.uptime ? Math.floor(process.uptime()) : 0,
-      memoryUsage: process.memoryUsage ? process.memoryUsage() : null,
-      baseUrl: getAppBaseUrl(),
-    },
-    officialAdmin: {
-      name: "أحلام صالح الضبيبي",
-      role: "وكيلة المدرسة",
-      school: "الثانوية الخامسة مسارات",
     },
   };
 

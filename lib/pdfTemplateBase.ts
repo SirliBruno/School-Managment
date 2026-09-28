@@ -47,6 +47,19 @@ th, td { vertical-align: middle; padding: 5px 7px; }
 @media print { body { margin: 0; padding: 0; } }
 `;
 
+/**
+ * تطهير النصوص لمنع هجمات حقن HTML و XSS داخل قوالب الـ PDF
+ */
+export function esc(s: string | number | undefined | null): string {
+  if (s === undefined || s === null) return "";
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export interface OfficialHeaderProps {
   formTitle: string;
   formCode: string;
@@ -77,16 +90,16 @@ export function renderOfficialHeader({
     <img src="${MOE_LOGO_BASE64}" alt="وزارة التعليم" style="height: 52px; width: auto; object-fit: contain; margin-bottom: 2px;" />
   </div>
   <div class="hdr-l">
-    <div>التاريخ : ${dateFormatted} م</div>
-    <div>الرقم : ${numberFormatted}</div>
-    <div>المشفوعات : ${attachmentsFormatted}</div>
+    <div>التاريخ : ${esc(dateFormatted)} م</div>
+    <div>الرقم : ${esc(numberFormatted)}</div>
+    <div>المشفوعات : ${esc(attachmentsFormatted)}</div>
   </div>
 </div>
 
 <!-- Title Bar -->
 <div class="title-bar">
-  <div class="title-bar-r">اسم النموذج : ${formTitle}</div>
-  <div class="title-bar-l">رمز النموذج ( ${formCode} )</div>
+  <div class="title-bar-r">اسم النموذج : ${esc(formTitle)}</div>
+  <div class="title-bar-l">رمز النموذج ( ${esc(formCode)} )</div>
 </div>
 `;
 }
@@ -95,7 +108,9 @@ export function renderOfficialHeader({
  * بناء جدول بيانات المدرسة الموحد (الجدول الأول)
  */
 export function renderSchoolInfoTable(civilRegistry: string, schoolName?: string): string {
-  const resolvedSchoolName = schoolName || getActiveSchoolSettings().schoolName || "المدرسة";
+  const rawSchoolName = schoolName || getActiveSchoolSettings().schoolName || "المدرسة";
+  const resolvedSchoolName = esc(rawSchoolName);
+  const cleanCivilRegistry = civilRegistry ? esc(civilRegistry) : "—";
   return `
 <!-- Table 1: School Info -->
 <table class="t1">
@@ -108,7 +123,7 @@ export function renderSchoolInfoTable(civilRegistry: string, schoolName?: string
   <tbody>
     <tr>
       <td class="vc" style="font-weight:800;color:#0f766e">${resolvedSchoolName}</td>
-      <td class="vc" style="font-family:monospace;font-weight:800;border-left:none">${civilRegistry || "—"}</td>
+      <td class="vc" style="font-family:monospace;font-weight:800;border-left:none">${cleanCivilRegistry}</td>
     </tr>
   </tbody>
 </table>

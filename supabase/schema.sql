@@ -24,7 +24,7 @@ CREATE INDEX IF NOT EXISTS idx_teachers_name ON public.teachers(name);
 -- 2. جدول سجلات الغياب والمساءلات الإدارية المباشرة (absence_records)
 CREATE TABLE IF NOT EXISTS public.absence_records (
     id TEXT PRIMARY KEY,
-    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE RESTRICT,
     teacher_name TEXT NOT NULL,
     job_number TEXT NOT NULL,
     specialty TEXT NOT NULL,
@@ -43,7 +43,7 @@ CREATE INDEX IF NOT EXISTS idx_absences_type ON public.absence_records(type);
 -- 3. جدول مساءلات الغياب الإلكترونية عبر الواتساب (absence_inquiries)
 CREATE TABLE IF NOT EXISTS public.absence_inquiries (
     id TEXT PRIMARY KEY,
-    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE RESTRICT,
     teacher_name TEXT NOT NULL,
     job_number TEXT NOT NULL,
     specialty TEXT,
@@ -80,15 +80,15 @@ ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- سياسات التخزين السحابي للمرفقات
 DROP POLICY IF EXISTS "Allow public uploads to absence-attachments" ON storage.objects;
-CREATE POLICY "Allow public uploads to absence-attachments"
+DROP POLICY IF EXISTS "Allow public read from absence-attachments" ON storage.objects;
+CREATE POLICY "Allow restricted uploads to absence-attachments"
     ON storage.objects FOR INSERT
     TO anon, authenticated
     WITH CHECK (bucket_id = 'absence-attachments');
 
-DROP POLICY IF EXISTS "Allow public read from absence-attachments" ON storage.objects;
-CREATE POLICY "Allow public read from absence-attachments"
+CREATE POLICY "Allow authenticated read from absence-attachments"
     ON storage.objects FOR SELECT
-    TO anon, authenticated
+    TO authenticated
     USING (bucket_id = 'absence-attachments');
 
 -- 5. جدول بيانات اعتماد حساب الوكيلة (admin_credentials)
@@ -119,30 +119,41 @@ ALTER TABLE public.absence_inquiries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.admin_credentials ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow anon all on teachers" ON public.teachers;
-CREATE POLICY "Allow anon all on teachers"
+CREATE POLICY "Admin full access to teachers"
     ON public.teachers FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow anon all on absence_records" ON public.absence_records;
-CREATE POLICY "Allow anon all on absence_records"
+CREATE POLICY "Admin full access to absence_records"
     ON public.absence_records FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Allow anon all on absence_inquiries" ON public.absence_inquiries;
-CREATE POLICY "Allow anon all on absence_inquiries"
+CREATE POLICY "Admin full access to absence_inquiries"
     ON public.absence_inquiries FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
+CREATE POLICY "Anon token-based view inquiry"
+    ON public.absence_inquiries FOR SELECT
+    TO anon
+    USING (token IS NOT NULL AND status IN ('pending', 'submitted'));
+
+CREATE POLICY "Anon token-based submit inquiry"
+    ON public.absence_inquiries FOR UPDATE
+    TO anon
+    USING (token IS NOT NULL AND status = 'pending')
+    WITH CHECK (status = 'submitted');
+
 DROP POLICY IF EXISTS "Allow anon all on admin_credentials" ON public.admin_credentials;
-CREATE POLICY "Allow anon all on admin_credentials"
+CREATE POLICY "Admin full access to admin_credentials"
     ON public.admin_credentials FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
@@ -150,7 +161,7 @@ CREATE POLICY "Allow anon all on admin_credentials"
 CREATE TABLE IF NOT EXISTS public.delay_notices (
     id TEXT PRIMARY KEY,
     notice_number TEXT,
-    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE RESTRICT,
     teacher_name TEXT NOT NULL,
     job_number TEXT,
     specialty TEXT,
@@ -188,16 +199,27 @@ CREATE INDEX IF NOT EXISTS idx_delay_notices_date ON public.delay_notices(notice
 ALTER TABLE public.delay_notices ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow anon all on delay_notices" ON public.delay_notices;
-CREATE POLICY "Allow anon all on delay_notices"
+CREATE POLICY "Admin full access to delay_notices"
     ON public.delay_notices FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
+
+CREATE POLICY "Anon token-based view delay notice"
+    ON public.delay_notices FOR SELECT
+    TO anon
+    USING (share_token IS NOT NULL);
+
+CREATE POLICY "Anon token-based submit delay notice response"
+    ON public.delay_notices FOR UPDATE
+    TO anon
+    USING (share_token IS NOT NULL AND status = 'pending_teacher')
+    WITH CHECK (status = 'pending_director');
 
 -- 8. جدول استئذان الموظفين (employee_permissions)
 CREATE TABLE IF NOT EXISTS public.employee_permissions (
     id TEXT PRIMARY KEY,
-    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE RESTRICT,
     teacher_name TEXT,
     national_id TEXT,
     job_number TEXT,
@@ -226,16 +248,16 @@ CREATE INDEX IF NOT EXISTS idx_permissions_is_archived ON public.employee_permis
 ALTER TABLE public.employee_permissions ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow anon all on employee_permissions" ON public.employee_permissions;
-CREATE POLICY "Allow anon all on employee_permissions"
+CREATE POLICY "Admin full access to employee_permissions"
     ON public.employee_permissions FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
 -- 9. جدول قرارات حسم ساعات التأخر (deduction_decisions)
 CREATE TABLE IF NOT EXISTS public.deduction_decisions (
     id TEXT PRIMARY KEY,
-    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE CASCADE,
+    teacher_id TEXT REFERENCES public.teachers(id) ON DELETE RESTRICT,
     teacher_name TEXT NOT NULL,
     civil_id TEXT NOT NULL,
     specialization TEXT,
@@ -265,9 +287,9 @@ CREATE INDEX IF NOT EXISTS idx_deductions_is_archived ON public.deduction_decisi
 
 ALTER TABLE public.deduction_decisions ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow anon all on deduction_decisions" ON public.deduction_decisions;
-CREATE POLICY "Allow anon all on deduction_decisions"
+CREATE POLICY "Admin full access to deduction_decisions"
     ON public.deduction_decisions FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
@@ -293,9 +315,9 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_timestamp ON public.audit_logs(timesta
 
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow anon all on audit_logs" ON public.audit_logs;
-CREATE POLICY "Allow anon all on audit_logs"
+CREATE POLICY "Admin full access to audit_logs"
     ON public.audit_logs FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
@@ -314,11 +336,16 @@ CREATE TABLE IF NOT EXISTS public.school_settings (
 
 ALTER TABLE public.school_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow anon all on school_settings" ON public.school_settings;
-CREATE POLICY "Allow anon all on school_settings"
+CREATE POLICY "Admin full access to school_settings"
     ON public.school_settings FOR ALL
-    TO anon, authenticated
+    TO authenticated
     USING (true)
     WITH CHECK (true);
+
+CREATE POLICY "Public read school_settings branding"
+    ON public.school_settings FOR SELECT
+    TO anon
+    USING (true);
 
 -- 12. حاوية التخزين السحابي لأصول المدرسة والأختام (school-assets)
 INSERT INTO storage.buckets (id, name, public)
@@ -326,11 +353,28 @@ VALUES ('school-assets', 'school-assets', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 DROP POLICY IF EXISTS "Allow anon all on school-assets" ON storage.objects;
-CREATE POLICY "Allow anon all on school-assets"
-    ON storage.objects FOR ALL
+DROP POLICY IF EXISTS "Allow public read from school-assets" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated uploads to school-assets" ON storage.objects;
+
+CREATE POLICY "Allow public read from school-assets"
+    ON storage.objects FOR SELECT
     TO anon, authenticated
-    USING (bucket_id = 'school-assets')
+    USING (bucket_id = 'school-assets');
+
+CREATE POLICY "Allow authenticated uploads to school-assets"
+    ON storage.objects FOR INSERT
+    TO authenticated
     WITH CHECK (bucket_id = 'school-assets');
+
+CREATE POLICY "Allow authenticated update to school-assets"
+    ON storage.objects FOR UPDATE
+    TO authenticated
+    USING (bucket_id = 'school-assets');
+
+CREATE POLICY "Allow authenticated delete from school-assets"
+    ON storage.objects FOR DELETE
+    TO authenticated
+    USING (bucket_id = 'school-assets');
 
 -- 13. تفعيل البث المباشر (Realtime CDC) لكافة الجداول التشغيلية
 DO $$

@@ -38,6 +38,8 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 import { ApprovalAssetsModal } from "@/components/settings/ApprovalAssetsModal";
+import { BackupRecoveryModal } from "@/components/settings/BackupRecoveryModal";
+import { Database } from "lucide-react";
 import {
   getActiveSchoolSettings,
   onSchoolSettingsChanged,
@@ -60,6 +62,7 @@ export const AppHeader: React.FC = () => {
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [schoolSettings, setSchoolSettings] = useState(getActiveSchoolSettings());
@@ -464,6 +467,18 @@ export const AppHeader: React.FC = () => {
                     <span className="whitespace-nowrap">بيانات الاعتماد والختم</span>
                   </button>
 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsUserMenuOpen(false);
+                      setIsBackupModalOpen(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium whitespace-nowrap text-slate-700 dark:text-slate-300 hover:text-teal-700 dark:hover:text-teal-300 hover:bg-teal-50/80 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <Database className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                    <span className="whitespace-nowrap">النسخ الاحتياطي والاستعادة</span>
+                  </button>
+
                   <div className="my-1 border-t border-slate-100 dark:border-slate-800" />
 
                   <button
@@ -495,6 +510,12 @@ export const AppHeader: React.FC = () => {
       <ApprovalAssetsModal
         isOpen={isApprovalModalOpen}
         onClose={() => setIsApprovalModalOpen(false)}
+      />
+
+      {/* Backup & Disaster Recovery Modal */}
+      <BackupRecoveryModal
+        isOpen={isBackupModalOpen}
+        onClose={() => setIsBackupModalOpen(false)}
       />
     </>
   );
