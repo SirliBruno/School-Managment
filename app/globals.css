@@ -111,3 +111,21 @@ button svg,
     scroll-behavior: auto !important;
   }
 }
+
+/* Strict Print & PDF Isolation: Always enforce official light mode on print */
+@media print {
+  :root,
+  html,
+  body,
+  .dark {
+    --background: #ffffff !important;
+    --foreground: #0f172a !important;
+    --card: #ffffff !important;
+    --card-foreground: #0f172a !important;
+    --border: #e2e8f0 !important;
+    color-scheme: light !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+}
+

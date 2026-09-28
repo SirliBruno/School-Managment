@@ -50,7 +50,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         "bg-gradient-to-b from-[#15828e] to-[#0f666f] hover:from-[#18919e] hover:to-[#116e78] text-white border border-[#0d5961] shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.22)] active:scale-[0.98]",
       secondary:
-        "bg-slate-100 hover:bg-slate-200/90 text-slate-800 border border-slate-200 shadow-2xs active:scale-[0.98]",
+        "bg-slate-100 hover:bg-slate-200/90 text-slate-800 border border-slate-200 shadow-2xs active:scale-[0.98] dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 dark:border-slate-700",
       success:
         "bg-gradient-to-b from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white border border-emerald-800 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
       emerald:
@@ -60,11 +60,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       danger:
         "bg-gradient-to-b from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white border border-rose-800 shadow-[0_1px_2px_rgba(0,0,0,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.2)] active:scale-[0.98]",
       ghost:
-        "bg-transparent hover:bg-slate-100/90 text-slate-600 hover:text-slate-900 active:scale-[0.98]",
+        "bg-transparent hover:bg-slate-100/90 text-slate-600 hover:text-slate-900 active:scale-[0.98] dark:hover:bg-slate-800 dark:text-slate-400 dark:hover:text-slate-100",
       outline:
-        "bg-white hover:bg-teal-50/60 text-[#137a85] border border-teal-200 hover:border-teal-300 shadow-2xs active:scale-[0.98]",
+        "bg-white hover:bg-teal-50/60 text-[#137a85] border border-teal-200 hover:border-teal-300 shadow-2xs active:scale-[0.98] dark:bg-slate-900 dark:hover:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800 dark:hover:border-teal-700",
       "outline-danger":
-        "bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 shadow-2xs active:scale-[0.98]",
+        "bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 hover:border-rose-300 shadow-2xs active:scale-[0.98] dark:bg-slate-900 dark:hover:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800 dark:hover:border-rose-700",
     };
 
     const leadIcon = leftIcon || icon;
