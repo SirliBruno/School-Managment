@@ -146,8 +146,11 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       const html = buildReportHtml(mockReportPayload);
       expect(html).toContain("الثانوية الخامسة مسارات");
       expect(html).toContain("أحلام صالح الضبيبي");
+      expect(html).toContain("فاطمة فلاتة");
       expect(html).toContain("ختم المدرسة الرسمي");
-      expect(html).toContain("توقيع الاعتماد");
+      expect(html).toContain("alt=\"توقيع الوكيلة\"");
+      expect(html).toContain("alt=\"توقيع الاعتماد\"");
+      expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
     });
 
     it("prevents stamp inclusion in statistical-only or internal-only reports", () => {

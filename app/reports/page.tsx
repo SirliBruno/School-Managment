@@ -35,7 +35,11 @@ import { printReportPdf } from "@/lib/reportPdfService";
 import { getSaudiToday } from "@/lib/timeUtils";
 import { PageHeader, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
-import { DEFAULT_STAMP_BASE64 } from "@/lib/defaultApprovalAssets";
+import {
+  DEFAULT_STAMP_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
+} from "@/lib/defaultApprovalAssets";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { logAuditEvent } from "@/lib/auditLogger";
@@ -932,11 +936,18 @@ export default function ReportsCenterPage() {
 
                 {/* Official Signatures */}
                 <div className="pt-6 border-t border-slate-200 flex justify-between items-end text-xs text-center">
-                  <div className="space-y-4">
+                  <div className="space-y-2 flex flex-col items-center">
                     <span className="font-bold text-[#0f766e] block">
                       {user?.role === "principal" ? "مديرة المدرسة" : DEFAULT_ADMIN_ROLE_LABEL}
                     </span>
                     <span className="font-bold text-slate-800 block">{reportData.payload.creatorName}</span>
+                    <div className="h-10 flex items-center justify-center">
+                      <img
+                        src={DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64}
+                        alt="توقيع الوكيلة"
+                        className="max-h-10 max-w-28 object-contain"
+                      />
+                    </div>
                   </div>
                   <div className="flex flex-col items-center justify-center">
                     <span className="text-[11px] font-bold text-[#0f766e] mb-1">الختم الرسمي للمدرسة</span>
@@ -948,9 +959,16 @@ export default function ReportsCenterPage() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-2 flex flex-col items-center">
                     <span className="font-bold text-[#0f766e] block">مديرة المدرسة</span>
                     <span className="font-bold text-slate-800 block">{reportData.payload.principalName}</span>
+                    <div className="h-10 flex items-center justify-center">
+                      <img
+                        src={DEFAULT_PRINCIPAL_SIGNATURE_BASE64}
+                        alt="توقيع المديرة"
+                        className="max-h-10 max-w-28 object-contain"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

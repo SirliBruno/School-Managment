@@ -26,9 +26,10 @@ export interface PdfReportPayload {
 }
 
 const REPORT_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 @page { size: A4 portrait; margin: 8mm 10mm; }
 * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-body { font-family: 'Cairo', 'Segoe UI', sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 8.5pt; line-height: 1.4; }
+body { font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 8.5pt; line-height: 1.4; }
 .report-page { width: 100%; min-height: 280mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
 .report-page:last-child { page-break-after: avoid; }
 .report-frame { border: 1.5px solid #0f766e; border-radius: 6px; padding: 8mm 9mm; display: flex; flex-direction: column; height: 100%; }
@@ -149,7 +150,9 @@ export function buildReportHtml(payload: PdfReportPayload): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${reportTitle}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 ${REPORT_CSS}
 </style>
