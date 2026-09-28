@@ -53,24 +53,24 @@ const TYPE_BADGE_STYLES: Record<
   { bg: string; text: string; border: string }
 > = {
   اضطراري: {
-    bg: "bg-rose-50",
-    text: "text-rose-700",
-    border: "border-rose-200",
+    bg: "bg-rose-50 dark:bg-rose-950/50",
+    text: "text-rose-700 dark:text-rose-300",
+    border: "border-rose-200 dark:border-rose-800/80",
   },
   مرضي: {
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-    border: "border-blue-200",
+    bg: "bg-blue-50 dark:bg-blue-950/50",
+    text: "text-blue-700 dark:text-blue-300",
+    border: "border-blue-200 dark:border-blue-800/80",
   },
   مرافق: {
-    bg: "bg-purple-50",
-    text: "text-purple-700",
-    border: "border-purple-200",
+    bg: "bg-purple-50 dark:bg-purple-950/50",
+    text: "text-purple-700 dark:text-purple-300",
+    border: "border-purple-200 dark:border-purple-800/80",
   },
   أخرى: {
-    bg: "bg-teal-50",
-    text: "text-teal-700",
-    border: "border-teal-200",
+    bg: "bg-teal-50 dark:bg-teal-950/50",
+    text: "text-teal-700 dark:text-teal-300",
+    border: "border-teal-200 dark:border-teal-800/80",
   },
 };
 
