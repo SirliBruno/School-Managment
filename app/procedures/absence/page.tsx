@@ -41,27 +41,27 @@ export default function AbsenceProcedurePage() {
           { label: "مساءلة غياب" },
         ]}
         description="توثيق غيابات المعلمات وإرسال المساءلات الرسمية واستلام الإفادات والمرفقات آلياً"
-        actionButtons={
-          <>
+        primaryAction={
+          <Button
+            variant="emerald"
+            size="sm"
+            icon={<MessageCircle className="w-4 h-4" />}
+            onClick={() => setIsSendModalOpen(true)}
+            className="shadow-2xs font-bold"
+          >
+            إرسال مساءلة واتساب
+          </Button>
+        }
+        actions={
+          <Link href="/teachers">
             <Button
-              variant="emerald"
+              variant="secondary"
               size="sm"
-              icon={<MessageCircle className="w-4 h-4" />}
-              onClick={() => setIsSendModalOpen(true)}
+              icon={<Users className="w-4 h-4 text-[#137a85]" />}
             >
-              إرسال مساءلة واتساب
+              سجل المعلمات ({availableTeachers})
             </Button>
-
-            <Link href="/teachers">
-              <Button
-                variant="secondary"
-                size="sm"
-                icon={<Users className="w-4 h-4 text-[#137a85]" />}
-              >
-                سجل المعلمات ({availableTeachers})
-              </Button>
-            </Link>
-          </>
+          </Link>
         }
       />
 

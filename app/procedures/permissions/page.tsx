@@ -273,15 +273,16 @@ export default function PermissionsManagementPage() {
           { label: "استئذان الموظفين" },
         ]}
         description="إدارة ومتابعة حالات خروج الموظفات أثناء الدوام الرسمي، وتوثيق أوقات الخروج والعودة وحساب المدد بدقة"
-        actionButtons={
+        primaryAction={
           <Button
             variant="primary"
-            size="md"
+            size="sm"
             icon={<Plus className="w-4 h-4 stroke-[2.5]" />}
             onClick={() => {
               setPermissionToEdit(null);
               setIsCreateModalOpen(true);
             }}
+            className="shadow-2xs font-bold"
           >
             تسجيل استئذان جديد
           </Button>

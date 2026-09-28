@@ -51,7 +51,14 @@ const KpiCard: React.FC<KpiCardProps> = ({
       variants={cardItemVariants}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-200 dark:border-slate-800 hover:border-slate-300/80 dark:hover:border-slate-700 flex flex-col justify-between group"
+      className={cn(
+        "relative overflow-hidden bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 cursor-default border border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 flex flex-col justify-between group",
+        "before:absolute before:top-0 before:inset-x-0 before:h-1 before:rounded-t-2xl",
+        badgeType === "danger" && "before:bg-rose-500",
+        badgeType === "warning" && "before:bg-amber-500",
+        badgeType === "info" && "before:bg-indigo-500",
+        badgeType === "success" && "before:bg-emerald-500"
+      )}
     >
       <div>
         <div className="flex items-start justify-between gap-2">

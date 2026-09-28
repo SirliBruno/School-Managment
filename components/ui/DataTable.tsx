@@ -433,10 +433,10 @@ export function DataTable<T>({
           )}
 
           {/* Desktop Table View */}
-          <div className={cn("overflow-x-auto", mobileCardRenderer && "hidden md:block")}>
+          <div className={cn("overflow-x-auto custom-scrollbar", mobileCardRenderer && "hidden md:block")}>
             <table className="w-full text-right border-collapse text-xs sm:text-sm">
               <thead>
-                <tr className="bg-slate-50/90 dark:bg-slate-900/90 border-b border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-bold select-none">
+                <tr className="bg-slate-100/60 dark:bg-slate-800/60 border-b border-slate-200/90 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold select-none">
                   {activeColumns.map((col) => {
                     const isSorted = sortColumnId === col.id;
                     return (
@@ -445,8 +445,8 @@ export function DataTable<T>({
                         scope="col"
                         style={{ width: col.width }}
                         className={cn(
-                          "py-3.5 px-4 text-xs font-bold tracking-tight whitespace-nowrap",
-                          col.sortable && "cursor-pointer hover:bg-slate-100/80 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-slate-100 transition-colors",
+                          "py-3.5 px-4 text-xs font-extrabold tracking-tight whitespace-nowrap",
+                          col.sortable && "cursor-pointer hover:bg-slate-200/60 dark:hover:bg-slate-700/60 hover:text-slate-900 dark:hover:text-white transition-colors",
                           col.align === "center" && "text-center",
                           col.align === "left" && "text-left"
                         )}
@@ -483,7 +483,7 @@ export function DataTable<T>({
                 {paginatedData.map((row, index) => (
                   <tr
                     key={keyExtractor(row, index)}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors duration-150 group"
+                    className="hover:bg-teal-50/50 dark:hover:bg-slate-800/70 transition-colors duration-150 group"
                   >
                     {activeColumns.map((col) => {
                       let cellVal: any;
@@ -497,7 +497,7 @@ export function DataTable<T>({
                         <td
                           key={col.id}
                           className={cn(
-                            "py-3.5 px-4 text-slate-700 dark:text-slate-300 align-middle",
+                            "py-4 px-4 text-slate-700 dark:text-slate-300 align-middle",
                             col.align === "center" && "text-center",
                             col.align === "left" && "text-left"
                           )}
