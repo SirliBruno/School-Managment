@@ -343,13 +343,13 @@ export default function PermissionsManagementPage() {
             <select
               value={selectedTeacherFilter}
               onChange={(e) => setSelectedTeacherFilter(e.target.value)}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#137a85]/30 focus:border-[#137a85] dark:focus:border-teal-500 transition-all cursor-pointer"
             >
               <option value="all">جميع المعلمات ({activePermissions.length})</option>
               {teachers
                 .filter((t) => !t.isArchived)
                 .map((t) => (
-                  <option key={t.id} value={t.id}>
+                  <option key={t.id} value={t.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
                     {t.fullName}
                   </option>
                 ))}

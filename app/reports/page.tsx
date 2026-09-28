@@ -56,7 +56,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "حصر شامل لغياب المعلمات خلال فترة محددة أو شهر معين مع تصنيف الأعذار والملاحظات الإدارية.",
     icon: Calendar,
     badge: "شهري / فترات",
-    accentColor: "border-teal-500 text-teal-600 bg-teal-50",
+    accentColor: "border-teal-500 text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 dark:border-teal-800",
   },
   {
     type: "delay_departure_summary",
@@ -64,7 +64,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "رصد دقائق التأخر الصباحي والخروج المبكر، وتتبع حالات اعتماد الأعذار وقرارات المديرة.",
     icon: Clock,
     badge: "دقائق وساعات",
-    accentColor: "border-amber-500 text-amber-600 bg-amber-50",
+    accentColor: "border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 dark:border-amber-800",
   },
   {
     type: "deduction_decisions_summary",
@@ -72,7 +72,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "سجل قرارات الحسم الإدارية (نموذج 19) الناتجة عن بلوغ نصاب التأخر، وحصر الأيام والدقائق المرحلة.",
     icon: AlertTriangle,
     badge: "قرارات وزارية",
-    accentColor: "border-rose-500 text-rose-600 bg-rose-50",
+    accentColor: "border-rose-500 text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 dark:border-rose-800",
   },
   {
     type: "teacher_detailed_record",
@@ -80,7 +80,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "سجل إداري تراكمي شامل لمعلمة محددة يجمع كل الغيابات، التأخرات، الاستئذان، وقرارات الحسم منذ بداية العام.",
     icon: User,
     badge: "ملف إداري فردي",
-    accentColor: "border-indigo-500 text-indigo-600 bg-indigo-50",
+    accentColor: "border-indigo-500 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 dark:border-indigo-800",
   },
   {
     type: "permissions_summary",
@@ -88,7 +88,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "توثيق رسمي شامل لحالات خروج الموظفات أثناء الدوام، دقائق الاستئذان المعتمدة، وأسباب الخروج.",
     icon: LogOut,
     badge: "استئذان شهري",
-    accentColor: "border-teal-600 text-teal-700 bg-teal-50",
+    accentColor: "border-teal-600 text-teal-700 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 dark:border-teal-800",
   },
   {
     type: "teacher_permissions_record",
@@ -96,7 +96,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "نموذج استئذان رسمي مفصل لموظفة محددة بكافة تواريخ وأوقات الخروج والعودة وحساب المدة الإجمالية.",
     icon: User,
     badge: "استئذان فردي",
-    accentColor: "border-cyan-600 text-cyan-700 bg-cyan-50",
+    accentColor: "border-cyan-600 text-cyan-700 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/40 dark:border-cyan-800",
   },
   {
     type: "permissions_statistics",
@@ -104,7 +104,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "تحليل إحصائي لمؤشرات الاستئذان بالمدرسة: إجمالي الدقائق، أكثر الموظفات استئذاناً، ومتوسط المدة.",
     icon: BarChart3,
     badge: "مؤشرات تحليلية",
-    accentColor: "border-violet-500 text-violet-600 bg-violet-50",
+    accentColor: "border-violet-500 text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/40 dark:border-violet-800",
   },
   {
     type: "school_comprehensive",
@@ -112,7 +112,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "تقرير إداري شامل لمديرة المدرسة يجمع المؤشرات العامة لجميع المعلمات ومستوى الانضباط.",
     icon: School,
     badge: "تقرير المديرة",
-    accentColor: "border-emerald-500 text-emerald-600 bg-emerald-50",
+    accentColor: "border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 dark:border-emerald-800",
   },
   {
     type: "custom_period",
@@ -120,7 +120,7 @@ const REPORT_CARDS: ReportCardDef[] = [
     description: "استخراج حصر مخصص يحدده المستخدم بتاريخ بداية ونهاية مع تصفيات دقيقة حسب التخصص وحالة العمل.",
     icon: Layers,
     badge: "مخصص ومرن",
-    accentColor: "border-sky-500 text-sky-600 bg-sky-50",
+    accentColor: "border-sky-500 text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 dark:border-sky-800",
   },
 ];
 
@@ -520,7 +520,7 @@ export default function ReportsCenterPage() {
                     className={cn(
                       "bg-white dark:bg-slate-900 border rounded-2xl p-5 shadow-2xs transition-all cursor-pointer flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5",
                       isSelected
-                        ? "border-[#137a85] ring-2 ring-[#137a85]/20 bg-teal-50/20 dark:bg-teal-950/20"
+                        ? "border-[#137a85] dark:border-teal-500 ring-2 ring-[#137a85]/20 dark:ring-teal-500/30 bg-teal-50/40 dark:bg-teal-950/40"
                         : "border-slate-200/90 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                     )}
                   >
