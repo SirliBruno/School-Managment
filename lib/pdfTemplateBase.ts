@@ -5,9 +5,10 @@ import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
  * الأنماط القياسية الموحدة لجميع استمارات ونماذج الطباعة PDF في المنصة
  */
 export const UNIFIED_PDF_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 @page { size: A4; margin: 0; }
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-body { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 9pt; line-height: 1.35; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif; }
+body { font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 9pt; line-height: 1.35; }
 .page { width: 210mm; height: 297mm; padding: 7mm 9mm; overflow: hidden; }
 .frame { border: 2px dashed #0f766e; padding: 6mm 7mm; height: 283mm; display: flex; flex-direction: column; }
 .hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f766e; padding-bottom: 8px; margin-bottom: 10px; }
@@ -156,6 +157,8 @@ window.onafterprint = function() {
 if (document.fonts && document.fonts.ready) {
   document.fonts.ready.then(function() {
     setTimeout(doPrint, 350);
+  }).catch(function() {
+    setTimeout(doPrint, 500);
   });
   setTimeout(doPrint, 1500);
 } else {

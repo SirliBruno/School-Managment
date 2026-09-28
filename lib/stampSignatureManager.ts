@@ -7,6 +7,8 @@
 import {
   DEFAULT_STAMP_BASE64,
   DEFAULT_SIGNATURE_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "./defaultApprovalAssets";
 import { SCHOOL_CONFIG } from "./appConfig";
 import { DEFAULT_ADMIN_NAME, DEFAULT_ADMIN_ROLE_LABEL } from "@/context/AuthContext";
@@ -24,6 +26,7 @@ export const APPROVAL_SETTINGS_STORAGE_KEY = "school_settings_approval_v1";
 export interface SchoolApprovalSettings {
   schoolStampUrl: string;
   principalSignatureUrl: string;
+  vicePrincipalSignatureUrl?: string;
   stampEnabled: boolean;
   signatureEnabled: boolean;
   updatedBy: string;
@@ -32,7 +35,8 @@ export interface SchoolApprovalSettings {
 
 export const DEFAULT_APPROVAL_SETTINGS: SchoolApprovalSettings = {
   schoolStampUrl: DEFAULT_STAMP_BASE64,
-  principalSignatureUrl: DEFAULT_SIGNATURE_BASE64,
+  principalSignatureUrl: DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  vicePrincipalSignatureUrl: DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
   stampEnabled: true,
   signatureEnabled: true,
   updatedBy: DEFAULT_ADMIN_NAME,
@@ -48,6 +52,7 @@ if (typeof window !== "undefined") {
     inMemorySettings = {
       schoolStampUrl: cloud.stampUrl || inMemorySettings.schoolStampUrl,
       principalSignatureUrl: cloud.signatureUrl || inMemorySettings.principalSignatureUrl,
+      vicePrincipalSignatureUrl: cloud.vicePrincipalSignatureUrl || inMemorySettings.vicePrincipalSignatureUrl,
       stampEnabled: cloud.stampEnabled,
       signatureEnabled: cloud.signatureEnabled,
       updatedBy: DEFAULT_ADMIN_NAME,
@@ -70,6 +75,7 @@ export function getSchoolApprovalSettings(): SchoolApprovalSettings {
     return {
       schoolStampUrl: cloud.stampUrl || inMemorySettings.schoolStampUrl,
       principalSignatureUrl: cloud.signatureUrl || inMemorySettings.principalSignatureUrl,
+      vicePrincipalSignatureUrl: cloud.vicePrincipalSignatureUrl || inMemorySettings.vicePrincipalSignatureUrl,
       stampEnabled: cloud.stampEnabled,
       signatureEnabled: cloud.signatureEnabled,
       updatedBy: DEFAULT_ADMIN_NAME,
@@ -89,7 +95,8 @@ export function getSchoolApprovalSettings(): SchoolApprovalSettings {
     const parsed = JSON.parse(raw);
     return {
       schoolStampUrl: typeof parsed.schoolStampUrl === "string" ? parsed.schoolStampUrl : DEFAULT_STAMP_BASE64,
-      principalSignatureUrl: typeof parsed.principalSignatureUrl === "string" ? parsed.principalSignatureUrl : DEFAULT_SIGNATURE_BASE64,
+      principalSignatureUrl: typeof parsed.principalSignatureUrl === "string" ? parsed.principalSignatureUrl : DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+      vicePrincipalSignatureUrl: typeof parsed.vicePrincipalSignatureUrl === "string" ? parsed.vicePrincipalSignatureUrl : DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
       stampEnabled: parsed.stampEnabled !== false,
       signatureEnabled: parsed.signatureEnabled !== false,
       updatedBy: parsed.updatedBy || DEFAULT_ADMIN_NAME,

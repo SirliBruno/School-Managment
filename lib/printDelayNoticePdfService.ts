@@ -7,6 +7,12 @@ import {
 } from "@/lib/pdfTemplateBase";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { DEFAULT_PRINCIPAL_NAME } from "@/lib/schoolSettingsService";
+import {
+  DEFAULT_STAMP_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
+} from "@/lib/defaultApprovalAssets";
 
 export interface DelayNoticePdfData {
   notice: DelayNotice;
@@ -51,7 +57,7 @@ function esc(s: string | undefined | null): string {
     .replace(/'/g, "&#039;");
 }
 
-function buildHtml(data: DelayNoticePdfData): string {
+export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
   const { notice, teacher } = data;
   const teacherName = esc(notice.teacherName || teacher.fullName || teacher.name);
   const jobNumber = esc(notice.nationalId || teacher.nationalId || notice.jobNumber || teacher.username || teacher.jobNumber);
@@ -114,15 +120,23 @@ function buildHtml(data: DelayNoticePdfData): string {
   const isRejected = notice.directorOpinion === "rejected_with_deduction";
 
   const settings = getSchoolApprovalSettings();
-  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
-  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+  const showStamp = settings.stampEnabled;
+  const showPrincipalSig = settings.signatureEnabled;
+  const showWakilaSig = settings.signatureEnabled;
 
-  const stampHtml = showStamp
-    ? `<img src="${settings.schoolStampUrl}" alt="ختم المدرسة" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
+  const stampSrc = settings.schoolStampUrl || DEFAULT_STAMP_BASE64;
+  const stampHtml = showStamp && stampSrc
+    ? `<img src="${stampSrc}" alt="الختم الرسمي" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
     : "";
 
-  const sigHtml = showSig
-    ? `<img src="${settings.principalSignatureUrl}" alt="التوقيع" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+  const principalSigSrc = settings.principalSignatureUrl || DEFAULT_PRINCIPAL_SIGNATURE_BASE64;
+  const principalSigHtml = showPrincipalSig && principalSigSrc
+    ? `<img src="${principalSigSrc}" alt="توقيع المديرة" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+    : "........................";
+
+  const wakilaSigSrc = settings.vicePrincipalSignatureUrl || DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64;
+  const wakilaSigHtml = showWakilaSig && wakilaSigSrc
+    ? `<img src="${wakilaSigSrc}" alt="توقيع الوكيلة" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
     : "........................";
 
   const headerHtml = renderOfficialHeader({
@@ -139,7 +153,9 @@ function buildHtml(data: DelayNoticePdfData): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>تنبيه عن تأخر / انصراف - ${teacherName}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 ${UNIFIED_PDF_CSS}
 </style>
@@ -207,8 +223,11 @@ ${schoolTableHtml}
   </div>
 
   <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>فاطمة فلاتة</strong></div>
-    <div style="flex: 1; text-align: center;">التوقيع : ........................</div>
+    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${DEFAULT_PRINCIPAL_NAME}</strong></div>
+    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      <span>التوقيع :</span>
+      <span>${principalSigHtml}</span>
+    </div>
     <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ${hijriYear} هـ</div>
   </div>
 </div>
@@ -257,7 +276,7 @@ ${schoolTableHtml}
     <div style="flex: 1.3; text-align: right;">وكيلة الشؤون التعليمية : <strong>${DEFAULT_ADMIN_NAME}</strong></div>
     <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
       <span>التوقيع :</span>
-      <span>${sigHtml}</span>
+      <span>${wakilaSigHtml}</span>
     </div>
     ${showStamp ? `<div style="width: 60px; text-align: center;">${stampHtml}</div>` : ""}
     <div style="flex: 0.8; text-align: left;">التاريخ : ${directorSigDate}</div>
@@ -298,7 +317,7 @@ export function printDelayNoticePdf(notice: DelayNotice, teacher?: Teacher): voi
     jobTitle: "معلم",
   };
 
-  const html = buildHtml({ notice, teacher: resolvedTeacher });
+  const html = buildDelayNoticePdfHtml({ notice, teacher: resolvedTeacher });
 
   // Strategy 1: Hidden iframe (bypasses popup blocker reliably)
   try {

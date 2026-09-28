@@ -9,6 +9,8 @@ import { SCHOOL_CONFIG } from "@/lib/appConfig";
 import {
   DEFAULT_STAMP_BASE64,
   DEFAULT_SIGNATURE_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "./defaultApprovalAssets";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { validateSecureUpload } from "@/lib/fileValidation";
@@ -21,6 +23,7 @@ export interface SchoolSettingsData {
   vicePrincipalName: string;
   stampUrl: string;
   signatureUrl: string;
+  vicePrincipalSignatureUrl?: string;
   stampEnabled: boolean;
   signatureEnabled: boolean;
   updatedAt?: string;
@@ -33,11 +36,15 @@ export const DEFAULT_SCHOOL_SETTINGS: SchoolSettingsData = {
   principalName: SCHOOL_CONFIG.principalName || "فاطمة فلاتة",
   vicePrincipalName: SCHOOL_CONFIG.vicePrincipalName || "أحلام صالح الضبيبي",
   stampUrl: DEFAULT_STAMP_BASE64,
-  signatureUrl: DEFAULT_SIGNATURE_BASE64,
+  signatureUrl: DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  vicePrincipalSignatureUrl: DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
   stampEnabled: true,
   signatureEnabled: true,
   updatedAt: new Date().toISOString(),
 };
+
+export const DEFAULT_PRINCIPAL_NAME = DEFAULT_SCHOOL_SETTINGS.principalName;
+export const DEFAULT_VICE_PRINCIPAL_NAME = DEFAULT_SCHOOL_SETTINGS.vicePrincipalName;
 
 // الذاكرة المؤقتة أثناء التشغيل السريع
 let inMemorySettings: SchoolSettingsData = { ...DEFAULT_SCHOOL_SETTINGS };

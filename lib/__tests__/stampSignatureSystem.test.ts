@@ -11,12 +11,16 @@ import {
 import {
   DEFAULT_STAMP_BASE64,
   DEFAULT_SIGNATURE_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "@/lib/defaultApprovalAssets";
 import { buildReportHtml, PdfReportPayload } from "@/lib/reportPdfService";
 import { generatePermissionPdfHtml } from "@/lib/printPermissionPdfService";
 import { buildDeductionDecisionHtml } from "@/lib/printDeductionDecisionPdfService";
+import { buildAbsencePdfHtml } from "@/lib/printPdfService";
+import { buildDelayNoticePdfHtml } from "@/lib/printDelayNoticePdfService";
 import { getAuditLogs } from "@/lib/auditLogger";
-import type { EmployeePermission, Teacher } from "@/types/teacher";
+import type { EmployeePermission, Teacher, DelayNotice } from "@/types/teacher";
 
 describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
   beforeEach(() => {
@@ -206,9 +210,70 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(html).toContain("alt=\"توقيع الاعتماد\"");
     });
 
-    it("embeds stamp and signature and dynamic principal title in absence inquiries (نموذج مساءلة غياب)", async () => {
-      const { printAbsencePdf } = await import("@/lib/printPdfService");
-      expect(printAbsencePdf).toBeDefined();
+    it("embeds principal signature in Stage 1, vice principal signature & stamp in Stage 3, and Cairo font in absence inquiries", () => {
+      const html = buildAbsencePdfHtml({
+        teacherName: "فاطمة أحمد",
+        username: "1098765432",
+        specialty: "لغة عربية",
+        jobTitle: "معلم ممارس",
+        employmentStatus: "على رأس العمل",
+        absenceCount: 3,
+        absenceDate: "2026-09-28",
+        absenceType: "اضطراري",
+        absenceReason: "ظرف عائلي طارئ",
+      });
+
+      // Stage 1: Principal Name & Principal Signature
+      expect(html).toContain("مديرة المدرسة : <strong>فاطمة فلاتة</strong>");
+      expect(html).toContain("alt=\"توقيع المديرة\"");
+
+      // Stage 3: Vice Principal Name & Vice Principal Signature & Stamp
+      expect(html).toContain("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>");
+      expect(html).toContain("alt=\"توقيع الوكيلة\"");
+      expect(html).toContain("alt=\"الختم الرسمي\"");
+
+      // Font & Encoding
+      expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
+      expect(html).toContain("font-family: 'Cairo'");
+    });
+
+    it("embeds principal and vice-principal signatures in delay notices (تنبيه عن تأخر / انصراف)", () => {
+      const mockTeacher: Teacher = {
+        id: "tch-10",
+        name: "منى المحمدي",
+        fullName: "منى المحمدي",
+        nationalId: "1055544433",
+        specialty: "دراسات إسلامية",
+        jobTitle: "معلم ممارس",
+      };
+
+      const mockNotice: DelayNotice = {
+        id: "dn-01",
+        teacherId: "tch-10",
+        teacherName: "منى المحمدي",
+        date: "2026-09-28",
+        violationLateMorning: true,
+        minutesLate: 25,
+        status: "pending",
+        createdAt: "2026-09-28T07:30:00.000Z",
+      };
+
+      const html = buildDelayNoticePdfHtml({
+        notice: mockNotice,
+        teacher: mockTeacher,
+      });
+
+      // Stage 1: Principal signature
+      expect(html).toContain("مديرة المدرسة : <strong>فاطمة فلاتة</strong>");
+      expect(html).toContain("alt=\"توقيع المديرة\"");
+
+      // Stage 3: Vice Principal signature & Stamp
+      expect(html).toContain("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>");
+      expect(html).toContain("alt=\"توقيع الوكيلة\"");
+      expect(html).toContain("alt=\"الختم الرسمي\"");
+
+      // Font verification
+      expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
     });
   });
 });

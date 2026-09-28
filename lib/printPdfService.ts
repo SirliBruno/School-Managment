@@ -6,6 +6,11 @@ import {
 } from "@/lib/pdfTemplateBase";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
 import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
+import {
+  DEFAULT_STAMP_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
+} from "@/lib/defaultApprovalAssets";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
 
@@ -69,7 +74,7 @@ function esc(s: string | undefined | null): string {
     .replace(/'/g, "&#039;");
 }
 
-function buildHtml(data: AbsencePdfData): string {
+export function buildAbsencePdfHtml(data: AbsencePdfData): string {
   const dayName = getArabicDayName(data.absenceDate);
   const dateDMY = formatDMY(data.absenceDate);
   const name = esc(data.teacherName);
@@ -82,19 +87,27 @@ function buildHtml(data: AbsencePdfData): string {
 
   const settings = getSchoolApprovalSettings();
   const schoolSettings = getActiveSchoolSettings();
-  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
-  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+  const showStamp = settings.stampEnabled && !!(settings.schoolStampUrl || DEFAULT_STAMP_BASE64);
+  const showPrincipalSig = settings.signatureEnabled && !!(settings.principalSignatureUrl || DEFAULT_PRINCIPAL_SIGNATURE_BASE64);
+  const showWakilaSig = settings.signatureEnabled && !!(settings.vicePrincipalSignatureUrl || DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64);
 
-  const principalName = esc(data.principalName || schoolSettings.principalName || "مديرة المدرسة");
-  const directManagerName = esc(data.directManagerName || schoolSettings.vicePrincipalName || DEFAULT_ADMIN_NAME);
+  const principalName = esc(data.principalName || schoolSettings.principalName || "فاطمة فلاتة");
+  const directManagerName = esc(data.directManagerName || schoolSettings.vicePrincipalName || "أحلام صالح الضبيبي");
   const schoolName = esc(data.schoolName || schoolSettings.schoolName || SCHOOL_CONFIG.schoolName);
 
-  const stampHtml = showStamp
-    ? `<img src="${settings.schoolStampUrl}" alt="الختم الرسمي" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
+  const stampSrc = settings.schoolStampUrl || DEFAULT_STAMP_BASE64;
+  const stampHtml = showStamp && stampSrc
+    ? `<img src="${stampSrc}" alt="الختم الرسمي" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
     : "";
 
-  const sigHtml = showSig
-    ? `<img src="${settings.principalSignatureUrl}" alt="التوقيع" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+  const principalSigSrc = settings.principalSignatureUrl || DEFAULT_PRINCIPAL_SIGNATURE_BASE64;
+  const principalSigHtml = showPrincipalSig && principalSigSrc
+    ? `<img src="${principalSigSrc}" alt="توقيع المديرة" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+    : "........................";
+
+  const wakilaSigSrc = settings.vicePrincipalSignatureUrl || DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64;
+  const wakilaSigHtml = showWakilaSig && wakilaSigSrc
+    ? `<img src="${wakilaSigSrc}" alt="توقيع الوكيلة" style="max-height: 38px; max-width: 110px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
     : "........................";
 
   const reasonHtml = rawReason
@@ -121,7 +134,9 @@ function buildHtml(data: AbsencePdfData): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>مساءلة غياب - ${name}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 ${UNIFIED_PDF_CSS}
 </style>
@@ -173,7 +188,10 @@ ${schoolTableHtml}
   </div>
   <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
     <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${principalName}</strong></div>
-    <div style="flex: 1; text-align: center;">التوقيع : ........................</div>
+    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      <span>التوقيع :</span>
+      <span>${principalSigHtml}</span>
+    </div>
     <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
   </div>
 </div>
@@ -220,7 +238,7 @@ ${schoolTableHtml}
     <div style="flex: 1.3; text-align: right">وكيلة الشؤون التعليمية : <strong>${directManagerName}</strong></div>
     <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
       <span>التوقيع :</span>
-      <span>${sigHtml}</span>
+      <span>${wakilaSigHtml}</span>
     </div>
     ${showStamp ? `<div style="width: 55px; text-align: center;">${stampHtml}</div>` : ""}
     <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
@@ -246,13 +264,13 @@ ${UNIFIED_PRINT_SCRIPT}
 }
 
 export function generateAbsencePdfHtml(data: AbsencePdfData): string {
-  return buildHtml(data);
+  return buildAbsencePdfHtml(data);
 }
 
 export function printAbsencePdf(data: AbsencePdfData): void {
   if (typeof window === "undefined") return;
 
-  const html = buildHtml(data);
+  const html = buildAbsencePdfHtml(data);
 
   // Strategy 1: Hidden iframe (Bypasses popup blocker completely on all desktop & mobile browsers)
   try {
