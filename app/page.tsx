@@ -483,6 +483,7 @@ export default function DashboardPage() {
         absenceDate: record.date,
         absenceType: record.type,
         absenceReason: record.reason,
+        attachmentUrl: record.attachmentUrl,
       });
 
       showToast({

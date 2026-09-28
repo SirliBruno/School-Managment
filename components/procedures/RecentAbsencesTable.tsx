@@ -96,6 +96,7 @@ export const RecentAbsencesTable: React.FC = () => {
         absenceDate: record.date,
         absenceType: record.type,
         absenceReason: record.reason,
+        attachmentUrl: record.attachmentUrl,
       });
 
       showToast({

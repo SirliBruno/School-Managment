@@ -94,6 +94,7 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
             : inquiry.absenceDate,
         absenceType: inquiry.absenceType || "مرضي",
         absenceReason: inquiry.teacherReason || "إفادة المساءلة الإلكترونية",
+        attachmentUrl: inquiry.attachmentUrl,
       });
     } catch (err) {
       console.error("فشل طباعة الاستمارة:", err);

@@ -241,6 +241,7 @@ export default function ProceduresListPage() {
         absenceDate: inq.absenceDate,
         absenceType: inq.absenceType || "اضطراري",
         absenceReason: inq.teacherReason || "مساءلة غياب رسمية",
+        attachmentUrl: inq.attachmentUrl,
       });
     }
   };

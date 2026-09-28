@@ -298,3 +298,75 @@ CREATE POLICY "Allow anon all on audit_logs"
     TO anon, authenticated
     USING (true)
     WITH CHECK (true);
+
+-- 11. جدول إعدادات المدرسة السحابية (school_settings)
+CREATE TABLE IF NOT EXISTS public.school_settings (
+    id TEXT PRIMARY KEY DEFAULT 'current',
+    school_name TEXT NOT NULL DEFAULT 'ثانوية خديجة بنت خويلد',
+    school_logo TEXT,
+    principal_name TEXT DEFAULT 'ريم هزاع الشمري',
+    vice_principal_name TEXT DEFAULT 'أحلام صالح الضبيبي',
+    stamp_url TEXT,
+    signature_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.school_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon all on school_settings" ON public.school_settings;
+CREATE POLICY "Allow anon all on school_settings"
+    ON public.school_settings FOR ALL
+    TO anon, authenticated
+    USING (true)
+    WITH CHECK (true);
+
+-- 12. حاوية التخزين السحابي لأصول المدرسة والأختام (school-assets)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('school-assets', 'school-assets', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Allow anon all on school-assets" ON storage.objects;
+CREATE POLICY "Allow anon all on school-assets"
+    ON storage.objects FOR ALL
+    TO anon, authenticated
+    USING (bucket_id = 'school-assets')
+    WITH CHECK (bucket_id = 'school-assets');
+
+-- 13. تفعيل البث المباشر (Realtime CDC) لكافة الجداول التشغيلية
+DO $$
+BEGIN
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.teachers;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.absence_records;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.absence_inquiries;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.delay_notices;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.employee_permissions;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.deduction_decisions;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+
+    BEGIN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.school_settings;
+    EXCEPTION WHEN duplicate_object THEN NULL;
+    END;
+END $$;

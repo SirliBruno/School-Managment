@@ -5,6 +5,7 @@ import {
   renderSchoolInfoTable,
 } from "@/lib/pdfTemplateBase";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
+import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
 
@@ -19,6 +20,7 @@ export interface AbsencePdfData {
   absenceDate: string;
   absenceType: string;
   absenceReason: string;
+  attachmentUrl?: string;
   directManagerName?: string;
   principalName?: string;
   schoolName?: string;
@@ -79,12 +81,13 @@ function buildHtml(data: AbsencePdfData): string {
   const rawReason = data.absenceReason?.trim() || "";
 
   const settings = getSchoolApprovalSettings();
+  const schoolSettings = getActiveSchoolSettings();
   const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
   const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
 
-  const principalName = esc(data.principalName || "فاطمة فلاتة");
-  const directManagerName = esc(data.directManagerName || DEFAULT_ADMIN_NAME);
-  const schoolName = esc(data.schoolName || SCHOOL_CONFIG.schoolName);
+  const principalName = esc(data.principalName || schoolSettings.principalName || "مديرة المدرسة");
+  const directManagerName = esc(data.directManagerName || schoolSettings.vicePrincipalName || DEFAULT_ADMIN_NAME);
+  const schoolName = esc(data.schoolName || schoolSettings.schoolName || SCHOOL_CONFIG.schoolName);
 
   const stampHtml = showStamp
     ? `<img src="${settings.schoolStampUrl}" alt="الختم الرسمي" style="max-height: 55px; max-width: 55px; object-fit: contain; margin: 0 auto; display: block;" />`
@@ -97,6 +100,12 @@ function buildHtml(data: AbsencePdfData): string {
   const reasonHtml = rawReason
     ? `<span style="font-weight:bold">${esc(rawReason)}</span>`
     : `<span style="color:#94a3b8">......................................................................................................................................................................</span>`;
+
+  const attachmentHtml = data.attachmentUrl
+    ? `<div style="margin-top:4px;padding:3px 6px;border-radius:4px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:7.5pt;color:#166534;display:inline-block">
+        ✓ <strong>المرفق الرسمي:</strong> تم إرفاق المستند إلكترونياً بنجاح
+       </div>`
+    : "";
 
   const headerHtml = renderOfficialHeader({
     formTitle: "مساءلة غياب",
@@ -180,6 +189,7 @@ ${schoolTableHtml}
     أفيدكم أن أسباب ذلك ما يلي :
   </div>
   <div class="rbox">${reasonHtml}</div>
+  ${attachmentHtml}
   <div class="sig">
     <div style="width:40%;text-align:right">اسم الموظفة : <strong>${name}</strong></div>
     <div style="width:32%;text-align:center">التوقيع : ........................</div>
@@ -233,6 +243,10 @@ ${schoolTableHtml}
 ${UNIFIED_PRINT_SCRIPT}
 </body>
 </html>`;
+}
+
+export function generateAbsencePdfHtml(data: AbsencePdfData): string {
+  return buildHtml(data);
 }
 
 export function printAbsencePdf(data: AbsencePdfData): void {

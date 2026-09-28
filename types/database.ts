@@ -227,3 +227,15 @@ export interface RealtimeDbPayload<T extends Record<string, unknown>> {
   errors?: string[] | null;
 }
 
+export interface DbSchoolSettingsRow {
+  id: string;
+  school_name: string;
+  school_logo: string | null;
+  principal_name: string | null;
+  vice_principal_name: string | null;
+  stamp_url: string | null;
+  signature_url: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+

@@ -472,6 +472,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
           absenceDate: formattedAbsenceDate,
           absenceType: newRecord.type,
           absenceReason: newRecord.reason,
+          attachmentUrl: newRecord.attachmentUrl,
         });
 
         setSuccessMessage(
@@ -510,6 +511,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
         absenceDate: lastSavedRecord.date,
         absenceType: lastSavedRecord.type,
         absenceReason: lastSavedRecord.reason,
+        attachmentUrl: lastSavedRecord.attachmentUrl,
       });
     } catch (err) {
       console.error("فشل طباعة ملف PDF:", err);

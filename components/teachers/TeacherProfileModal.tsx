@@ -251,6 +251,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         absenceDate: record.date,
         absenceType: record.type,
         absenceReason: record.reason,
+        attachmentUrl: record.attachmentUrl,
       });
 
     } catch (err) {

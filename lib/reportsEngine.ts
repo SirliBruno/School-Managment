@@ -14,6 +14,7 @@ import {
   getAllSettledNoticeIds,
 } from "@/lib/delayDeductionIntegration";
 import { MINUTES_PER_WORK_DAY, MINUTES_PER_HOUR } from "@/lib/deductionCalculator";
+import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
 
 export interface ReportGeneratedData {
   payload: PdfReportPayload;
@@ -62,8 +63,9 @@ export function generateReportData(
   permissions: EmployeePermission[] = []
 ): ReportGeneratedData {
   const saudiToday = getSaudiToday();
-  const schoolName = "الثانوية الخامسة مسارات";
-  const principalName = "فاطمة فلاتة";
+  const schoolSettings = getActiveSchoolSettings();
+  const schoolName = schoolSettings.schoolName || "المدرسة";
+  const principalName = schoolSettings.principalName || "مديرة المدرسة";
 
   // استبعاد المعلمات والسجلات المؤرشفة لضمان دقة البيانات 100%
   const activeTeachers = teachers.filter((t) => !t.isArchived);

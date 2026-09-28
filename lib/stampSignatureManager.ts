@@ -12,6 +12,13 @@ import { SCHOOL_CONFIG } from "./appConfig";
 import { DEFAULT_ADMIN_NAME, DEFAULT_ADMIN_ROLE_LABEL } from "@/context/AuthContext";
 import { logAuditEvent } from "./auditLogger";
 
+import {
+  getActiveSchoolSettings,
+  updateSchoolSettingsInCloud,
+  onSchoolSettingsChanged,
+} from "./schoolSettingsService";
+import { isSupabaseConfigured } from "./supabase";
+
 export const APPROVAL_SETTINGS_STORAGE_KEY = "school_settings_approval_v1";
 
 export interface SchoolApprovalSettings {
@@ -35,10 +42,41 @@ export const DEFAULT_APPROVAL_SETTINGS: SchoolApprovalSettings = {
 // In-memory cache for SSR, Node, and test environments
 let inMemorySettings: SchoolApprovalSettings = { ...DEFAULT_APPROVAL_SETTINGS };
 
+// مزامنة فورية مع خدمة الإعدادات السحابية
+if (typeof window !== "undefined") {
+  onSchoolSettingsChanged((cloud) => {
+    inMemorySettings = {
+      schoolStampUrl: cloud.stampUrl || inMemorySettings.schoolStampUrl,
+      principalSignatureUrl: cloud.signatureUrl || inMemorySettings.principalSignatureUrl,
+      stampEnabled: cloud.stampEnabled,
+      signatureEnabled: cloud.signatureEnabled,
+      updatedBy: DEFAULT_ADMIN_NAME,
+      updatedAt: cloud.updatedAt || new Date().toISOString(),
+    };
+  });
+}
+
 /**
- * جلب إعدادات الختم والتوقيع الحالية
+ * جلب إعدادات الختم والتوقيع الحالية (محدثة سحابياً)
  */
 export function getSchoolApprovalSettings(): SchoolApprovalSettings {
+  const cloud = getActiveSchoolSettings();
+  if (isSupabaseConfigured()) {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(APPROVAL_SETTINGS_STORAGE_KEY);
+      } catch {}
+    }
+    return {
+      schoolStampUrl: cloud.stampUrl || inMemorySettings.schoolStampUrl,
+      principalSignatureUrl: cloud.signatureUrl || inMemorySettings.principalSignatureUrl,
+      stampEnabled: cloud.stampEnabled,
+      signatureEnabled: cloud.signatureEnabled,
+      updatedBy: DEFAULT_ADMIN_NAME,
+      updatedAt: cloud.updatedAt || inMemorySettings.updatedAt,
+    };
+  }
+
   if (typeof window === "undefined") {
     return inMemorySettings;
   }
@@ -80,9 +118,22 @@ export function updateSchoolApprovalSettings(
 
   inMemorySettings = updated;
 
+  // مزامنة فورية مع سوبابيز السحابي
+  updateSchoolSettingsInCloud({
+    stampUrl: updated.schoolStampUrl,
+    signatureUrl: updated.principalSignatureUrl,
+    stampEnabled: updated.stampEnabled,
+    signatureEnabled: updated.signatureEnabled,
+  }).catch(() => {});
+
   if (typeof window !== "undefined") {
     try {
-      localStorage.setItem(APPROVAL_SETTINGS_STORAGE_KEY, JSON.stringify(updated));
+      if (isSupabaseConfigured()) {
+        // عند تفعيل السحابة، نمنع تماماً تخزين الختم والتوقيع في LocalStorage
+        localStorage.removeItem(APPROVAL_SETTINGS_STORAGE_KEY);
+      } else {
+        localStorage.setItem(APPROVAL_SETTINGS_STORAGE_KEY, JSON.stringify(updated));
+      }
     } catch (e) {
       console.warn("تعذر تخزين إعدادات الختم والتوقيع محلياً:", e);
     }

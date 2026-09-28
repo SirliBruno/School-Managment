@@ -1,4 +1,5 @@
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
+import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
 
 /**
  * الأنماط القياسية الموحدة لجميع استمارات ونماذج الطباعة PDF في المنصة
@@ -93,7 +94,8 @@ export function renderOfficialHeader({
 /**
  * بناء جدول بيانات المدرسة الموحد (الجدول الأول)
  */
-export function renderSchoolInfoTable(civilRegistry: string, schoolName = "الثانوية الخامسة مسارات"): string {
+export function renderSchoolInfoTable(civilRegistry: string, schoolName?: string): string {
+  const resolvedSchoolName = schoolName || getActiveSchoolSettings().schoolName || "المدرسة";
   return `
 <!-- Table 1: School Info -->
 <table class="t1">
@@ -105,7 +107,7 @@ export function renderSchoolInfoTable(civilRegistry: string, schoolName = "ال�
   </thead>
   <tbody>
     <tr>
-      <td class="vc" style="font-weight:800;color:#0f766e">${schoolName}</td>
+      <td class="vc" style="font-weight:800;color:#0f766e">${resolvedSchoolName}</td>
       <td class="vc" style="font-family:monospace;font-weight:800;border-left:none">${civilRegistry || "—"}</td>
     </tr>
   </tbody>

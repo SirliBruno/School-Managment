@@ -38,6 +38,10 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 import { ApprovalAssetsModal } from "@/components/settings/ApprovalAssetsModal";
+import {
+  getActiveSchoolSettings,
+  onSchoolSettingsChanged,
+} from "@/lib/schoolSettingsService";
 import { cn } from "@/lib/utils";
 
 export const AppHeader: React.FC = () => {
@@ -58,6 +62,14 @@ export const AppHeader: React.FC = () => {
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
+  const [schoolSettings, setSchoolSettings] = useState(getActiveSchoolSettings());
+
+  useEffect(() => {
+    const unsub = onSchoolSettingsChanged((latest) => {
+      setSchoolSettings(latest);
+    });
+    return unsub;
+  }, []);
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const quickActionsRef = useRef<HTMLDivElement>(null);
@@ -156,13 +168,22 @@ export const AppHeader: React.FC = () => {
 
           {/* School Badge & Platform Identity */}
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 flex items-center justify-center text-[#137a85] dark:text-teal-400 shrink-0 shadow-2xs">
-              <Building2 className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 flex items-center justify-center text-[#137a85] dark:text-teal-400 shrink-0 shadow-2xs overflow-hidden">
+              {schoolSettings.schoolLogo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={schoolSettings.schoolLogo}
+                  alt="شعار المدرسة"
+                  className="w-full h-full object-contain p-0.5"
+                />
+              ) : (
+                <Building2 className="w-5 h-5" />
+              )}
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="font-bold text-sm text-slate-900 dark:text-slate-100 truncate">
-                  الثانوية الخامسة مسارات
+                  {schoolSettings.schoolName || "الإدارة المدرسية"}
                 </span>
                 <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/70 text-[#137a85] dark:text-teal-300 text-[10px] font-bold border border-teal-200/60 dark:border-teal-800/80">
                   الإدارة المدرسية
