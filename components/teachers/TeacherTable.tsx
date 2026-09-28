@@ -801,9 +801,9 @@ export const TeacherTable: React.FC = () => {
                 size="sm"
                 onClick={handleLoadOfficialTeachers}
                 disabled={isImportingOfficial}
-                className="inline-flex flex-row items-center gap-2 px-3.5 py-2 text-xs font-bold text-emerald-700 border-emerald-300 hover:bg-emerald-50 whitespace-nowrap shadow-2xs"
+                className="inline-flex flex-row items-center gap-2 px-3.5 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 whitespace-nowrap shadow-2xs"
               >
-                <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span className="whitespace-nowrap">
                   {isImportingOfficial ? "جاري الاستيراد..." : "استيراد الكادر المعتمد"}
                 </span>

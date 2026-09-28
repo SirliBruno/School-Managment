@@ -42,28 +42,28 @@ const ABSENCE_TYPES: {
     label: "اضطراري",
     description: "ظرف عائلي أو شخصي طارئ",
     icon: AlertOctagon,
-    colorClass: "border-blue-300 text-blue-700 bg-blue-50/70 hover:border-blue-400",
+    colorClass: "border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 bg-blue-50/70 dark:bg-blue-950/50 hover:border-blue-400 dark:hover:border-blue-700",
   },
   {
     type: "مرضي",
     label: "مرضي",
     description: "إجازة أو تقرير طبي معتمد",
     icon: Stethoscope,
-    colorClass: "border-emerald-300 text-emerald-700 bg-emerald-50/70 hover:border-emerald-400",
+    colorClass: "border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50/70 dark:bg-emerald-950/50 hover:border-emerald-400 dark:hover:border-emerald-700",
   },
   {
     type: "مرافق",
     label: "مرافق",
     description: "مرافقة مريض بتقرير طبي",
     icon: Users2,
-    colorClass: "border-purple-300 text-purple-700 bg-purple-50/70 hover:border-purple-400",
+    colorClass: "border-purple-300 dark:border-purple-800 text-purple-700 dark:text-purple-300 bg-purple-50/70 dark:bg-purple-950/50 hover:border-purple-400 dark:hover:border-purple-700",
   },
   {
     type: "أخرى",
     label: "أخرى",
     description: "أسباب إدارية أو استثنائية",
     icon: HelpCircle,
-    colorClass: "border-amber-300 text-amber-700 bg-amber-50/70 hover:border-amber-400",
+    colorClass: "border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 bg-amber-50/70 dark:bg-amber-950/50 hover:border-amber-400 dark:hover:border-amber-700",
   },
 ];
 

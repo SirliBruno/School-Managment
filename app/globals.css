@@ -76,15 +76,6 @@ button svg,
   min-height: 48px;
 }
 
-/* Cross-browser scrollbar hiding utility */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
 /* Custom subtle scrollbar for sidebar — WebKit */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;

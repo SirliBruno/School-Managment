@@ -34,10 +34,10 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   // شاشة تحميل أثناء التحقق من الجلسة
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-3 border-teal-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-semibold text-slate-500">
+          <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
             جاري التحقق من الصلاحيات الإدارية...
           </span>
         </div>
@@ -53,7 +53,7 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   // التخطيط الكامل للمنصة الإدارية المحمية
   return (
     <SidebarProvider>
-      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
+      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-slate-950">
         {/* القائمة الجانبية على اليمين */}
         <Sidebar />
 

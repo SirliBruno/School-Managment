@@ -96,10 +96,10 @@ export const ToastProvider: React.FC<{ children: ReactNode }> = ({ children }) =
                 className={cn(
                   "pointer-events-auto p-4 rounded-2xl border shadow-xl flex items-center justify-between gap-3 text-xs md:text-sm font-medium transition-all backdrop-blur-md",
                   isSuccess
-                    ? "bg-emerald-50/95 text-emerald-950 border-emerald-300 shadow-emerald-900/10"
+                    ? "bg-emerald-50/95 dark:bg-emerald-950/95 text-emerald-950 dark:text-emerald-100 border-emerald-300 dark:border-emerald-800 shadow-emerald-900/10"
                     : isError
-                    ? "bg-rose-50/95 text-rose-950 border-rose-300 shadow-rose-900/10"
-                    : "bg-slate-900/95 text-white border-slate-700 shadow-slate-950/20"
+                    ? "bg-rose-50/95 dark:bg-rose-950/95 text-rose-950 dark:text-rose-100 border-rose-300 dark:border-rose-800 shadow-rose-900/10"
+                    : "bg-slate-900/95 dark:bg-slate-900/95 text-white border-slate-700 dark:border-slate-800 shadow-slate-950/20"
                 )}
               >
                 <div className="flex items-center gap-2.5 min-w-0">

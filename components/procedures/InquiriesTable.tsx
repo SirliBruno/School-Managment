@@ -151,12 +151,12 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       sortable: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-700 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+          <div className="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/80 dark:border-emerald-800/80 text-emerald-700 dark:text-emerald-300 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
             {row.teacherName.charAt(0)}
           </div>
           <div>
-            <span className="font-bold text-slate-900 block">{row.teacherName}</span>
-            <span className="text-[11px] text-slate-400 font-mono">
+            <span className="font-bold text-slate-900 dark:text-slate-100 block">{row.teacherName}</span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
               {row.nationalId || row.jobNumber || "—"}
             </span>
           </div>
@@ -171,19 +171,19 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
         const isMulti = Boolean(row.absenceEndDate && row.absenceEndDate !== row.absenceDate);
 
         return (
-          <div className="font-mono text-slate-700">
+          <div className="font-mono text-slate-700 dark:text-slate-300">
             {isMulti ? (
               <div className="flex flex-col gap-1 items-start">
                 <span className="text-xs">
                   {row.absenceDate} إلى {row.absenceEndDate}
                 </span>
-                <span className="inline-flex items-center gap-1 text-[10px] text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded-md border border-teal-200">
+                <span className="inline-flex items-center gap-1 text-[10px] text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
                   {row.daysCount || 2} أيام
                 </span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                 <span>{row.absenceDate}</span>
               </div>
             )}
@@ -195,7 +195,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       id: "mobile",
       header: "رقم الجوال",
       cell: ({ row }) => (
-        <span className="font-mono text-slate-600 text-xs dir-ltr block" dir="ltr">
+        <span className="font-mono text-slate-600 dark:text-slate-400 text-xs dir-ltr block" dir="ltr">
           {row.mobile || "—"}
         </span>
       ),
@@ -205,11 +205,11 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       header: "النوع الموضح",
       cell: ({ row }) => {
         if (!row.absenceType) {
-          return <span className="text-slate-400 text-xs">بانتظار الإفادة</span>;
+          return <span className="text-slate-400 dark:text-slate-500 text-xs">بانتظار الإفادة</span>;
         }
 
         return (
-          <span className="px-2 py-0.5 rounded-lg bg-teal-50 text-[#137a85] font-semibold border border-teal-200 text-xs">
+          <span className="px-2 py-0.5 rounded-lg bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 font-semibold border border-teal-200 dark:border-teal-800 text-xs">
             {row.absenceType}
           </span>
         );
@@ -221,14 +221,14 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       align: "center",
       cell: ({ row }) => {
         if (!row.attachmentUrl) {
-          return <span className="text-slate-400 text-xs">لا يوجد</span>;
+          return <span className="text-slate-400 dark:text-slate-500 text-xs">لا يوجد</span>;
         }
 
         return (
           <button
             type="button"
             onClick={() => handleOpenReview(row)}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 hover:text-teal-900 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-teal-100 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer"
           >
             <Eye className="w-3 h-3" />
             <span>معاينة</span>

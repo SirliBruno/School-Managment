@@ -606,15 +606,15 @@ function DeductionHoursContent() {
           </div>
 
           {/* Section 1: Teacher Selection Card */}
-          <Card className="p-6 border-slate-200/80 shadow-sm space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <Card className="p-6 border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-lg bg-teal-50 border border-teal-100 text-teal-700 flex items-center justify-center font-bold">
+                <div className="w-9 h-9 rounded-lg bg-teal-50 dark:bg-teal-950/60 border border-teal-100 dark:border-teal-800 text-teal-700 dark:text-teal-300 flex items-center justify-center font-bold">
                   ١
                 </div>
                 <div>
-                  <h2 className="text-base font-bold text-slate-800">بيانات المعلمة محل القرار</h2>
-                  <p className="text-xs text-slate-500">اختر المعلمة من السجل المدرسي المعتمد</p>
+                  <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">بيانات المعلمة محل القرار</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">اختر المعلمة من السجل المدرسي المعتمد</p>
                 </div>
               </div>
               {selectedTeacher && (
@@ -623,7 +623,7 @@ function DeductionHoursContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
                 اسم المعلمة <span className="text-rose-500">*</span>
               </label>
               <TeacherCombobox
