@@ -236,10 +236,19 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(html).toContain("مديرة المدرسة : <strong>فاطمة فلاتة</strong>");
       expect(html).toContain("alt=\"توقيع المديرة\"");
 
-      // Stage 3: Vice Principal Name & Vice Principal Signature & Stamp
-      expect(html).toContain("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>");
+      // Stage 3 Ordering: Principal -> Vice Principal -> Stamp at bottom
+      const stage3Idx = html.indexOf("( ٣ ) قرار مديرة المدرسة");
+      expect(stage3Idx).toBeGreaterThan(0);
+
+      const stage3PrincipalIdx = html.indexOf("مديرة المدرسة : <strong>فاطمة فلاتة</strong>", stage3Idx);
+      const stage3WakilaIdx = html.indexOf("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>", stage3Idx);
+      const stage3StampIdx = html.indexOf("alt=\"الختم الرسمي\"", stage3Idx);
+
+      expect(stage3PrincipalIdx).toBeGreaterThan(stage3Idx);
+      expect(stage3WakilaIdx).toBeGreaterThan(stage3PrincipalIdx);
+      expect(stage3StampIdx).toBeGreaterThan(stage3WakilaIdx);
+
       expect(html).toContain("alt=\"توقيع الوكيلة\"");
-      expect(html).toContain("alt=\"الختم الرسمي\"");
 
       // Font & Encoding
       expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
@@ -276,10 +285,19 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(html).toContain("مديرة المدرسة : <strong>فاطمة فلاتة</strong>");
       expect(html).toContain("alt=\"توقيع المديرة\"");
 
-      // Stage 3: Vice Principal signature & Stamp
-      expect(html).toContain("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>");
+      // Stage 3 Ordering: Principal -> Vice Principal -> Stamp at bottom
+      const stage3Idx = html.indexOf("( ٣ ) رأي مديرة المدرسة");
+      expect(stage3Idx).toBeGreaterThan(0);
+
+      const stage3PrincipalIdx = html.indexOf("مديرة المدرسة : <strong>فاطمة فلاتة</strong>", stage3Idx);
+      const stage3WakilaIdx = html.indexOf("وكيلة الشؤون التعليمية : <strong>أحلام صالح الضبيبي</strong>", stage3Idx);
+      const stage3StampIdx = html.indexOf("alt=\"الختم الرسمي\"", stage3Idx);
+
+      expect(stage3PrincipalIdx).toBeGreaterThan(stage3Idx);
+      expect(stage3WakilaIdx).toBeGreaterThan(stage3PrincipalIdx);
+      expect(stage3StampIdx).toBeGreaterThan(stage3WakilaIdx);
+
       expect(html).toContain("alt=\"توقيع الوكيلة\"");
-      expect(html).toContain("alt=\"الختم الرسمي\"");
 
       // Font verification
       expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");

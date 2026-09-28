@@ -272,15 +272,29 @@ ${schoolTableHtml}
       <span>عذره غير مقبول ويحسم عليه .</span>
     </div>
   </div>
-  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-    <div style="flex: 1.3; text-align: right;">وكيلة الشؤون التعليمية : <strong>${DEFAULT_ADMIN_NAME}</strong></div>
+  <!-- Stage 3 Signatures: Principal, Vice-Principal, and Stamp at Bottom -->
+  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+    <div style="flex: 1.2; text-align: right">مديرة المدرسة : <strong>${DEFAULT_PRINCIPAL_NAME}</strong></div>
+    <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
+      <span>التوقيع :</span>
+      <span>${principalSigHtml}</span>
+    </div>
+    <div style="flex: 0.8; text-align: left">التاريخ : ..../ ..../ ${hijriYear} هـ</div>
+  </div>
+
+  <div class="sig" style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+    <div style="flex: 1.2; text-align: right;">وكيلة الشؤون التعليمية : <strong>${DEFAULT_ADMIN_NAME}</strong></div>
     <div style="flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px;">
       <span>التوقيع :</span>
       <span>${wakilaSigHtml}</span>
     </div>
-    ${showStamp ? `<div style="width: 60px; text-align: center;">${stampHtml}</div>` : ""}
     <div style="flex: 0.8; text-align: left;">التاريخ : ${directorSigDate}</div>
   </div>
+
+  ${showStamp ? `
+  <div style="display: flex; justify-content: center; align-items: center; margin-top: 4px;">
+    ${stampHtml}
+  </div>` : ""}
 </div>
 
 <div class="spacer"></div>
