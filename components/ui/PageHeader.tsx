@@ -17,7 +17,6 @@ export interface PageHeaderProps {
   description?: string;
   subtitle?: string;
   badge?: React.ReactNode;
-  primaryAction?: React.ReactNode;
   actionButtons?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
@@ -29,28 +28,25 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   description,
   subtitle,
   badge,
-  primaryAction,
   actionButtons,
   actions,
   className,
 }) => {
   const descText = subtitle || description;
-  const secondaryActions = actions || actionButtons;
-
+  const actionNode = actions || actionButtons;
   return (
     <header
       className={cn(
-        "bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-20 shadow-2xs transition-colors",
+        "bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-2xs transition-colors",
         className
       )}
-      dir="rtl"
     >
-      <div className="px-4 sm:px-6 lg:px-8 py-3.5 sm:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5">
-        <div className="min-w-0 space-y-1">
+      <div className="px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="min-w-0">
           {breadcrumbs && breadcrumbs.length > 0 && (
             <nav
-              aria-label="مسار التصفح"
-              className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-1 flex-wrap select-none"
+              aria-label="Breadcrumb"
+              className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-1.5 flex-wrap"
             >
               {breadcrumbs.map((crumb, idx) => {
                 const isLast = idx === breadcrumbs.length - 1;
@@ -65,7 +61,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                     {crumb.href && !isLast ? (
                       <Link
                         href={crumb.href}
-                        className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors font-medium hover:underline underline-offset-2"
+                        className="hover:text-teal-700 dark:hover:text-teal-400 transition-colors font-medium"
                       >
                         {crumb.label}
                       </Link>
@@ -76,7 +72,6 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                             ? "text-[#137a85] dark:text-teal-400 font-bold"
                             : "font-medium text-slate-500 dark:text-slate-400"
                         )}
-                        aria-current={isLast ? "page" : undefined}
                       >
                         {crumb.label}
                       </span>
@@ -87,40 +82,21 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             </nav>
           )}
 
-          {/* Title Row with Badge & Primary Action grouped together */}
-          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-            <h1 className={cn(typography.pageTitle, "tracking-tight text-slate-900 dark:text-slate-100")}>
-              {title}
-            </h1>
-            {badge && (
-              <div className="shrink-0">
-                {typeof badge === "string" ? (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700">
-                    {badge}
-                  </span>
-                ) : (
-                  badge
-                )}
-              </div>
-            )}
-            {primaryAction && (
-              <div className="shrink-0 ms-1">
-                {primaryAction}
-              </div>
-            )}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1 className={typography.pageTitle}>{title}</h1>
+            {badge && <div className="shrink-0">{badge}</div>}
           </div>
 
           {descText && (
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-3xl">
+            <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
               {descText}
             </p>
           )}
         </div>
 
-        {/* Secondary Actions / Auxiliary Filters */}
-        {secondaryActions && (
-          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap pt-1 md:pt-0">
-            {secondaryActions}
+        {actionNode && (
+          <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+            {actionNode}
           </div>
         )}
       </div>

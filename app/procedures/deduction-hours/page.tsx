@@ -393,26 +393,6 @@ function DeductionHoursContent() {
         title="قرار حسم مجموع ساعات تأخر وخروج مبكر"
         subtitle="نموذج رقم ( ١٩ ) برمز ( و.م.ع.ن - ٠٢ - ٠٣ ) استناداً للمادة (٢١) من لائحة الخدمة المدنية وقرار معالي الوزير رقم ١/١١٣٩"
         badge="نموذج رسمي 19"
-        primaryAction={
-          <Button
-            variant="primary"
-            size="sm"
-            icon={<Calculator className="w-4 h-4" />}
-            onClick={() => formRef.current?.scrollIntoView({ behavior: "smooth" })}
-            className="shadow-2xs font-bold"
-          >
-            إصدار قرار حسم
-          </Button>
-        }
-        actions={
-          <Link
-            href="/procedures/delay-notice"
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition-colors shadow-2xs"
-          >
-            <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span>تنبيهات التأخر</span>
-          </Link>
-        }
       />
 
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-8">

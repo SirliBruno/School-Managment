@@ -347,13 +347,12 @@ export default function ReportsCenterPage() {
     <div className="flex-1 flex flex-col min-h-screen">
       <PageHeader
         title="مركز التقارير والحصر الإداري"
-        badge="التقارير الرسمية المعتمدة"
         breadcrumbs={[
           { label: "نظام الإدارة المدرسية", href: "/" },
           { label: "مركز التقارير" },
         ]}
         description="إنشاء وطباعة التقارير الرسمية المعتمدة لبيانات الغياب، تنبيهات التأخر، وقرارات الحسم بصيغة PDF فورية للرفع والأرشفة المدرسية"
-        actions={
+        actionButtons={
           <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
             <Button
               variant={activeTab === "builder" ? "primary" : "ghost"}

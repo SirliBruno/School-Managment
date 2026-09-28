@@ -73,17 +73,6 @@ const variantStyles: Record<
   },
 };
 
-const variantTopBorder: Record<string, string> = {
-  teal: "before:bg-[#137a85]",
-  emerald: "before:bg-emerald-500",
-  sky: "before:bg-sky-500",
-  blue: "before:bg-blue-500",
-  amber: "before:bg-amber-500",
-  rose: "before:bg-rose-500",
-  purple: "before:bg-purple-500",
-  slate: "before:bg-slate-400",
-};
-
 export const KpiCard: React.FC<KpiCardProps> = ({
   title,
   value,
@@ -101,26 +90,23 @@ export const KpiCard: React.FC<KpiCardProps> = ({
   const finalIconBg = iconBgColor || preset.iconBg;
   const finalIconColor = iconColor || preset.iconText;
   const finalValueColor = valueColor || preset.valueText;
-  const accentBar = variantTopBorder[variant] || variantTopBorder.teal;
 
   return (
     <div
       className={cn(
-        "relative overflow-hidden bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 hover:border-slate-300 dark:hover:border-slate-700",
-        "before:absolute before:top-0 before:inset-x-0 before:h-1 before:rounded-t-2xl",
-        accentBar,
+        "bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-slate-800 shadow-xs flex flex-col justify-between transition-all duration-200 hover:shadow-sm hover:border-slate-300 dark:hover:border-slate-700",
         className
       )}
       dir="rtl"
     >
       {/* Card Header: Title & Icon */}
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <span className="text-xs font-bold text-slate-600 dark:text-slate-400 truncate block">
+      <div className="flex items-center justify-between gap-3 mb-2.5">
+        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate block">
           {title}
         </span>
         <div
           className={cn(
-            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-200",
+            "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 shadow-2xs",
             finalIconBg,
             finalIconColor
           )}
@@ -132,10 +118,10 @@ export const KpiCard: React.FC<KpiCardProps> = ({
 
       {/* Main Metric Value & Unit */}
       <div>
-        <div className="flex items-baseline gap-2 flex-wrap">
+        <div className="flex items-baseline gap-1.5 flex-wrap">
           <span
             className={cn(
-              "text-2xl sm:text-3xl font-black font-mono tracking-tight tabular-nums",
+              "text-2xl sm:text-3xl font-black font-mono tracking-tight",
               finalValueColor
             )}
           >
@@ -147,7 +133,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
             </span>
           )}
           {badge && (
-            <span className="ms-auto text-[10px] text-amber-800 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-lg border border-amber-200/80 dark:border-amber-800/80 shadow-2xs">
+            <span className="ms-auto text-[10px] text-amber-700 dark:text-amber-300 font-bold bg-amber-50 dark:bg-amber-950/80 px-1.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
               {badge}
             </span>
           )}
@@ -156,7 +142,7 @@ export const KpiCard: React.FC<KpiCardProps> = ({
         {/* Subtitle / Contextual Status */}
         {subtitle && (
           <div
-            className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate"
+            className="mt-2.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate"
             dir="rtl"
           >
             {subtitle}
