@@ -200,7 +200,7 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
         civilId: "1089953663",
         specialization: "رياضيات",
         schoolName: "الثانوية الخامسة مسارات",
-        principalName: "أحلام صالح الضبيبي",
+        principalName: "فاطمة فلاتة",
         delayHours: 7,
         deductionDays: 1,
         decisionNumber: "DEC-2026-001",
@@ -208,9 +208,12 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       });
 
       expect(html).toContain("الثانوية الخامسة مسارات");
+      expect(html).toContain("فاطمة فلاتة");
       expect(html).toContain("أحلام صالح الضبيبي");
       expect(html).toContain("alt=\"الختم الرسمي\"");
       expect(html).toContain("alt=\"توقيع الاعتماد\"");
+      expect(html).toContain(DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64);
+      expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
     });
 
     it("embeds principal signature in Stage 1, vice principal signature & stamp in Stage 3, and Cairo font in absence inquiries", () => {

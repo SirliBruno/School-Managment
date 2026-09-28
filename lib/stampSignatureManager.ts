@@ -170,7 +170,8 @@ export function resetSchoolApprovalSettings(adminName: string = DEFAULT_ADMIN_NA
   return updateSchoolApprovalSettings(
     {
       schoolStampUrl: DEFAULT_STAMP_BASE64,
-      principalSignatureUrl: DEFAULT_SIGNATURE_BASE64,
+      principalSignatureUrl: DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+      vicePrincipalSignatureUrl: DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
       stampEnabled: true,
       signatureEnabled: true,
     },
