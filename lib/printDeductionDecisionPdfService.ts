@@ -6,6 +6,10 @@ import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
 import { DEFAULT_ADMIN_NAME, DEFAULT_PRINCIPAL_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
+import {
+  DEFAULT_STAMP_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
+} from "@/lib/defaultApprovalAssets";
 
 export interface DeductionDecisionPdfData {
   teacherName: string;
@@ -48,15 +52,17 @@ export function buildDeductionDecisionHtml(data: DeductionDecisionPdfData): stri
   const decisionDate = esc(data.decisionDate || "..../..../١٤.. هـ");
 
   const settings = getSchoolApprovalSettings();
-  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
-  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+  const showStamp = settings.stampEnabled;
+  const showSig = settings.signatureEnabled;
 
-  const stampElementHtml = showStamp
-    ? `<img src="${settings.schoolStampUrl}" alt="الختم الرسمي" style="max-height: 75px; max-width: 75px; object-fit: contain; margin: 0 auto; display: block;" />`
+  const stampSrc = settings.schoolStampUrl || DEFAULT_STAMP_BASE64;
+  const stampElementHtml = showStamp && stampSrc
+    ? `<img src="${stampSrc}" alt="الختم الرسمي" style="max-height: 75px; max-width: 75px; object-fit: contain; margin: 0 auto; display: block;" />`
     : `الختم الرسمي`;
 
-  const sigElementHtml = showSig
-    ? `<img src="${settings.principalSignatureUrl}" alt="توقيع الاعتماد" style="max-height: 44px; max-width: 140px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
+  const sigSrc = settings.vicePrincipalSignatureUrl || DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64;
+  const sigElementHtml = showSig && sigSrc
+    ? `<img src="${sigSrc}" alt="توقيع الاعتماد" style="max-height: 44px; max-width: 140px; object-fit: contain; display: inline-block; vertical-align: middle;" />`
     : `....................................................`;
 
   return `<!DOCTYPE html>
@@ -65,7 +71,9 @@ export function buildDeductionDecisionHtml(data: DeductionDecisionPdfData): stri
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>قرار حسم مجموع ساعات - ${teacherName}</title>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 ${UNIFIED_PDF_CSS}
 

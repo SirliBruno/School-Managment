@@ -187,8 +187,11 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
 
       expect(html).toContain("الثانوية الخامسة مسارات");
       expect(html).toContain("أحلام صالح الضبيبي");
+      expect(html).toContain("فاطمة فلاتة");
       expect(html).toContain("alt=\"ختم المدرسة\"");
-      expect(html).toContain("alt=\"التوقيع\"");
+      expect(html).toContain("alt=\"توقيع الوكيلة\"");
+      expect(html).toContain("alt=\"توقيع المديرة\"");
+      expect(html).toContain("fonts.googleapis.com/css2?family=Cairo");
     });
 
     it("embeds stamp and signature into official deduction decisions (نموذج 19)", () => {

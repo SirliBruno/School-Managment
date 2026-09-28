@@ -2,6 +2,11 @@ import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { UNIFIED_PRINT_SCRIPT } from "@/lib/pdfTemplateBase";
 import { EmployeePermission, Teacher } from "@/types/teacher";
 import { getSchoolApprovalSettings } from "@/lib/stampSignatureManager";
+import {
+  DEFAULT_STAMP_BASE64,
+  DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+  DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
+} from "@/lib/defaultApprovalAssets";
 
 export interface PrintPermissionPdfOptions {
   permission: EmployeePermission;
@@ -67,15 +72,23 @@ export function generatePermissionPdfHtml({
   } catch {}
 
   const settings = getSchoolApprovalSettings();
-  const showStamp = settings.stampEnabled && !!settings.schoolStampUrl;
-  const showSig = settings.signatureEnabled && !!settings.principalSignatureUrl;
+  const showStamp = settings.stampEnabled;
+  const showPrincipalSig = settings.signatureEnabled;
+  const showWakilaSig = settings.signatureEnabled;
 
-  const stampHtml = showStamp
-    ? `<img src="${settings.schoolStampUrl}" alt="ختم المدرسة" style="max-height: 70px; max-width: 70px; object-fit: contain; margin: 0 auto; display: block;" />`
+  const stampSrc = settings.schoolStampUrl || DEFAULT_STAMP_BASE64;
+  const stampHtml = showStamp && stampSrc
+    ? `<img src="${stampSrc}" alt="ختم المدرسة" style="max-height: 70px; max-width: 70px; object-fit: contain; margin: 0 auto; display: block;" />`
     : `<div style="font-size: 7pt; color: #94a3b8; border: 1px dashed #cbd5e1; border-radius: 50%; width: 55px; height: 55px; margin: 0 auto; display: flex; align-items: center; justify-content: center;">ختم المنشأة</div>`;
 
-  const sigHtml = showSig
-    ? `<img src="${settings.principalSignatureUrl}" alt="التوقيع" style="max-height: 42px; max-width: 120px; object-fit: contain; margin: 2px auto 0 auto; display: block;" />`
+  const principalSigSrc = settings.principalSignatureUrl || DEFAULT_PRINCIPAL_SIGNATURE_BASE64;
+  const principalSigHtml = showPrincipalSig && principalSigSrc
+    ? `<img src="${principalSigSrc}" alt="توقيع المديرة" style="max-height: 42px; max-width: 120px; object-fit: contain; margin: 2px auto 0 auto; display: block;" />`
+    : `<div style="height: 35px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>`;
+
+  const wakilaSigSrc = settings.vicePrincipalSignatureUrl || DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64;
+  const wakilaSigHtml = showWakilaSig && wakilaSigSrc
+    ? `<img src="${wakilaSigSrc}" alt="توقيع الوكيلة" style="max-height: 42px; max-width: 120px; object-fit: contain; margin: 2px auto 0 auto; display: block;" />`
     : `<div style="height: 35px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>`;
 
   return `<!DOCTYPE html>
@@ -83,7 +96,11 @@ export function generatePermissionPdfHtml({
 <head>
   <meta charset="utf-8">
   <title>استمارة استئذان موظفة - ${teacherName}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
     @page {
       size: A4 portrait;
       margin: 12mm 15mm;
@@ -96,7 +113,7 @@ export function generatePermissionPdfHtml({
       print-color-adjust: exact !important;
     }
     body {
-      font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+      font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
       direction: rtl;
       text-align: right;
       color: #0f172a;
@@ -420,7 +437,7 @@ export function generatePermissionPdfHtml({
         <div class="sig-block" style="flex: 1; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">وكيلة المدرسة</div>
           <div class="sig-name">${vicePrincipalName}</div>
-          <div style="min-height: 42px; display: flex; align-items: center; justify-content: center;">${sigHtml}</div>
+          <div style="min-height: 42px; display: flex; align-items: center; justify-content: center;">${wakilaSigHtml}</div>
         </div>
         <div class="sig-block" style="width: 110px; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">الختم الرسمي</div>
@@ -429,7 +446,7 @@ export function generatePermissionPdfHtml({
         <div class="sig-block" style="flex: 1; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">مديرة المدرسة</div>
           <div class="sig-name">${principalName}</div>
-          <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>
+          <div style="min-height: 42px; display: flex; align-items: center; justify-content: center;">${principalSigHtml}</div>
         </div>
       </div>
 

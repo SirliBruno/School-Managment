@@ -243,7 +243,8 @@ export function renderOfficialApprovalFooterHtml(options: OfficialApprovalFooter
       : settings.signatureEnabled && !!(options.customSignatureUrl || settings.principalSignatureUrl);
 
   const stampSrc = options.customStampUrl || settings.schoolStampUrl || DEFAULT_STAMP_BASE64;
-  const sigSrc = options.customSignatureUrl || settings.principalSignatureUrl || DEFAULT_SIGNATURE_BASE64;
+  const sigSrc = options.customSignatureUrl || settings.principalSignatureUrl || DEFAULT_PRINCIPAL_SIGNATURE_BASE64 || DEFAULT_SIGNATURE_BASE64;
+  const viceSigSrc = settings.vicePrincipalSignatureUrl || DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64;
 
   const stampElementHtml = showStamp && stampSrc
     ? `<img src="${stampSrc}" alt="ختم المدرسة الرسمي" style="max-height: 110px; max-width: 110px; width: 105px; height: 105px; object-fit: contain; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.18)); display: block; margin: 0 auto;" />`
@@ -251,6 +252,10 @@ export function renderOfficialApprovalFooterHtml(options: OfficialApprovalFooter
 
   const signatureElementHtml = showSignature && sigSrc
     ? `<img src="${sigSrc}" alt="توقيع الاعتماد" style="max-height: 48px; max-width: 140px; width: auto; height: auto; object-fit: contain; display: block; margin: 2px auto 0 auto;" />`
+    : `<div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt; letter-spacing: 1px;">...............................</div>`;
+
+  const viceSignatureElementHtml = showSignature && viceSigSrc
+    ? `<img src="${viceSigSrc}" alt="توقيع الوكيلة" style="max-height: 48px; max-width: 140px; width: auto; height: auto; object-fit: contain; display: block; margin: 2px auto 0 auto;" />`
     : `<div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt; letter-spacing: 1px;">...............................</div>`;
 
   if (options.layout === "2boxes") {
@@ -282,7 +287,7 @@ export function renderOfficialApprovalFooterHtml(options: OfficialApprovalFooter
     <div style="font-size: 9.5pt; font-weight: 800; color: #0f766e; margin-bottom: 3px;">${officialTitle}</div>
     <div style="font-size: 9.5pt; font-weight: 800; color: #0f172a;">${officialName}</div>
     <div style="min-height: 48px; margin: 4px 0; display: flex; align-items: center; justify-content: center;">
-      <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt; letter-spacing: 1px;">...............................</div>
+      ${viceSignatureElementHtml}
     </div>
     <div style="font-size: 8pt; color: #64748b;">التاريخ: ${dateStr} م</div>
   </div>
