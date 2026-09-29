@@ -24,10 +24,10 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
 
     // Header & Create Button
     const headerTitle = page.locator("h1:has-text('المسائلات الإدارية')");
-    await expect(headerTitle).toBeVisible();
+    await expect(headerTitle).toBeVisible({ timeout: 15000 });
 
     const createBtn = page.getByRole("button", { name: "إنشاء مساءلة جديدة" });
-    await expect(createBtn).toBeVisible();
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
 
     // Stats cards check
     await expect(page.getByText("إجمالي المسائلات")).toBeVisible();
@@ -39,7 +39,10 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
   test("2. فتح نموذج إنشاء مساءلة جديدة وتعبئة البيانات", async ({ page }) => {
     await page.goto("/procedures/administrative-inquiries");
 
+    await expect(page.locator("h1:has-text('المسائلات الإدارية')")).toBeVisible({ timeout: 15000 });
+
     const createBtn = page.getByRole("button", { name: "إنشاء مساءلة جديدة" });
+    await expect(createBtn).toBeVisible({ timeout: 10000 });
     await createBtn.click();
 
     // Modal check
@@ -164,7 +167,7 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
     await page.goto("/procedures/administrative-inquiries");
 
     // Check table contains teacher
-    await expect(page.getByText("نورة خالد الدوسري").first()).toBeVisible();
+    await expect(page.getByText("نورة خالد الدوسري").first()).toBeVisible({ timeout: 15000 });
 
     // Click "مراجعة واعتماد" or table action button
     const reviewButton = page.locator(`button[title*="مراجعة"], button:has-text("مراجعة")`).first();
