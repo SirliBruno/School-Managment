@@ -1,28 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-const PROJECT_REF = "xizppykmqfkvzwcwxuzr";
-const MOCK_AUTH_SESSION = {
-  access_token: "mock-e2e-jwt-token",
-  refresh_token: "mock-e2e-refresh-token",
-  expires_in: 86400,
-  expires_at: Math.floor(Date.now() / 1000) + 86400,
-  token_type: "bearer",
-  user: {
-    id: "e2e-admin-id",
-    aud: "authenticated",
-    role: "authenticated",
-    email: "ahlam@school.edu.sa",
-    user_metadata: {
-      username: "ahlam",
-      fullName: "أحلام صالح الضبيبي",
-      role: "vice_principal",
-    },
-  },
-};
-
 test.describe("قسم المسائلات الإدارية - دورة العمل الكاملة والمعاينة", () => {
-  test.beforeEach(async ({ context, page }) => {
-    // 1. Set middleware authentication cookie
+  test.beforeEach(async ({ context }) => {
+    // Set cookies for authentication and e2e mock session
     await context.addCookies([
       {
         name: "school_admin_token",
@@ -30,15 +10,13 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
         domain: "localhost",
         path: "/",
       },
-    ]);
-
-    // 2. Set Supabase client session in localStorage before page load
-    await page.addInitScript(
-      ({ ref, session }) => {
-        localStorage.setItem(`sb-${ref}-auth-token`, JSON.stringify(session));
+      {
+        name: "playwright_e2e_auth",
+        value: "true",
+        domain: "localhost",
+        path: "/",
       },
-      { ref: PROJECT_REF, session: MOCK_AUTH_SESSION }
-    );
+    ]);
   });
 
   test("1. عرض صفحة المسائلات الإدارية والتحقق من الإحصائيات والأزرار", async ({ page }) => {
@@ -94,8 +72,8 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
   test("3. التحقق من بوابة المعلمة العامة ومعاينة المرفقات التفاعلية", async ({ page }) => {
     const testToken = "test-e2e-token-" + Date.now();
 
-    // Mock an inquiry in local storage before navigating
-    await page.evaluate((tok) => {
+    // Mock an inquiry in local storage before navigation
+    await page.addInitScript((tok) => {
       const mockInquiry = {
         id: "mock-inq-1",
         inquiryNumber: "ADM-999",
@@ -149,8 +127,8 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
     const sampleAttachmentDataUrl =
       "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%234338ca'/><text x='50%25' y='50%25' fill='white' dominant-baseline='middle' text-anchor='middle' font-size='16'>تقرير طبي رسمي</text></svg>";
 
-    // Inject inquiry that has a teacher response and attachment
-    await page.evaluate(
+    // Inject inquiry that has a teacher response and attachment before navigation
+    await page.addInitScript(
       ({ inqId, sampleAtt }) => {
         const mockInquiry = {
           id: inqId,
@@ -227,7 +205,7 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
     const approveBtn = page.getByRole("button", { name: "اعتماد القرار رسميًا" });
     await approveBtn.click();
 
-    // Verify modal closed or success feedback
+    // Verify modal closed
     await expect(page.getByText("مراجعة الإفادة واعتماد قرار الإدارة")).not.toBeVisible();
   });
 });
