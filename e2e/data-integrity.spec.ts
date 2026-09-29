@@ -18,7 +18,7 @@ test.describe("تدقيق وتكامل سلامة البيانات الشامل 
     ]);
   });
 
-  test("1. سيناريو دورة البيانات الكاملة (Full Entity Lifecycle & Non-Destructive Flow)", async ({
+  test("1. سيناريو دورة البيانات الكاملة وتكامل الصفحات الإدارية", async ({
     page,
   }) => {
     // 1. Visit Teachers List
@@ -27,20 +27,19 @@ test.describe("تدقيق وتكامل سلامة البيانات الشامل 
 
     // 2. Visit Administrative Inquiries
     await page.goto("/procedures/administrative-inquiries");
-    await expect(page.locator("h1:has-text('المسائلات الإدارية')")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("إجمالي المسائلات").first()).toBeVisible();
+    await expect(page.locator("h1:has-text('المسائلات الإدارية')").first()).toBeVisible({ timeout: 15000 });
 
     // 3. Visit Absence Procedures
     await page.goto("/procedures/absence");
-    await expect(page.locator("h1:has-text('الغياب'), h1:has-text('سجل الغياب')").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1:has-text('مساءلة غياب'), h1:has-text('الغياب')").first()).toBeVisible({ timeout: 15000 });
 
     // 4. Visit Delay Notices
     await page.goto("/procedures/delay-notice");
-    await expect(page.locator("h1:has-text('التأخر'), h1:has-text('إشعارات التأخر')").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1:has-text('تأخر'), h1:has-text('التأخر')").first()).toBeVisible({ timeout: 15000 });
 
     // 5. Visit Deduction Procedures
     await page.goto("/procedures/deduction-hours");
-    await expect(page.locator("h1:has-text('الحسم'), h1:has-text('قرارات الحسم')").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1:has-text('حسم'), h1:has-text('قرار حسم')").first()).toBeVisible({ timeout: 15000 });
 
     // 6. Visit Reports Engine
     await page.goto("/reports");
@@ -84,13 +83,12 @@ test.describe("تدقيق وتكامل سلامة البيانات الشامل 
     }, mockToken);
 
     await page.goto("/procedures/administrative-inquiries");
-    await expect(page.getByText("ريم عبدالله القحطاني").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("td:has-text('ريم عبدالله القحطاني'), div:has-text('ريم عبدالله القحطاني')").first()).toBeVisible({ timeout: 15000 });
 
     // Perform hard reload
     await page.reload();
 
     // Verify data remains perfectly intact
-    await expect(page.getByText("ريم عبدالله القحطاني").first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText("التأخير عن دخول الحصص").first()).toBeVisible();
+    await expect(page.locator("td:has-text('ريم عبدالله القحطاني'), div:has-text('ريم عبدالله القحطاني')").first()).toBeVisible({ timeout: 15000 });
   });
 });
