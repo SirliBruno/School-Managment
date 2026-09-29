@@ -30,9 +30,9 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
     await expect(createBtn).toBeVisible({ timeout: 10000 });
 
     // Stats cards check
-    await expect(page.getByText("إجمالي المسائلات")).toBeVisible();
-    await expect(page.getByText(/بانتظار إفادة المعلمة/)).toBeVisible();
-    await expect(page.getByText(/بانتظار قرار المديرة/)).toBeVisible();
+    await expect(page.getByText("إجمالي المسائلات").first()).toBeVisible();
+    await expect(page.getByText(/بانتظار إفادة المعلمة/).first()).toBeVisible();
+    await expect(page.getByText(/بانتظار قرار المديرة/).first()).toBeVisible();
   });
 
   test("2. فتح نموذج إنشاء مساءلة جديدة وتعبئة البيانات", async ({ page }) => {
