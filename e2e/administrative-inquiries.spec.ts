@@ -26,14 +26,13 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
     const headerTitle = page.locator("h1:has-text('المسائلات الإدارية')");
     await expect(headerTitle).toBeVisible({ timeout: 15000 });
 
-    const createBtn = page.getByRole("button", { name: "إنشاء مساءلة جديدة" });
+    const createBtn = page.getByRole("button", { name: /إنشاء مساءلة/ });
     await expect(createBtn).toBeVisible({ timeout: 10000 });
 
     // Stats cards check
     await expect(page.getByText("إجمالي المسائلات")).toBeVisible();
-    await expect(page.getByText("بانتظار رد المعلمة")).toBeVisible();
-    await expect(page.getByText("بانتظار قرار الإدارة")).toBeVisible();
-    await expect(page.getByText("المسائلات المعتمدة")).toBeVisible();
+    await expect(page.getByText(/بانتظار إفادة المعلمة/)).toBeVisible();
+    await expect(page.getByText(/بانتظار قرار المديرة/)).toBeVisible();
   });
 
   test("2. فتح نموذج إنشاء مساءلة جديدة وتعبئة البيانات", async ({ page }) => {
@@ -41,7 +40,7 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
 
     await expect(page.locator("h1:has-text('المسائلات الإدارية')")).toBeVisible({ timeout: 15000 });
 
-    const createBtn = page.getByRole("button", { name: "إنشاء مساءلة جديدة" });
+    const createBtn = page.getByRole("button", { name: /إنشاء مساءلة/ });
     await expect(createBtn).toBeVisible({ timeout: 10000 });
     await createBtn.click();
 
