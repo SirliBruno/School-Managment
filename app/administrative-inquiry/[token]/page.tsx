@@ -28,6 +28,8 @@ import { isTokenExpired } from "@/lib/timeUtils";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { cn } from "@/lib/utils";
+import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
+import { openSafeAttachmentUrl } from "@/lib/attachments";
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 
@@ -49,6 +51,7 @@ export default function AdministrativeInquiryPublicResponsePage() {
   const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
   const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   // Submit State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -395,19 +398,33 @@ export default function AdministrativeInquiryPublicResponsePage() {
               </div>
 
               {inquiry.attachmentUrl && (
-                <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200">
+                <div className="p-3.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 text-xs font-semibold">
                     <Paperclip className="w-4 h-4 text-indigo-600" />
-                    <span>تم إرفاق مستند داعم</span>
+                    <span>تم إرفاق مستند داعم للإفادة</span>
                   </div>
-                  <a
-                    href={inquiry.attachmentUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 rounded-xl bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold"
-                  >
-                    معاينة المرفق
-                  </a>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsViewerOpen(true)}
+                      className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 text-xs font-semibold hover:bg-indigo-50 transition-colors cursor-pointer"
+                    >
+                      معاينة المرفق
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openSafeAttachmentUrl(
+                          inquiry.attachmentUrl!,
+                          `inquiry_attachment_${inquiry.inquiryNumber || inquiry.id}`
+                        )
+                      }
+                      className="p-1.5 rounded-xl bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 transition-colors cursor-pointer"
+                      title="فتح في نافذة مستقلة"
+                    >
+                      <Paperclip className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -643,6 +660,15 @@ export default function AdministrativeInquiryPublicResponsePage() {
           </form>
         </motion.div>
       </div>
+
+      {/* Lightbox Modal */}
+      <AttachmentViewerModal
+        isOpen={isViewerOpen}
+        onClose={() => setIsViewerOpen(false)}
+        url={inquiry?.attachmentUrl || null}
+        title={`مرفق إفادة — ${inquiry?.teacherName || "المعلمة"}`}
+        fileName={`inquiry_${inquiry?.inquiryNumber || inquiry?.id || "attachment"}`}
+      />
     </div>
   );
 }

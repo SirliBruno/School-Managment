@@ -138,3 +138,50 @@ export function isSafeForLocalStorageFallback(fileSize: number): boolean {
   return fileSize <= MAX_FALLBACK_DATA_URL_BYTES;
 }
 
+/**
+ * Safely opens or triggers download for any attachment URL (handles data URLs, blob URLs, and https URLs).
+ */
+export function openSafeAttachmentUrl(url: string, filename = "attachment"): void {
+  if (!url || typeof window === "undefined") return;
+
+  // 1. If HTTPS / standard web URL:
+  if (url.startsWith("http://") || url.startsWith("https://")) {
+    window.open(url, "_blank", "noopener,noreferrer");
+    return;
+  }
+
+  // 2. If Data URL: Convert to Blob and Object URL to bypass browser top-level data URL blocking
+  if (url.startsWith("data:")) {
+    try {
+      const parts = url.split(",");
+      const mimeMatch = parts[0].match(/:(.*?);/);
+      const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+      const bstr = atob(parts[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      const win = window.open(blobUrl, "_blank", "noopener,noreferrer");
+      if (!win) {
+        // Fallback: trigger download link
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      return;
+    } catch (e) {
+      console.error("Failed to open data URL safely:", e);
+    }
+  }
+
+  // 3. Fallback
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
