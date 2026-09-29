@@ -1650,7 +1650,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
           // 1. Teachers Partitioning
           const activeTeachers = cleanTeachersList.filter((t) => !t.isArchived);
-          const finalArchivedTeachers: ArchivedTeacher[] = cleanTeachersList
+          const cloudArchivedTeachers: ArchivedTeacher[] = cleanTeachersList
             .filter((t) => t.isArchived)
             .map((t) => ({
               teacher: t,
@@ -1663,10 +1663,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               associatedPermissions: cleanPermissionsList.filter((p) => p.teacherId === t.id && p.isArchived),
               associatedAdministrativeInquiries: cleanAdminInquiriesList.filter((ai) => ai.teacherId === t.id && ai.isArchived),
             }));
+          const archTeacherIds = new Set(cloudArchivedTeachers.map((at) => at.teacher.id));
+          const localOnlyArchTeachers = parsedArchTeachers.filter((at) => !archTeacherIds.has(at.teacher.id));
+          const finalArchivedTeachers: ArchivedTeacher[] = [...cloudArchivedTeachers, ...localOnlyArchTeachers];
 
           // 2. Absences Partitioning
           const activeAbsences = cleanAbsencesList.filter((a) => !a.isArchived);
-          const finalArchivedAbsences: ArchivedAbsenceRecord[] = cleanAbsencesList
+          const cloudArchivedAbsences: ArchivedAbsenceRecord[] = cleanAbsencesList
             .filter((a) => a.isArchived)
             .map((a) => ({
               record: a,
@@ -1674,10 +1677,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archiveReason: a.archiveReason || "أرشفة إدارية",
               archivedByCascade: Boolean(a.archivedByCascade),
             }));
+          const archAbsIdsSet = new Set(cloudArchivedAbsences.map((a) => a.record.id));
+          const localOnlyArchAbs = parsedArchAbsences.filter((a) => !archAbsIdsSet.has(a.record.id));
+          const finalArchivedAbsences: ArchivedAbsenceRecord[] = [...cloudArchivedAbsences, ...localOnlyArchAbs];
 
           // 3. Delays Partitioning
           const activeDelays = cleanDelaysList.filter((d) => !d.isArchived);
-          const finalArchivedDelays: ArchivedDelayNotice[] = cleanDelaysList
+          const cloudArchivedDelays: ArchivedDelayNotice[] = cleanDelaysList
             .filter((d) => d.isArchived)
             .map((d) => ({
               notice: d,
@@ -1685,10 +1691,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archiveReason: d.archiveReason || "أرشفة إدارية",
               archivedByCascade: Boolean(d.archivedByCascade),
             }));
+          const archDelayIdsSet = new Set(cloudArchivedDelays.map((d) => d.notice.id));
+          const localOnlyArchDelays = parsedArchDelays.filter((d) => !archDelayIdsSet.has(d.notice.id));
+          const finalArchivedDelays: ArchivedDelayNotice[] = [...cloudArchivedDelays, ...localOnlyArchDelays];
 
           // 4. Permissions Partitioning
           const activePermissions = cleanPermissionsList.filter((p) => !p.isArchived);
-          const finalArchivedPermissions: ArchivedEmployeePermission[] = cleanPermissionsList
+          const cloudArchivedPermissions: ArchivedEmployeePermission[] = cleanPermissionsList
             .filter((p) => p.isArchived)
             .map((p) => ({
               permission: p,
@@ -1697,10 +1706,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archiveReason: p.archiveReason || "أرشفة إدارية",
               archivedByCascade: Boolean(p.archivedByCascade),
             }));
+          const archPermIdsSet = new Set(cloudArchivedPermissions.map((p) => p.permission.id));
+          const localOnlyArchPerms = parsedArchPermissions.filter((p) => !archPermIdsSet.has(p.permission.id));
+          const finalArchivedPermissions: ArchivedEmployeePermission[] = [...cloudArchivedPermissions, ...localOnlyArchPerms];
 
           // 5. Deductions Partitioning
           const activeDeductions = cleanDeductionsList.filter((d) => !d.isArchived);
-          const finalArchivedDeductions: ArchivedDeductionDecision[] = cleanDeductionsList
+          const cloudArchivedDeductions: ArchivedDeductionDecision[] = cleanDeductionsList
             .filter((d) => d.isArchived)
             .map((d) => ({
               decision: d,
@@ -1708,10 +1720,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archiveReason: d.archiveReason || "أرشفة إدارية",
               archivedByCascade: Boolean(d.archivedByCascade),
             }));
+          const archDeductIdsSet = new Set(cloudArchivedDeductions.map((d) => d.decision.id));
+          const localOnlyArchDeducts = parsedArchDeductions.filter((d) => !archDeductIdsSet.has(d.decision.id));
+          const finalArchivedDeductions: ArchivedDeductionDecision[] = [...cloudArchivedDeductions, ...localOnlyArchDeducts];
 
           // 6. Administrative Inquiries Partitioning
           const activeAdminInquiries = cleanAdminInquiriesList.filter((ai) => !ai.isArchived);
-          const finalArchivedAdminInquiries: ArchivedAdministrativeInquiry[] = cleanAdminInquiriesList
+          const cloudArchivedAdminInquiries: ArchivedAdministrativeInquiry[] = cleanAdminInquiriesList
             .filter((ai) => ai.isArchived)
             .map((ai) => ({
               inquiry: ai,
@@ -1720,6 +1735,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archivedBy: ai.archivedBy || "الإدارة",
               archivedByCascade: Boolean(ai.archivedByCascade),
             }));
+          const archAdminInqIdsSet = new Set(cloudArchivedAdminInquiries.map((ai) => ai.inquiry.id));
+          const localOnlyArchAdminInqs = parsedArchAdminInquiries.filter((ai) => !archAdminInqIdsSet.has(ai.inquiry.id));
+          const finalArchivedAdminInquiries: ArchivedAdministrativeInquiry[] = [...cloudArchivedAdminInquiries, ...localOnlyArchAdminInqs];
 
           // Recalculate teacher counters strictly based on active linked records
           const absCountMap: Record<string, number> = {};
@@ -4956,7 +4974,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (shouldRestoreAbsenceRecord) {
           setAbsenceRecords((prev) => {
-            const next = prev.some((r) => r.id === id) ? prev : [cleanRecord, ...prev];
+            const next = [cleanRecord, ...prev.filter((r) => r.id !== id)];
             try {
               localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(next));
             } catch {}
@@ -5041,8 +5059,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const teacherId = found.notice.teacherId;
-        const activeTeacher = teachers.find((t) => t.id === teacherId);
-        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+        const normRecName = normalizeArabicName(found.notice.teacherName || "");
+        const normRecNatId = found.notice.nationalId ? normalizeNationalId(found.notice.nationalId) : "";
+        const activeTeacher = teachers.find(
+          (t) =>
+            t.id === teacherId ||
+            (normRecNatId && normalizeNationalId(t.nationalId || t.username || t.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(t.fullName || t.name) === normRecName)
+        );
+        const archivedTeacher = archivedTeachers.find(
+          (a) =>
+            a.teacher.id === teacherId ||
+            (normRecNatId && normalizeNationalId(a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(a.teacher.fullName || a.teacher.name) === normRecName)
+        );
 
         // Edge Case 3: Teacher was permanently deleted
         if (!activeTeacher && !archivedTeacher) {
@@ -5052,8 +5082,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           };
         }
 
+        const effectiveTeacherId = activeTeacher?.id || archivedTeacher?.teacher.id || teacherId;
+
         const cleanNotice: DelayNotice = {
           ...found.notice,
+          teacherId: effectiveTeacherId,
           isArchived: false,
           archivedAt: undefined,
           archiveReason: undefined,
@@ -5070,24 +5103,34 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             totalDelayNotices: 1,
           };
           setTeachers((prev) =>
-            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+            prev.some((t) => t.id === effectiveTeacherId) ? prev : [restoredTeacher, ...prev]
           );
-          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== effectiveTeacherId));
         } else {
           setTeachers((prev) =>
             prev.map((t) =>
-              t.id === teacherId
+              t.id === effectiveTeacherId
                 ? { ...t, totalDelayNotices: (t.totalDelayNotices || 0) + 1 }
                 : t
             )
           );
         }
 
-        setDelayNotices((prev) =>
-          prev.some((d) => d.id === id) ? prev : [cleanNotice, ...prev]
-        );
+        setDelayNotices((prev) => {
+          const next = [cleanNotice, ...prev.filter((d) => d.id !== id)];
+          try {
+            localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
-        setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.id !== id));
+        setArchivedDelayNotices((prev) => {
+          const next = prev.filter((a) => a.notice.id !== id);
+          try {
+            localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
         if (isSupabaseConfigured() && supabase) {
           supabase
@@ -5136,8 +5179,21 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const teacherId = found.decision.teacherId;
-        const activeTeacher = teachers.find((t) => t.id === teacherId);
-        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+        const normRecName = normalizeArabicName(found.decision.teacherName || "");
+        const rawRecNatId = found.decision.civilId || found.decision.jobNumber || "";
+        const normRecNatId = rawRecNatId ? normalizeNationalId(rawRecNatId) : "";
+        const activeTeacher = teachers.find(
+          (t) =>
+            t.id === teacherId ||
+            (normRecNatId && normalizeNationalId(t.nationalId || t.username || t.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(t.fullName || t.name) === normRecName)
+        );
+        const archivedTeacher = archivedTeachers.find(
+          (a) =>
+            a.teacher.id === teacherId ||
+            (normRecNatId && normalizeNationalId(a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(a.teacher.fullName || a.teacher.name) === normRecName)
+        );
 
         if (!activeTeacher && !archivedTeacher) {
           return {
@@ -5146,8 +5202,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           };
         }
 
+        const effectiveTeacherId = activeTeacher?.id || archivedTeacher?.teacher.id || teacherId;
+
         const cleanDecision: DeductionDecision = {
           ...found.decision,
+          teacherId: effectiveTeacherId,
           isArchived: false,
           archivedAt: undefined,
           archiveReason: undefined,
@@ -5164,16 +5223,26 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             totalDelayNotices: 0,
           };
           setTeachers((prev) =>
-            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+            prev.some((t) => t.id === effectiveTeacherId) ? prev : [restoredTeacher, ...prev]
           );
-          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== effectiveTeacherId));
         }
 
-        setDeductionDecisions((prev) =>
-          prev.some((d) => d.id === id) ? prev : [cleanDecision, ...prev]
-        );
+        setDeductionDecisions((prev) => {
+          const next = [cleanDecision, ...prev.filter((d) => d.id !== id)];
+          try {
+            localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
-        setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.id !== id));
+        setArchivedDeductionDecisions((prev) => {
+          const next = prev.filter((a) => a.decision.id !== id);
+          try {
+            localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
         if (isSupabaseConfigured() && supabase) {
           supabase
@@ -5222,8 +5291,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const teacherId = found.permission.teacherId;
-        const activeTeacher = teachers.find((t) => t.id === teacherId);
-        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+        const normRecName = normalizeArabicName(found.permission.teacherName || "");
+        const normRecNatId = found.permission.nationalId ? normalizeNationalId(found.permission.nationalId) : "";
+        const activeTeacher = teachers.find(
+          (t) =>
+            t.id === teacherId ||
+            (normRecNatId && normalizeNationalId(t.nationalId || t.username || t.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(t.fullName || t.name) === normRecName)
+        );
+        const archivedTeacher = archivedTeachers.find(
+          (a) =>
+            a.teacher.id === teacherId ||
+            (normRecNatId && normalizeNationalId(a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(a.teacher.fullName || a.teacher.name) === normRecName)
+        );
 
         if (!activeTeacher && !archivedTeacher) {
           return {
@@ -5232,8 +5313,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           };
         }
 
+        const effectiveTeacherId = activeTeacher?.id || archivedTeacher?.teacher.id || teacherId;
+
         const cleanPermission: EmployeePermission = {
           ...found.permission,
+          teacherId: effectiveTeacherId,
           isArchived: false,
           archivedAt: undefined,
           archiveReason: undefined,
@@ -5250,16 +5334,26 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             totalDelayNotices: 0,
           };
           setTeachers((prev) =>
-            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+            prev.some((t) => t.id === effectiveTeacherId) ? prev : [restoredTeacher, ...prev]
           );
-          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== effectiveTeacherId));
         }
 
-        setPermissions((prev) =>
-          prev.some((p) => p.id === id) ? prev : [cleanPermission, ...prev]
-        );
+        setPermissions((prev) => {
+          const next = [cleanPermission, ...prev.filter((p) => p.id !== id)];
+          try {
+            localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
-        setArchivedPermissions((prev) => prev.filter((a) => a.permission.id !== id));
+        setArchivedPermissions((prev) => {
+          const next = prev.filter((a) => a.permission.id !== id);
+          try {
+            localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
         if (isSupabaseConfigured() && supabase) {
           supabase
@@ -5308,8 +5402,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const teacherId = found.inquiry.teacherId;
-        const activeTeacher = teachers.find((t) => t.id === teacherId);
-        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+        const normRecName = normalizeArabicName(found.inquiry.teacherName || "");
+        const normRecNatId = found.inquiry.nationalId ? normalizeNationalId(found.inquiry.nationalId) : "";
+        const activeTeacher = teachers.find(
+          (t) =>
+            t.id === teacherId ||
+            (normRecNatId && normalizeNationalId(t.nationalId || t.username || t.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(t.fullName || t.name) === normRecName)
+        );
+        const archivedTeacher = archivedTeachers.find(
+          (a) =>
+            a.teacher.id === teacherId ||
+            (normRecNatId && normalizeNationalId(a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(a.teacher.fullName || a.teacher.name) === normRecName)
+        );
 
         if (!activeTeacher && !archivedTeacher) {
           return {
@@ -5318,8 +5424,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           };
         }
 
-        const cleanAdminInq: AdministrativeInquiry = {
+        const effectiveTeacherId = activeTeacher?.id || archivedTeacher?.teacher.id || teacherId;
+
+        const cleanInquiry: AdministrativeInquiry = {
           ...found.inquiry,
+          teacherId: effectiveTeacherId,
           isArchived: false,
           archivedAt: undefined,
           archivedBy: undefined,
@@ -5337,16 +5446,26 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             totalDelayNotices: 0,
           };
           setTeachers((prev) =>
-            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+            prev.some((t) => t.id === effectiveTeacherId) ? prev : [restoredTeacher, ...prev]
           );
-          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== effectiveTeacherId));
         }
 
-        setAdministrativeInquiries((prev) =>
-          prev.some((ai) => ai.id === id) ? prev : [cleanAdminInq, ...prev]
-        );
+        setAdministrativeInquiries((prev) => {
+          const next = [cleanInquiry, ...prev.filter((ai) => ai.id !== id)];
+          try {
+            localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
-        setArchivedAdministrativeInquiries((prev) => prev.filter((a) => a.inquiry.id !== id));
+        setArchivedAdministrativeInquiries((prev) => {
+          const next = prev.filter((a) => a.inquiry.id !== id);
+          try {
+            localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
         if (isSupabaseConfigured() && supabase) {
           supabase
@@ -5360,7 +5479,6 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             })
             .eq("id", id)
             .then(() => {}, () => {});
-
           if (!activeTeacher && archivedTeacher) {
             supabase
               .from("teachers")
@@ -5378,8 +5496,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           action: "RESTORE",
           entityType: "administrative_inquiry",
           entityId: id,
-          details: `استعادة مساءلة إدارية للمعلمة: ${cleanAdminInq.teacherName} من الأرشيف الإداري`,
-          newValue: cleanAdminInq,
+          details: `استعادة مساءلة إدارية للمعلمة: ${cleanInquiry.teacherName} برقم ${cleanInquiry.inquiryNumber || ""} من الأرشيف`,
+          newValue: cleanInquiry,
         });
 
         return {
