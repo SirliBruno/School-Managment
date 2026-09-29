@@ -35,6 +35,7 @@ import {
 } from "@/types/teacher";
 import {
   normalizeArabicDigits,
+  normalizeArabicName,
   normalizeNationalId,
   normalizeSaudiMobile,
   planTeacherImport,
@@ -1477,10 +1478,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             );
           }
 
-          // B. Process Absences (أي سجل غير موجود في سوبابيز يعتبر محذوفاً - لا يتم إعادته)
+          // B. Process Absences
           let cleanAbsencesList: AbsenceRecord[] = localAbsences;
           if (!aErr && dbAbsences !== null) {
-            cleanAbsencesList = dbAbsences.map((a) => ({
+            const dbMapped: AbsenceRecord[] = dbAbsences.map((a) => ({
               id: a.id,
               teacherId: a.teacher_id,
               teacherName: a.teacher_name,
@@ -1497,6 +1498,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archiveReason: a.archive_reason || undefined,
               archivedByCascade: Boolean(a.archived_by_cascade),
             }));
+            const dbIdSet = new Set(dbMapped.map((r) => r.id));
+            const localOnly = localAbsences.filter((la) => !dbIdSet.has(la.id));
+            cleanAbsencesList = [...dbMapped, ...localOnly];
           }
 
           // C. Process Inquiries
@@ -1610,25 +1614,34 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           // E. Process Employee Permissions from Supabase
           let cleanPermissionsList: EmployeePermission[] = localPermissions;
           if (!permErr && dbPermissions !== null) {
-            cleanPermissionsList = (dbPermissions as unknown as DbEmployeePermissionRow[]).map(
+            const dbMapped = (dbPermissions as unknown as DbEmployeePermissionRow[]).map(
               (p: DbEmployeePermissionRow) => mapDbPermissionToPermission(p)
             );
+            const dbIdSet = new Set(dbMapped.map((p) => p.id));
+            const localOnly = localPermissions.filter((lp) => !dbIdSet.has(lp.id));
+            cleanPermissionsList = [...dbMapped, ...localOnly];
           }
 
           // F. Process Deduction Decisions from Supabase
           let cleanDeductionsList: DeductionDecision[] = localDeductions;
           if (!dedErr && dbDeductions !== null) {
-            cleanDeductionsList = (dbDeductions as unknown as DbDeductionDecisionRow[]).map(
+            const dbMapped = (dbDeductions as unknown as DbDeductionDecisionRow[]).map(
               (d: DbDeductionDecisionRow) => mapDbDeductionToDecision(d)
             );
+            const dbIdSet = new Set(dbMapped.map((d) => d.id));
+            const localOnly = localDeductions.filter((ld) => !dbIdSet.has(ld.id));
+            cleanDeductionsList = [...dbMapped, ...localOnly];
           }
 
           // F.2 Process Administrative Inquiries from Supabase
           let cleanAdminInquiriesList: AdministrativeInquiry[] = localAdminInquiries;
           if (!adminInqErr && dbAdminInquiries !== null) {
-            cleanAdminInquiriesList = (dbAdminInquiries as unknown as DbAdministrativeInquiryRow[]).map(
+            const dbMapped = (dbAdminInquiries as unknown as DbAdministrativeInquiryRow[]).map(
               (row: DbAdministrativeInquiryRow) => mapDbAdminInquiryToInquiry(row)
             );
+            const dbIdSet = new Set(dbMapped.map((ai) => ai.id));
+            const localOnly = localAdminInquiries.filter((lai) => !dbIdSet.has(lai.id));
+            cleanAdminInquiriesList = [...dbMapped, ...localOnly];
           }
 
           // =========================================================================
@@ -4864,8 +4877,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const teacherId = found.record.teacherId;
-        const activeTeacher = teachers.find((t) => t.id === teacherId);
-        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+        const normRecName = normalizeArabicName(found.record.teacherName || "");
+        const normRecNatId = found.record.nationalId ? normalizeNationalId(found.record.nationalId) : "";
+        const activeTeacher = teachers.find(
+          (t) =>
+            t.id === teacherId ||
+            (normRecNatId && normalizeNationalId(t.nationalId || t.username || t.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(t.fullName || t.name) === normRecName)
+        );
+        const archivedTeacher = archivedTeachers.find(
+          (a) =>
+            a.teacher.id === teacherId ||
+            (normRecNatId && normalizeNationalId(a.teacher.nationalId || a.teacher.username || a.teacher.jobNumber) === normRecNatId) ||
+            (normRecName && normalizeArabicName(a.teacher.fullName || a.teacher.name) === normRecName)
+        );
 
         // Edge Case 3: Teacher was permanently deleted
         if (!activeTeacher && !archivedTeacher) {
@@ -4875,8 +4900,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           };
         }
 
+        const effectiveTeacherId = activeTeacher?.id || archivedTeacher?.teacher.id || teacherId;
+
         const cleanRecord: AbsenceRecord = {
           ...found.record,
+          teacherId: effectiveTeacherId,
           isArchived: false,
           archivedAt: undefined,
           archiveReason: undefined,
@@ -4887,6 +4915,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         if (found.linkedInquiry) {
           const cleanInquiry: AbsenceInquiry = {
             ...found.linkedInquiry,
+            teacherId: effectiveTeacherId,
             isArchived: false,
             archivedAt: undefined,
             archiveReason: undefined,
@@ -4912,13 +4941,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             totalDelayNotices: 0,
           };
           setTeachers((prev) =>
-            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+            prev.some((t) => t.id === effectiveTeacherId) ? prev : [restoredTeacher, ...prev]
           );
-          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== effectiveTeacherId));
         } else if (shouldRestoreAbsenceRecord) {
           setTeachers((prev) =>
             prev.map((t) =>
-              t.id === teacherId
+              t.id === effectiveTeacherId
                 ? { ...t, totalAbsences: (t.totalAbsences || 0) + 1 }
                 : t
             )
@@ -4926,12 +4955,22 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         if (shouldRestoreAbsenceRecord) {
-          setAbsenceRecords((prev) =>
-            prev.some((r) => r.id === id) ? prev : [cleanRecord, ...prev]
-          );
+          setAbsenceRecords((prev) => {
+            const next = prev.some((r) => r.id === id) ? prev : [cleanRecord, ...prev];
+            try {
+              localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(next));
+            } catch {}
+            return next;
+          });
         }
 
-        setArchivedAbsences((prev) => prev.filter((a) => a.record.id !== id));
+        setArchivedAbsences((prev) => {
+          const next = prev.filter((a) => a.record.id !== id);
+          try {
+            localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
 
         if (isSupabaseConfigured() && supabase) {
           supabase
@@ -4944,6 +4983,28 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             })
             .eq("id", id)
             .then(() => {}, () => {});
+
+          if (found.linkedInquiry) {
+            const inqPayload: Record<string, unknown> = {
+              id: found.linkedInquiry.id,
+              teacher_id: found.linkedInquiry.teacherId,
+              teacher_name: found.linkedInquiry.teacherName,
+              job_number: found.linkedInquiry.jobNumber,
+              specialty: found.linkedInquiry.specialty || null,
+              mobile: found.linkedInquiry.mobile || null,
+              absence_date: found.linkedInquiry.absenceDate,
+              token: found.linkedInquiry.token,
+              status: found.linkedInquiry.status,
+              expires_at: found.linkedInquiry.expiresAt,
+              absence_type: found.linkedInquiry.absenceType || null,
+              teacher_reason: found.linkedInquiry.teacherReason || null,
+              attachment_url: found.linkedInquiry.attachmentUrl || null,
+              admin_notes: found.linkedInquiry.adminNotes || null,
+              submitted_at: found.linkedInquiry.submittedAt || null,
+              created_at: found.linkedInquiry.createdAt,
+            };
+            supabase.from("absence_inquiries").upsert(inqPayload).then(() => {}, () => {});
+          }
 
           if (!activeTeacher && archivedTeacher) {
             supabase

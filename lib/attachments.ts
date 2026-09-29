@@ -81,13 +81,54 @@ export function getAttachmentSlotsForType(absenceType: string): AttachmentSlotCo
   ];
 }
 
+const DEFAULT_SUPABASE_BASE_URL = "https://xizppykmqfkvzwcwxuzr.supabase.co";
+
+/**
+ * Resolves any raw attachment string (Storage path, signed/public URL, Base64 Data URL, or JSON array string)
+ * into a safe, valid absolute URL or Data URL that can be directly rendered or opened.
+ */
+export function resolveAttachmentUrl(rawUrl?: string, defaultBucket = "absence-attachments"): string {
+  if (!rawUrl) return "";
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return "";
+
+  // 1. If JSON array / object string, extract the first valid URL
+  if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+    const parsedItems = parseAttachments(trimmed, defaultBucket);
+    if (parsedItems.length > 0 && parsedItems[0].url) {
+      return parsedItems[0].url;
+    }
+  }
+
+  // 2. If already an absolute Web URL, Data URL, or Blob URL:
+  if (
+    trimmed.startsWith("http://") ||
+    trimmed.startsWith("https://") ||
+    trimmed.startsWith("data:") ||
+    trimmed.startsWith("blob:")
+  ) {
+    return trimmed;
+  }
+
+  // 3. If it is a Supabase Storage path (e.g., "absence-attachments/inquiries/file.png" or "manual-records/file.pdf")
+  const baseBucket = defaultBucket || "absence-attachments";
+  let cleanPath = trimmed.replace(/^\/+/, "");
+  if (cleanPath.startsWith(`${baseBucket}/`)) {
+    cleanPath = cleanPath.substring(baseBucket.length + 1);
+  }
+
+  return `${DEFAULT_SUPABASE_BASE_URL}/storage/v1/object/public/${baseBucket}/${cleanPath}`;
+}
+
 /**
  * Parses attachment URL field whether stored as JSON array of attachments
- * or legacy single URL string.
+ * or legacy single URL string, ensuring all URLs are safely resolved.
  */
-export function parseAttachments(rawUrl?: string): InquiryAttachmentItem[] {
+export function parseAttachments(rawUrl?: string, defaultBucket = "absence-attachments"): InquiryAttachmentItem[] {
   if (!rawUrl) return [];
   const trimmed = rawUrl.trim();
+  if (!trimmed) return [];
+
   if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
     try {
       const parsed = JSON.parse(trimmed);
@@ -95,12 +136,17 @@ export function parseAttachments(rawUrl?: string): InquiryAttachmentItem[] {
         return parsed
           .map((item, idx) => {
             if (typeof item === "string") {
-              return { slotId: `att_${idx}`, label: `مرفق ${idx + 1}`, url: item };
+              return {
+                slotId: `att_${idx}`,
+                label: `مرفق ${idx + 1}`,
+                url: resolveAttachmentUrl(item, defaultBucket),
+              };
             }
+            const itemUrl = item.url || item.path || "";
             return {
               slotId: item.slotId || item.id || `att_${idx}`,
               label: item.label || `مرفق ${idx + 1}`,
-              url: item.url || "",
+              url: resolveAttachmentUrl(itemUrl, defaultBucket),
             };
           })
           .filter((item) => !!item.url);
@@ -116,7 +162,7 @@ export function parseAttachments(rawUrl?: string): InquiryAttachmentItem[] {
                 : key === "other"
                 ? "مرفقات أخرى"
                 : "مرفق",
-            url: String(val),
+            url: resolveAttachmentUrl(String(val), defaultBucket),
           }))
           .filter((item) => !!item.url);
       }
@@ -124,7 +170,9 @@ export function parseAttachments(rawUrl?: string): InquiryAttachmentItem[] {
       // Fallback to single string
     }
   }
-  return [{ slotId: "default", label: "المرفق", url: rawUrl }];
+
+  const resolved = resolveAttachmentUrl(rawUrl, defaultBucket);
+  return resolved ? [{ slotId: "default", label: "المرفق", url: resolved }] : [];
 }
 
 export const MAX_ATTACHMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10MB max upload
@@ -144,16 +192,19 @@ export function isSafeForLocalStorageFallback(fileSize: number): boolean {
 export function openSafeAttachmentUrl(url: string, filename = "attachment"): void {
   if (!url || typeof window === "undefined") return;
 
+  const resolvedUrl = resolveAttachmentUrl(url);
+  if (!resolvedUrl) return;
+
   // 1. If HTTPS / standard web URL:
-  if (url.startsWith("http://") || url.startsWith("https://")) {
-    window.open(url, "_blank", "noopener,noreferrer");
+  if (resolvedUrl.startsWith("http://") || resolvedUrl.startsWith("https://")) {
+    window.open(resolvedUrl, "_blank", "noopener,noreferrer");
     return;
   }
 
   // 2. If Data URL: Convert to Blob and Object URL to bypass browser top-level data URL blocking
-  if (url.startsWith("data:")) {
+  if (resolvedUrl.startsWith("data:")) {
     try {
-      const parts = url.split(",");
+      const parts = resolvedUrl.split(",");
       const mimeMatch = parts[0].match(/:(.*?);/);
       const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
       const bstr = atob(parts[1]);
@@ -182,6 +233,7 @@ export function openSafeAttachmentUrl(url: string, filename = "attachment"): voi
   }
 
   // 3. Fallback
-  window.open(url, "_blank", "noopener,noreferrer");
+  window.open(resolvedUrl, "_blank", "noopener,noreferrer");
 }
+
 

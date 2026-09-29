@@ -22,7 +22,8 @@ import {
 import { AbsenceInquiry, Teacher } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
 import { printAbsencePdf } from "@/lib/printPdfService";
-import { parseAttachments } from "@/lib/attachments";
+import { parseAttachments, openSafeAttachmentUrl } from "@/lib/attachments";
+import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { cn } from "@/lib/utils";
 
 interface InquiryReviewModalProps {
@@ -40,6 +41,9 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
 
   const [adminNotes, setAdminNotes] = useState(inquiry?.adminNotes || "");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [selectedViewerUrl, setSelectedViewerUrl] = useState<string | null>(null);
+  const [selectedViewerTitle, setSelectedViewerTitle] = useState<string>("معاينة المرفق الرسمي");
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -264,24 +268,44 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
                             <FileCheck className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
                             <span>{att.label}</span>
                           </span>
-                          <a
-                            href={att.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[11px] font-bold text-[#137a85] dark:text-teal-400 hover:underline flex items-center gap-1"
-                          >
-                            <span>فتح بالحجم الكامل</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedViewerUrl(att.url);
+                                setSelectedViewerTitle(`${att.label} — ${inquiry.teacherName}`);
+                                setIsViewerOpen(true);
+                              }}
+                              className="text-[11px] font-bold text-[#137a85] dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>معاينة المرفق</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openSafeAttachmentUrl(att.url, `${inquiry.teacherName}_${att.label}`)}
+                              className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                              title="فتح في نافذة جديدة"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
 
                         {!isPdf ? (
-                          <div className="flex justify-center bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <div
+                            onClick={() => {
+                              setSelectedViewerUrl(att.url);
+                              setSelectedViewerTitle(`${att.label} — ${inquiry.teacherName}`);
+                              setIsViewerOpen(true);
+                            }}
+                            className="flex justify-center bg-white dark:bg-slate-900 p-2 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer group hover:border-[#137a85] transition-colors"
+                          >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={att.url}
                               alt={att.label}
-                              className="max-h-64 w-auto object-contain rounded-lg shadow-2xs"
+                              className="max-h-64 w-auto object-contain rounded-lg shadow-2xs group-hover:scale-[1.01] transition-transform"
                             />
                           </div>
                         ) : (
@@ -357,6 +381,17 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
             </div>
           </div>
         </motion.div>
+
+        {/* Attachment Lightbox Viewer Modal */}
+        <AttachmentViewerModal
+          isOpen={isViewerOpen}
+          onClose={() => {
+            setIsViewerOpen(false);
+            setSelectedViewerUrl(null);
+          }}
+          url={selectedViewerUrl}
+          title={selectedViewerTitle}
+        />
       </div>
     </AnimatePresence>
   );

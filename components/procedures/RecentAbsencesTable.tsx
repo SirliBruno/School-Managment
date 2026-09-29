@@ -19,7 +19,9 @@ import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { printAbsencePdf } from "@/lib/printPdfService";
+import { resolveAttachmentUrl, parseAttachments } from "@/lib/attachments";
 import {
   DataTable,
   ColumnDef,
@@ -62,6 +64,8 @@ export const RecentAbsencesTable: React.FC = () => {
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [recordToEdit, setRecordToEdit] = useState<AbsenceRecord | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(null);
+  const [selectedAttachmentRecord, setSelectedAttachmentRecord] = useState<AbsenceRecord | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
 
   const activeRecords = absenceRecords.filter((r) => !r.isArchived);
 
@@ -199,16 +203,24 @@ export const RecentAbsencesTable: React.FC = () => {
           return <span className="text-slate-400 dark:text-slate-500 text-xs">لا يوجد</span>;
         }
 
+        const attachments = parseAttachments(row.attachmentUrl);
+        if (attachments.length === 0) {
+          return <span className="text-slate-400 dark:text-slate-500 text-xs">لا يوجد</span>;
+        }
+
         return (
-          <a
-            href={row.attachmentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-teal-100 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800"
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedAttachmentRecord(row);
+              setIsViewerOpen(true);
+            }}
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-teal-100 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer"
+            title="معاينة المرفق الرسمي"
           >
             <Eye className="w-3 h-3" />
-            <span>عرض</span>
-          </a>
+            <span>{attachments.length > 1 ? `عرض (${attachments.length})` : "عرض"}</span>
+          </button>
         );
       },
     },
@@ -367,6 +379,20 @@ export const RecentAbsencesTable: React.FC = () => {
                 <span className="font-mono">{record.date}</span>
 
                 <div className="flex items-center gap-2">
+                  {record.attachmentUrl && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedAttachmentRecord(record);
+                        setIsViewerOpen(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-teal-50 dark:bg-teal-950/50 text-[#137a85] dark:text-teal-300 border border-teal-200 dark:border-teal-800/60"
+                      title="معاينة المرفق"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>المرفق</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleExportPdf(record)}
@@ -405,6 +431,20 @@ export const RecentAbsencesTable: React.FC = () => {
           record={recordToEdit}
           isOpen={!!recordToEdit}
           onClose={() => setRecordToEdit(null)}
+        />
+      )}
+
+      {/* Attachment Viewer Modal */}
+      {selectedAttachmentRecord && selectedAttachmentRecord.attachmentUrl && (
+        <AttachmentViewerModal
+          isOpen={isViewerOpen}
+          onClose={() => {
+            setIsViewerOpen(false);
+            setSelectedAttachmentRecord(null);
+          }}
+          url={resolveAttachmentUrl(selectedAttachmentRecord.attachmentUrl)}
+          title={`مرفق غياب المعلمة: ${selectedAttachmentRecord.teacherName}`}
+          fileName={`absence_attachment_${selectedAttachmentRecord.teacherName}_${selectedAttachmentRecord.date}`}
         />
       )}
 

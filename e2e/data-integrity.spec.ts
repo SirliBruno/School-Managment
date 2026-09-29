@@ -27,7 +27,7 @@ test.describe("تدقيق وتكامل سلامة البيانات الشامل 
 
     // 2. Visit Administrative Inquiries
     await page.goto("/procedures/administrative-inquiries");
-    await expect(page.locator("h1:has-text('المسائلات الإدارية')").first()).toBeVisible({ timeout: 15000 });
+    await expect(page.locator("h1:has-text('المسائلات'), h1:has-text('المساءلات'), h1:has-text('سجل المسائلات')").first()).toBeVisible({ timeout: 15000 });
 
     // 3. Visit Absence Procedures
     await page.goto("/procedures/absence");
@@ -91,4 +91,96 @@ test.describe("تدقيق وتكامل سلامة البيانات الشامل 
     // Verify data remains perfectly intact
     await expect(page.locator("td:has-text('ريم عبدالله القحطاني'), div:has-text('ريم عبدالله القحطاني')").first()).toBeVisible({ timeout: 15000 });
   });
+
+  test("3. سيناريو دورة حياة المرفقات بعد الأرشفة والاستعادة (Attachment Loss After Archive Restore Prevention)", async ({
+    page,
+  }) => {
+    const testTeacherName = "ساره محمد سليمان الطلحي";
+    const testDataUrl =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+    // Attach sample absence record with dataUrl
+    await page.addInitScript(
+      ({ teacherName, dataUrl }) => {
+        const sampleAbsence = {
+          id: "abs-test-lifecycle-1",
+          teacherId: "teacher-sara",
+          teacherName: teacherName,
+          nationalId: "1092332483",
+          jobNumber: "1092332483",
+          specialty: "لغة عربية",
+          date: "2026-09-29",
+          type: "اضطراري",
+          reason: "ظرف عائلي طارئ",
+          attachmentUrl: dataUrl,
+          timestamp: new Date().toISOString(),
+          isArchived: false,
+        };
+
+        const existingAbs = localStorage.getItem("school_admin_absences_v1");
+        const list = existingAbs ? JSON.parse(existingAbs) : [];
+        const filtered = list.filter((r: any) => r.teacherName !== teacherName);
+        filtered.unshift(sampleAbsence);
+        localStorage.setItem("school_admin_absences_v1", JSON.stringify(filtered));
+      },
+      { teacherName: testTeacherName, dataUrl: testDataUrl }
+    );
+
+    // 1. Visit Absence Procedures & Switch to Manual/Direct Tab
+    await page.goto("/procedures/absence");
+    await page.click("button:has-text('التسجيل والتوثيق المباشر')");
+
+    // 2. Locate row for ساره محمد سليمان الطلحي
+    const teacherRow = page.locator(`tr:has-text('${testTeacherName}')`).first();
+    await expect(teacherRow).toBeVisible({ timeout: 15000 });
+
+    const viewButton = teacherRow.locator("button:has-text('عرض')");
+    await expect(viewButton).toBeVisible();
+    await viewButton.click();
+
+    // Verify Lightbox Modal opened
+    await expect(page.locator("div[role='dialog']:has-text('مرفق غياب المعلمة')").first()).toBeVisible({ timeout: 10000 });
+    await page.click("button[aria-label='إغلاق المعاينة']");
+
+    // 3. Archive the record via ActionMenu
+    const actionMenuButton = teacherRow.locator("button[aria-label='إجراءات الصف']");
+    await actionMenuButton.click();
+    await page.click("button:has-text('نقل للأرشيف الإداري')");
+    await page.click("button:has-text('نقل إلى الأرشيف')");
+
+    // 4. Visit Archive and Restore
+    await page.goto("/archive");
+    await page.click("button:has-text('سجلات الغياب')");
+    const archivedRow = page.locator(`div:has-text('${testTeacherName}')`).first();
+    await expect(archivedRow).toBeVisible({ timeout: 15000 });
+
+    const restoreButton = page.locator(`button:has-text('استعادة')`).first();
+    await restoreButton.click();
+
+    // 5. Return to Absence Procedures & Check Restored Attachment
+    await page.goto("/procedures/absence");
+    await page.click("button:has-text('التسجيل والتوثيق المباشر')");
+
+    const restoredTeacherRow = page.locator(`tr:has-text('${testTeacherName}')`).first();
+    await expect(restoredTeacherRow).toBeVisible({ timeout: 15000 });
+
+    const restoredViewButton = restoredTeacherRow.locator("button:has-text('عرض')");
+    await expect(restoredViewButton).toBeVisible();
+    await restoredViewButton.click();
+
+    // Verify Lightbox opens without 404
+    await expect(page.locator("div[role='dialog']:has-text('مرفق غياب المعلمة')").first()).toBeVisible({ timeout: 10000 });
+    await page.click("button[aria-label='إغلاق المعاينة']");
+
+    // 6. Hard refresh and verify it still works
+    await page.reload();
+    await page.click("button:has-text('التسجيل والتوثيق المباشر')");
+    const persistedTeacherRow = page.locator(`tr:has-text('${testTeacherName}')`).first();
+    await expect(persistedTeacherRow).toBeVisible({ timeout: 15000 });
+    const persistedViewButton = persistedTeacherRow.locator("button:has-text('عرض')");
+    await persistedViewButton.click();
+    await expect(page.locator("div[role='dialog']:has-text('مرفق غياب المعلمة')").first()).toBeVisible({ timeout: 10000 });
+    await page.click("button[aria-label='إغلاق المعاينة']");
+  });
 });
+
