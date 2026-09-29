@@ -198,7 +198,7 @@ test.describe("قسم المسائلات الإدارية - دورة العمل 
     await acceptBtn.click();
 
     // Fill notes
-    const notesField = page.getByPlaceholder("اكتبي توجيهات المديرة، مثال: يتم قبول العذر لمرة واحدة...");
+    const notesField = page.getByPlaceholder(/اكتبي توجيهات المديرة/);
     await notesField.fill("تم قبول العذر بعد التأكد من تكليف المعمل.");
 
     // Submit Director Decision
