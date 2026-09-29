@@ -116,9 +116,13 @@ export default function AdministrativeInquiryPublicResponsePage() {
           setIsExpired(true);
         }
 
-        // Prepopulate if already answered
+        // Prepopulate if already answered and set submitted status
         if (foundInquiry.teacherResponse) {
           setTeacherResponse(foundInquiry.teacherResponse);
+        }
+
+        if (foundInquiry.status !== "pending_teacher") {
+          setSubmitSuccess(true);
         }
       } catch (err) {
         console.error("خطأ أثناء تحميل المساءلة:", err);

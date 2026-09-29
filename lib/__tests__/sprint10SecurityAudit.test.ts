@@ -238,6 +238,7 @@ describe("Sprint 10: Production Security & Disaster Recovery Audit Test Suite", 
         "/login",
         "/inquiry/inq_token_123",
         "/teacher-response/notice_token_456",
+        "/administrative-inquiry/admin_tok_789",
         "/api/health",
       ];
 
@@ -247,6 +248,7 @@ describe("Sprint 10: Production Security & Disaster Recovery Audit Test Suite", 
         "/procedures/absence",
         "/procedures/delay-warning",
         "/procedures/permissions",
+        "/procedures/administrative-inquiries",
         "/reports",
         "/archive",
       ];
@@ -255,6 +257,7 @@ describe("Sprint 10: Production Security & Disaster Recovery Audit Test Suite", 
         path === "/login" ||
         path.startsWith("/inquiry/") ||
         path.startsWith("/teacher-response/") ||
+        path.startsWith("/administrative-inquiry/") ||
         path.startsWith("/api/health");
 
       for (const r of publicRoutes) {

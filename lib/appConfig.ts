@@ -76,6 +76,15 @@ export function getDelayNoticePublicUrl(shareToken: string): string {
 }
 
 /**
+ * توليد الرابط الإلكتروني العام للمساءلة الإدارية الموجه للمعلمة
+ */
+export function getAdministrativeInquiryPublicUrl(token: string): string {
+  const baseUrl = getAppBaseUrl();
+  const cleanToken = encodeURIComponent(token.trim());
+  return `${baseUrl}/administrative-inquiry/${cleanToken}`;
+}
+
+/**
  * الإعدادات الرسمية الموحدة للمدرسة (School Configuration Setup)
  * توفر المصدر الموحد للترويسات، النماذج، والتقارير الإدارية
  */

@@ -18,7 +18,12 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   const isLoginPage = pathname === "/login";
   const isInquiryPublicPage = pathname?.startsWith("/inquiry/");
   const isTeacherResponsePublicPage = pathname?.startsWith("/teacher-response/");
-  const isPublicRoute = isLoginPage || isInquiryPublicPage || isTeacherResponsePublicPage;
+  const isAdministrativeInquiryPublicPage = pathname?.startsWith("/administrative-inquiry/");
+  const isPublicRoute =
+    isLoginPage ||
+    isInquiryPublicPage ||
+    isTeacherResponsePublicPage ||
+    isAdministrativeInquiryPublicPage;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !isPublicRoute) {

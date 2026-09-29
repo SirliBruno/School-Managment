@@ -1,5 +1,6 @@
 import { formatSaudiMobile } from "./whatsapp";
 import { AdministrativeInquiry } from "@/types/teacher";
+import { getAdministrativeInquiryPublicUrl } from "./appConfig";
 
 export interface AdministrativeInquiryWhatsAppParams {
   teacherName?: string;
@@ -36,10 +37,9 @@ export function generateAdministrativeInquiryWhatsAppMessage(
   // Check if passed AdministrativeInquiry entity
   if ("id" in paramsOrInquiry) {
     const inquiry = paramsOrInquiry;
-    const baseUrl =
-      fallbackBaseUrl ||
-      (typeof window !== "undefined" ? window.location.origin : "");
-    const portalUrl = `${baseUrl.replace(/\/+$/, "")}/administrative-inquiry/${inquiry.token}`;
+    const portalUrl = fallbackBaseUrl
+      ? `${fallbackBaseUrl.replace(/\/+$/, "")}/administrative-inquiry/${inquiry.token}`
+      : getAdministrativeInquiryPublicUrl(inquiry.token);
     const displayType =
       inquiry.inquiryType === "أخرى" && (inquiry.customType || inquiry.customViolationType)
         ? (inquiry.customType || inquiry.customViolationType)
@@ -66,12 +66,11 @@ export function generateAdministrativeInquiryWhatsAppMessage(
   // Passed AdministrativeInquiryWhatsAppParams
   const params = paramsOrInquiry;
   const { teacherName, inquiryType, customType, incidentDate } = params;
-  const baseUrl =
-    fallbackBaseUrl ||
-    (typeof window !== "undefined" ? window.location.origin : "");
   const portalUrl =
     params.portalUrl ||
-    `${baseUrl.replace(/\/+$/, "")}/administrative-inquiry/${params.token || "TOKEN"}`;
+    (fallbackBaseUrl
+      ? `${fallbackBaseUrl.replace(/\/+$/, "")}/administrative-inquiry/${params.token || "TOKEN"}`
+      : getAdministrativeInquiryPublicUrl(params.token || "TOKEN"));
 
   const displayType =
     inquiryType === "أخرى" && customType?.trim()
@@ -138,6 +137,6 @@ export function openAdministrativeInquiryWhatsApp(
 ): void {
   const url = buildAdministrativeInquiryWhatsAppUrl(inquiry, mobile, baseUrl);
   if (typeof window !== "undefined") {
-    window.open(url, "_blank");
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 }

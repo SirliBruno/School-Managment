@@ -22,6 +22,7 @@ import {
   User,
   MessageSquare,
   FileText,
+  Copy,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -35,7 +36,7 @@ import { AdministrativeInquiryReviewModal } from "@/components/procedures/Admini
 import { AdministrativeInquiryDetailsModal } from "@/components/procedures/AdministrativeInquiryDetailsModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
-import { openAdministrativeInquiryWhatsApp } from "@/lib/administrativeInquiryWhatsappService";
+import { openAdministrativeInquiryWhatsApp, generateAdministrativeInquiryWhatsAppMessage } from "@/lib/administrativeInquiryWhatsappService";
 import {
   PageHeader,
   KpiCard,
@@ -179,6 +180,25 @@ export default function AdministrativeInquiriesPage() {
       message: "تم فتح محادثة واتساب مع المعلمة برابط المساءلة المباشر.",
       type: "success",
     });
+  };
+
+  // Handle Copy Message & Link
+  const handleCopyMessage = async (inq: AdministrativeInquiry) => {
+    try {
+      const msg = generateAdministrativeInquiryWhatsAppMessage(inq);
+      await navigator.clipboard.writeText(msg);
+      markAdministrativeInquiryLinkShared(inq.id);
+      showToast({
+        message: "تم نسخ رسالة ورابط المساءلة الإدارية بنجاح إلى الحافظة.",
+        type: "success",
+      });
+    } catch (err) {
+      console.error("فشل نسخ الرسالة:", err);
+      showToast({
+        message: "تعذر نسخ الرسالة إلى الحافظة.",
+        type: "error",
+      });
+    }
   };
 
   // Handle Soft-Delete to Archive
@@ -372,6 +392,12 @@ export default function AdministrativeInquiriesPage() {
             label: "إعادة إرسال الرابط",
             icon: MessageSquare,
             onClick: () => handleWhatsAppShare(row),
+          },
+          {
+            id: "copy",
+            label: "نسخ الرسالة والرابط",
+            icon: Copy,
+            onClick: () => handleCopyMessage(row),
           },
         ];
 

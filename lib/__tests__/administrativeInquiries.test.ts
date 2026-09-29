@@ -3,6 +3,7 @@ import {
   generateAdministrativeInquiryWhatsAppMessage,
   buildAdministrativeInquiryWhatsAppUrl,
 } from "@/lib/administrativeInquiryWhatsappService";
+import { getAdministrativeInquiryPublicUrl } from "@/lib/appConfig";
 import { generateReportData, getDashboardStats } from "@/lib/reportsEngine";
 import {
   AdministrativeInquiry,
@@ -95,6 +96,11 @@ describe("Administrative Inquiries Module Suite", () => {
       expect(message).toContain(
         "https://school-portal.gov.sa/administrative-inquiry/test-token-uuid-12345"
       );
+    });
+
+    it("should generate proper public URL without requiring authentication", () => {
+      const publicUrl = getAdministrativeInquiryPublicUrl("test-token-uuid-12345");
+      expect(publicUrl).toContain("/administrative-inquiry/test-token-uuid-12345");
     });
   });
 

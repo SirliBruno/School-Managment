@@ -23,6 +23,9 @@ import {
   ChevronRight,
   ArrowRight,
   Save,
+  Phone,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -30,6 +33,7 @@ import { Teacher, AdministrativeInquiry, AdministrativeInquiryType } from "@/typ
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { getSaudiToday } from "@/lib/timeUtils";
 import { cn } from "@/lib/utils";
+import { formatSaudiMobile, normalizeSaudiMobileInput } from "@/lib/whatsapp";
 import { openAdministrativeInquiryWhatsApp, generateAdministrativeInquiryWhatsAppMessage } from "@/lib/administrativeInquiryWhatsappService";
 
 interface CreateAdministrativeInquiryModalProps {
@@ -95,13 +99,16 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
   inquiryToEdit,
   preselectedTeacherId,
 }) => {
-  const { teachers, createAdministrativeInquiry, updateAdministrativeInquiry, markAdministrativeInquiryLinkShared } = useTeachers();
+  const { teachers, updateTeacher, createAdministrativeInquiry, updateAdministrativeInquiry, markAdministrativeInquiryLinkShared } = useTeachers();
   const { showToast } = useToast();
   const formId = useId();
 
   const [currentStep, setCurrentStep] = useState<StepNumber>(1);
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [mobileInput, setMobileInput] = useState("");
+  const [saveMobileToProfile, setSaveMobileToProfile] = useState(false);
+  const [copiedSuccess, setCopiedSuccess] = useState(false);
   const [incidentDate, setIncidentDate] = useState(() => getSaudiToday());
   const [inquiryType, setInquiryType] = useState<AdministrativeInquiryType>("التأخير عن دخول الحصص");
   const [customType, setCustomType] = useState("");
@@ -116,6 +123,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
       setSelectedTeacherId(inquiryToEdit.teacherId);
       const t = teachers.find((tch) => tch.id === inquiryToEdit.teacherId) || null;
       setSelectedTeacher(t);
+      setMobileInput(inquiryToEdit.teacherPhone || t?.mobile || t?.phone || "");
       setIncidentDate(inquiryToEdit.incidentDate || getSaudiToday());
       setInquiryType(inquiryToEdit.inquiryType || "التأخير عن دخول الحصص");
       setCustomType(inquiryToEdit.customType || inquiryToEdit.customViolationType || "");
@@ -128,8 +136,10 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
       if (initialTeacherId) {
         const t = teachers.find((tch) => tch.id === initialTeacherId) || null;
         setSelectedTeacher(t);
+        setMobileInput(t?.mobile || t?.phone || "");
       } else {
         setSelectedTeacher(null);
+        setMobileInput("");
       }
       setIncidentDate(getSaudiToday());
       setInquiryType("التأخير عن دخول الحصص");
@@ -138,12 +148,15 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
       setVicePrincipalNotes("");
       setCurrentStep(1);
     }
+    setSaveMobileToProfile(false);
+    setCopiedSuccess(false);
     setErrorMsg(null);
   }, [inquiryToEdit, preselectedTeacherId, teachers, isOpen]);
 
   const handleTeacherChange = (teacher: Teacher | null) => {
     setSelectedTeacher(teacher);
     setSelectedTeacherId(teacher?.id || "");
+    setMobileInput(teacher?.mobile || teacher?.phone || "");
     setErrorMsg(null);
   };
 
@@ -220,6 +233,11 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
     setIsProcessing(true);
     setErrorMsg(null);
 
+    const targetPhone = mobileInput.trim() || selectedTeacher?.mobile || selectedTeacher?.phone || "";
+    if (saveMobileToProfile && targetPhone && selectedTeacher && targetPhone !== selectedTeacher.mobile) {
+      updateTeacher(selectedTeacher.id, { mobile: targetPhone });
+    }
+
     try {
       if (inquiryToEdit) {
         const res = updateAdministrativeInquiry(inquiryToEdit.id, {
@@ -231,8 +249,8 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
         });
 
         if (res.success && res.inquiry) {
-          if (openWhatsApp && selectedTeacher?.mobile) {
-            openAdministrativeInquiryWhatsApp(res.inquiry, selectedTeacher.mobile);
+          if (openWhatsApp) {
+            openAdministrativeInquiryWhatsApp(res.inquiry, targetPhone);
             markAdministrativeInquiryLinkShared(res.inquiry.id);
           }
           showToast({
@@ -254,8 +272,8 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
         });
 
         if (res.success && res.inquiry) {
-          if (openWhatsApp && selectedTeacher?.mobile) {
-            openAdministrativeInquiryWhatsApp(res.inquiry, selectedTeacher.mobile);
+          if (openWhatsApp) {
+            openAdministrativeInquiryWhatsApp(res.inquiry, targetPhone);
             markAdministrativeInquiryLinkShared(res.inquiry.id);
           }
           showToast({
@@ -269,6 +287,77 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "حدث خطأ غير متوقع");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCopyLinkAndMessage = async () => {
+    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setErrorMsg(null);
+
+    const targetPhone = mobileInput.trim() || selectedTeacher?.mobile || selectedTeacher?.phone || "";
+    if (saveMobileToProfile && targetPhone && selectedTeacher && targetPhone !== selectedTeacher.mobile) {
+      updateTeacher(selectedTeacher.id, { mobile: targetPhone });
+    }
+
+    try {
+      let inquiryObj = inquiryToEdit;
+
+      if (inquiryToEdit) {
+        const res = updateAdministrativeInquiry(inquiryToEdit.id, {
+          inquiryType,
+          customType: inquiryType === "أخرى" ? customType.trim() : undefined,
+          incidentDate,
+          description: description.trim(),
+          vicePrincipalNotes: vicePrincipalNotes.trim() || undefined,
+        });
+        if (res.success && res.inquiry) {
+          inquiryObj = res.inquiry;
+        } else {
+          setErrorMsg(res.error || "فشل تحديث المساءلة.");
+          setIsProcessing(false);
+          return;
+        }
+      } else {
+        const res = createAdministrativeInquiry({
+          teacherId: selectedTeacherId,
+          inquiryType,
+          customType: inquiryType === "أخرى" ? customType.trim() : undefined,
+          incidentDate,
+          description: description.trim(),
+          vicePrincipalNotes: vicePrincipalNotes.trim() || undefined,
+        });
+        if (res.success && res.inquiry) {
+          inquiryObj = res.inquiry;
+        } else {
+          setErrorMsg(res.error || "فشل إنشاء المساءلة.");
+          setIsProcessing(false);
+          return;
+        }
+      }
+
+      if (inquiryObj) {
+        const msg = generateAdministrativeInquiryWhatsAppMessage(inquiryObj);
+        await navigator.clipboard.writeText(msg);
+        markAdministrativeInquiryLinkShared(inquiryObj.id);
+        setCopiedSuccess(true);
+        showToast({
+          message: "تم نسخ رسالة ورابط المساءلة الإدارية بنجاح إلى الحافظة.",
+          type: "success",
+        });
+        setTimeout(() => {
+          setCopiedSuccess(false);
+          onClose();
+        }, 1200);
+      }
+    } catch (err) {
+      console.error("فشل نسخ الرسالة:", err);
+      setErrorMsg("تعذر نسخ الرسالة إلى الحافظة.");
     } finally {
       setIsProcessing(false);
     }
@@ -638,7 +727,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                   <div>
                     <span className="text-slate-500 dark:text-slate-400 block">رقم جوال المعلمة:</span>
                     <strong className="text-slate-800 dark:text-slate-200 font-mono">
-                      {selectedTeacher?.mobile || "غير مسجل"}
+                      {mobileInput || selectedTeacher?.mobile || "غير مسجل"}
                     </strong>
                   </div>
                 </div>
@@ -650,6 +739,51 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                       {description}
                     </p>
                   </div>
+                )}
+              </div>
+
+              {/* Teacher Mobile Number Input for WhatsApp */}
+              <div className="space-y-1.5 p-3.5 rounded-2xl bg-indigo-50/60 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40">
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor={`${formId}-mobile`}
+                    className="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                  >
+                    رقم جوال المعلمة (واتساب) <span className="text-rose-500">*</span>
+                  </label>
+                  {formatSaudiMobile(mobileInput) && (
+                    <span className="text-[11px] font-mono text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/60 px-2 py-0.5 rounded-md border">
+                      +{formatSaudiMobile(mobileInput)}
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <Phone
+                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
+                    aria-hidden="true"
+                  />
+                  <input
+                    id={`${formId}-mobile`}
+                    type="tel"
+                    dir="ltr"
+                    placeholder="05XXXXXXXX أو 9665XXXXXXXX"
+                    value={mobileInput}
+                    onChange={(e) => setMobileInput(normalizeSaudiMobileInput(e.target.value))}
+                    className="w-full pl-10 pr-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
+                  />
+                </div>
+                {selectedTeacher && mobileInput && mobileInput !== selectedTeacher.mobile && (
+                  <label className="flex items-center gap-2 cursor-pointer mt-1">
+                    <input
+                      type="checkbox"
+                      checked={saveMobileToProfile}
+                      onChange={(e) => setSaveMobileToProfile(e.target.checked)}
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 w-3.5 h-3.5"
+                    />
+                    <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                      حفظ وتحديث رقم الجوال في ملف المعلمة الدائم
+                    </span>
+                  </label>
                 )}
               </div>
 
@@ -719,6 +853,25 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
 
                 <button
                   type="button"
+                  onClick={handleCopyLinkAndMessage}
+                  disabled={isProcessing || !selectedTeacherId}
+                  className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-800 dark:text-teal-300 text-xs font-bold transition-all focus:outline-none disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  {copiedSuccess ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700 dark:text-emerald-300">تم النسخ!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>نسخ الرسالة والرابط</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
                   onClick={() => handleSubmit(true)}
                   disabled={isProcessing || !selectedTeacherId}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all focus:outline-none disabled:opacity-50 cursor-pointer"
@@ -726,7 +879,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                   {isProcessing ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>جاري الحفظ...</span>
+                      <span>جاري المعالجة...</span>
                     </>
                   ) : (
                     <>
