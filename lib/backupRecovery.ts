@@ -17,6 +17,8 @@ import {
   ArchivedDeductionDecision,
   ArchivedEmployeePermission,
   AuditLog,
+  AdministrativeInquiry,
+  ArchivedAdministrativeInquiry,
 } from "@/types/teacher";
 import { getLocalAuditLogs, logAuditEvent } from "@/lib/auditLogger";
 
@@ -35,11 +37,13 @@ export interface SystemBackupMetadata {
     inquiries: number;
     deductionDecisions: number;
     permissions: number;
+    administrativeInquiries?: number;
     archivedTeachers: number;
     archivedAbsences: number;
     archivedDelayNotices: number;
     archivedDeductions: number;
     archivedPermissions: number;
+    archivedAdministrativeInquiries?: number;
     auditLogs: number;
   };
   checksum: string;
@@ -52,11 +56,13 @@ export interface SystemBackupData {
   inquiries: AbsenceInquiry[];
   deductionDecisions: DeductionDecision[];
   permissions: EmployeePermission[];
+  administrativeInquiries?: AdministrativeInquiry[];
   archivedTeachers: ArchivedTeacher[];
   archivedAbsences: ArchivedAbsenceRecord[];
   archivedDelayNotices: ArchivedDelayNotice[];
   archivedDeductionDecisions: ArchivedDeductionDecision[];
   archivedPermissions: ArchivedEmployeePermission[];
+  archivedAdministrativeInquiries?: ArchivedAdministrativeInquiry[];
   auditLogs: AuditLog[];
 }
 
@@ -92,11 +98,13 @@ export function createDatabaseBackupSnapshot(
     inquiries: state.inquiries || [],
     deductionDecisions: state.deductionDecisions || [],
     permissions: state.permissions || [],
+    administrativeInquiries: state.administrativeInquiries || [],
     archivedTeachers: state.archivedTeachers || [],
     archivedAbsences: state.archivedAbsences || [],
     archivedDelayNotices: state.archivedDelayNotices || [],
     archivedDeductionDecisions: state.archivedDeductionDecisions || [],
     archivedPermissions: state.archivedPermissions || [],
+    archivedAdministrativeInquiries: state.archivedAdministrativeInquiries || [],
     auditLogs,
   };
 
@@ -107,11 +115,13 @@ export function createDatabaseBackupSnapshot(
     inquiries: data.inquiries.length,
     deductionDecisions: data.deductionDecisions.length,
     permissions: data.permissions.length,
+    administrativeInquiries: (data.administrativeInquiries || []).length,
     archivedTeachers: data.archivedTeachers.length,
     archivedAbsences: data.archivedAbsences.length,
     archivedDelayNotices: data.archivedDelayNotices.length,
     archivedDeductions: data.archivedDeductionDecisions.length,
     archivedPermissions: data.archivedPermissions.length,
+    archivedAdministrativeInquiries: (data.archivedAdministrativeInquiries || []).length,
     auditLogs: data.auditLogs.length,
   };
 

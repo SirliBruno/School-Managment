@@ -20,6 +20,7 @@ import {
   Layers,
   FileCheck,
   DoorOpen,
+  Scale,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -27,8 +28,8 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
-type ArchiveTab = "all" | "teachers" | "absences" | "delays" | "deductions" | "permissions";
-type ArchiveEntityType = "teacher" | "absence" | "delay" | "deduction" | "permission";
+type ArchiveTab = "all" | "teachers" | "absences" | "delays" | "deductions" | "permissions" | "administrative_inquiries";
+type ArchiveEntityType = "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry";
 
 interface UnifiedArchiveItem {
   uid: string; // `${type}:${entityId}`
@@ -70,6 +71,7 @@ export default function ArchivePage() {
     archivedDelayNotices,
     archivedDeductionDecisions,
     archivedPermissions,
+    archivedAdministrativeInquiries,
     restoreFromArchive,
     permanentDeleteFromArchive,
   } = useTeachers();
@@ -217,11 +219,47 @@ export default function ArchivePage() {
       });
     }
 
+    // 6. Archived Administrative Inquiries
+    for (const aai of archivedAdministrativeInquiries) {
+      const inq = aai.inquiry;
+      const isCascade = Boolean(aai.archivedByCascade || inq.archivedByCascade);
+      const statusLabel =
+        inq.status === "completed"
+          ? "مكتمل"
+          : inq.status === "pending_director"
+          ? "بانتظار المديرة"
+          : inq.status === "expired"
+          ? "منتهي الصلاحية"
+          : "بانتظار إفادة المعلمة";
+
+      const inqTypeDisplay =
+        inq.inquiryType === "أخرى"
+          ? inq.customType
+            ? `أخرى (${inq.customType})`
+            : "أخرى"
+          : inq.inquiryType || inq.violationTypeArabic || inq.violationType || "—";
+
+      items.push({
+        uid: `administrative_inquiry:${inq.id}`,
+        type: "administrative_inquiry",
+        entityId: inq.id,
+        title: `${inq.teacherName || "معلمة"} — مساءلة إدارية (${inq.inquiryNumber || "—"})`,
+        subtitle: `تاريخ الواقعة: ${inq.incidentDate || "—"} • نوع المخالفة: ${inqTypeDisplay} • الحالة: ${statusLabel}`,
+        details: inq.description || inq.incidentDescription
+          ? `الوصف: ${inq.description || inq.incidentDescription}`
+          : inq.vicePrincipalNotes || "",
+        archivedAt: aai.archivedAt || inq.archivedAt || new Date().toISOString(),
+        archivedBy: aai.archivedBy || inq.archivedBy || "الإدارة المدرسية",
+        archiveReason: aai.archiveReason || inq.archiveReason || "تم نقل المساءلة الإدارية إلى الأرشيف",
+        archivedByCascade: isCascade,
+      });
+    }
+
     return items.sort(
       (a, b) =>
         new Date(b.archivedAt).getTime() - new Date(a.archivedAt).getTime()
     );
-  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, archivedPermissions]);
+  }, [archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, archivedPermissions, archivedAdministrativeInquiries]);
 
   // Filter by activeTab and searchQuery
   const filteredItems = useMemo(() => {
@@ -232,6 +270,7 @@ export default function ArchivePage() {
       if (activeTab === "delays" && item.type !== "delay") return false;
       if (activeTab === "deductions" && item.type !== "deduction") return false;
       if (activeTab === "permissions" && item.type !== "permission") return false;
+      if (activeTab === "administrative_inquiries" && item.type !== "administrative_inquiry") return false;
 
       if (!q) return true;
       return (
@@ -392,8 +431,8 @@ export default function ArchivePage() {
 
       {/* Main Body */}
       <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-6xl w-full mx-auto pb-28">
-        {/* 5 KPI Summary Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        {/* 6 KPI Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
           <div onClick={() => setActiveTab("teachers")} className="cursor-pointer">
             <KpiCard
               title="المعلمات المؤرشفة"
@@ -406,7 +445,7 @@ export default function ArchivePage() {
 
           <div onClick={() => setActiveTab("absences")} className="cursor-pointer">
             <KpiCard
-              title="سجلات الغياب المؤرشفة"
+              title="سجلات الغياب"
               value={archivedAbsences.length}
               variant="sky"
               icon={<FileText className="w-5 h-5" />}
@@ -416,7 +455,7 @@ export default function ArchivePage() {
 
           <div onClick={() => setActiveTab("delays")} className="cursor-pointer">
             <KpiCard
-              title="تنبيهات التأخر المؤرشفة"
+              title="تنبيهات التأخر"
               value={archivedDelayNotices.length}
               variant="amber"
               icon={<Clock className="w-5 h-5" />}
@@ -426,7 +465,7 @@ export default function ArchivePage() {
 
           <div onClick={() => setActiveTab("deductions")} className="cursor-pointer">
             <KpiCard
-              title="قرارات الحسم المؤرشفة"
+              title="قرارات الحسم"
               value={archivedDeductionDecisions.length}
               variant="rose"
               icon={<FileCheck className="w-5 h-5" />}
@@ -436,11 +475,21 @@ export default function ArchivePage() {
 
           <div onClick={() => setActiveTab("permissions")} className="cursor-pointer">
             <KpiCard
-              title="سجلات الاستئذان المؤرشفة"
+              title="سجلات الاستئذان"
               value={archivedPermissions.length}
               variant="purple"
               icon={<DoorOpen className="w-5 h-5" />}
               className={activeTab === "permissions" ? "ring-2 ring-purple-600" : ""}
+            />
+          </div>
+
+          <div onClick={() => setActiveTab("administrative_inquiries")} className="cursor-pointer">
+            <KpiCard
+              title="المسائلات الإدارية"
+              value={archivedAdministrativeInquiries.length}
+              variant="indigo"
+              icon={<Scale className="w-5 h-5" />}
+              className={activeTab === "administrative_inquiries" ? "ring-2 ring-indigo-600" : ""}
             />
           </div>
         </div>
@@ -551,6 +600,23 @@ export default function ArchivePage() {
                     {archivedPermissions.length}
                   </span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("administrative_inquiries")}
+                  className={cn(
+                    "px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer",
+                    activeTab === "administrative_inquiries"
+                      ? "bg-white dark:bg-slate-900 text-indigo-700 dark:text-indigo-400 shadow-xs"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100"
+                  )}
+                >
+                  <Scale className="w-3.5 h-3.5" />
+                  <span>المسائلات الإدارية</span>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[10px] font-mono">
+                    {archivedAdministrativeInquiries.length}
+                  </span>
+                </button>
               </div>
 
               {/* Search Input */}
@@ -638,6 +704,13 @@ export default function ArchivePage() {
                           bg: "bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border-purple-200 dark:border-purple-800/60",
                           iconBg: "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 border-purple-100 dark:border-purple-800",
                           Icon: DoorOpen,
+                        }
+                      : item.type === "administrative_inquiry"
+                      ? {
+                          label: "مساءلة إدارية",
+                          bg: "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/60",
+                          iconBg: "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800",
+                          Icon: Scale,
                         }
                       : {
                           label: "قرار حسم ساعات",

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
+import Link from "next/link";
 import {
   FileText,
   Calendar,
@@ -21,6 +22,7 @@ import {
   Download,
   LogOut,
   BarChart3,
+  Scale,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTeachers } from "@/context/TeacherContext";
@@ -119,6 +121,14 @@ const REPORT_CARDS: ReportCardDef[] = [
     accentColor: "border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-700",
   },
   {
+    type: "administrative_inquiries_summary",
+    title: "حصر المسائلات الإدارية",
+    description: "حصر شامل لجميع المسائلات الإدارية الخطية، وتتبع حالات رد المعلمات وقرارات الإدارة المعتمدة.",
+    icon: Scale,
+    badge: "مساءلات خطية",
+    accentColor: "border-purple-500 text-purple-600 bg-purple-50 dark:bg-purple-950/60 dark:text-purple-300 dark:border-purple-700",
+  },
+  {
     type: "custom_period",
     title: "تقرير فترة زمنية مخصص",
     description: "استخراج حصر مخصص يحدده المستخدم بتاريخ بداية ونهاية مع تصفيات دقيقة حسب التخصص وحالة العمل.",
@@ -138,6 +148,7 @@ export default function ReportsCenterPage() {
     delayNotices,
     deductionDecisions,
     permissions,
+    administrativeInquiries,
     isLoading: isDataLoading,
   } = useTeachers();
 
@@ -158,6 +169,19 @@ export default function ReportsCenterPage() {
     employmentStatus: "all",
     status: "all",
   });
+
+  // مركز الحصر: مؤشرات المسائلات الإدارية (Section 12 requirement)
+  const adminInquiryStats = useMemo(() => {
+    const active = (administrativeInquiries || []).filter((i) => !i.isArchived);
+    const total = active.length;
+    const open = active.filter(
+      (i) => i.status === "pending_teacher" || i.status === "teacher_responded" || i.status === "pending_director"
+    ).length;
+    const completed = active.filter((i) => i.status === "completed").length;
+    const expired = active.filter((i) => i.status === "expired").length;
+
+    return { total, open, completed, expired };
+  }, [administrativeInquiries]);
 
   // Report History State
   const [historyItems, setHistoryItems] = useState<ReportHistoryItem[]>([]);
@@ -278,7 +302,8 @@ export default function ReportsCenterPage() {
       delayNotices,
       deductionDecisions,
       user?.fullName || DEFAULT_ADMIN_NAME,
-      permissions
+      permissions,
+      administrativeInquiries
     );
   }, [
     selectedType,
@@ -288,6 +313,7 @@ export default function ReportsCenterPage() {
     delayNotices,
     deductionDecisions,
     permissions,
+    administrativeInquiries,
     user?.fullName,
     step,
   ]);
@@ -383,7 +409,63 @@ export default function ReportsCenterPage() {
 
       <main className="flex-1 p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl w-full mx-auto" dir="rtl">
 
-      {/* Main Content Area */}
+        {/* قسم مركز الحصر: المسائلات الإدارية (Section 12 requirement) */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-5 shadow-2xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/60 border border-purple-100 dark:border-purple-800 text-purple-700 dark:text-purple-300 flex items-center justify-center shrink-0">
+                <Scale className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  مركز الحصر الإداري — قسم المسائلات الإدارية
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  مؤشرات الحصر اللحظي للمسائلات الإدارية الخطية وحالات الاستجابة والاعتماد
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/procedures/administrative-inquiries"
+              className="text-xs font-bold text-purple-700 dark:text-purple-300 hover:text-purple-800 flex items-center gap-1 self-start sm:self-auto px-3 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 transition-colors"
+            >
+              <span>إدارة المسائلات الإدارية</span>
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-800">
+              <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block">إجمالي المسائلات</span>
+              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100 mt-1 block">
+                {adminInquiryStats.total}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40">
+              <span className="text-xs text-amber-700 dark:text-amber-400 font-medium block">المسائلات المفتوحة</span>
+              <span className="text-xl font-bold font-mono text-amber-800 dark:text-amber-300 mt-1 block">
+                {adminInquiryStats.open}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40">
+              <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium block">المكتملة</span>
+              <span className="text-xl font-bold font-mono text-emerald-800 dark:text-emerald-300 mt-1 block">
+                {adminInquiryStats.completed}
+              </span>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700">
+              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium block">المنتهية</span>
+              <span className="text-xl font-bold font-mono text-slate-700 dark:text-slate-300 mt-1 block">
+                {adminInquiryStats.expired}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Area */}
       {activeTab === "history" ? (
         /* History View */
         <div className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-2xl p-6 shadow-2xs space-y-4">

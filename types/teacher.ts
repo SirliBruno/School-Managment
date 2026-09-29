@@ -22,6 +22,7 @@ export interface Teacher {
   name?: string;
   username?: string;
   jobNumber?: string;
+  phone?: string;
 }
 
 export interface ExcelTeacherRow {
@@ -258,6 +259,7 @@ export interface ArchivedTeacher {
   associatedDelayNotices: DelayNotice[];
   associatedDeductionDecisions?: DeductionDecision[];
   associatedPermissions?: EmployeePermission[];
+  associatedAdministrativeInquiries?: AdministrativeInquiry[];
   archivedAt: string;
   archiveReason?: string;
 }
@@ -281,6 +283,14 @@ export interface ArchivedDelayNotice {
 export interface ArchivedDeductionDecision {
   decision: DeductionDecision;
   archivedAt: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
+}
+
+export interface ArchivedAdministrativeInquiry {
+  inquiry: AdministrativeInquiry;
+  archivedAt: string;
+  archivedBy?: string;
   archiveReason?: string;
   archivedByCascade?: boolean;
 }
@@ -348,6 +358,7 @@ export type AuditLogEntityType =
   | "delay_notice"
   | "permission"
   | "deduction"
+  | "administrative_inquiry"
   | "report"
   | "backup"
   | "settings"
@@ -366,4 +377,71 @@ export interface AuditLog {
   newValue?: Record<string, unknown> | unknown;
   ipAddress?: string;
   timestamp: string;
+}
+
+// === Administrative Inquiries Management (المسائلات الإدارية) ===
+export type AdministrativeInquiryType =
+  | "التأخير عن دخول الحصص"
+  | "الخروج من الحصص قبل انتهاء الوقت"
+  | "الامتناع عن دخول حصص الانتظار"
+  | "الامتناع عن المناوبة"
+  | "أخرى"
+  | (string & {});
+
+export type AdministrativeInquiryStatus =
+  | "pending_teacher"
+  | "teacher_responded"
+  | "pending_director"
+  | "completed"
+  | "expired";
+
+export type AdministrativeDirectorDecision = "accepted" | "rejected";
+
+export interface AdministrativeInquiry {
+  id: string;
+  inquiryNumber?: string;
+  teacherId: string;
+  teacherName?: string;
+  nationalId?: string;
+  jobNumber?: string;
+  specialty?: string;
+  jobTitle?: string;
+
+  inquiryType: AdministrativeInquiryType;
+  customType?: string;
+  violationType?: AdministrativeInquiryType | string;
+  violationTypeArabic?: string;
+  customViolationType?: string;
+  incidentDate: string;
+  inquiryDate?: string;
+  description?: string;
+  incidentDescription?: string;
+  vicePrincipalNotes?: string;
+  teacherPhone?: string;
+
+  status: AdministrativeInquiryStatus;
+
+  token: string;
+  tokenExpiresAt: string;
+
+  teacherResponse?: string;
+  responseDate?: string;
+  teacherResponseDate?: string;
+  responseIp?: string;
+  attachmentUrl?: string;
+
+  directorDecision?: AdministrativeDirectorDecision;
+  directorNotes?: string;
+  decisionDate?: string;
+
+  createdBy?: string;
+  createdAt: string;
+  updatedAt?: string;
+
+  // Archive (Soft Delete) metadata
+  isArchived?: boolean;
+  archivedAt?: string;
+  archivedBy?: string;
+  archiveReason?: string;
+  archivedByCascade?: boolean;
 }

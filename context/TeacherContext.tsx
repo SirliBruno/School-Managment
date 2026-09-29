@@ -23,6 +23,11 @@ import {
   ArchivedDeductionDecision,
   EmployeePermission,
   ArchivedEmployeePermission,
+  AdministrativeInquiry,
+  ArchivedAdministrativeInquiry,
+  AdministrativeInquiryType,
+  AdministrativeInquiryStatus,
+  AdministrativeDirectorDecision,
   ExcelTeacherRow,
   TeacherImportPlan,
   TeacherImportResult,
@@ -47,11 +52,13 @@ import {
   DbAbsenceInquiryRow,
   DbEmployeePermissionRow,
   DbDeductionDecisionRow,
+  DbAdministrativeInquiryRow,
 } from "@/types/database";
 import {
   getSaudiToday,
   calculate48HoursExpiry,
   generateSecureToken,
+  isTokenExpired,
   getDatesInRange,
   calculateDaysBetween,
   parseInquiryMeta,
@@ -77,21 +84,23 @@ interface TeacherContextType {
   delayNotices: DelayNotice[];
   deductionDecisions: DeductionDecision[];
   permissions: EmployeePermission[];
+  administrativeInquiries: AdministrativeInquiry[];
   // === Archive System (نظام الأرشيف) ===
   archivedTeachers: ArchivedTeacher[];
   archivedAbsences: ArchivedAbsenceRecord[];
   archivedDelayNotices: ArchivedDelayNotice[];
   archivedDeductionDecisions: ArchivedDeductionDecision[];
   archivedPermissions: ArchivedEmployeePermission[];
+  archivedAdministrativeInquiries: ArchivedAdministrativeInquiry[];
   restoreFromArchive: (
-    type: "teacher" | "absence" | "delay" | "deduction" | "permission",
+    type: "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry",
     id: string
   ) => { success: boolean; error?: string; message?: string };
   permanentDeleteFromArchive: (
-    type: "teacher" | "absence" | "delay" | "deduction" | "permission",
+    type: "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry",
     id: string
   ) => boolean;
-  clearArchive: (type?: "teacher" | "absence" | "delay" | "deduction" | "permission") => void;
+  clearArchive: (type?: "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry") => void;
   isLoading: boolean;
   isCloudConnected: boolean;
   pendingSyncCount: number;
@@ -118,7 +127,8 @@ interface TeacherContextType {
     associatedRecords?: AbsenceRecord[],
     associatedDelayNotices?: DelayNotice[],
     associatedDeductions?: DeductionDecision[],
-    associatedPermissions?: EmployeePermission[]
+    associatedPermissions?: EmployeePermission[],
+    associatedAdministrativeInquiries?: AdministrativeInquiry[]
   ) => void;
   clearTeachers: () => void;
   loadOfficialTeachers: () => number;
@@ -211,6 +221,40 @@ interface TeacherContextType {
     archivedBy?: string
   ) => { deletedPermission?: EmployeePermission };
   restorePermission: (permission: EmployeePermission) => void;
+  // === Administrative Inquiries (المسائلات الإدارية) ===
+  createAdministrativeInquiry: (
+    data: Omit<
+      AdministrativeInquiry,
+      "id" | "createdAt" | "status" | "token" | "tokenExpiresAt"
+    > & {
+      token?: string;
+      tokenExpiresAt?: string;
+    }
+  ) => { success: boolean; inquiry?: AdministrativeInquiry; error?: string };
+  updateAdministrativeInquiry: (
+    id: string,
+    updates: Partial<AdministrativeInquiry>
+  ) => { success: boolean; inquiry?: AdministrativeInquiry; error?: string };
+  submitTeacherAdministrativeResponse: (
+    token: string,
+    teacherResponse: string,
+    attachmentUrl?: string,
+    responseIp?: string
+  ) => Promise<{ success: boolean; inquiry?: AdministrativeInquiry; error?: string }>;
+  submitAdministrativeDirectorDecision: (
+    id: string,
+    directorDecision: "accepted" | "rejected",
+    directorNotes?: string,
+    decisionDate?: string
+  ) => { success: boolean; inquiry?: AdministrativeInquiry; error?: string };
+  deleteAdministrativeInquiry: (
+    id: string,
+    archiveReason?: string,
+    archivedBy?: string
+  ) => { deletedInquiry?: AdministrativeInquiry };
+  restoreAdministrativeInquiry: (inquiry: AdministrativeInquiry) => void;
+  permanentDeleteAdministrativeInquiry: (id: string) => boolean;
+  markAdministrativeInquiryLinkShared: (id: string) => void;
   restoreFullSystemSnapshot: (
     snapshotData: SystemBackupData
   ) => Promise<{ success: boolean; message: string; error?: string }>;
@@ -222,11 +266,13 @@ const INQUIRIES_STORAGE_KEY = "school_admin_inquiries_v1";
 const DELAY_NOTICES_STORAGE_KEY = "school_admin_delay_notices_v1";
 const DEDUCTION_DECISIONS_STORAGE_KEY = "school_admin_deductions_v1";
 const PERMISSIONS_STORAGE_KEY = "school_admin_permissions_v1";
+const ADMINISTRATIVE_INQUIRIES_STORAGE_KEY = "school_admin_administrative_inquiries_v1";
 const ARCHIVED_TEACHERS_STORAGE_KEY = "school_admin_archived_teachers_v1";
 const ARCHIVED_ABSENCES_STORAGE_KEY = "school_admin_archived_absences_v1";
 const ARCHIVED_DELAYS_STORAGE_KEY = "school_admin_archived_delays_v1";
 const ARCHIVED_DEDUCTIONS_STORAGE_KEY = "school_admin_archived_deductions_v1";
 const ARCHIVED_PERMISSIONS_STORAGE_KEY = "school_admin_archived_permissions_v1";
+const ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY = "school_admin_archived_admin_inquiries_v1";
 const PENDING_SYNC_STORAGE_KEY = "school_admin_pending_sync_v1";
 
 export interface PendingSyncOperation {
@@ -237,12 +283,85 @@ export interface PendingSyncOperation {
     | "delay_notices"
     | "absence_inquiries"
     | "employee_permissions"
-    | "deduction_decisions";
+    | "deduction_decisions"
+    | "administrative_inquiries";
   action: "insert" | "update" | "delete";
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>;
   timestamp: number;
 }
+
+export const mapDbAdminInquiryToInquiry = (
+  row: DbAdministrativeInquiryRow
+): AdministrativeInquiry => ({
+  id: row.id,
+  inquiryNumber: row.inquiry_number || undefined,
+  teacherId: row.teacher_id,
+  teacherName: row.teacher_name,
+  nationalId: row.national_id || undefined,
+  jobNumber: row.job_number || undefined,
+  specialty: row.specialty || undefined,
+  jobTitle: row.job_title || undefined,
+  inquiryType: row.inquiry_type as AdministrativeInquiryType,
+  customType: row.custom_type || undefined,
+  incidentDate: row.incident_date,
+  description: row.description || undefined,
+  vicePrincipalNotes: row.vice_principal_notes || undefined,
+  status: (row.status as AdministrativeInquiryStatus) || "pending_teacher",
+  token: row.token,
+  tokenExpiresAt: row.token_expires_at,
+  teacherResponse: row.teacher_response || undefined,
+  responseDate: row.response_date || undefined,
+  responseIp: row.response_ip || undefined,
+  attachmentUrl: row.attachment_url || undefined,
+  directorDecision: (row.director_decision as AdministrativeDirectorDecision) || undefined,
+  directorNotes: row.director_notes || undefined,
+  decisionDate: row.decision_date || undefined,
+  createdBy: row.created_by || undefined,
+  createdAt: row.created_at || new Date().toISOString(),
+  updatedAt: row.updated_at || undefined,
+  isArchived: Boolean(row.is_archived),
+  archivedAt: row.archived_at || undefined,
+  archivedBy: row.archived_by || undefined,
+  archiveReason: row.archive_reason || undefined,
+  archivedByCascade: Boolean(row.archived_by_cascade),
+});
+
+export const mapAdminInquiryToDbRow = (
+  inq: AdministrativeInquiry
+): Record<string, unknown> => ({
+  id: inq.id,
+  inquiry_number: inq.inquiryNumber || null,
+  teacher_id: inq.teacherId,
+  teacher_name: inq.teacherName || "معلمة",
+  national_id: inq.nationalId || null,
+  job_number: inq.jobNumber || null,
+  specialty: inq.specialty || null,
+  job_title: inq.jobTitle || "معلم",
+  inquiry_type: inq.inquiryType,
+  custom_type: inq.customType || null,
+  incident_date: inq.incidentDate,
+  description: inq.description || null,
+  vice_principal_notes: inq.vicePrincipalNotes || null,
+  status: inq.status,
+  token: inq.token,
+  token_expires_at: inq.tokenExpiresAt,
+  teacher_response: inq.teacherResponse || null,
+  response_date: inq.responseDate || null,
+  response_ip: inq.responseIp || null,
+  attachment_url: inq.attachmentUrl || null,
+  director_decision: inq.directorDecision || null,
+  director_notes: inq.directorNotes || null,
+  decision_date: inq.decisionDate || null,
+  created_by: inq.createdBy || null,
+  created_at: inq.createdAt || new Date().toISOString(),
+  updated_at: inq.updatedAt || new Date().toISOString(),
+  is_archived: Boolean(inq.isArchived),
+  archived_at: inq.archivedAt || null,
+  archived_by: inq.archivedBy || null,
+  archive_reason: inq.archiveReason || null,
+  archived_by_cascade: Boolean(inq.archivedByCascade),
+});
 
 export const mapDbPermissionToPermission = (
   p: DbEmployeePermissionRow
@@ -829,7 +948,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     typeof window !== "undefined" &&
     (window.location.pathname === "/login" ||
       window.location.pathname.startsWith("/inquiry/") ||
-      window.location.pathname.startsWith("/teacher-response/"));
+      window.location.pathname.startsWith("/teacher-response/") ||
+      window.location.pathname.startsWith("/administrative-inquiry/"));
 
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [absenceRecords, setAbsenceRecords] = useState<AbsenceRecord[]>([]);
@@ -837,12 +957,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   const [delayNotices, setDelayNotices] = useState<DelayNotice[]>([]);
   const [deductionDecisions, setDeductionDecisions] = useState<DeductionDecision[]>([]);
   const [permissions, setPermissions] = useState<EmployeePermission[]>([]);
+  const [administrativeInquiries, setAdministrativeInquiries] = useState<AdministrativeInquiry[]>([]);
   // Archive States
   const [archivedTeachers, setArchivedTeachers] = useState<ArchivedTeacher[]>([]);
   const [archivedAbsences, setArchivedAbsences] = useState<ArchivedAbsenceRecord[]>([]);
   const [archivedDelayNotices, setArchivedDelayNotices] = useState<ArchivedDelayNotice[]>([]);
   const [archivedDeductionDecisions, setArchivedDeductionDecisions] = useState<ArchivedDeductionDecision[]>([]);
   const [archivedPermissions, setArchivedPermissions] = useState<ArchivedEmployeePermission[]>([]);
+  const [archivedAdministrativeInquiries, setArchivedAdministrativeInquiries] = useState<ArchivedAdministrativeInquiry[]>([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isCloudConnected, setIsCloudConnected] = useState(false);
@@ -946,11 +1068,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         let localDelayNotices: DelayNotice[] = [];
         let localDeductions: DeductionDecision[] = [];
         let localPermissions: EmployeePermission[] = [];
+        let localAdminInquiries: AdministrativeInquiry[] = [];
         let parsedArchTeachers: ArchivedTeacher[] = [];
         let parsedArchAbsences: ArchivedAbsenceRecord[] = [];
         let parsedArchDelays: ArchivedDelayNotice[] = [];
         let parsedArchDeductions: ArchivedDeductionDecision[] = [];
         let parsedArchPermissions: ArchivedEmployeePermission[] = [];
+        let parsedArchAdminInquiries: ArchivedAdministrativeInquiry[] = [];
 
         try {
           const storedTeachers = localStorage.getItem(TEACHERS_STORAGE_KEY);
@@ -1035,6 +1159,26 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             } catch {}
           }
 
+          const storedAdminInquiries = localStorage.getItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY);
+          if (storedAdminInquiries) {
+            try {
+              const parsed = JSON.parse(storedAdminInquiries);
+              if (Array.isArray(parsed)) {
+                localAdminInquiries = parsed.map((inq: Record<string, unknown>) => {
+                  const tokenExpiresAt = String(inq.tokenExpiresAt || inq.token_expires_at || calculate48HoursExpiry());
+                  const currentStatus = String(inq.status || "pending_teacher") as AdministrativeInquiryStatus;
+                  const isExpired = currentStatus === "pending_teacher" && isTokenExpired(tokenExpiresAt);
+                  return {
+                    ...inq,
+                    token: (inq.token as string) || generateSecureToken(16),
+                    tokenExpiresAt,
+                    status: isExpired ? "expired" : currentStatus,
+                  } as AdministrativeInquiry;
+                });
+              }
+            } catch {}
+          }
+
         // Load Archives from LocalStorage with cascade auto-migration
         const storedArchTeachers = localStorage.getItem(ARCHIVED_TEACHERS_STORAGE_KEY);
         if (storedArchTeachers) {
@@ -1071,12 +1215,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             if (Array.isArray(parsed)) parsedArchPermissions = parsed;
           } catch {}
         }
+        const storedArchAdminInquiries = localStorage.getItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY);
+        if (storedArchAdminInquiries) {
+          try {
+            const parsed = JSON.parse(storedArchAdminInquiries);
+            if (Array.isArray(parsed)) parsedArchAdminInquiries = parsed;
+          } catch {}
+        }
 
-        // Migrate any associatedRecords / associatedDelayNotices / associatedDeductions / associatedPermissions from archivedTeachers into child archive arrays if not already present
+        // Migrate any associated records from archivedTeachers into child archive arrays if not already present
         const archAbsIds = new Set(parsedArchAbsences.map((a) => a.record.id));
         const archDelayIds = new Set(parsedArchDelays.map((d) => d.notice.id));
         const archDeductIds = new Set(parsedArchDeductions.map((d) => d.decision.id));
         const archPermIds = new Set(parsedArchPermissions.map((p) => p.permission.id));
+        const archAdminInqIds = new Set(parsedArchAdminInquiries.map((a) => a.inquiry.id));
 
         for (const archTeacher of parsedArchTeachers) {
           if (Array.isArray(archTeacher.associatedRecords)) {
@@ -1157,6 +1309,27 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               }
             }
           }
+          if (Array.isArray(archTeacher.associatedAdministrativeInquiries)) {
+            for (const inq of archTeacher.associatedAdministrativeInquiries) {
+              if (inq && inq.id && !archAdminInqIds.has(inq.id)) {
+                archAdminInqIds.add(inq.id);
+                parsedArchAdminInquiries.push({
+                  inquiry: {
+                    ...inq,
+                    isArchived: true,
+                    archivedAt: archTeacher.archivedAt,
+                    archivedBy: "النظام (أرشفة تلقائية مع المعلمة)",
+                    archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                    archivedByCascade: true,
+                  },
+                  archivedAt: archTeacher.archivedAt,
+                  archivedBy: "النظام (أرشفة تلقائية مع المعلمة)",
+                  archiveReason: archTeacher.archiveReason || "أرشفة تلقائية مع المعلمة",
+                  archivedByCascade: true,
+                });
+              }
+            }
+          }
         }
 
         setArchivedTeachers(parsedArchTeachers);
@@ -1164,6 +1337,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         setArchivedDelayNotices(parsedArchDelays);
         setArchivedDeductionDecisions(parsedArchDeductions);
         setArchivedPermissions(parsedArchPermissions);
+        setArchivedAdministrativeInquiries(parsedArchAdminInquiries);
+        setAdministrativeInquiries(localAdminInquiries);
       } catch (err) {
         console.warn("تعذر استرجاع التخزين المحلي:", err);
       }
@@ -1193,6 +1368,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             }
           }
           for (const inq of localInquiries) {
+            if (officialReconciled.updatedNationalIdByTeacherId.has(inq.teacherId)) {
+              const correctId = officialReconciled.updatedNationalIdByTeacherId.get(inq.teacherId)!;
+              inq.jobNumber = correctId;
+              inq.nationalId = correctId;
+            }
+          }
+          for (const inq of localAdminInquiries) {
             if (officialReconciled.updatedNationalIdByTeacherId.has(inq.teacherId)) {
               const correctId = officialReconciled.updatedNationalIdByTeacherId.get(inq.teacherId)!;
               inq.jobNumber = correctId;
@@ -1235,9 +1417,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           localStorage.setItem(ABSENCES_STORAGE_KEY, JSON.stringify(localAbsences));
           localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(localDelayNotices));
           localStorage.setItem(INQUIRIES_STORAGE_KEY, JSON.stringify(localInquiries));
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(localAdminInquiries));
           localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(parsedArchTeachers));
           localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(parsedArchAbsences));
           localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(parsedArchDelays));
+          localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(parsedArchAdminInquiries));
         } catch (e) {
           console.warn("فشل تحديث التخزين المحلي بعد الترحيل:", e);
         }
@@ -1249,11 +1433,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       setDelayNotices(localDelayNotices);
       setDeductionDecisions(localDeductions);
       setPermissions(localPermissions);
+      setAdministrativeInquiries(localAdminInquiries);
       setArchivedTeachers(parsedArchTeachers);
       setArchivedAbsences(parsedArchAbsences);
       setArchivedDelayNotices(parsedArchDelays);
       setArchivedDeductionDecisions(parsedArchDeductions);
       setArchivedPermissions(parsedArchPermissions);
+      setArchivedAdministrativeInquiries(parsedArchAdminInquiries);
 
       // Cloud Sync if Supabase is Configured (Single Source of Truth)
       if (isSupabaseConfigured() && supabase) {
@@ -1269,6 +1455,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             { data: dbInquiries, error: inqErr },
             { data: dbPermissions, error: permErr },
             { data: dbDeductions, error: dedErr },
+            { data: dbAdminInquiries, error: adminInqErr },
           ] = await Promise.all([
             supabase.from("teachers").select("*").order("created_at", { ascending: true }),
             supabase.from("absence_records").select("*").order("timestamp", { ascending: false }),
@@ -1276,6 +1463,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             supabase.from("absence_inquiries").select("*").order("created_at", { ascending: false }),
             supabase.from("employee_permissions").select("*").order("permission_date", { ascending: false }),
             supabase.from("deduction_decisions").select("*").order("decision_date", { ascending: false }),
+            supabase.from("administrative_inquiries").select("*").order("created_at", { ascending: false }),
           ]);
 
           fetchSchoolSettingsFromCloud().catch(() => {});
@@ -1435,6 +1623,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             );
           }
 
+          // F.2 Process Administrative Inquiries from Supabase
+          let cleanAdminInquiriesList: AdministrativeInquiry[] = localAdminInquiries;
+          if (!adminInqErr && dbAdminInquiries !== null) {
+            cleanAdminInquiriesList = (dbAdminInquiries as unknown as DbAdministrativeInquiryRow[]).map(
+              (row: DbAdministrativeInquiryRow) => mapDbAdminInquiryToInquiry(row)
+            );
+          }
+
           // =========================================================================
           // G. Partition ALL entities into Active and Archived sets strictly from Cloud
           // =========================================================================
@@ -1452,6 +1648,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               associatedDelayNotices: cleanDelaysList.filter((d) => d.teacherId === t.id && d.isArchived),
               associatedDeductionDecisions: cleanDeductionsList.filter((dec) => dec.teacherId === t.id && dec.isArchived),
               associatedPermissions: cleanPermissionsList.filter((p) => p.teacherId === t.id && p.isArchived),
+              associatedAdministrativeInquiries: cleanAdminInquiriesList.filter((ai) => ai.teacherId === t.id && ai.isArchived),
             }));
 
           // 2. Absences Partitioning
@@ -1499,6 +1696,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               archivedByCascade: Boolean(d.archivedByCascade),
             }));
 
+          // 6. Administrative Inquiries Partitioning
+          const activeAdminInquiries = cleanAdminInquiriesList.filter((ai) => !ai.isArchived);
+          const finalArchivedAdminInquiries: ArchivedAdministrativeInquiry[] = cleanAdminInquiriesList
+            .filter((ai) => ai.isArchived)
+            .map((ai) => ({
+              inquiry: ai,
+              archivedAt: ai.archivedAt || ai.createdAt || new Date().toISOString(),
+              archiveReason: ai.archiveReason || "أرشفة إدارية",
+              archivedBy: ai.archivedBy || "الإدارة",
+              archivedByCascade: Boolean(ai.archivedByCascade),
+            }));
+
           // Recalculate teacher counters strictly based on active linked records
           const absCountMap: Record<string, number> = {};
           for (const a of activeAbsences) {
@@ -1521,11 +1730,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           setDelayNotices(activeDelays);
           setPermissions(activePermissions);
           setDeductionDecisions(activeDeductions);
+          setAdministrativeInquiries(activeAdminInquiries);
           setArchivedTeachers(finalArchivedTeachers);
           setArchivedAbsences(finalArchivedAbsences);
           setArchivedDelayNotices(finalArchivedDelays);
           setArchivedPermissions(finalArchivedPermissions);
           setArchivedDeductionDecisions(finalArchivedDeductions);
+          setArchivedAdministrativeInquiries(finalArchivedAdminInquiries);
 
           // Update LocalStorage solely as an offline read-cache
           try {
@@ -1535,11 +1746,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(activeDelays));
             localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(activePermissions));
             localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(activeDeductions));
+            localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(activeAdminInquiries));
             localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(finalArchivedTeachers));
             localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(finalArchivedAbsences));
             localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(finalArchivedDelays));
             localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(finalArchivedPermissions));
             localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(finalArchivedDeductions));
+            localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(finalArchivedAdminInquiries));
           } catch (cacheErr) {
             console.warn("فشل تحديث التخزين المؤقت المحلي:", cacheErr);
           }
@@ -2614,6 +2827,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     const targetDelayNotices = delayNotices.filter((dn) => dn.teacherId === id);
     const targetDeductions = deductionDecisions.filter((d) => d.teacherId === id);
     const targetPermissions = permissions.filter((p) => p.teacherId === id);
+    const targetAdminInquiries = administrativeInquiries.filter((ai) => ai.teacherId === id);
 
     const deletedTeacher: Teacher | undefined = targetTeacher
       ? {
@@ -2657,12 +2871,22 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       archivedByCascade: true,
     }));
 
+    const deletedAdminInquiries: AdministrativeInquiry[] = targetAdminInquiries.map((ai) => ({
+      ...ai,
+      isArchived: true,
+      archivedAt: now,
+      archivedBy: "النظام (أرشفة تلقائية مع المعلمة)",
+      archiveReason: cascadeReason,
+      archivedByCascade: true,
+    }));
+
     setTeachers((prev) => prev.filter((t) => t.id !== id));
     setAbsenceRecords((prev) => prev.filter((a) => a.teacherId !== id));
     setInquiries((prev) => prev.filter((inq) => inq.teacherId !== id));
     setDelayNotices((prev) => prev.filter((dn) => dn.teacherId !== id));
     setDeductionDecisions((prev) => prev.filter((d) => d.teacherId !== id));
     setPermissions((prev) => prev.filter((p) => p.teacherId !== id));
+    setAdministrativeInquiries((prev) => prev.filter((ai) => ai.teacherId !== id));
 
     if (deletedTeacher) {
       const archivedItem: ArchivedTeacher = {
@@ -2672,6 +2896,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         associatedDelayNotices: deletedDelayNotices,
         associatedDeductionDecisions: deletedDeductions,
         associatedPermissions: deletedPermissions,
+        associatedAdministrativeInquiries: deletedAdminInquiries,
         archivedAt: now,
         archiveReason: cleanReason,
       };
@@ -2738,6 +2963,21 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     }
 
+    // Cascade archive all associated administrative inquiries with archivedByCascade = true
+    if (deletedAdminInquiries.length > 0) {
+      setArchivedAdministrativeInquiries((prev) => {
+        const deletedIds = new Set(deletedAdminInquiries.map((ai) => ai.id));
+        const cascadedItems: ArchivedAdministrativeInquiry[] = deletedAdminInquiries.map((ai) => ({
+          inquiry: ai,
+          archivedAt: now,
+          archivedBy: "النظام (أرشفة تلقائية مع المعلمة)",
+          archiveReason: cascadeReason,
+          archivedByCascade: true,
+        }));
+        return [...cascadedItems, ...prev.filter((a) => !deletedIds.has(a.inquiry.id))];
+      });
+    }
+
     if (isSupabaseConfigured() && supabase) {
       supabase
         .from("absence_records")
@@ -2780,6 +3020,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       supabase
         .from("employee_permissions")
+        .update({
+          is_archived: true,
+          archived_at: now,
+          archived_by: "النظام (أرشفة تلقائية مع المعلمة)",
+          archive_reason: cascadeReason,
+          archived_by_cascade: true,
+        })
+        .eq("teacher_id", id)
+        .then(() => {}, () => {});
+
+      supabase
+        .from("administrative_inquiries")
         .update({
           is_archived: true,
           archived_at: now,
@@ -2835,7 +3087,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     return { deletedTeacher, deletedRecords };
-  }, [teachers, absenceRecords, inquiries, delayNotices, deductionDecisions, permissions, queueSyncOperation]);
+  }, [teachers, absenceRecords, inquiries, delayNotices, deductionDecisions, permissions, administrativeInquiries, queueSyncOperation]);
 
   // 6.b Restore Teacher (Undo Support)
   const restoreTeacher = useCallback(
@@ -2844,7 +3096,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       associatedRecords: AbsenceRecord[] = [],
       associatedDelayNotices: DelayNotice[] = [],
       associatedDeductions: DeductionDecision[] = [],
-      associatedPermissions: EmployeePermission[] = []
+      associatedPermissions: EmployeePermission[] = [],
+      associatedAdministrativeInquiries: AdministrativeInquiry[] = []
     ) => {
       const cleanTeacher: Teacher = {
         ...teacher,
@@ -2918,12 +3171,29 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         });
       }
 
+      if (associatedAdministrativeInquiries.length > 0) {
+        const cleanAdminInqs = associatedAdministrativeInquiries.map((ai) => ({
+          ...ai,
+          isArchived: false,
+          archivedAt: undefined,
+          archivedBy: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        }));
+        setAdministrativeInquiries((prev) => {
+          const existingIds = new Set(prev.map((ai) => ai.id));
+          const toAdd = cleanAdminInqs.filter((ai) => !existingIds.has(ai.id));
+          return [...toAdd, ...prev];
+        });
+      }
+
       // Also remove from archive lists if Undo is pressed
       setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacher.id));
       setArchivedAbsences((prev) => prev.filter((a) => a.record.teacherId !== teacher.id));
       setArchivedDelayNotices((prev) => prev.filter((a) => a.notice.teacherId !== teacher.id));
       setArchivedDeductionDecisions((prev) => prev.filter((a) => a.decision.teacherId !== teacher.id));
       setArchivedPermissions((prev) => prev.filter((a) => a.permission.teacherId !== teacher.id));
+      setArchivedAdministrativeInquiries((prev) => prev.filter((a) => a.inquiry.teacherId !== teacher.id));
 
       if (isSupabaseConfigured() && supabase) {
         supabase
@@ -2971,6 +3241,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
         supabase
           .from("employee_permissions")
+          .update({
+            is_archived: false,
+            archived_at: null,
+            archived_by: null,
+            archive_reason: null,
+            archived_by_cascade: false,
+          })
+          .eq("teacher_id", cleanTeacher.id)
+          .then(() => {}, () => {});
+
+        supabase
+          .from("administrative_inquiries")
           .update({
             is_archived: false,
             archived_at: null,
@@ -4288,7 +4570,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // === Archive Management Methods ===
   const restoreFromArchive = useCallback(
     (
-      type: "teacher" | "absence" | "delay" | "deduction" | "permission",
+      type: "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry",
       id: string
     ): { success: boolean; error?: string; message?: string } => {
       if (type === "teacher") {
@@ -4453,16 +4735,46 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           });
         }
 
+        const remainingCascadedAdminInquiries = archivedAdministrativeInquiries
+          .filter(
+            (ai) =>
+              ai.inquiry.teacherId === id &&
+              (ai.archivedByCascade ||
+                ai.inquiry.archivedByCascade ||
+                Math.abs(
+                  new Date(ai.archivedAt).getTime() -
+                    new Date(found.archivedAt).getTime()
+                ) <= 2000)
+          )
+          .map((ai) => ({
+            ...ai.inquiry,
+            isArchived: false,
+            archivedAt: undefined,
+            archivedBy: undefined,
+            archiveReason: undefined,
+            archivedByCascade: undefined,
+          }));
+
+        if (remainingCascadedAdminInquiries.length > 0) {
+          setAdministrativeInquiries((prev) => {
+            const existingIds = new Set(prev.map((ai) => ai.id));
+            const toAdd = remainingCascadedAdminInquiries.filter((ai) => !existingIds.has(ai.id));
+            return [...toAdd, ...prev];
+          });
+        }
+
         // Remove teacher and her cascaded records from Archive
         const restoredAbsIds = new Set(remainingCascadedAbsences.map((r) => r.id));
         const restoredDelayIds = new Set(remainingCascadedDelays.map((d) => d.id));
         const restoredDeductIds = new Set(remainingCascadedDeductions.map((d) => d.id));
         const restoredPermIds = new Set(remainingCascadedPermissions.map((p) => p.id));
+        const restoredAdminInqIds = new Set(remainingCascadedAdminInquiries.map((ai) => ai.id));
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
         setArchivedAbsences((prev) => prev.filter((a) => !restoredAbsIds.has(a.record.id)));
         setArchivedDelayNotices((prev) => prev.filter((d) => !restoredDelayIds.has(d.notice.id)));
         setArchivedDeductionDecisions((prev) => prev.filter((d) => !restoredDeductIds.has(d.decision.id)));
         setArchivedPermissions((prev) => prev.filter((p) => !restoredPermIds.has(p.permission.id)));
+        setArchivedAdministrativeInquiries((prev) => prev.filter((a) => !restoredAdminInqIds.has(a.inquiry.id)));
 
         if (isSupabaseConfigured() && supabase) {
           supabase
@@ -4510,6 +4822,18 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
           supabase
             .from("employee_permissions")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archived_by: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("teacher_id", id)
+            .then(() => {}, () => {});
+
+          supabase
+            .from("administrative_inquiries")
             .update({
               is_archived: false,
               archived_at: null,
@@ -4916,15 +5240,103 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               ? "تم استعادة سجل الاستئذان مع استعادة المعلمة المرتبطة به"
               : "تم استعادة سجل الاستئذان بنجاح",
         };
+      } else if (type === "administrative_inquiry") {
+        const found = archivedAdministrativeInquiries.find((a) => a.inquiry.id === id);
+        if (!found) {
+          return { success: false, error: "المساءلة الإدارية غير موجودة في الأرشيف." };
+        }
+
+        const teacherId = found.inquiry.teacherId;
+        const activeTeacher = teachers.find((t) => t.id === teacherId);
+        const archivedTeacher = archivedTeachers.find((a) => a.teacher.id === teacherId);
+
+        if (!activeTeacher && !archivedTeacher) {
+          return {
+            success: false,
+            error: "لا يمكن استعادة المساءلة لأن المعلمة المرتبطة بها محذوفة نهائياً",
+          };
+        }
+
+        const cleanAdminInq: AdministrativeInquiry = {
+          ...found.inquiry,
+          isArchived: false,
+          archivedAt: undefined,
+          archivedBy: undefined,
+          archiveReason: undefined,
+          archivedByCascade: undefined,
+        };
+
+        if (!activeTeacher && archivedTeacher) {
+          const restoredTeacher: Teacher = {
+            ...archivedTeacher.teacher,
+            isArchived: false,
+            archivedAt: undefined,
+            archiveReason: undefined,
+            totalAbsences: 0,
+            totalDelayNotices: 0,
+          };
+          setTeachers((prev) =>
+            prev.some((t) => t.id === teacherId) ? prev : [restoredTeacher, ...prev]
+          );
+          setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== teacherId));
+        }
+
+        setAdministrativeInquiries((prev) =>
+          prev.some((ai) => ai.id === id) ? prev : [cleanAdminInq, ...prev]
+        );
+
+        setArchivedAdministrativeInquiries((prev) => prev.filter((a) => a.inquiry.id !== id));
+
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("administrative_inquiries")
+            .update({
+              is_archived: false,
+              archived_at: null,
+              archived_by: null,
+              archive_reason: null,
+              archived_by_cascade: false,
+            })
+            .eq("id", id)
+            .then(() => {}, () => {});
+
+          if (!activeTeacher && archivedTeacher) {
+            supabase
+              .from("teachers")
+              .update({
+                is_archived: false,
+                archived_at: null,
+                archive_reason: null,
+              })
+              .eq("id", teacherId)
+              .then(() => {}, () => {});
+          }
+        }
+
+        logAuditEvent({
+          action: "RESTORE",
+          entityType: "administrative_inquiry",
+          entityId: id,
+          details: `استعادة مساءلة إدارية للمعلمة: ${cleanAdminInq.teacherName} من الأرشيف الإداري`,
+          newValue: cleanAdminInq,
+        });
+
+        return {
+          success: true,
+          message:
+            !activeTeacher && archivedTeacher
+              ? "تم استعادة المساءلة الإدارية مع استعادة المعلمة المرتبطة بها"
+              : "تم استعادة المساءلة الإدارية بنجاح",
+        };
       }
 
       return { success: false, error: "نوع العنصر غير معروف." };
     },
-    [teachers, absenceRecords, delayNotices, deductionDecisions, permissions, archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, archivedPermissions]
+    [teachers, absenceRecords, delayNotices, deductionDecisions, permissions, administrativeInquiries, archivedTeachers, archivedAbsences, archivedDelayNotices, archivedDeductionDecisions, archivedPermissions, archivedAdministrativeInquiries]
   );
 
   const permanentDeleteFromArchive = useCallback(
-    (type: "teacher" | "absence" | "delay" | "deduction" | "permission", id: string): boolean => {
+    (type: "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry", id: string): boolean => {
       if (type === "teacher") {
         // Edge Case 4: Permanently deleting a teacher removes all her associated records (active or archived)
         setArchivedTeachers((prev) => prev.filter((a) => a.teacher.id !== id));
@@ -4932,10 +5344,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         setArchivedDelayNotices((prev) => prev.filter((d) => d.notice.teacherId !== id));
         setArchivedDeductionDecisions((prev) => prev.filter((d) => d.decision.teacherId !== id));
         setArchivedPermissions((prev) => prev.filter((p) => p.permission.teacherId !== id));
+        setArchivedAdministrativeInquiries((prev) => prev.filter((a) => a.inquiry.teacherId !== id));
         setAbsenceRecords((prev) => prev.filter((r) => r.teacherId !== id));
         setDelayNotices((prev) => prev.filter((d) => d.teacherId !== id));
         setDeductionDecisions((prev) => prev.filter((d) => d.teacherId !== id));
         setPermissions((prev) => prev.filter((p) => p.teacherId !== id));
+        setAdministrativeInquiries((prev) => prev.filter((ai) => ai.teacherId !== id));
         setInquiries((prev) => prev.filter((i) => i.teacherId !== id));
 
         if (isSupabaseConfigured() && supabase) {
@@ -4946,6 +5360,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               supabase.from("delay_notices").delete().eq("teacher_id", id),
               supabase.from("deduction_decisions").delete().eq("teacher_id", id),
               supabase.from("employee_permissions").delete().eq("teacher_id", id),
+              supabase.from("administrative_inquiries").delete().eq("teacher_id", id),
               supabase.from("absence_inquiries").delete().eq("teacher_id", id),
             ]);
             await supabase.from("teachers").delete().eq("id", id);
@@ -5067,6 +5482,38 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           queueSyncOperation({ table: "employee_permissions", action: "delete", data: { id } });
         }
         return true;
+      } else if (type === "administrative_inquiry") {
+        setArchivedAdministrativeInquiries((prev) => {
+          const next = prev.filter((a) => a.inquiry.id !== id);
+          try {
+            localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+        setArchivedTeachers((prev) =>
+          prev.map((at) => ({
+            ...at,
+            associatedAdministrativeInquiries: (at.associatedAdministrativeInquiries || []).filter(
+              (ai) => ai.id !== id
+            ),
+          }))
+        );
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("administrative_inquiries")
+            .delete()
+            .eq("id", id)
+            .then(
+              () => {},
+              (err) => {
+                console.warn("Permanent delete administrative inquiry cloud error:", err);
+                queueSyncOperation({ table: "administrative_inquiries", action: "delete", data: { id } });
+              }
+            );
+        } else {
+          queueSyncOperation({ table: "administrative_inquiries", action: "delete", data: { id } });
+        }
+        return true;
       }
       return false;
     },
@@ -5074,7 +5521,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const clearArchive = useCallback(
-    (type?: "teacher" | "absence" | "delay" | "deduction" | "permission") => {
+    (type?: "teacher" | "absence" | "delay" | "deduction" | "permission" | "administrative_inquiry") => {
       if (!type || type === "teacher") {
         setArchivedTeachers([]);
         try { localStorage.removeItem(ARCHIVED_TEACHERS_STORAGE_KEY); } catch {}
@@ -5108,6 +5555,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         try { localStorage.removeItem(ARCHIVED_PERMISSIONS_STORAGE_KEY); } catch {}
         if (isSupabaseConfigured() && supabase) {
           supabase.from("employee_permissions").delete().eq("is_archived", true).then(() => {}, () => {});
+        }
+      }
+      if (!type || type === "administrative_inquiry") {
+        setArchivedAdministrativeInquiries([]);
+        try { localStorage.removeItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY); } catch {}
+        if (isSupabaseConfigured() && supabase) {
+          supabase.from("administrative_inquiries").delete().eq("is_archived", true).then(() => {}, () => {});
         }
       }
     },
@@ -5701,6 +6155,507 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  // === Administrative Inquiries Management Methods (قسم المسائلات الإدارية) ===
+  const createAdministrativeInquiry = useCallback(
+    (
+      data: Omit<
+        AdministrativeInquiry,
+        "id" | "createdAt" | "status" | "token" | "tokenExpiresAt"
+      > & {
+        token?: string;
+        tokenExpiresAt?: string;
+      }
+    ): { success: boolean; inquiry?: AdministrativeInquiry; error?: string } => {
+      const teacher = teachers.find((t) => t.id === data.teacherId);
+      if (!teacher) {
+        return { success: false, error: "المعلمة المحددة غير موجودة." };
+      }
+
+      const id =
+        typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `admin-inq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+      const token =
+        data.token ||
+        (typeof crypto !== "undefined" && crypto.randomUUID
+          ? crypto.randomUUID().replace(/-/g, "")
+          : generateSecureToken(16));
+
+      const tokenExpiresAt = data.tokenExpiresAt || calculate48HoursExpiry();
+
+      let createdInquiry: AdministrativeInquiry | null = null;
+
+      setAdministrativeInquiries((prev) => {
+        const inquiryNum =
+          data.inquiryNumber ||
+          `م-${new Date().getFullYear()}-${String(prev.length + 1).padStart(3, "0")}`;
+
+        const newInq: AdministrativeInquiry = {
+          ...data,
+          id,
+          inquiryNumber: inquiryNum,
+          teacherName: teacher.fullName || teacher.name,
+          nationalId: teacher.nationalId || teacher.username || teacher.jobNumber,
+          jobNumber: teacher.nationalId || teacher.username || teacher.jobNumber,
+          specialty: teacher.specialty || teacher.teachingField,
+          jobTitle: teacher.jobTitle || "معلم",
+          status: "pending_teacher",
+          createdAt: new Date().toISOString(),
+          token,
+          tokenExpiresAt,
+        };
+        createdInquiry = newInq;
+        const next = [newInq, ...prev];
+        try {
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      if (createdInquiry) {
+        const inqRow = mapAdminInquiryToDbRow(createdInquiry);
+        if (isSupabaseConfigured() && supabase) {
+          supabase
+            .from("administrative_inquiries")
+            .insert(inqRow)
+            .then(
+              ({ error }) => {
+                if (error) {
+                  console.warn("فشل حفظ المساءلة الإدارية في سوبابيز، تحويل للطابور:", error.message);
+                  queueSyncOperation({ table: "administrative_inquiries", action: "insert", data: inqRow });
+                }
+              },
+              () => {
+                queueSyncOperation({ table: "administrative_inquiries", action: "insert", data: inqRow });
+              }
+            );
+        } else {
+          queueSyncOperation({ table: "administrative_inquiries", action: "insert", data: inqRow });
+        }
+
+        logAuditEvent({
+          action: "CREATE",
+          entityType: "administrative_inquiry",
+          entityId: id,
+          details: `إصدار مساءلة إدارية للمعلمة: ${(createdInquiry as AdministrativeInquiry).teacherName} برقم ${(createdInquiry as AdministrativeInquiry).inquiryNumber}`,
+          newValue: createdInquiry,
+        });
+      }
+
+      return { success: true, inquiry: createdInquiry || undefined };
+    },
+    [teachers, queueSyncOperation]
+  );
+
+  const updateAdministrativeInquiry = useCallback(
+    (
+      id: string,
+      updates: Partial<AdministrativeInquiry>
+    ): { success: boolean; inquiry?: AdministrativeInquiry; error?: string } => {
+      let updatedInq: AdministrativeInquiry | undefined;
+
+      setAdministrativeInquiries((prev) => {
+        const next = prev.map((inq) => {
+          if (inq.id === id) {
+            if (inq.status !== "pending_teacher") {
+              updatedInq = inq;
+              return inq;
+            }
+            updatedInq = { ...inq, ...updates, updatedAt: new Date().toISOString() };
+            return updatedInq;
+          }
+          return inq;
+        });
+        try {
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      if (!updatedInq) {
+        return { success: false, error: "المساءلة الإدارية غير موجودة." };
+      }
+
+      const dbRow = mapAdminInquiryToDbRow(updatedInq);
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("administrative_inquiries")
+          .update(dbRow)
+          .eq("id", id)
+          .then(
+            ({ error }) => {
+              if (error) {
+                queueSyncOperation({ table: "administrative_inquiries", action: "update", data: dbRow });
+              }
+            },
+            () => {
+              queueSyncOperation({ table: "administrative_inquiries", action: "update", data: dbRow });
+            }
+          );
+      } else {
+        queueSyncOperation({ table: "administrative_inquiries", action: "update", data: dbRow });
+      }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "administrative_inquiry",
+        entityId: id,
+        details: `تحديث بيانات مساءلة إدارية للمعلمة: ${updatedInq.teacherName}`,
+        newValue: updatedInq,
+      });
+
+      return { success: true, inquiry: updatedInq };
+    },
+    [queueSyncOperation]
+  );
+
+  const submitTeacherAdministrativeResponse = useCallback(
+    async (
+      token: string,
+      teacherResponse: string,
+      attachmentUrl?: string,
+      responseIp?: string
+    ): Promise<{ success: boolean; inquiry?: AdministrativeInquiry; error?: string }> => {
+      const responseDate = getSaudiToday();
+      const now = new Date().toISOString();
+      let updatedInq: AdministrativeInquiry | undefined;
+
+      setAdministrativeInquiries((prev) => {
+        const next = prev.map((inq) => {
+          if (inq.token === token) {
+            updatedInq = {
+              ...inq,
+              teacherResponse,
+              responseDate,
+              responseIp: responseIp || inq.responseIp,
+              attachmentUrl: attachmentUrl || inq.attachmentUrl,
+              status: "pending_director",
+              updatedAt: now,
+            };
+            return updatedInq;
+          }
+          return inq;
+        });
+        try {
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const { error } = await supabase
+            .from("administrative_inquiries")
+            .update({
+              teacher_response: teacherResponse,
+              response_date: responseDate,
+              response_ip: responseIp || null,
+              attachment_url: attachmentUrl || null,
+              status: "pending_director",
+              updated_at: now,
+            })
+            .eq("token", token);
+
+          if (error) {
+            console.error("فشل تحديث رد المعلمة في سوبابيز:", error.message);
+            return {
+              success: false,
+              error: `تعذر حفظ الرد في قاعدة البيانات (${error.message}). يرجى إعادة المحاولة.`,
+            };
+          }
+        } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          console.error("خطأ شبكة أثناء إرسال الرد:", err);
+          return {
+            success: false,
+            error: `تعذر الاتصال بقاعدة البيانات السحابية (${errMsg}). تم الحفاظ على مسودة ردك، يرجى إعادة المحاولة.`,
+          };
+        }
+      }
+
+      if (updatedInq) {
+        const inqObj: AdministrativeInquiry = updatedInq;
+        logAuditEvent({
+          action: "UPDATE",
+          entityType: "administrative_inquiry",
+          entityId: inqObj.id,
+          details: `تسجيل رد المعلمة على المساءلة الإدارية: ${inqObj.teacherName}`,
+          newValue: inqObj,
+        });
+      }
+
+      return { success: true, inquiry: updatedInq };
+    },
+    []
+  );
+
+  const submitAdministrativeDirectorDecision = useCallback(
+    (
+      id: string,
+      directorDecision: "accepted" | "rejected",
+      directorNotes?: string,
+      decisionDate?: string
+    ): { success: boolean; inquiry?: AdministrativeInquiry; error?: string } => {
+      let updatedInq: AdministrativeInquiry | undefined;
+      const decDate = decisionDate || getSaudiToday();
+      const now = new Date().toISOString();
+
+      setAdministrativeInquiries((prev) => {
+        const next = prev.map((inq) => {
+          if (inq.id === id) {
+            updatedInq = {
+              ...inq,
+              directorDecision,
+              directorNotes: directorNotes || inq.directorNotes,
+              decisionDate: decDate,
+              status: "completed",
+              updatedAt: now,
+            };
+            return updatedInq;
+          }
+          return inq;
+        });
+        try {
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      if (!updatedInq) {
+        return { success: false, error: "المساءلة الإدارية غير موجودة." };
+      }
+
+      const updateData = {
+        director_decision: directorDecision,
+        director_notes: directorNotes || null,
+        decision_date: decDate,
+        status: "completed",
+        updated_at: now,
+      };
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("administrative_inquiries")
+          .update(updateData)
+          .eq("id", id)
+          .then(
+            ({ error }) => {
+              if (error) {
+                queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id, ...updateData } });
+              }
+            },
+            () => {
+              queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id, ...updateData } });
+            }
+          );
+      } else {
+        queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id, ...updateData } });
+      }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "administrative_inquiry",
+        entityId: id,
+        details: `اعتماد قرار الإدارة على المساءلة الإدارية للمعلمة: ${updatedInq.teacherName} (${directorDecision === "accepted" ? "عذر مقبول" : "عذر غير مقبول"})`,
+        newValue: updatedInq,
+      });
+
+      return { success: true, inquiry: updatedInq };
+    },
+    [queueSyncOperation]
+  );
+
+  const deleteAdministrativeInquiry = useCallback(
+    (
+      id: string,
+      archiveReason?: string,
+      archivedBy?: string
+    ): { deletedInquiry?: AdministrativeInquiry } => {
+      const inquiryToDelete = administrativeInquiries.find((ai) => ai.id === id);
+      if (!inquiryToDelete) return {};
+
+      const now = new Date().toISOString();
+      const reason = archiveReason || "حذف يدوي بواسطة الإدارة";
+      const actor = archivedBy || DEFAULT_ADMIN_NAME;
+
+      const archivedItem: ArchivedAdministrativeInquiry = {
+        inquiry: {
+          ...inquiryToDelete,
+          isArchived: true,
+          archivedAt: now,
+          archivedBy: actor,
+          archiveReason: reason,
+          archivedByCascade: false,
+        },
+        archivedAt: now,
+        archivedBy: actor,
+        archiveReason: reason,
+        archivedByCascade: false,
+      };
+
+      setAdministrativeInquiries((prev) => {
+        const next = prev.filter((ai) => ai.id !== id);
+        try {
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setArchivedAdministrativeInquiries((prev) => {
+        const next = [archivedItem, ...prev.filter((a) => a.inquiry.id !== id)];
+        try {
+          localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      const dbUpdate = {
+        is_archived: true,
+        archived_at: now,
+        archived_by: actor,
+        archive_reason: reason,
+        archived_by_cascade: false,
+      };
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("administrative_inquiries")
+          .update(dbUpdate)
+          .eq("id", id)
+          .then(
+            ({ error }) => {
+              if (error) {
+                queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id, ...dbUpdate } });
+              }
+            },
+            () => {
+              queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id, ...dbUpdate } });
+            }
+          );
+      } else {
+        queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id, ...dbUpdate } });
+      }
+
+      logAuditEvent({
+        action: "ARCHIVE",
+        entityType: "administrative_inquiry",
+        entityId: id,
+        details: `أرشفة مساءلة إدارية للمعلمة: ${inquiryToDelete.teacherName} برقم ${inquiryToDelete.inquiryNumber || ""}`,
+        oldValue: inquiryToDelete,
+      });
+
+      return { deletedInquiry: inquiryToDelete };
+    },
+    [administrativeInquiries, queueSyncOperation]
+  );
+
+  const restoreAdministrativeInquiry = useCallback(
+    (inquiry: AdministrativeInquiry) => {
+      const restored: AdministrativeInquiry = {
+        ...inquiry,
+        isArchived: false,
+        archivedAt: undefined,
+        archivedBy: undefined,
+        archiveReason: undefined,
+        archivedByCascade: undefined,
+      };
+
+      setAdministrativeInquiries((prev) => {
+        const exists = prev.some((ai) => ai.id === restored.id);
+        const next = exists
+          ? prev.map((ai) => (ai.id === restored.id ? restored : ai))
+          : [restored, ...prev];
+        try {
+          localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      setArchivedAdministrativeInquiries((prev) => {
+        const next = prev.filter((a) => a.inquiry.id !== inquiry.id);
+        try {
+          localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      const dbUpdate = {
+        is_archived: false,
+        archived_at: null,
+        archived_by: null,
+        archive_reason: null,
+        archived_by_cascade: false,
+      };
+
+      if (isSupabaseConfigured() && supabase) {
+        supabase
+          .from("administrative_inquiries")
+          .update(dbUpdate)
+          .eq("id", inquiry.id)
+          .then(
+            ({ error }) => {
+              if (error) {
+                queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id: inquiry.id, ...dbUpdate } });
+              }
+            },
+            () => {
+              queueSyncOperation({ table: "administrative_inquiries", action: "update", data: { id: inquiry.id, ...dbUpdate } });
+            }
+          );
+      }
+
+      logAuditEvent({
+        action: "RESTORE",
+        entityType: "administrative_inquiry",
+        entityId: restored.id,
+        details: `استعادة مساءلة إدارية للمعلمة: ${restored.teacherName} برقم ${restored.inquiryNumber || ""}`,
+        newValue: restored,
+      });
+    },
+    [queueSyncOperation]
+  );
+
+  const permanentDeleteAdministrativeInquiry = useCallback(
+    (id: string): boolean => {
+      return permanentDeleteFromArchive("administrative_inquiry", id);
+    },
+    [permanentDeleteFromArchive]
+  );
+
+  const markAdministrativeInquiryLinkShared = useCallback((id: string) => {
+    const timestamp = new Date().toISOString();
+    let sharedInq: AdministrativeInquiry | undefined;
+    setAdministrativeInquiries((prev) => {
+      const next = prev.map((ai) => {
+        if (ai.id === id) {
+          sharedInq = { ...ai, updatedAt: timestamp };
+          return sharedInq;
+        }
+        return ai;
+      });
+      try {
+        localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+
+    if (isSupabaseConfigured() && supabase) {
+      supabase
+        .from("administrative_inquiries")
+        .update({ updated_at: timestamp })
+        .eq("id", id)
+        .then(() => {});
+    }
+
+    logAuditEvent({
+      action: "SHARE",
+      entityType: "administrative_inquiry",
+      entityId: id,
+      details: `إرسال رابط المساءلة الإدارية للمعلمة: ${sharedInq?.teacherName || id} عبر واتساب`,
+    });
+  }, []);
+
   // 26. Restore Full System Snapshot (Point-in-Time Disaster Recovery)
   const restoreFullSystemSnapshot = useCallback(
     async (
@@ -5721,11 +6676,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         setInquiries(snapshotData.inquiries || []);
         setDeductionDecisions(snapshotData.deductionDecisions || []);
         setPermissions(snapshotData.permissions || []);
+        setAdministrativeInquiries(snapshotData.administrativeInquiries || []);
         setArchivedTeachers(snapshotData.archivedTeachers || []);
         setArchivedAbsences(snapshotData.archivedAbsences || []);
         setArchivedDelayNotices(snapshotData.archivedDelayNotices || []);
         setArchivedDeductionDecisions(snapshotData.archivedDeductionDecisions || []);
         setArchivedPermissions(snapshotData.archivedPermissions || []);
+        setArchivedAdministrativeInquiries(snapshotData.archivedAdministrativeInquiries || []);
 
         if (typeof window !== "undefined") {
           try {
@@ -5735,11 +6692,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             localStorage.setItem(DELAY_NOTICES_STORAGE_KEY, JSON.stringify(snapshotData.delayNotices || []));
             localStorage.setItem(PERMISSIONS_STORAGE_KEY, JSON.stringify(snapshotData.permissions || []));
             localStorage.setItem(DEDUCTION_DECISIONS_STORAGE_KEY, JSON.stringify(snapshotData.deductionDecisions || []));
+            localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(snapshotData.administrativeInquiries || []));
             localStorage.setItem(ARCHIVED_TEACHERS_STORAGE_KEY, JSON.stringify(snapshotData.archivedTeachers || []));
             localStorage.setItem(ARCHIVED_ABSENCES_STORAGE_KEY, JSON.stringify(snapshotData.archivedAbsences || []));
             localStorage.setItem(ARCHIVED_DELAYS_STORAGE_KEY, JSON.stringify(snapshotData.archivedDelayNotices || []));
             localStorage.setItem(ARCHIVED_PERMISSIONS_STORAGE_KEY, JSON.stringify(snapshotData.archivedPermissions || []));
             localStorage.setItem(ARCHIVED_DEDUCTIONS_STORAGE_KEY, JSON.stringify(snapshotData.archivedDeductionDecisions || []));
+            localStorage.setItem(ARCHIVED_ADMIN_INQUIRIES_STORAGE_KEY, JSON.stringify(snapshotData.archivedAdministrativeInquiries || []));
           } catch (storageErr) {
             console.warn("تنبيه تخزين محلي أثناء استعادة النسخة الاحتياطية:", storageErr);
           }
@@ -5774,6 +6733,10 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               ...(snapshotData.permissions || []),
               ...(snapshotData.archivedPermissions?.map((ap) => ap.permission) || []),
             ];
+            const allAdminInquiries = [
+              ...(snapshotData.administrativeInquiries || []),
+              ...(snapshotData.archivedAdministrativeInquiries?.map((ai) => ai.inquiry) || []),
+            ];
             const allInquiries = snapshotData.inquiries || [];
 
             await Promise.all([
@@ -5788,6 +6751,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                 : Promise.resolve(),
               allPermissions.length > 0
                 ? supabase.from("employee_permissions").upsert(allPermissions.map(mapPermissionToDbRow))
+                : Promise.resolve(),
+              allAdminInquiries.length > 0
+                ? supabase.from("administrative_inquiries").upsert(allAdminInquiries.map(mapAdminInquiryToDbRow))
                 : Promise.resolve(),
               allInquiries.length > 0
                 ? supabase.from("absence_inquiries").upsert(allInquiries.map(mapInquiryToDbRow))
@@ -5821,12 +6787,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       delayNotices,
       deductionDecisions,
       permissions,
+      administrativeInquiries,
       restoreFullSystemSnapshot,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
       archivedDeductionDecisions,
       archivedPermissions,
+      archivedAdministrativeInquiries,
       restoreFromArchive,
       permanentDeleteFromArchive,
       clearArchive,
@@ -5869,6 +6837,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       updatePermission,
       deletePermission,
       restorePermission,
+      createAdministrativeInquiry,
+      updateAdministrativeInquiry,
+      submitTeacherAdministrativeResponse,
+      submitAdministrativeDirectorDecision,
+      deleteAdministrativeInquiry,
+      restoreAdministrativeInquiry,
+      permanentDeleteAdministrativeInquiry,
+      markAdministrativeInquiryLinkShared,
       pendingSyncCount,
       flushSyncQueue,
     }),
@@ -5879,11 +6855,13 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       delayNotices,
       deductionDecisions,
       permissions,
+      administrativeInquiries,
       archivedTeachers,
       archivedAbsences,
       archivedDelayNotices,
       archivedDeductionDecisions,
       archivedPermissions,
+      archivedAdministrativeInquiries,
       restoreFromArchive,
       permanentDeleteFromArchive,
       clearArchive,
@@ -5928,6 +6906,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       updatePermission,
       deletePermission,
       restorePermission,
+      createAdministrativeInquiry,
+      updateAdministrativeInquiry,
+      submitTeacherAdministrativeResponse,
+      submitAdministrativeDirectorDecision,
+      deleteAdministrativeInquiry,
+      restoreAdministrativeInquiry,
+      permanentDeleteAdministrativeInquiry,
+      markAdministrativeInquiryLinkShared,
       restoreFullSystemSnapshot,
     ]
   );

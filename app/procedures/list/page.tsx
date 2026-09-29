@@ -21,21 +21,23 @@ import {
   ShieldCheck,
   Building2,
   Users,
+  Scale,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { PageHeader, Card, Button, Badge, KpiCard } from "@/components/ui";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
-import { AbsenceInquiry, DeductionDecision, DelayNotice } from "@/types/teacher";
+import { AbsenceInquiry, DeductionDecision, DelayNotice, AdministrativeInquiry } from "@/types/teacher";
 import { printDeductionDecisionPdf } from "@/lib/printDeductionDecisionPdfService";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { printAbsencePdf } from "@/lib/printPdfService";
+import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 
-type ProcedureTab = "all" | "inquiry" | "deduction" | "delay";
+type ProcedureTab = "all" | "inquiry" | "deduction" | "delay" | "administrative_inquiry";
 
 interface UnifiedProcedureItem {
   id: string;
-  type: "inquiry" | "deduction" | "delay";
+  type: "inquiry" | "deduction" | "delay" | "administrative_inquiry";
   typeName: string;
   formNumberBadge: string;
   referenceNumber: string;
@@ -48,7 +50,7 @@ interface UnifiedProcedureItem {
     label: string;
     variant: "success" | "warning" | "error" | "info" | "neutral" | "brand";
   };
-  rawItem: AbsenceInquiry | DeductionDecision | DelayNotice;
+  rawItem: AbsenceInquiry | DeductionDecision | DelayNotice | AdministrativeInquiry;
 }
 
 export default function ProceduresListPage() {
@@ -57,9 +59,11 @@ export default function ProceduresListPage() {
     inquiries,
     delayNotices,
     deductionDecisions,
+    administrativeInquiries,
     deleteInquiry,
     deleteDelayNotice,
     deleteDeductionDecision,
+    deleteAdministrativeInquiry,
   } = useTeachers();
   const { showToast } = useToast();
 
@@ -80,13 +84,21 @@ export default function ProceduresListPage() {
     () => deductionDecisions.filter((d) => !d.isArchived),
     [deductionDecisions]
   );
+  const activeAdminInquiries = useMemo(
+    () => (administrativeInquiries || []).filter((i) => !i.isArchived),
+    [administrativeInquiries]
+  );
 
   // KPI Metrics
   const totalCount =
-    activeInquiries.length + activeDelayNotices.length + activeDeductions.length;
+    activeInquiries.length +
+    activeDelayNotices.length +
+    activeDeductions.length +
+    activeAdminInquiries.length;
   const inquiryCount = activeInquiries.length;
   const deductionCount = activeDeductions.length;
   const delayCount = activeDelayNotices.length;
+  const adminInquiryCount = activeAdminInquiries.length;
 
   // Unify all procedures into a single sorted timeline
   const unifiedItems = useMemo<UnifiedProcedureItem[]>(() => {
@@ -182,9 +194,43 @@ export default function ProceduresListPage() {
       });
     }
 
+    // 4. Administrative Inquiries
+    for (const inq of activeAdminInquiries) {
+      let statusLabel = "بانتظار إفادة المعلمة";
+      let statusVariant: UnifiedProcedureItem["statusBadge"]["variant"] = "warning";
+      if (inq.status === "completed") {
+        statusLabel = inq.directorDecision === "accepted" ? "عذر مقبول" : "عذر غير مقبول";
+        statusVariant = inq.directorDecision === "accepted" ? "success" : "error";
+      } else if (inq.status === "pending_director") {
+        statusLabel = "بانتظار قرار المديرة";
+        statusVariant = "info";
+      } else if (inq.status === "expired") {
+        statusLabel = "منتهي الصلاحية";
+        statusVariant = "error";
+      }
+
+      list.push({
+        id: `admin-inq-${inq.id}`,
+        type: "administrative_inquiry",
+        typeName: "مساءلة إدارية",
+        formNumberBadge: "مساءلة خطية",
+        referenceNumber: inq.inquiryNumber || inq.id.slice(0, 8),
+        teacherId: inq.teacherId,
+        teacherName: inq.teacherName || "—",
+        civilId: inq.nationalId || "—",
+        date: inq.incidentDate,
+        details: `${inq.violationTypeArabic || inq.violationType}: ${inq.incidentDescription || "مساءلة إدارية"}`,
+        statusBadge: {
+          label: statusLabel,
+          variant: statusVariant,
+        },
+        rawItem: inq,
+      });
+    }
+
     // Sort by date descending
     return list.sort((a, b) => b.date.localeCompare(a.date));
-  }, [activeInquiries, activeDeductions, activeDelayNotices]);
+  }, [activeInquiries, activeDeductions, activeDelayNotices, activeAdminInquiries]);
 
   // Filtered Items based on Tab & Search Query
   const filteredItems = useMemo(() => {
@@ -243,6 +289,8 @@ export default function ProceduresListPage() {
         absenceReason: inq.teacherReason || "مساءلة غياب رسمية",
         attachmentUrl: inq.attachmentUrl,
       });
+    } else if (item.type === "administrative_inquiry") {
+      printAdministrativeInquiryPdf(item.rawItem as AdministrativeInquiry);
     }
   };
 
@@ -256,6 +304,8 @@ export default function ProceduresListPage() {
       deleteDelayNotice((itemToDelete.rawItem as DelayNotice).id, reason);
     } else if (itemToDelete.type === "inquiry") {
       await deleteInquiry((itemToDelete.rawItem as AbsenceInquiry).id, reason);
+    } else if (itemToDelete.type === "administrative_inquiry") {
+      deleteAdministrativeInquiry((itemToDelete.rawItem as AdministrativeInquiry).id, reason);
     }
 
     setItemToDelete(null);
@@ -277,6 +327,16 @@ export default function ProceduresListPage() {
         badge="سجل الإدارة المدرسية"
         actions={
           <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/procedures/administrative-inquiries"
+              className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xs hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 hover:border-indigo-200 dark:hover:border-indigo-800 hover:text-indigo-900 dark:hover:text-indigo-300 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+            >
+              <span className="w-6 h-6 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 flex items-center justify-center shrink-0 transition-transform duration-300 ease-out group-hover:scale-110 group-hover:bg-indigo-100/80">
+                <Scale className="w-3.5 h-3.5 stroke-[2.2]" />
+              </span>
+              <span>مساءلة إدارية</span>
+            </Link>
+
             <Link
               href="/procedures/deduction-hours"
               className="group inline-flex items-center gap-2.5 h-10 px-4 rounded-xl text-xs sm:text-sm font-bold text-white bg-gradient-to-b from-[#15828e] to-[#0f666f] border border-[#0d5961] shadow-[0_1px_3px_rgba(0,0,0,0.1),inset_0_1px_0.5px_rgba(255,255,255,0.22)] hover:from-[#18919e] hover:to-[#116e78] hover:shadow-md active:scale-[0.98] transition-all duration-200 cursor-pointer"
@@ -312,13 +372,20 @@ export default function ProceduresListPage() {
 
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
         {/* KPI Cards Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <KpiCard
             title="إجمالي الإجراءات المسجلة"
             value={totalCount}
             subtitle="كافة القرارات والمساءلات"
             icon={<FileCheck className="w-5 h-5 text-teal-700 dark:text-teal-400" />}
             variant="emerald"
+          />
+          <KpiCard
+            title="المسائلات الإدارية"
+            value={adminInquiryCount}
+            subtitle="مساءلات خطية رسمية"
+            icon={<Scale className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />}
+            variant="indigo"
           />
           <KpiCard
             title="قرارات حسم الساعات"
@@ -350,6 +417,7 @@ export default function ProceduresListPage() {
             <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/80 dark:bg-slate-800 rounded-xl">
               {[
                 { id: "all", label: "الكل", count: totalCount },
+                { id: "administrative_inquiry", label: "المسائلات الإدارية", count: adminInquiryCount },
                 { id: "deduction", label: "قرارات حسم الساعات (١٩)", count: deductionCount },
                 { id: "inquiry", label: "مساءلات الغياب (٢٠)", count: inquiryCount },
                 { id: "delay", label: "إشعارات التأخر", count: delayCount },

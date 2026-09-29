@@ -15,6 +15,7 @@ import {
   DoorOpen,
   ShieldAlert,
   ListTodo,
+  Scale,
   GraduationCap,
   X,
   MessageCircle,
@@ -58,15 +59,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
     archivedTeachers,
     archivedAbsences,
     archivedDelayNotices,
+    archivedAdministrativeInquiries,
+    administrativeInquiries,
   } = useTeachers();
   const { isCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
 
   const pendingDirectorDelayCount = stats.pendingDelayNotices;
   const pendingAbsencesCount = Math.max(0, stats.pendingProcedures - stats.pendingDelayNotices);
+  const pendingAdminInquiriesCount = (administrativeInquiries || []).filter(
+    (i) => i.status === "pending_teacher" || i.status === "pending_director"
+  ).length;
   const totalArchivedCount =
     (archivedTeachers?.length || 0) +
     (archivedAbsences?.length || 0) +
-    (archivedDelayNotices?.length || 0);
+    (archivedDelayNotices?.length || 0) +
+    (archivedAdministrativeInquiries?.length || 0);
 
   // Swipe-to-close for RTL (swiping to the right edge closes drawer)
   const swipeHandlers = useSwipe(
@@ -151,6 +158,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           icon: Clock,
           href: "/procedures/delay-notice",
           badgeCount: pendingDirectorDelayCount,
+          badgeVariant: "rose",
+        },
+        {
+          id: "administrative-inquiries",
+          label: "المسائلات الإدارية",
+          icon: Scale,
+          href: "/procedures/administrative-inquiries",
+          badgeCount: pendingAdminInquiriesCount,
           badgeVariant: "rose",
         },
         {

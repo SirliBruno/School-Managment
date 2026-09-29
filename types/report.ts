@@ -7,6 +7,7 @@ export type ReportType =
   | "teacher_permissions_record"
   | "permissions_statistics"
   | "school_comprehensive"
+  | "administrative_inquiries_summary"
   | "custom_period";
 
 export interface ReportFilterOptions {

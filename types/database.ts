@@ -198,6 +198,7 @@ export type AuditLogEntityType =
   | "delay_notice"
   | "permission"
   | "deduction"
+  | "administrative_inquiry"
   | "report"
   | "backup"
   | "system";
@@ -238,4 +239,39 @@ export interface DbSchoolSettingsRow {
   created_at?: string;
   updated_at?: string;
 }
+
+export interface DbAdministrativeInquiryRow {
+  id: string;
+  inquiry_number: string | null;
+  teacher_id: string;
+  teacher_name: string;
+  national_id?: string | null;
+  job_number?: string | null;
+  specialty?: string | null;
+  job_title?: string | null;
+  inquiry_type: string;
+  custom_type: string | null;
+  incident_date: string;
+  description: string | null;
+  vice_principal_notes: string | null;
+  status: string;
+  token: string;
+  token_expires_at: string;
+  teacher_response: string | null;
+  response_date: string | null;
+  response_ip: string | null;
+  attachment_url: string | null;
+  director_decision: string | null;
+  director_notes: string | null;
+  decision_date: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string | null;
+  is_archived?: boolean | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  archive_reason?: string | null;
+  archived_by_cascade?: boolean | null;
+}
+
 

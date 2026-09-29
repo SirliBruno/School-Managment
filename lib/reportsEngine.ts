@@ -4,6 +4,7 @@ import {
   DelayNotice,
   DeductionDecision,
   EmployeePermission,
+  AdministrativeInquiry,
 } from "@/types/teacher";
 import { ReportType, ReportFilterOptions } from "@/types/report";
 import { PdfReportPayload } from "@/lib/reportPdfService";
@@ -60,7 +61,8 @@ export function generateReportData(
   delayNotices: DelayNotice[],
   deductionDecisions: DeductionDecision[],
   creatorName: string = "أحلام صالح الضبيبي",
-  permissions: EmployeePermission[] = []
+  permissions: EmployeePermission[] = [],
+  administrativeInquiries: AdministrativeInquiry[] = []
 ): ReportGeneratedData {
   const saudiToday = getSaudiToday();
   const schoolSettings = getActiveSchoolSettings();
@@ -73,6 +75,7 @@ export function generateReportData(
   const activeDelays = delayNotices.filter((d) => !d.isArchived);
   const activeDeductions = deductionDecisions.filter((dd) => !dd.isArchived);
   const activePermissions = permissions.filter((p) => !p.isArchived);
+  const activeAdminInquiries = administrativeInquiries.filter((i) => !i.isArchived);
 
   // الخريطة المرجعية للمعلمات النشطات
   const teachersMap = new Map<string, Teacher>();
@@ -839,7 +842,132 @@ export function generateReportData(
     };
   }
 
-  // 5. التقرير الشامل للمدرسة (School Administrative Summary)
+  // 6. تقرير حصر المسائلات الإدارية الرسمية
+  if (reportType === "administrative_inquiries_summary") {
+    const filteredInquiries = activeAdminInquiries.filter((inq) => {
+      if (
+        !filterByDateRange(
+          inq.incidentDate,
+          filters.startDate,
+          filters.endDate,
+          filters.month,
+          filters.year
+        )
+      ) {
+        return false;
+      }
+
+      if (filters.teacherId && filters.teacherId !== "all" && inq.teacherId !== filters.teacherId) {
+        return false;
+      }
+
+      const t = teachersMap.get(inq.teacherId);
+      if (filters.specialty && filters.specialty !== "all" && t?.specialty !== filters.specialty) {
+        return false;
+      }
+      if (
+        filters.employmentStatus &&
+        filters.employmentStatus !== "all" &&
+        t?.employmentStatus !== filters.employmentStatus
+      ) {
+        return false;
+      }
+      if (filters.status && filters.status !== "all" && inq.status !== filters.status) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const totalInquiries = filteredInquiries.length;
+    const pendingTeacher = filteredInquiries.filter((i) => i.status === "pending_teacher").length;
+    const teacherResponded = filteredInquiries.filter((i) => i.status === "teacher_responded").length;
+    const pendingDirector = filteredInquiries.filter((i) => i.status === "pending_director").length;
+    const completedCount = filteredInquiries.filter((i) => i.status === "completed").length;
+    const expiredCount = filteredInquiries.filter((i) => i.status === "expired").length;
+    const acceptedCount = filteredInquiries.filter((i) => i.directorDecision === "accepted").length;
+    const rejectedCount = filteredInquiries.filter((i) => i.directorDecision === "rejected").length;
+
+    // Response rate: inquiries where teacher provided response or moved past pending_teacher
+    const respondedCount = filteredInquiries.filter(
+      (i) => Boolean(i.teacherResponse) || i.status === "teacher_responded" || i.status === "pending_director" || i.status === "completed"
+    ).length;
+    const responseRate = totalInquiries > 0 ? Math.round((respondedCount / totalInquiries) * 100) : 0;
+
+    const summaryCards = [
+      { label: "إجمالي المساءلات", value: `${totalInquiries} مساءلة` },
+      { label: "معدل استجابة المعلمات", value: `${responseRate}% (${respondedCount}/${totalInquiries})` },
+      { label: "بانتظار إفادة المعلمة", value: `${pendingTeacher} حالة` },
+      { label: "بانتظار قرار الإدارة", value: `${pendingDirector + teacherResponded} حالة` },
+      { label: "قرارات معتمدة", value: `${acceptedCount + rejectedCount} قرار (${acceptedCount} مقبول / ${rejectedCount} غير مقبول)` },
+      { label: "منتهية بدون رد", value: `${expiredCount} حالة` },
+    ];
+
+    const tableHeaders = [
+      "#",
+      "رقم المساءلة",
+      "اسم المعلمة",
+      "السجل المدني",
+      "تاريخ الواقعة",
+      "نوع المخالفة",
+      "حالة المساءلة",
+      "قرار المديرة",
+      "الملاحظات الإدارية",
+    ];
+
+    const tableRows = filteredInquiries.map((inq, idx) => {
+      let statusText = "بانتظار إفادة المعلمة";
+      if (inq.status === "teacher_responded") statusText = "تم إرسال الإفادة";
+      else if (inq.status === "pending_director") statusText = "بانتظار قرار الإدارة";
+      else if (inq.status === "completed") statusText = "مكتملة ومعتمدة";
+      else if (inq.status === "expired") statusText = "منتهية الصلاحية";
+
+      let decisionText = "لم يصدر قرار";
+      if (inq.directorDecision === "accepted") decisionText = "عذر مقبول (حفظ)";
+      else if (inq.directorDecision === "rejected") decisionText = "عذر غير مقبول";
+
+      const displayType =
+        inq.inquiryType === "أخرى" && (inq.customType || inq.customViolationType)
+          ? `أخرى: ${inq.customType || inq.customViolationType}`
+          : inq.inquiryType || inq.violationTypeArabic || inq.violationType || "—";
+
+      return [
+        idx + 1,
+        inq.inquiryNumber || "—",
+        inq.teacherName || "—",
+        inq.nationalId || "—",
+        inq.incidentDate || "—",
+        displayType,
+        statusText,
+        decisionText,
+        inq.directorNotes || inq.vicePrincipalNotes || "—",
+      ];
+    });
+
+    return {
+      payload: {
+        reportTitle: "تقرير حصر المسائلات الإدارية الرسمية",
+        reportCode: "تق-مساءلة-إدارية-٠١",
+        schoolName,
+        principalName,
+        creatorName,
+        dateFormatted: saudiToday,
+        periodText,
+        summaryCards,
+        tableHeaders,
+        tableRows,
+      },
+      rawRowsCount: filteredInquiries.length,
+      summaryHighlights: [
+        { label: "المساءلات المسجلة", value: totalInquiries },
+        { label: "معدل الرد", value: `${responseRate}%` },
+        { label: "قيد المتابعة", value: pendingTeacher + pendingDirector + teacherResponded },
+        { label: "قرارات معتمدة", value: acceptedCount + rejectedCount },
+      ],
+    };
+  }
+
+  // 7. التقرير الشامل للمدرسة (School Administrative Summary)
   const totalAbsences = activeAbsences.length;
   const totalDelays = activeDelays.length;
   const totalDeductions = activeDeductions.length;
@@ -933,6 +1061,7 @@ export interface DashboardStats {
   totalAbsences: number;
   totalDelayNotices: number;
   totalPermissions: number;
+  totalAdministrativeInquiries?: number;
   absenceRate: number;
 }
 
@@ -943,17 +1072,20 @@ export function getDashboardStats(
   teachers: Teacher[] = [],
   absenceRecords: AbsenceRecord[] = [],
   delayNotices: DelayNotice[] = [],
-  permissions: EmployeePermission[] = []
+  permissions: EmployeePermission[] = [],
+  administrativeInquiries: AdministrativeInquiry[] = []
 ): DashboardStats {
   const activeTeachers = teachers.filter((t) => !t.isArchived);
   const activeAbsences = absenceRecords.filter((a) => !a.isArchived);
   const activeDelays = delayNotices.filter((d) => !d.isArchived);
   const activePermissions = permissions.filter((p) => !p.isArchived);
+  const activeAdminInquiries = (administrativeInquiries || []).filter((ai) => !ai.isArchived);
 
   const totalTeachers = activeTeachers.length;
   const totalAbsences = activeAbsences.length;
   const totalDelayNotices = activeDelays.length;
   const totalPermissions = activePermissions.length;
+  const totalAdministrativeInquiries = activeAdminInquiries.length;
 
   const absenceRate =
     totalTeachers > 0 ? Number(((totalAbsences / totalTeachers) * 100).toFixed(1)) : 0;
@@ -963,6 +1095,7 @@ export function getDashboardStats(
     totalAbsences,
     totalDelayNotices,
     totalPermissions,
+    totalAdministrativeInquiries,
     absenceRate,
   };
 }
