@@ -79,19 +79,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   // Swipe-to-close RTL
   const swipeHandlers = useSwipe(() => setIsMobileOpen(false), undefined, 45);
 
-  // Auto close mobile drawer on route changes
+  // Auto close mobile drawer on route changes and unlock body scroll safely
   useEffect(() => {
     setIsMobileOpen(false);
+    document.body.style.overflow = "";
   }, [pathname, setIsMobileOpen]);
 
-  // Lock scroll on mobile open
+  // Lock scroll on mobile open safely
   useEffect(() => {
     if (isMobileOpen) {
-      const orig = window.getComputedStyle(document.body).overflow;
+      const orig = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = orig;
+        document.body.style.overflow = orig === "hidden" ? "" : orig;
       };
+    } else {
+      document.body.style.overflow = "";
     }
   }, [isMobileOpen]);
 
@@ -365,7 +368,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
         {/* Scrollable Navigation Area */}
         <nav
-          className="flex-1 space-y-2.5 overflow-y-auto custom-scrollbar pr-0.5"
+          className="flex-1 space-y-2.5 overflow-y-auto custom-scrollbar overscroll-contain pr-1 pl-1"
           aria-label="قائمة التصفح الرئيسية"
         >
           {/* 1. مركز القيادة Card */}

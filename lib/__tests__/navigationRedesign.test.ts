@@ -58,4 +58,24 @@ describe("Sprint: Administrative Navigation & Sidebar UX Redesign", () => {
   it("8. Sidebar provides tooltips and administrative descriptions", () => {
     expect(sidebarCode).toMatch(/description|tooltip|title/i);
   });
+
+  it("9. PageTransition does not block routing with AnimatePresence mode='wait'", () => {
+    const pageTransitionPath = path.join(process.cwd(), "components/layout/PageTransition.tsx");
+    const pageTransitionCode = fs.readFileSync(pageTransitionPath, "utf-8");
+    expect(pageTransitionCode).not.toContain("mode=\"wait\"");
+    expect(pageTransitionCode).toContain("motion.div");
+  });
+
+  it("10. Sidebar enforces overscroll-contain and safe body overflow release", () => {
+    expect(sidebarCode).toContain("overscroll-contain");
+    expect(sidebarCode).toContain("document.body.style.overflow = \"\"");
+  });
+
+  it("11. Globals CSS contains pageEnter animation and visible scrollbar styling", () => {
+    const globalsPath = path.join(process.cwd(), "app/globals.css");
+    const globalsCode = fs.readFileSync(globalsPath, "utf-8");
+    expect(globalsCode).toContain("@keyframes pageEnter");
+    expect(globalsCode).toContain(".animate-page-enter");
+    expect(globalsCode).toContain("overscroll-behavior: contain");
+  });
 });
