@@ -26,6 +26,8 @@ import {
   Award,
   Database,
   GraduationCap,
+  X,
+  ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -39,6 +41,8 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
 import { ApprovalAssetsModal } from "@/components/settings/ApprovalAssetsModal";
 import { BackupRecoveryModal } from "@/components/settings/BackupRecoveryModal";
+import { TeacherProfileModal } from "@/components/teachers/TeacherProfileModal";
+import { Teacher } from "@/types/teacher";
 import {
   getActiveSchoolSettings,
   onSchoolSettingsChanged,
@@ -49,6 +53,7 @@ export const AppHeader: React.FC = () => {
   const router = useRouter();
   const { user, logout } = useAuth();
   const {
+    teachers,
     isCloudConnected,
     pendingSyncCount,
     flushSyncQueue,
@@ -68,6 +73,8 @@ export const AppHeader: React.FC = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
+  const [selectedTeacherForProfile, setSelectedTeacherForProfile] = useState<Teacher | null>(null);
   const [schoolSettings, setSchoolSettings] = useState(getActiveSchoolSettings());
 
   useEffect(() => {
@@ -79,6 +86,8 @@ export const AppHeader: React.FC = () => {
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const quickActionsRef = useRef<HTMLDivElement>(null);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Close menus when clicking outside
   useEffect(() => {
@@ -95,10 +104,80 @@ export const AppHeader: React.FC = () => {
       ) {
         setIsQuickActionsOpen(false);
       }
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchDropdownOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Real-time Global Search Matching (0ms in-memory cache)
+  const trimmedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const searchResults = React.useMemo(() => {
+    if (!trimmedSearchQuery) {
+      return { matchingTeachers: [], matchingDelayNotices: [], matchingAdminInquiries: [] };
+    }
+
+    const matchingTeachers = (teachers || [])
+      .filter((t) => !t.isArchived)
+      .filter((t) => {
+        const name = (t.fullName || t.name || "").toLowerCase();
+        const nationalId = (t.nationalId || t.username || "").toLowerCase();
+        const job = (t.jobNumber || "").toLowerCase();
+        const specialty = (t.specialty || "").toLowerCase();
+        const mobile = (t.mobile || "").toLowerCase();
+        return (
+          name.includes(trimmedSearchQuery) ||
+          nationalId.includes(trimmedSearchQuery) ||
+          job.includes(trimmedSearchQuery) ||
+          specialty.includes(trimmedSearchQuery) ||
+          mobile.includes(trimmedSearchQuery)
+        );
+      })
+      .slice(0, 5);
+
+    const matchingDelayNotices = (delayNotices || [])
+      .filter((d) => !d.isArchived)
+      .filter((d) => {
+        const num = (d.noticeNumber || "").toLowerCase();
+        const name = (d.teacherName || "").toLowerCase();
+        const date = (d.noticeDate || d.date || "").toLowerCase();
+        return (
+          num.includes(trimmedSearchQuery) ||
+          name.includes(trimmedSearchQuery) ||
+          date.includes(trimmedSearchQuery)
+        );
+      })
+      .slice(0, 3);
+
+    const matchingAdminInquiries = (administrativeInquiries || [])
+      .filter((a) => !a.isArchived)
+      .filter((a) => {
+        const num = (a.inquiryNumber || "").toLowerCase();
+        const name = (a.teacherName || "").toLowerCase();
+        const type = (a.violationTypeArabic || a.violationType || a.inquiryType || "").toLowerCase();
+        const date = (a.incidentDate || "").toLowerCase();
+        return (
+          num.includes(trimmedSearchQuery) ||
+          name.includes(trimmedSearchQuery) ||
+          type.includes(trimmedSearchQuery) ||
+          date.includes(trimmedSearchQuery)
+        );
+      })
+      .slice(0, 3);
+
+    return { matchingTeachers, matchingDelayNotices, matchingAdminInquiries };
+  }, [trimmedSearchQuery, teachers, delayNotices, administrativeInquiries]);
+
+  const totalResultsCount =
+    searchResults.matchingTeachers.length +
+    searchResults.matchingDelayNotices.length +
+    searchResults.matchingAdminInquiries.length;
 
   // Formatted Dates (Hijri & Gregorian)
   const [dates, setDates] = useState<{ hijri: string; gregorian: string }>({
@@ -257,17 +336,199 @@ export const AppHeader: React.FC = () => {
             </span>
           </button>
 
-          {/* Quick Search Input */}
-          <form onSubmit={handleSearchSubmit} className="relative w-44 lg:w-56">
-            <Search className="w-3.5 h-3.5 text-teal-200/80 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث سريع... (Enter)"
-              className="w-full bg-white/15 hover:bg-white/20 focus:bg-white/25 text-white placeholder-teal-100/70 text-xs font-medium rounded-xl py-1.5 pr-8 pl-3 border border-white/20 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
-            />
-          </form>
+          {/* Quick Search Input with Live Dropdown */}
+          <div className="relative w-44 lg:w-60" ref={searchContainerRef}>
+            <form onSubmit={handleSearchSubmit} className="relative w-full">
+              <Search className="w-3.5 h-3.5 text-teal-200/80 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsSearchDropdownOpen(true);
+                }}
+                onFocus={() => {
+                  if (searchQuery.trim()) setIsSearchDropdownOpen(true);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    setIsSearchDropdownOpen(false);
+                  }
+                }}
+                placeholder="بحث سريع... (Enter)"
+                className="w-full bg-white/15 hover:bg-white/20 focus:bg-white/25 text-white placeholder-teal-100/70 text-xs font-medium rounded-xl py-1.5 pr-8 pl-7 border border-white/20 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                role="combobox"
+                aria-expanded={isSearchDropdownOpen && Boolean(searchQuery.trim())}
+                aria-haspopup="listbox"
+                aria-controls="global-search-dropdown-menu"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setIsSearchDropdownOpen(false);
+                    searchInputRef.current?.focus();
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-0.5 text-teal-100/80 hover:text-white rounded-md cursor-pointer"
+                  aria-label="مسح البحث"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </form>
+
+            {/* Live Search Results Dropdown */}
+            <AnimatePresence>
+              {isSearchDropdownOpen && searchQuery.trim() && (
+                <motion.div
+                  id="global-search-dropdown-menu"
+                  role="listbox"
+                  initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                  transition={{ duration: 0.16 }}
+                  className="absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl z-50 overflow-hidden text-right select-none"
+                  dir="rtl"
+                >
+                  {/* Results Header */}
+                  <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-850 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                    <span className="text-slate-500 dark:text-slate-400 font-medium">
+                      نتائج البحث عن: <strong className="text-slate-800 dark:text-slate-200 font-bold">&quot;{searchQuery}&quot;</strong>
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-50 dark:bg-teal-950/70 text-[#137a85] dark:text-teal-300 font-bold border border-teal-200/60 dark:border-teal-800/60">
+                      {totalResultsCount} نتائج
+                    </span>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto p-1.5 space-y-1">
+                    {/* Teachers Section */}
+                    {searchResults.matchingTeachers.length > 0 && (
+                      <div className="space-y-0.5">
+                        <div className="px-2.5 py-1 text-[11px] font-bold text-teal-800 dark:text-teal-300">
+                          سجل المعلمات ({searchResults.matchingTeachers.length})
+                        </div>
+                        {searchResults.matchingTeachers.map((teacher) => (
+                          <div
+                            key={teacher.id}
+                            className="group flex items-center justify-between p-2 rounded-xl hover:bg-teal-50/70 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setSelectedTeacherForProfile(teacher);
+                              setIsSearchDropdownOpen(false);
+                            }}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="w-7 h-7 rounded-lg bg-teal-100/70 dark:bg-teal-950/80 text-[#137a85] dark:text-teal-300 flex items-center justify-center font-bold text-xs shrink-0">
+                                {(teacher.fullName || teacher.name || "").charAt(0)}
+                              </div>
+                              <div className="min-w-0">
+                                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate group-hover:text-teal-700 dark:group-hover:text-teal-300">
+                                  {teacher.fullName || teacher.name}
+                                </span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
+                                  {teacher.specialty || "عام"} • سجـل: {teacher.nationalId || teacher.jobNumber || "—"}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-[10px] px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-teal-700 dark:text-teal-300 font-bold border border-teal-200/60 dark:border-teal-800/60 shrink-0">
+                              الملف الشخصي
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Delay Notices Section */}
+                    {searchResults.matchingDelayNotices.length > 0 && (
+                      <div className="space-y-0.5 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300">
+                          إشعارات التأخر ({searchResults.matchingDelayNotices.length})
+                        </div>
+                        {searchResults.matchingDelayNotices.map((notice) => (
+                          <div
+                            key={notice.id}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-amber-50/50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+                            onClick={() => {
+                              router.push("/procedures/delay-notice");
+                              setIsSearchDropdownOpen(false);
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate">
+                                {notice.teacherName} — {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 block">
+                                تاريخ: {notice.noticeDate || notice.date}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold shrink-0">
+                              عرض الإشعار
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Administrative Inquiries Section */}
+                    {searchResults.matchingAdminInquiries.length > 0 && (
+                      <div className="space-y-0.5 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+                        <div className="px-2.5 py-1 text-[11px] font-bold text-indigo-700 dark:text-indigo-300">
+                          المساءلات الإدارية ({searchResults.matchingAdminInquiries.length})
+                        </div>
+                        {searchResults.matchingAdminInquiries.map((inq) => (
+                          <div
+                            key={inq.id}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-indigo-50/50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
+                            onClick={() => {
+                              router.push("/procedures/administrative-inquiries");
+                              setIsSearchDropdownOpen(false);
+                            }}
+                          >
+                            <div className="min-w-0">
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block truncate">
+                                {inq.teacherName} — {inq.inquiryNumber || `م-${inq.id.slice(-4)}`}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
+                                {inq.violationTypeArabic || inq.violationType || "مساءلة"}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold shrink-0">
+                              عرض المساءلة
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Empty State */}
+                    {totalResultsCount === 0 && (
+                      <div className="p-4 text-center space-y-1">
+                        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          لا توجد نتائج سريعة مطابقة
+                        </p>
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                          اضغطي Enter للبحث الشامل داخل سجل المعلمات
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dropdown Footer: Full Search Link */}
+                  <div className="p-2 bg-slate-50/80 dark:bg-slate-850 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={handleSearchSubmit}
+                      className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-[#137a85] text-white hover:bg-teal-700 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+                    >
+                      <span>عرض النتائج في سجل المعلمات</span>
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Left Section (End in RTL): Connection Status, Notifications, Quick Action, Theme, Profile */}
@@ -581,6 +842,14 @@ export const AppHeader: React.FC = () => {
         isOpen={isBackupModalOpen}
         onClose={() => setIsBackupModalOpen(false)}
       />
+
+      {/* Teacher Profile Modal from Quick Search */}
+      {selectedTeacherForProfile && (
+        <TeacherProfileModal
+          teacher={selectedTeacherForProfile}
+          onClose={() => setSelectedTeacherForProfile(null)}
+        />
+      )}
     </>
   );
 };

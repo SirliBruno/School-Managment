@@ -48,7 +48,11 @@ import { cn } from "@/lib/utils";
 
 type FilterStatus = "all" | "دائم" | "عقد" | "with_absence";
 
-export const TeacherTable: React.FC = () => {
+export interface TeacherTableProps {
+  initialSearchQuery?: string;
+}
+
+export const TeacherTable: React.FC<TeacherTableProps> = ({ initialSearchQuery = "" }) => {
   const router = useRouter();
   const {
     teachers,
@@ -715,6 +719,7 @@ export const TeacherTable: React.FC = () => {
         columns={columns}
         keyExtractor={(item) => item.id}
         isLoading={isLoading}
+        initialSearchQuery={initialSearchQuery}
         searchPlaceholder="البحث باسم المعلمة، السجل المدني، التخصص، الجوال..."
         searchFilterKeys={[
           "fullName",

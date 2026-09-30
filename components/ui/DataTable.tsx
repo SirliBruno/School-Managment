@@ -52,6 +52,7 @@ export interface DataTableProps<T> {
   pageSizeOptions?: number[];
   className?: string;
   mobileCardRenderer?: (item: T, index: number) => React.ReactNode;
+  initialSearchQuery?: string;
 }
 
 export function DataTable<T>({
@@ -74,8 +75,16 @@ export function DataTable<T>({
   pageSizeOptions = [10, 25, 50],
   className,
   mobileCardRenderer,
+  initialSearchQuery,
 }: DataTableProps<T>) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || "");
+
+  React.useEffect(() => {
+    if (initialSearchQuery !== undefined) {
+      setSearchQuery(initialSearchQuery);
+      setCurrentPage(1);
+    }
+  }, [initialSearchQuery]);
   const [sortColumnId, setSortColumnId] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);

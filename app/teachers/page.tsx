@@ -1,11 +1,18 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Users, UserCheck, Calendar, GraduationCap, FileSpreadsheet } from "lucide-react";
 import { PageHeader, KpiCard, Card } from "@/components/ui";
 import { ExcelImporter } from "@/components/teachers/ExcelImporter";
 import { TeacherTable } from "@/components/teachers/TeacherTable";
 import { useTeachers } from "@/context/TeacherContext";
+
+function TeachersTableWithQuery() {
+  const searchParams = useSearchParams();
+  const query = searchParams?.get("q") || "";
+  return <TeacherTable initialSearchQuery={query} />;
+}
 
 export default function TeachersPage() {
   const { teachers } = useTeachers();
@@ -112,8 +119,16 @@ export default function TeachersPage() {
             </div>
           </div>
 
-          {/* Teachers Table Component */}
-          <TeacherTable />
+          {/* Teachers Table Component with Suspense */}
+          <Suspense
+            fallback={
+              <div className="p-8 text-center text-xs text-slate-400 dark:text-slate-500 font-medium">
+                جاري تحميل سجل المعلمات...
+              </div>
+            }
+          >
+            <TeachersTableWithQuery />
+          </Suspense>
         </section>
       </main>
     </div>
