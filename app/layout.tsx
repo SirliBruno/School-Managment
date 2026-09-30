@@ -20,13 +20,8 @@ const cairo = Cairo({
 });
 
 export const metadata: Metadata = {
-  title: "منصة إدارتي المدرسية | نظام الإدارة المدرسية",
+  title: "منصة الغياب الإدارية | نظام الإدارة المدرسية",
   description: "منظومة إدارية متكاملة لمتابعة غياب المعلمات والإجراءات الإدارية المدرسية",
-  icons: {
-    icon: "/platform-logo.png",
-    shortcut: "/platform-logo.png",
-    apple: "/platform-logo.png",
-  },
 };
 
 export default function RootLayout({

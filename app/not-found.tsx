@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { UnderDevelopment } from "@/components/common/UnderDevelopment";
 
 export const metadata: Metadata = {
-  title: "الصفحة قيد التطوير | منصة إدارتي المدرسية",
+  title: "الصفحة قيد التطوير | منصة الغياب الإدارية",
   description: "هذه الصفحة قيد التطوير أو غير متوفرة حالياً",
 };
 

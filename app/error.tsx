@@ -3,7 +3,6 @@
 import React, { useEffect } from "react";
 import Link from "next/link";
 import { AlertTriangle, RefreshCw, Home, RotateCcw } from "lucide-react";
-import { PLATFORM_LOGO_BASE64 } from "@/lib/platformLogo";
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };
@@ -76,14 +75,8 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
         </div>
 
         {/* School System Branding */}
-        <div className="pt-4 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800 flex items-center justify-center gap-1.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={PLATFORM_LOGO_BASE64}
-            alt="شعار المنصة"
-            className="w-4 h-4 object-contain opacity-70"
-          />
-          <span>الثانوية الخامسة مسارات — منصة إدارتي المدرسية</span>
+        <div className="pt-4 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
+          منصة الغياب والمتابعة الإدارية — الثانوية الخامسة مسارات
         </div>
       </div>
     </div>

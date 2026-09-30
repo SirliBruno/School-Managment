@@ -28,7 +28,6 @@ import { AbsenceInquiry, AbsenceType } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { cn } from "@/lib/utils";
-import { PLATFORM_LOGO_BASE64 } from "@/lib/platformLogo";
 import {
   getAttachmentSlotsForType,
   parseAttachments,
@@ -1122,14 +1121,8 @@ export default function TeacherInquiryPage() {
 
         </form>
 
-        <footer className="text-center text-xs text-slate-400 dark:text-slate-500 pb-6 flex items-center justify-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={PLATFORM_LOGO_BASE64}
-            alt="شعار المنصة"
-            className="w-4 h-4 object-contain opacity-70"
-          />
-          <span>نظام الإدارة المدرسية الموحد — منصة إدارتي المدرسية</span>
+        <footer className="text-center text-xs text-slate-400 dark:text-slate-500 pb-6">
+          نظام الإدارة المدرسية الموحد — منصة الغياب الإدارية
         </footer>
       </div>
     </div>

@@ -30,7 +30,6 @@ import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryP
 import { cn } from "@/lib/utils";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
-import { PLATFORM_LOGO_BASE64 } from "@/lib/platformLogo";
 
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5MB
 
@@ -298,14 +297,10 @@ export default function AdministrativeInquiryPublicResponsePage() {
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             {errorMessage || "الرابط المطلوب غير متوفر حالياً."}
           </p>
-          <div className="pt-2 flex items-center justify-center gap-1.5 text-xs text-slate-400">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={PLATFORM_LOGO_BASE64}
-              alt="شعار المنصة"
-              className="w-4 h-4 object-contain opacity-70"
-            />
-            <span>الثانوية الخامسة مسارات — منصة إدارتي المدرسية</span>
+          <div className="pt-2">
+            <span className="text-xs text-slate-400">
+              الثانوية الخامسة مسارات — منصة الغياب والمساءلات الإدارية
+            </span>
           </div>
         </motion.div>
       </div>
@@ -664,16 +659,6 @@ export default function AdministrativeInquiryPublicResponsePage() {
             </div>
           </form>
         </motion.div>
-
-        <footer className="text-center text-xs text-slate-400 dark:text-slate-500 pb-6 flex items-center justify-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={PLATFORM_LOGO_BASE64}
-            alt="شعار المنصة"
-            className="w-4 h-4 object-contain opacity-70"
-          />
-          <span>نظام الإدارة المدرسية الموحد — منصة إدارتي المدرسية</span>
-        </footer>
       </div>
 
       {/* Lightbox Modal */}
