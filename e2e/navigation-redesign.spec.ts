@@ -44,7 +44,7 @@ test.describe("Premium Administrative UX & Reference Navigation Quality Suite", 
     await expect(sidebar).toBeVisible({ timeout: 15000 });
 
     // 1. Header Card with School Name
-    await expect(sidebar.locator("text=منصة الإدارة المدرسية").first()).toBeVisible();
+    await expect(sidebar.locator("text=منصة إدارتي المدرسية").first()).toBeVisible();
     await expect(sidebar.locator("text=الثانوية الخامسة مسارات").first()).toBeVisible();
 
     // 2. Floating Collapse/Expand Button

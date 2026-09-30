@@ -65,7 +65,8 @@ describe("Sprint: Premium Administrative UX & Navigation Redesign (إعادة ت
   describe("3. Clean Sidebar Architecture (تصميم الـ Sidebar المرجعي وهدوء الواجهة)", () => {
     it("3.1 Sidebar uses clean navigation cards matching reference image", () => {
       expect(sidebarCode).toMatch(/bg-\[#f8fafc\]|bg-white/);
-      expect(sidebarCode).toContain("منصة الإدارة المدرسية");
+      expect(sidebarCode).toContain("منصة إدارتي المدرسية");
+      expect(sidebarCode).toContain("PLATFORM_LOGO_BASE64");
     });
 
     it("3.2 Sidebar contains all 5 required administrative workflow groups", () => {
