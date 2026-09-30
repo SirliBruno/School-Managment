@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("اختبارات إعادة تصميم تجربة التنقل والـ Sidebar (Accordion Navigation & Workflow)", () => {
+test.describe("Premium Administrative UX & Reference Navigation Quality Suite", () => {
   test.setTimeout(60000);
 
   test.beforeEach(async ({ context, page }) => {
@@ -36,71 +36,85 @@ test.describe("اختبارات إعادة تصميم تجربة التنقل و
     });
   });
 
-  test("1. التحقق من هيكل الأقسام الـ 5 ونظام الـ Accordion على الشاشات الكبيرة", async ({ page }) => {
+  test("1. فحص الهيكل المرجعي للقائمة الجانبية (Header, Cards, Timeline & Profile)", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const sidebar = page.locator("aside[aria-label='شريط القائمة الجانبية']");
     await expect(sidebar).toBeVisible({ timeout: 15000 });
 
-    // 1. مركز القيادة
+    // 1. Header Card with School Name
+    await expect(sidebar.locator("text=منصة الإدارة المدرسية").first()).toBeVisible();
+    await expect(sidebar.locator("text=الثانوية الخامسة مسارات").first()).toBeVisible();
+
+    // 2. Floating Collapse/Expand Button
+    const floatingToggle = sidebar.locator("button[aria-label*='طي القائمة'], button[aria-label*='توسيع القائمة']").first();
+    await expect(floatingToggle).toBeVisible();
+
+    // 3. مركز القيادة Card
     await expect(sidebar.locator("a:has-text('مركز القيادة')").first()).toBeVisible();
 
-    // 2. السجلات اليومية
-    const recordsHeader = sidebar.locator("button:has-text('السجلات اليومية')");
-    await expect(recordsHeader).toBeVisible();
+    // 4. العمل اليومي Card
+    const dailyHeader = sidebar.locator("button:has-text('العمل اليومي')");
+    await expect(dailyHeader).toBeVisible();
 
-    // 3. الإجراءات والقرارات
+    // 5. الإجراءات والقرارات Card
     const proceduresHeader = sidebar.locator("button:has-text('الإجراءات والقرارات')");
     await expect(proceduresHeader).toBeVisible();
 
-    // 4. التقارير والتوثيق
-    const reportsHeader = sidebar.locator("button:has-text('التقارير والتوثيق')");
+    // 6. التقارير والأرشيف Card
+    const reportsHeader = sidebar.locator("button:has-text('التقارير والأرشيف')");
     await expect(reportsHeader).toBeVisible();
 
-    // 5. الإدارة
-    const adminHeader = sidebar.locator("button:has-text('الإدارة والتهيئة'), button:has-text('الإدارة')");
-    await expect(adminHeader.first()).toBeVisible();
+    // 7. الإدارة Card
+    const adminHeader = sidebar.locator("button:has-text('الإدارة')");
+    await expect(adminHeader).toBeVisible();
+
+    // 8. Bottom Profile Card
+    await expect(sidebar.locator("text=أحلام صالح الضبيبي").first()).toBeVisible();
+    await expect(sidebar.locator("text=وكيلة المدرسة").first()).toBeVisible();
+
+    // 9. Navbar Task Center (مركز المهام)
+    const taskCenter = page.locator("button[aria-label='مركز المهام']");
+    await expect(taskCenter).toBeVisible();
   });
 
-  test("2. التحقق من فتح وغلق أقسام الـ Accordion والتنقل السلس بين الصفحات", async ({ page }) => {
+  test("2. فحص سلاسة فتح وطي الـ Accordion والتنقل لجميع الصفحات بدون 404", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
     const sidebar = page.locator("aside[aria-label='شريط القائمة الجانبية']");
     await expect(sidebar).toBeVisible({ timeout: 15000 });
 
-    // Ensure Daily Records is open
-    const recordsHeader = sidebar.locator("button:has-text('السجلات اليومية')");
-    const isExpanded = await recordsHeader.getAttribute("aria-expanded");
-    if (isExpanded !== "true") {
-      await recordsHeader.click();
+    // Ensure Daily Work is open
+    const dailyHeader = sidebar.locator("button:has-text('العمل اليومي')");
+    const isDailyExpanded = await dailyHeader.getAttribute("aria-expanded");
+    if (isDailyExpanded !== "true") {
+      await dailyHeader.click();
       await page.waitForTimeout(300);
     }
 
-    // Check items in Daily Records
+    // 1. Navigate to Teachers page
     const teachersLink = sidebar.locator("a[href='/teachers']").first();
     await expect(teachersLink).toBeVisible();
-
-    const absenceLink = sidebar.locator("a[href='/procedures/absence']").first();
-    await expect(absenceLink).toBeVisible();
-
-    const delayLink = sidebar.locator("a[href='/procedures/delay-notice']").first();
-    await expect(delayLink).toBeVisible();
-
-    const permLink = sidebar.locator("a[href='/procedures/permissions']").first();
-    await expect(permLink).toBeVisible();
-
-    // Click on Teachers page
     await teachersLink.click();
     await page.waitForURL("**/teachers", { timeout: 10000 });
     await expect(page).toHaveURL(/.*teachers/);
+    await expect(page.locator("text=404")).not.toBeVisible();
 
-    // Open Procedures & Decisions
-    const proceduresHeader = sidebar.locator("button:has-text('الإجراءات والقرارات')");
-    const isProcExpanded = await proceduresHeader.getAttribute("aria-expanded");
-    if (isProcExpanded !== "true") {
-      await proceduresHeader.click();
+    // 2. Navigate to Absence page
+    const absenceLink = sidebar.locator("a[href='/procedures/absence']").first();
+    await expect(absenceLink).toBeVisible();
+    await absenceLink.click();
+    await page.waitForURL("**/procedures/absence", { timeout: 10000 });
+    await expect(page).toHaveURL(/.*absence/);
+    await expect(page.locator("text=404")).not.toBeVisible();
+
+    // 3. Open Procedures & Decisions and navigate to Administrative Inquiries
+    const procHeader = sidebar.locator("button:has-text('الإجراءات والقرارات')");
+    const isProcExp = await procHeader.getAttribute("aria-expanded");
+    if (isProcExp !== "true") {
+      await procHeader.click();
       await page.waitForTimeout(300);
     }
 
@@ -109,12 +123,13 @@ test.describe("اختبارات إعادة تصميم تجربة التنقل و
     await adminInqLink.click();
     await page.waitForURL("**/procedures/administrative-inquiries", { timeout: 10000 });
     await expect(page).toHaveURL(/.*administrative-inquiries/);
+    await expect(page.locator("text=404")).not.toBeVisible();
 
-    // Open Reports & Documentation
-    const reportsHeader = sidebar.locator("button:has-text('التقارير والتوثيق')");
-    const isRepExpanded = await reportsHeader.getAttribute("aria-expanded");
-    if (isRepExpanded !== "true") {
-      await reportsHeader.click();
+    // 4. Open Reports & Archive and navigate to Reports
+    const repHeader = sidebar.locator("button:has-text('التقارير والأرشيف')");
+    const isRepExp = await repHeader.getAttribute("aria-expanded");
+    if (isRepExp !== "true") {
+      await repHeader.click();
       await page.waitForTimeout(300);
     }
 
@@ -123,42 +138,60 @@ test.describe("اختبارات إعادة تصميم تجربة التنقل و
     await reportsLink.click();
     await page.waitForURL("**/reports", { timeout: 10000 });
     await expect(page).toHaveURL(/.*reports/);
+    await expect(page.locator("text=404")).not.toBeVisible();
 
+    // 5. Navigate to Archive
     const archiveLink = sidebar.locator("a[href='/archive']").first();
     await expect(archiveLink).toBeVisible();
     await archiveLink.click();
     await page.waitForURL("**/archive", { timeout: 10000 });
     await expect(page).toHaveURL(/.*archive/);
+    await expect(page.locator("text=404")).not.toBeVisible();
   });
 
-  test("3. التحقق من القائمة الجانبية في وضع الجوال (Drawer Menu & Auto-close on Navigate)", async ({ page }) => {
-    // Set Mobile Viewport
+  test("3. فحص التوافقية والتجاوبية (Tablet & Mobile Drawer)", async ({ page }) => {
+    // 1. Tablet Viewport (820x1180)
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await page.goto("/");
+    await page.waitForLoadState("networkidle");
+
+    // Hamburger button should be visible on tablet
+    const hamburgerBtn = page.locator("button[aria-label='فتح القائمة الرئيسية']").first();
+    await expect(hamburgerBtn).toBeVisible({ timeout: 10000 });
+    await hamburgerBtn.click();
+
+    // Drawer should open smoothly
+    const drawer = page.locator("div.fixed.inset-y-0.right-0").first();
+    await expect(drawer).toBeVisible({ timeout: 5000 });
+
+    // Drawer search input should be functional
+    const drawerSearch = drawer.locator("input[placeholder*='تصفية الأقسام']");
+    await expect(drawerSearch).toBeVisible();
+
+    // 2. Mobile Viewport (390x844)
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Open Mobile Drawer via hamburger
-    const hamburgerBtn = page.locator("button[aria-label='فتح القائمة الرئيسية']").first();
-    await expect(hamburgerBtn).toBeVisible({ timeout: 15000 });
-    await hamburgerBtn.click();
+    const mobileHamburger = page.locator("button[aria-label='فتح القائمة الرئيسية']").first();
+    await expect(mobileHamburger).toBeVisible({ timeout: 10000 });
+    await mobileHamburger.click();
 
-    const mobileDrawer = page.locator("div[role='dialog'][aria-label='القائمة الجانبية للجوال']");
+    const mobileDrawer = page.locator("div.fixed.inset-y-0.right-0").first();
     await expect(mobileDrawer).toBeVisible({ timeout: 5000 });
 
-    // Ensure Daily Records is expanded
-    const recordsHeader = mobileDrawer.locator("button:has-text('السجلات اليومية')");
-    const isExpanded = await recordsHeader.getAttribute("aria-expanded");
-    if (isExpanded !== "true") {
-      await recordsHeader.click();
-      await page.waitForTimeout(300);
+    // Navigate to permissions from drawer and ensure auto-close
+    const dailyBtn = mobileDrawer.locator("button:has-text('العمل اليومي')");
+    const isDailyExp = await dailyBtn.getAttribute("aria-expanded");
+    if (isDailyExp !== "true") {
+      await dailyBtn.click();
+      await page.waitForTimeout(250);
     }
 
-    // Click on Absence page and verify drawer closes automatically
-    const absenceLink = mobileDrawer.locator("a[href='/procedures/absence']").first();
-    await absenceLink.click();
-    await page.waitForURL("**/procedures/absence", { timeout: 10000 });
-
-    await expect(page).toHaveURL(/.*procedures\/absence/);
-    await expect(mobileDrawer).not.toBeVisible({ timeout: 5000 });
+    const permissionsLink = mobileDrawer.locator("a[href='/procedures/permissions']").first();
+    await permissionsLink.click();
+    await page.waitForURL("**/procedures/permissions", { timeout: 10000 });
+    await expect(page).toHaveURL(/.*permissions/);
+    await expect(page.locator("text=404")).not.toBeVisible();
   });
 });

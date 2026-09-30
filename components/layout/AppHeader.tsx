@@ -52,6 +52,9 @@ export const AppHeader: React.FC = () => {
     isCloudConnected,
     pendingSyncCount,
     flushSyncQueue,
+    delayNotices,
+    inquiries,
+    administrativeInquiries,
   } = useTeachers();
   const {
     isCollapsed,
@@ -133,6 +136,18 @@ export const AppHeader: React.FC = () => {
     }
   }, []);
 
+  // Calculate pending tasks for Task Center
+  const pendingDelayCount = (delayNotices || []).filter(
+    (d) => !d.isArchived && d.status === "pending_director"
+  ).length;
+  const pendingInqCount = (inquiries || []).filter(
+    (i) => !i.isArchived && i.status === "pending"
+  ).length;
+  const pendingAdminInqCount = (administrativeInquiries || []).filter(
+    (i) => !i.isArchived && (i.status === "pending_teacher" || i.status === "pending_director")
+  ).length;
+  const totalActionTasks = pendingDelayCount + pendingInqCount + pendingAdminInqCount;
+
   // Global search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,7 +163,7 @@ export const AppHeader: React.FC = () => {
         dir="rtl"
       >
         {/* Right Section (Start in RTL): Controls, Platform & School Branding */}
-        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0 shrink-0 z-10">
           {/* Mobile Menu Hamburger */}
           <button
             type="button"
@@ -209,16 +224,48 @@ export const AppHeader: React.FC = () => {
           </Link>
         </div>
 
-        {/* Center Section: Quick Global Search (بحث عام سريع) */}
-        <div className="hidden lg:flex items-center justify-center flex-1 max-w-md mx-4">
-          <form onSubmit={handleSearchSubmit} className="relative w-full max-w-sm">
-            <Search className="w-4 h-4 text-teal-200/80 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        {/* Center Section: Task Center (مركز المهام) & Quick Search (Large Screens) */}
+        <div className="hidden lg:flex items-center justify-center gap-3 flex-1 max-w-xl mx-4">
+          {/* Interactive Task Center Pill */}
+          <button
+            type="button"
+            onClick={() => {
+              if (pendingDelayCount > 0) router.push("/procedures/delay-notice");
+              else if (pendingAdminInqCount > 0) router.push("/procedures/administrative-inquiries");
+              else if (pendingInqCount > 0) router.push("/procedures/absence");
+              else router.push("/");
+            }}
+            className={cn(
+              "px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer whitespace-nowrap shadow-2xs hover:scale-[1.02] active:scale-[0.98]",
+              totalActionTasks > 0
+                ? "bg-amber-400/20 hover:bg-amber-400/30 text-amber-100 border-amber-300/40"
+                : "bg-white/10 hover:bg-white/15 text-teal-100 border-white/20"
+            )}
+            title="انقري للانتقال المباشر للإجراءات التي تحتاج متابعة"
+            aria-label="مركز المهام"
+          >
+            <span
+              className={cn(
+                "w-2 h-2 rounded-full",
+                totalActionTasks > 0 ? "bg-amber-300 animate-pulse ring-2 ring-amber-400/50" : "bg-emerald-400"
+              )}
+            />
+            <span>
+              {totalActionTasks > 0
+                ? `لديكِ: ${totalActionTasks} إجراءات تحتاج متابعة`
+                : "✨ مركز المهام: جميع الإجراءات مكتملة"}
+            </span>
+          </button>
+
+          {/* Quick Search Input */}
+          <form onSubmit={handleSearchSubmit} className="relative w-44 lg:w-56">
+            <Search className="w-3.5 h-3.5 text-teal-200/80 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث سريع في المعلمات والإجراءات... (Enter)"
-              className="w-full bg-white/15 hover:bg-white/20 focus:bg-white/25 text-white placeholder-teal-100/70 text-xs font-medium rounded-xl py-2 pr-9 pl-3 border border-white/20 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
+              placeholder="بحث سريع... (Enter)"
+              className="w-full bg-white/15 hover:bg-white/20 focus:bg-white/25 text-white placeholder-teal-100/70 text-xs font-medium rounded-xl py-1.5 pr-8 pl-3 border border-white/20 focus:border-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 transition-all"
             />
           </form>
         </div>

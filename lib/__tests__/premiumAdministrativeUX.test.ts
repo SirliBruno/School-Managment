@@ -7,11 +7,13 @@ describe("Sprint: Premium Administrative UX & Navigation Redesign (إعادة ت
   const authGuardPath = path.join(process.cwd(), "components/auth/AuthGuard.tsx");
   const sidebarPath = path.join(process.cwd(), "components/Sidebar.tsx");
   const dashboardPath = path.join(process.cwd(), "app/page.tsx");
+  const pageTransitionPath = path.join(process.cwd(), "components/layout/PageTransition.tsx");
 
   const appHeaderCode = fs.readFileSync(appHeaderPath, "utf-8");
   const authGuardCode = fs.readFileSync(authGuardPath, "utf-8");
   const sidebarCode = fs.readFileSync(sidebarPath, "utf-8");
   const dashboardCode = fs.readFileSync(dashboardPath, "utf-8");
+  const pageTransitionCode = fs.readFileSync(pageTransitionPath, "utf-8");
 
   describe("1. Navbar Redesign (إعادة تصميم شريط الـ Navbar)", () => {
     it("1.1 Navbar has fixed height of 72px", () => {
@@ -28,8 +30,8 @@ describe("Sprint: Premium Administrative UX & Navigation Redesign (إعادة ت
       expect(appHeaderCode).toMatch(/منظومة الإدارة والمتابعة المدرسية|الإدارة المدرسية/);
     });
 
-    it("1.4 Navbar center section contains quick global search (بحث عام سريع)", () => {
-      expect(appHeaderCode).toMatch(/بحث سريع في المعلمات والإجراءات/);
+    it("1.4 Navbar center section contains Task Center (مركز المهام) and quick search", () => {
+      expect(appHeaderCode).toContain("مركز المهام");
       expect(appHeaderCode).toContain("Search");
     });
 
@@ -53,15 +55,17 @@ describe("Sprint: Premium Administrative UX & Navigation Redesign (إعادة ت
       expect(mainIndex).toBeGreaterThan(sidebarIndex);
     });
 
-    it("2.2 Main content container has accessible id='main-content'", () => {
+    it("2.2 Main content container has accessible id='main-content' and PageTransition", () => {
       expect(authGuardCode).toContain('id="main-content"');
+      expect(authGuardCode).toContain("<PageTransition>");
+      expect(pageTransitionCode).toContain("motion.div");
     });
   });
 
-  describe("3. Clean Sidebar Architecture (تصميم الـ Sidebar الجديد وهدوء الواجهة)", () => {
-    it("3.1 Sidebar uses clean navigation with White / Slate-50 background", () => {
-      expect(sidebarCode).toContain("bg-white dark:bg-slate-900");
-      expect(sidebarCode).toMatch(/border-l border-slate-200/);
+  describe("3. Clean Sidebar Architecture (تصميم الـ Sidebar المرجعي وهدوء الواجهة)", () => {
+    it("3.1 Sidebar uses clean navigation cards matching reference image", () => {
+      expect(sidebarCode).toMatch(/bg-\[#f8fafc\]|bg-white/);
+      expect(sidebarCode).toContain("منصة الإدارة المدرسية");
     });
 
     it("3.2 Sidebar contains all 5 required administrative workflow groups", () => {
@@ -101,26 +105,27 @@ describe("Sprint: Premium Administrative UX & Navigation Redesign (إعادة ت
       expect(sidebarCode).toContain("AdminProfileModal");
     });
 
-    it("3.7 Active state uses calm light teal background without heavy borders or shadows", () => {
-      expect(sidebarCode).toMatch(/bg-teal-50\/90 dark:bg-teal-950\/40/);
-      expect(sidebarCode).toContain("text-[#137a85]");
-      // Verify removal of jarring thick border-r-4 and drop shadow from active item
+    it("3.7 Active state uses calm light mint/teal background and rounded indicator", () => {
+      expect(sidebarCode).toMatch(/bg-\[#eefcf9\]|bg-teal-50/);
+      expect(sidebarCode).toMatch(/text-\[#0e6f7a\]|text-\[#137a85\]/);
       expect(sidebarCode).not.toContain("border-r-4 border-r-[#137a85]");
     });
 
-    it("3.8 Visual calming: Sub-items do not display distracting red/amber badges", () => {
-      // Checks that subitems no longer carry individual badgeCount pills
-      expect(sidebarCode).not.toContain("badgeVariant");
-      expect(sidebarCode).not.toContain("badgeCount: pendingDirectorDelayCount");
+    it("3.8 Sidebar implements timeline tree branch line for subitems", () => {
+      expect(sidebarCode).toMatch(/before:w-\[1\.5px\]/);
     });
 
-    it("3.9 Typography follows Cairo hierarchical scale (Semi Bold headings, Medium items, Regular descriptions)", () => {
-      expect(sidebarCode).toMatch(/font-semibold/);
-      expect(sidebarCode).toMatch(/font-medium/);
-      expect(sidebarCode).toMatch(/font-normal/);
+    it("3.9 Sidebar provides floating collapse toggle button on edge", () => {
+      expect(sidebarCode).toContain("toggleCollapsed");
+      expect(sidebarCode).toMatch(/ChevronLeft|ChevronRight/);
     });
 
-    it("3.10 Mobile drawer provides real-time search and RTL swipe-to-close", () => {
+    it("3.10 Sidebar provides docked Bottom Profile Card for Vice Principal", () => {
+      expect(sidebarCode).toMatch(/وكيلة المدرسة|DEFAULT_ADMIN_ROLE_LABEL/);
+      expect(sidebarCode).toContain("setIsProfileModalOpen");
+    });
+
+    it("3.11 Mobile drawer provides real-time search and RTL swipe-to-close", () => {
       expect(sidebarCode).toContain("drawerSearchQuery");
       expect(sidebarCode).toContain("useSwipe");
       expect(sidebarCode).toContain("isMobileOpen");

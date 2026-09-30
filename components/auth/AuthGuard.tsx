@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "@/components/Sidebar";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { AppHeader } from "@/components/layout/AppHeader";
+import { PageTransition } from "@/components/layout/PageTransition";
 
 export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -68,7 +69,7 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
 
           {/* منطقة المحتوى الإداري */}
           <main className="flex-1 min-w-0" id="main-content">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </main>
         </div>
       </div>
