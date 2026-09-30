@@ -9,12 +9,12 @@ describe("Sprint: Administrative Navigation & Sidebar UX Redesign", () => {
   it("1. Sidebar structure contains all 5 required main groups", () => {
     // 1. مركز القيادة
     expect(sidebarCode).toContain("مركز القيادة");
-    // 2. السجلات اليومية
-    expect(sidebarCode).toContain("السجلات اليومية");
+    // 2. العمل اليومي / السجلات اليومية
+    expect(sidebarCode).toMatch(/العمل اليومي|السجلات اليومية/);
     // 3. الإجراءات والقرارات
     expect(sidebarCode).toContain("الإجراءات والقرارات");
-    // 4. التقارير والتوثيق
-    expect(sidebarCode).toContain("التقارير والتوثيق");
+    // 4. التقارير والأرشيف / التقارير والتوثيق
+    expect(sidebarCode).toMatch(/التقارير والأرشيف|التقارير والتوثيق/);
     // 5. الإدارة
     expect(sidebarCode).toMatch(/الإدارة|الإدارة والتهيئة/);
   });

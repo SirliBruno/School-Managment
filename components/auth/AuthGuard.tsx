@@ -58,14 +58,16 @@ export const AuthGuard: React.FC<{ children: React.ReactNode }> = ({
   // التخطيط الكامل للمنصة الإدارية المحمية
   return (
     <SidebarProvider>
-      <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50 dark:bg-slate-950">
-        {/* القائمة الجانبية على اليمين */}
-        <Sidebar />
+      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950 font-cairo">
+        {/* شريط الـ Navbar الكامل بلون الهوية الأساسي */}
+        <AppHeader />
 
-        {/* منطقة المحتوى الإداري على اليسار */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <AppHeader />
-          <main className="flex-1 min-w-0">
+        <div className="flex-1 flex flex-col lg:flex-row min-w-0">
+          {/* القائمة الجانبية الإدارية النظيفة */}
+          <Sidebar />
+
+          {/* منطقة المحتوى الإداري */}
+          <main className="flex-1 min-w-0" id="main-content">
             {children}
           </main>
         </div>
