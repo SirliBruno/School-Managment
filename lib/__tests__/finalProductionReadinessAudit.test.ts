@@ -250,6 +250,37 @@ describe("Final Production Readiness Audit Suite (فحص الجاهزية الن
       expect(tamperedValidation.valid).toBe(false);
       expect(tamperedValidation.error).toContain("التوقيع الرقمي");
     });
+
+    it("2.3 يشمل إعدادات المدرسة والتواقيع والمساءلات الإدارية وكافة جداول الأرشيف", () => {
+      const mockSchoolSettings = {
+        schoolName: "الثانوية الخامسة مسارات",
+        principalName: "فاطمة فلاتة",
+        vicePrincipalName: "أحلام صالح الضبيبي",
+        signatureUrl: "data:image/png;base64,TEST_PRINCIPAL",
+        vicePrincipalSignatureUrl: "data:image/png;base64,TEST_VICE",
+        stampUrl: "data:image/png;base64,TEST_STAMP",
+      };
+
+      const snapshot = createDatabaseBackupSnapshot({
+        teachers: mockTeachers,
+        administrativeInquiries: mockAdminInquiries,
+        archivedTeachers: [{ teacher: mockTeachers[0], archivedAt: "2026-09-20", archiveReason: "نقل" }],
+        archivedAdministrativeInquiries: [{ inquiry: mockAdminInquiries[0], archivedAt: "2026-09-21", archiveReason: "أرشفة" }],
+        schoolSettings: mockSchoolSettings,
+      });
+
+      expect(snapshot.data.schoolSettings).toBeDefined();
+      expect((snapshot.data.schoolSettings as typeof mockSchoolSettings).principalName).toBe("فاطمة فلاتة");
+      expect((snapshot.data.schoolSettings as typeof mockSchoolSettings).vicePrincipalName).toBe("أحلام صالح الضبيبي");
+      expect(snapshot.data.administrativeInquiries?.length).toBe(1);
+      expect(snapshot.data.archivedAdministrativeInquiries?.length).toBe(1);
+      expect(snapshot.metadata.counts.archivedAdministrativeInquiries).toBe(1);
+      expect(snapshot.metadata.counts.administrativeInquiries).toBe(1);
+
+      const validation = validateBackupSnapshot(snapshot);
+      expect(validation.valid).toBe(true);
+      expect(validation.snapshot?.data.schoolSettings).toBeDefined();
+    });
   });
 
   // ---------------------------------------------------------------------------

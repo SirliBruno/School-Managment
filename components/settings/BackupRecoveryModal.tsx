@@ -25,6 +25,11 @@ import {
   validateBackupSnapshot,
   SystemBackupSnapshot,
 } from "@/lib/backupRecovery";
+import {
+  updateSchoolSettingsInCloud,
+  getActiveSchoolSettings,
+  SchoolSettingsData,
+} from "@/lib/schoolSettingsService";
 
 interface BackupRecoveryModalProps {
   isOpen: boolean;
@@ -42,11 +47,13 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
     inquiries,
     deductionDecisions,
     permissions,
+    administrativeInquiries,
     archivedTeachers,
     archivedAbsences,
     archivedDelayNotices,
     archivedDeductionDecisions,
     archivedPermissions,
+    archivedAdministrativeInquiries,
     isCloudConnected,
     restoreFullSystemSnapshot,
   } = useTeachers();
@@ -81,11 +88,14 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
         inquiries,
         deductionDecisions,
         permissions,
+        administrativeInquiries,
         archivedTeachers,
         archivedAbsences,
         archivedDelayNotices,
         archivedDeductionDecisions,
         archivedPermissions,
+        archivedAdministrativeInquiries,
+        schoolSettings: getActiveSchoolSettings() as unknown as Record<string, unknown>,
       });
 
       exportBackupToFile(snapshot);
@@ -143,6 +153,15 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
 
     try {
       const res = await restoreFullSystemSnapshot(validatedSnapshot.data);
+      if (res.success && validatedSnapshot.data.schoolSettings) {
+        try {
+          await updateSchoolSettingsInCloud(
+            validatedSnapshot.data.schoolSettings as unknown as Partial<SchoolSettingsData>
+          );
+        } catch (settingsErr) {
+          console.warn("تعذر تحديث إعدادات المدرسة أثناء الاستعادة:", settingsErr);
+        }
+      }
       setRestoreResult(res);
       if (res.success) {
         setSelectedFile(null);
@@ -268,43 +287,58 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
               </div>
 
               {/* Data Summary Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 block">المعلمات</span>
+                  <span className="text-slate-500 block text-[11px]">المعلمات</span>
                   <span className="text-base font-bold text-slate-800 dark:text-slate-100">
                     {teachers.length}
                   </span>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 block">سجلات الغياب</span>
+                  <span className="text-slate-500 block text-[11px]">سجلات الغياب</span>
                   <span className="text-base font-bold text-slate-800 dark:text-slate-100">
                     {absenceRecords.length}
                   </span>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 block">إشعارات التأخر</span>
+                  <span className="text-slate-500 block text-[11px]">إشعارات التأخر</span>
                   <span className="text-base font-bold text-slate-800 dark:text-slate-100">
                     {delayNotices.length}
                   </span>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 block">قرارات الحسم</span>
-                  <span className="text-base font-bold text-slate-800 dark:text-slate-100">
-                    {deductionDecisions.length}
+                  <span className="text-slate-500 block text-[11px]">المسائلات الإدارية</span>
+                  <span className="text-base font-bold text-teal-600 dark:text-teal-400">
+                    {administrativeInquiries?.length || 0}
                   </span>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 block">أذونات الاستئذان</span>
+                  <span className="text-slate-500 block text-[11px]">أذونات الاستئذان</span>
                   <span className="text-base font-bold text-slate-800 dark:text-slate-100">
                     {permissions.length}
                   </span>
                 </div>
                 <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-slate-500 block">عناصر الأرشيف</span>
+                  <span className="text-slate-500 block text-[11px]">قرارات الحسم</span>
+                  <span className="text-base font-bold text-slate-800 dark:text-slate-100">
+                    {deductionDecisions.length}
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500 block text-[11px]">عناصر الأرشيف</span>
                   <span className="text-base font-bold text-slate-800 dark:text-slate-100">
                     {archivedTeachers.length +
                       archivedAbsences.length +
-                      archivedDelayNotices.length}
+                      archivedDelayNotices.length +
+                      archivedDeductionDecisions.length +
+                      archivedPermissions.length +
+                      (archivedAdministrativeInquiries?.length || 0)}
+                  </span>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-slate-100 dark:border-slate-800">
+                  <span className="text-slate-500 block text-[11px]">إعدادات وتواقيع المدرسة</span>
+                  <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                    مضمنة ✓
                   </span>
                 </div>
               </div>
@@ -395,7 +429,7 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
                     <div className="bg-white/80 dark:bg-slate-800 p-2 rounded-lg">
                       <span className="text-slate-500 block text-[11px]">تاريخ التصدير:</span>
                       <span className="font-bold text-slate-700 dark:text-slate-300">
@@ -421,6 +455,13 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
                       </span>
                     </div>
                     <div className="bg-white/80 dark:bg-slate-800 p-2 rounded-lg">
+                      <span className="text-slate-500 block text-[11px]">المسائلات الإدارية:</span>
+                      <span className="font-bold text-teal-600 dark:text-teal-400">
+                        {validatedSnapshot.metadata.counts.administrativeInquiries ??
+                          (validatedSnapshot.data.administrativeInquiries?.length || 0)}
+                      </span>
+                    </div>
+                    <div className="bg-white/80 dark:bg-slate-800 p-2 rounded-lg">
                       <span className="text-slate-500 block text-[11px]">الاستئذان:</span>
                       <span className="font-bold text-slate-700 dark:text-slate-300">
                         {validatedSnapshot.metadata.counts.permissions}
@@ -430,6 +471,12 @@ export const BackupRecoveryModal: React.FC<BackupRecoveryModalProps> = ({
                       <span className="text-slate-500 block text-[11px]">قرارات الحسم:</span>
                       <span className="font-bold text-slate-700 dark:text-slate-300">
                         {validatedSnapshot.metadata.counts.deductionDecisions}
+                      </span>
+                    </div>
+                    <div className="bg-white/80 dark:bg-slate-800 p-2 rounded-lg">
+                      <span className="text-slate-500 block text-[11px]">إعدادات المدرسة:</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {validatedSnapshot.data.schoolSettings ? "موجودة ✓" : "افتراضية"}
                       </span>
                     </div>
                   </div>

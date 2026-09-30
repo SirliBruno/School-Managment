@@ -51,14 +51,16 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
   const [vicePrincipalName, setVicePrincipalName] = useState<string>("");
   const [previewLogo, setPreviewLogo] = useState<string>("");
   const [previewStamp, setPreviewStamp] = useState<string>("");
-  const [previewSig, setPreviewSig] = useState<string>("");
+  const [previewPrincipalSig, setPreviewPrincipalSig] = useState<string>("");
+  const [previewViceSig, setPreviewViceSig] = useState<string>("");
   const [stampEnabled, setStampEnabled] = useState<boolean>(true);
   const [signatureEnabled, setSignatureEnabled] = useState<boolean>(true);
   const [successMsg, setSuccessMsg] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string>("");
 
   const stampInputRef = useRef<HTMLInputElement>(null);
-  const sigInputRef = useRef<HTMLInputElement>(null);
+  const principalSigInputRef = useRef<HTMLInputElement>(null);
+  const viceSigInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,12 +68,17 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
       const current = getSchoolApprovalSettings();
       const currentSchool = getActiveSchoolSettings();
       setSettings(current);
-      setSchoolName(currentSchool.schoolName || "");
-      setPrincipalName(currentSchool.principalName || "");
-      setVicePrincipalName(currentSchool.vicePrincipalName || "");
-      setPreviewLogo(currentSchool.schoolLogo || "");
-      setPreviewStamp(current.schoolStampUrl || currentSchool.stampUrl || "");
-      setPreviewSig(current.principalSignatureUrl || currentSchool.signatureUrl || "");
+      setSchoolName(currentSchool.schoolName || DEFAULT_SCHOOL_SETTINGS.schoolName);
+      setPrincipalName(currentSchool.principalName || DEFAULT_SCHOOL_SETTINGS.principalName);
+      setVicePrincipalName(currentSchool.vicePrincipalName || DEFAULT_SCHOOL_SETTINGS.vicePrincipalName);
+      setPreviewLogo(currentSchool.schoolLogo || DEFAULT_SCHOOL_SETTINGS.schoolLogo);
+      setPreviewStamp(current.schoolStampUrl || currentSchool.stampUrl || DEFAULT_SCHOOL_SETTINGS.stampUrl);
+      setPreviewPrincipalSig(
+        current.principalSignatureUrl || currentSchool.signatureUrl || DEFAULT_SCHOOL_SETTINGS.signatureUrl
+      );
+      setPreviewViceSig(
+        current.vicePrincipalSignatureUrl || currentSchool.vicePrincipalSignatureUrl || DEFAULT_SCHOOL_SETTINGS.vicePrincipalSignatureUrl || ""
+      );
       setStampEnabled(current.stampEnabled);
       setSignatureEnabled(current.signatureEnabled);
       setSuccessMsg("");
@@ -81,7 +88,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
 
   const handleFileUpload = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    type: "stamp" | "signature" | "logo"
+    type: "stamp" | "principal_signature" | "vice_signature" | "logo"
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -98,8 +105,11 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
         if (type === "stamp") {
           setPreviewStamp(res.url);
           setStampEnabled(true);
-        } else if (type === "signature") {
-          setPreviewSig(res.url);
+        } else if (type === "principal_signature") {
+          setPreviewPrincipalSig(res.url);
+          setSignatureEnabled(true);
+        } else if (type === "vice_signature") {
+          setPreviewViceSig(res.url);
           setSignatureEnabled(true);
         } else if (type === "logo") {
           setPreviewLogo(res.url);
@@ -119,7 +129,8 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
       const updated = updateSchoolApprovalSettings(
         {
           schoolStampUrl: previewStamp,
-          principalSignatureUrl: previewSig,
+          principalSignatureUrl: previewPrincipalSig,
+          vicePrincipalSignatureUrl: previewViceSig,
           stampEnabled,
           signatureEnabled,
         },
@@ -131,7 +142,8 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
         vicePrincipalName: vicePrincipalName.trim() || undefined,
         schoolLogo: previewLogo || undefined,
         stampUrl: previewStamp,
-        signatureUrl: previewSig,
+        signatureUrl: previewPrincipalSig,
+        vicePrincipalSignatureUrl: previewViceSig,
         stampEnabled,
         signatureEnabled,
       }).catch(() => {});
@@ -160,7 +172,8 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
       setVicePrincipalName(DEFAULT_SCHOOL_SETTINGS.vicePrincipalName);
       setPreviewLogo(DEFAULT_SCHOOL_SETTINGS.schoolLogo);
       setPreviewStamp(reset.schoolStampUrl);
-      setPreviewSig(reset.principalSignatureUrl);
+      setPreviewPrincipalSig(reset.principalSignatureUrl);
+      setPreviewViceSig(reset.vicePrincipalSignatureUrl || "");
       setStampEnabled(true);
       setSignatureEnabled(true);
 
@@ -171,6 +184,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
         schoolLogo: DEFAULT_SCHOOL_SETTINGS.schoolLogo,
         stampUrl: reset.schoolStampUrl,
         signatureUrl: reset.principalSignatureUrl,
+        vicePrincipalSignatureUrl: reset.vicePrincipalSignatureUrl,
         stampEnabled: true,
         signatureEnabled: true,
       }).catch(() => {});
@@ -191,9 +205,12 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
     setStampEnabled(false);
   };
 
-  const handleDeleteSig = () => {
-    setPreviewSig("");
-    setSignatureEnabled(false);
+  const handleDeletePrincipalSig = () => {
+    setPreviewPrincipalSig("");
+  };
+
+  const handleDeleteViceSig = () => {
+    setPreviewViceSig("");
   };
 
   if (!isOpen) return null;
@@ -220,7 +237,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
           initial={{ opacity: 0, scale: 0.95, y: 10 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
-          className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 z-10 text-right my-8"
+          className="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-100 dark:border-slate-800 z-10 text-right my-8"
         >
           {/* Header */}
           <div className="px-6 py-4 bg-gradient-to-r from-teal-800 to-[#137a85] text-white flex items-center justify-between">
@@ -374,52 +391,52 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
               </div>
             </div>
 
-            {/* Assets Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {/* Section 1: School Stamp */}
-              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 bg-white dark:bg-slate-850 shadow-2xs space-y-3.5">
+            {/* Assets Grid: 3 Distinct Cards for Stamp, Principal Signature, and Vice Principal Signature */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4.5">
+              {/* Card 1: School Stamp */}
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-teal-700 dark:text-teal-400" />
-                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">ختم المدرسة الرسمي</span>
+                    <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">ختم المدرسة الرسمي</span>
                   </div>
-                  <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                    <span>تفعيل</span>
+                  <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <span className="text-[11px]">تفعيل</span>
                     <input
                       type="checkbox"
                       checked={stampEnabled}
                       onChange={(e) => setStampEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-600"
+                      className="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-600"
                     />
                   </label>
                 </div>
 
                 {/* Stamp Preview Box */}
-                <div className="h-36 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-3 relative group overflow-hidden">
+                <div className="h-32 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-2 relative group overflow-hidden">
                   {previewStamp ? (
                     <img
                       src={previewStamp}
                       alt="معاينة الختم"
-                      className={`max-h-28 max-w-full object-contain filter drop-shadow-sm transition-opacity ${
+                      className={`max-h-24 max-w-full object-contain filter drop-shadow-sm transition-opacity ${
                         stampEnabled ? "opacity-100" : "opacity-40 grayscale"
                       }`}
                     />
                   ) : (
-                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1.5">
-                      <FileImage className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                      <span>لا يوجد ختم مرفوع</span>
+                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1">
+                      <FileImage className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                      <span className="text-[11px]">لا يوجد ختم مرفوع</span>
                     </div>
                   )}
 
                   {!stampEnabled && previewStamp && (
-                    <span className="absolute bottom-2 px-2 py-0.5 rounded-full bg-slate-800/80 text-white text-[10px] font-bold">
+                    <span className="absolute bottom-1.5 px-2 py-0.5 rounded-full bg-slate-800/80 text-white text-[10px] font-bold">
                       معطل حالياً
                     </span>
                   )}
                 </div>
 
                 {/* Stamp Actions */}
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex items-center gap-1.5 pt-1">
                   <input
                     ref={stampInputRef}
                     type="file"
@@ -430,91 +447,163 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => stampInputRef.current?.click()}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl transition-colors cursor-pointer"
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl transition-colors cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{previewStamp ? "استبدال الختم" : "رفع الختم"}</span>
+                    <span>{previewStamp ? "استبدال" : "رفع الختم"}</span>
                   </button>
                   {previewStamp && (
                     <button
                       type="button"
                       onClick={handleDeleteStamp}
-                      className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+                      className="p-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
                       title="حذف الختم"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Section 2: Vice Principal Signature */}
-              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4.5 bg-white dark:bg-slate-850 shadow-2xs space-y-3.5">
+              {/* Card 2: Principal Signature (فاطمة فلاتة) */}
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-teal-700 dark:text-teal-400" />
-                    <span className="font-bold text-sm text-slate-900 dark:text-slate-100">توقيع وكيلة المدرسة</span>
+                    <Award className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                    <div>
+                      <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 block">
+                        توقيع مديرة المدرسة
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal">
+                        {principalName || DEFAULT_SCHOOL_SETTINGS.principalName}
+                      </span>
+                    </div>
                   </div>
-                  <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
-                    <span>تفعيل</span>
+                  <label className="flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer">
+                    <span className="text-[11px]">تفعيل</span>
                     <input
                       type="checkbox"
                       checked={signatureEnabled}
                       onChange={(e) => setSignatureEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-600"
+                      className="w-3.5 h-3.5 rounded text-teal-600 focus:ring-teal-500 border-slate-300 dark:border-slate-600"
                     />
                   </label>
                 </div>
 
-                {/* Signature Preview Box */}
-                <div className="h-36 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-3 relative group overflow-hidden">
-                  {previewSig ? (
+                {/* Principal Signature Preview Box */}
+                <div className="h-32 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-2 relative group overflow-hidden">
+                  {previewPrincipalSig ? (
                     <img
-                      src={previewSig}
-                      alt="معاينة التوقيع"
-                      className={`max-h-24 max-w-full object-contain transition-opacity ${
+                      src={previewPrincipalSig}
+                      alt="توقيع مديرة المدرسة"
+                      className={`max-h-20 max-w-full object-contain transition-opacity ${
                         signatureEnabled ? "opacity-100" : "opacity-40 grayscale"
                       }`}
                     />
                   ) : (
-                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1.5">
-                      <FileImage className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                      <span>لا يوجد توقيع مرفوع</span>
+                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1">
+                      <FileImage className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                      <span className="text-[11px]">لا يوجد توقيع مديرة</span>
                     </div>
                   )}
 
-                  {!signatureEnabled && previewSig && (
-                    <span className="absolute bottom-2 px-2 py-0.5 rounded-full bg-slate-800/80 text-white text-[10px] font-bold">
+                  {!signatureEnabled && previewPrincipalSig && (
+                    <span className="absolute bottom-1.5 px-2 py-0.5 rounded-full bg-slate-800/80 text-white text-[10px] font-bold">
                       معطل حالياً
                     </span>
                   )}
                 </div>
 
-                {/* Signature Actions */}
-                <div className="flex items-center gap-2 pt-1">
+                {/* Principal Signature Actions */}
+                <div className="flex items-center gap-1.5 pt-1">
                   <input
-                    ref={sigInputRef}
+                    ref={principalSigInputRef}
                     type="file"
                     accept="image/png,image/jpeg,image/svg+xml"
                     className="hidden"
-                    onChange={(e) => handleFileUpload(e, "signature")}
+                    onChange={(e) => handleFileUpload(e, "principal_signature")}
                   />
                   <button
                     type="button"
-                    onClick={() => sigInputRef.current?.click()}
-                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl transition-colors cursor-pointer"
+                    onClick={() => principalSigInputRef.current?.click()}
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 rounded-xl transition-colors cursor-pointer"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{previewSig ? "استبدال التوقيع" : "رفع التوقيع"}</span>
+                    <span>{previewPrincipalSig ? "استبدال" : "رفع توقيع المديرة"}</span>
                   </button>
-                  {previewSig && (
+                  {previewPrincipalSig && (
                     <button
                       type="button"
-                      onClick={handleDeleteSig}
-                      className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
-                      title="حذف التوقيع"
+                      onClick={handleDeletePrincipalSig}
+                      className="p-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+                      title="حذف توقيع المديرة"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Card 3: Vice Principal Signature (أحلام صالح الضبيبي) */}
+              <div className="border border-slate-200 dark:border-slate-800 rounded-2xl p-4 bg-white dark:bg-slate-850 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                    <div>
+                      <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 block">
+                        توقيع وكيلة المدرسة
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-normal">
+                        {vicePrincipalName || DEFAULT_SCHOOL_SETTINGS.vicePrincipalName}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/50 px-1.5 py-0.5 rounded font-medium">
+                    الإعداد الإداري
+                  </span>
+                </div>
+
+                {/* Vice Principal Signature Preview Box */}
+                <div className="h-32 rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 flex flex-col items-center justify-center p-2 relative group overflow-hidden">
+                  {previewViceSig ? (
+                    <img
+                      src={previewViceSig}
+                      alt="توقيع وكيلة المدرسة"
+                      className="max-h-20 max-w-full object-contain filter drop-shadow-xs"
+                    />
+                  ) : (
+                    <div className="text-center text-slate-400 dark:text-slate-500 text-xs flex flex-col items-center gap-1">
+                      <FileImage className="w-7 h-7 text-slate-300 dark:text-slate-600" />
+                      <span className="text-[11px]">لا يوجد توقيع وكيلة</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Vice Principal Signature Actions */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <input
+                    ref={viceSigInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/svg+xml"
+                    className="hidden"
+                    onChange={(e) => handleFileUpload(e, "vice_signature")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => viceSigInputRef.current?.click()}
+                    className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-semibold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 rounded-xl transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{previewViceSig ? "استبدال" : "رفع توقيع الوكيلة"}</span>
+                  </button>
+                  {previewViceSig && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteViceSig}
+                      className="p-1.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+                      title="حذف توقيع الوكيلة"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>

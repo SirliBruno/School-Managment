@@ -129,6 +129,7 @@ export function updateSchoolApprovalSettings(
   updateSchoolSettingsInCloud({
     stampUrl: updated.schoolStampUrl,
     signatureUrl: updated.principalSignatureUrl,
+    vicePrincipalSignatureUrl: updated.vicePrincipalSignatureUrl,
     stampEnabled: updated.stampEnabled,
     signatureEnabled: updated.signatureEnabled,
   }).catch(() => {});
@@ -151,12 +152,13 @@ export function updateSchoolApprovalSettings(
     entityType: "settings",
     userName: adminName,
     userRole: DEFAULT_ADMIN_ROLE_LABEL,
-    details: `تحديث بيانات الختم والتوقيع الإداري (ختم: ${updated.stampEnabled ? "مفعل" : "معطل"}, توقيع: ${updated.signatureEnabled ? "مفعل" : "معطل"})`,
+    details: `تحديث بيانات الختم والتواقيع الإدارية (ختم: ${updated.stampEnabled ? "مفعل" : "معطل"}, توقيع: ${updated.signatureEnabled ? "مفعل" : "معطل"})`,
     newValue: {
       stampEnabled: updated.stampEnabled,
       signatureEnabled: updated.signatureEnabled,
       hasStamp: !!updated.schoolStampUrl,
-      hasSignature: !!updated.principalSignatureUrl,
+      hasPrincipalSignature: !!updated.principalSignatureUrl,
+      hasVicePrincipalSignature: !!updated.vicePrincipalSignatureUrl,
     },
   });
 
@@ -193,13 +195,25 @@ export function deleteSchoolStamp(adminName: string = DEFAULT_ADMIN_NAME): Schoo
 }
 
 /**
- * حذف التوقيع الحالي
+ * حذف توقيع مديرة المدرسة
  */
 export function deletePrincipalSignature(adminName: string = DEFAULT_ADMIN_NAME): SchoolApprovalSettings {
   return updateSchoolApprovalSettings(
     {
       principalSignatureUrl: "",
       signatureEnabled: false,
+    },
+    adminName
+  );
+}
+
+/**
+ * حذف توقيع وكيلة المدرسة
+ */
+export function deleteVicePrincipalSignature(adminName: string = DEFAULT_ADMIN_NAME): SchoolApprovalSettings {
+  return updateSchoolApprovalSettings(
+    {
+      vicePrincipalSignatureUrl: "",
     },
     adminName
   );

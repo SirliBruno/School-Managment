@@ -21,6 +21,7 @@ import {
   ArchivedAdministrativeInquiry,
 } from "@/types/teacher";
 import { getLocalAuditLogs, logAuditEvent } from "@/lib/auditLogger";
+import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
 
 export const BACKUP_VERSION = "2.0.0";
 export const BACKUP_STORAGE_KEY = "school_admin_latest_backup_v1";
@@ -63,6 +64,7 @@ export interface SystemBackupData {
   archivedDeductionDecisions: ArchivedDeductionDecision[];
   archivedPermissions: ArchivedEmployeePermission[];
   archivedAdministrativeInquiries?: ArchivedAdministrativeInquiry[];
+  schoolSettings?: Record<string, unknown>;
   auditLogs: AuditLog[];
 }
 
@@ -105,6 +107,7 @@ export function createDatabaseBackupSnapshot(
     archivedDeductionDecisions: state.archivedDeductionDecisions || [],
     archivedPermissions: state.archivedPermissions || [],
     archivedAdministrativeInquiries: state.archivedAdministrativeInquiries || [],
+    schoolSettings: state.schoolSettings || (typeof window !== "undefined" ? (getActiveSchoolSettings() as unknown as Record<string, unknown>) : undefined),
     auditLogs,
   };
 

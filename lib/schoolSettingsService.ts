@@ -91,6 +91,9 @@ export async function fetchSchoolSettingsFromCloud(): Promise<SchoolSettingsData
         vicePrincipalName: row.vice_principal_name || inMemorySettings.vicePrincipalName,
         stampUrl: row.stamp_url || inMemorySettings.stampUrl,
         signatureUrl: row.signature_url || inMemorySettings.signatureUrl,
+        vicePrincipalSignatureUrl:
+          (row as DbSchoolSettingsRow & { vice_principal_signature_url?: string | null })
+            .vice_principal_signature_url || inMemorySettings.vicePrincipalSignatureUrl,
         stampEnabled: row.stamp_url !== "" && row.stamp_url !== null,
         signatureEnabled: row.signature_url !== "" && row.signature_url !== null,
         updatedAt: row.updated_at || new Date().toISOString(),
@@ -121,7 +124,7 @@ export async function updateSchoolSettingsInCloud(
 
   if (isSupabaseConfigured() && supabase) {
     try {
-      const payload: Partial<DbSchoolSettingsRow> = {
+      const payload: Partial<DbSchoolSettingsRow> & { vice_principal_signature_url?: string | null } = {
         id: "current",
         school_name: updated.schoolName,
         school_logo: updated.schoolLogo || null,
@@ -129,6 +132,7 @@ export async function updateSchoolSettingsInCloud(
         vice_principal_name: updated.vicePrincipalName || null,
         stamp_url: updated.stampEnabled ? updated.stampUrl : "",
         signature_url: updated.signatureEnabled ? updated.signatureUrl : "",
+        vice_principal_signature_url: updated.signatureEnabled ? (updated.vicePrincipalSignatureUrl || null) : "",
         updated_at: updated.updatedAt,
       };
 
@@ -147,11 +151,11 @@ export async function updateSchoolSettingsInCloud(
 }
 
 /**
- * رفع الأصول الإدارية (ختم / توقيع / شعار) إلى Supabase Storage bucket: school-assets
+ * رفع الأصول الإدارية (ختم / توقيع مديرة / توقيع وكيلة / شعار) إلى Supabase Storage bucket: school-assets
  */
 export async function uploadSchoolAsset(
   file: File,
-  type: "stamp" | "signature" | "logo"
+  type: "stamp" | "signature" | "principal_signature" | "vice_signature" | "vice_principal_signature" | "logo"
 ): Promise<{ success: boolean; url?: string; error?: string }> {
   const validation = await validateSecureUpload(file, {
     allowedExtensions: ["png", "jpg", "jpeg", "webp"],

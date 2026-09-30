@@ -5,6 +5,7 @@ import {
   resetSchoolApprovalSettings,
   deleteSchoolStamp,
   deletePrincipalSignature,
+  deleteVicePrincipalSignature,
   renderOfficialApprovalFooterHtml,
   DEFAULT_APPROVAL_SETTINGS,
 } from "@/lib/stampSignatureManager";
@@ -89,15 +90,31 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(current.signatureEnabled).toBe(false);
     });
 
-    it("resets back to official project assets reliably", () => {
+    it("supports deleting vice principal signature independently without affecting principal signature", () => {
+      // First ensure both exist
+      updateSchoolApprovalSettings({
+        principalSignatureUrl: DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
+        vicePrincipalSignatureUrl: DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
+        signatureEnabled: true,
+      }, "أحلام صالح الضبيبي");
+
+      const deletedVice = deleteVicePrincipalSignature("أحلام صالح الضبيبي");
+      expect(deletedVice.vicePrincipalSignatureUrl).toBe("");
+      expect(deletedVice.principalSignatureUrl).toBe(DEFAULT_PRINCIPAL_SIGNATURE_BASE64);
+      expect(deletedVice.signatureEnabled).toBe(true);
+    });
+
+    it("resets back to official project assets reliably for both principal and vice principal", () => {
       deleteSchoolStamp("أحلام صالح الضبيبي");
       deletePrincipalSignature("أحلام صالح الضبيبي");
+      deleteVicePrincipalSignature("أحلام صالح الضبيبي");
 
       const reset = resetSchoolApprovalSettings("أحلام صالح الضبيبي");
       expect(reset.stampEnabled).toBe(true);
       expect(reset.signatureEnabled).toBe(true);
       expect(reset.schoolStampUrl).toBe(DEFAULT_STAMP_BASE64);
-      expect(reset.principalSignatureUrl).toBe(DEFAULT_SIGNATURE_BASE64);
+      expect(reset.principalSignatureUrl).toBe(DEFAULT_PRINCIPAL_SIGNATURE_BASE64);
+      expect(reset.vicePrincipalSignatureUrl).toBe(DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64);
     });
   });
 
