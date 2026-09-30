@@ -20,6 +20,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { PLATFORM_LOGO_BASE64 } from "@/lib/platformLogo";
 
 const features = [
   {
@@ -140,12 +141,17 @@ export default function LoginPage() {
         >
           {/* ترويسة الشعار والمنصة */}
           <div className="flex items-center gap-3.5 mb-8">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-teal-700 to-cyan-800 text-white flex items-center justify-center shadow-md shadow-teal-900/20 shrink-0">
-              <Building2 className="w-6 h-6" />
+            <div className="w-13 h-13 rounded-2xl bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 p-1.5 flex items-center justify-center shadow-md shadow-slate-200/50 dark:shadow-slate-950/50 shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={PLATFORM_LOGO_BASE64}
+                alt="شعار منصة إدارتي المدرسية"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-                منصة الغياب الإدارية
+                منصة إدارتي المدرسية
               </h1>
               <p className="text-xs font-bold text-teal-700 dark:text-teal-400 mt-0.5">
                 بوابة الدخول الموحدة • وكيلة الشؤون التعليمية
@@ -300,14 +306,26 @@ export default function LoginPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
-              منصة الغياب الإدارية
-            </h2>
-            <p className="text-lg font-bold text-teal-200 mt-2.5">
-              الحل الشامل لوكيلة شؤون المعلمات
-            </p>
+            <div className="flex items-center gap-3.5 mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 p-2 flex items-center justify-center shadow-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={PLATFORM_LOGO_BASE64}
+                  alt="شعار منصة إدارتي المدرسية"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div>
+                <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+                  منصة إدارتي المدرسية
+                </h2>
+                <p className="text-sm font-bold text-teal-200 mt-1">
+                  المنظومة الإدارية الشاملة لوكيلة الشؤون التعليمية
+                </p>
+              </div>
+            </div>
             <p className="text-sm text-teal-100/90 leading-relaxed max-w-lg mt-3 font-normal">
-              نظام ذكي يهدف إلى تسهيل حصر الغياب، إصدار المساءلات، وتوليد الإحصائيات بدقة متناهية.
+              نظام ذكي متكامل يهدف إلى تسهيل حصر الغياب، إصدار المساءلات والتنبيهات، وتوليد الإحصائيات بدقة متناهية.
             </p>
           </motion.div>
 

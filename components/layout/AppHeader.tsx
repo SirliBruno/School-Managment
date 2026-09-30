@@ -43,6 +43,7 @@ import {
   getActiveSchoolSettings,
   onSchoolSettingsChanged,
 } from "@/lib/schoolSettingsService";
+import { PLATFORM_LOGO_BASE64 } from "@/lib/platformLogo";
 import { cn } from "@/lib/utils";
 
 export const AppHeader: React.FC = () => {
@@ -195,16 +196,21 @@ export const AppHeader: React.FC = () => {
             className="flex items-center gap-3 min-w-0 group hover:opacity-95 transition-opacity"
             aria-label="الرئيسية - مركز القيادة"
           >
-            <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/25 backdrop-blur-xs flex items-center justify-center text-white shrink-0 shadow-2xs overflow-hidden">
+            <div className="w-10 h-10 rounded-xl bg-white/15 border border-white/25 backdrop-blur-xs flex items-center justify-center text-white shrink-0 shadow-2xs overflow-hidden p-1">
               {schoolSettings.schoolLogo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={schoolSettings.schoolLogo}
                   alt="شعار المدرسة"
-                  className="w-full h-full object-contain p-0.5"
+                  className="w-full h-full object-contain"
                 />
               ) : (
-                <GraduationCap className="w-5 h-5 stroke-[2.2]" />
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={PLATFORM_LOGO_BASE64}
+                  alt="شعار منصة إدارتي المدرسية"
+                  className="w-full h-full object-contain"
+                />
               )}
             </div>
 
