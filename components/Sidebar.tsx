@@ -308,7 +308,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         {/* Top Header Card (Teal Gradient with Floating Toggle Button) */}
         <div className="relative rounded-2xl bg-gradient-to-l from-[#0e6f7a] to-[#12828f] p-3.5 sm:p-4 text-white shadow-sm mb-3 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center text-white shrink-0 shadow-2xs overflow-hidden p-1">
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-slate-800 shrink-0 shadow-xs overflow-hidden p-1">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={PLATFORM_LOGO_BASE64}
