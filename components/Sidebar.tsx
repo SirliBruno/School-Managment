@@ -197,13 +197,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             href: "/reports",
           },
           {
-            id: "teachers-records",
-            label: "السجل الإداري الشامل",
-            description: "السجل التراكمي الشامل للإجراءات والغياب",
-            icon: GraduationCap,
-            href: "/teachers",
-          },
-          {
             id: "archive",
             label: "الأرشيف الإداري",
             description: "سجلات العناصر المؤرشفة مع إمكانية الاستعادة",
