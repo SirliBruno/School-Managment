@@ -37,7 +37,10 @@ import { useTeachers } from "@/context/TeacherContext";
 import { ApprovalAssetsModal } from "@/components/settings/ApprovalAssetsModal";
 import { BackupRecoveryModal } from "@/components/settings/BackupRecoveryModal";
 import { AdminProfileModal } from "@/components/auth/AdminProfileModal";
-import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
+import {
+  getActiveSchoolSettings,
+  onSchoolSettingsChanged,
+} from "@/lib/schoolSettingsService";
 
 export interface NavSubItem {
   id: string;
@@ -66,7 +69,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const pathname = usePathname();
   const { user } = useAuth();
   const { isCollapsed, toggleCollapsed, isMobileOpen, setIsMobileOpen } = useSidebar();
-  const [schoolSettings] = useState(getActiveSchoolSettings());
+  const [schoolSettings, setSchoolSettings] = useState(getActiveSchoolSettings());
+
+  useEffect(() => {
+    const unsub = onSchoolSettingsChanged((latest) => {
+      setSchoolSettings(latest);
+    });
+    return unsub;
+  }, []);
 
   // Admin Modals
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);

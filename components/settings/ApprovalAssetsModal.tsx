@@ -71,7 +71,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
       setSchoolName(currentSchool.schoolName || DEFAULT_SCHOOL_SETTINGS.schoolName);
       setPrincipalName(currentSchool.principalName || DEFAULT_SCHOOL_SETTINGS.principalName);
       setVicePrincipalName(currentSchool.vicePrincipalName || DEFAULT_SCHOOL_SETTINGS.vicePrincipalName);
-      setPreviewLogo(currentSchool.schoolLogo || DEFAULT_SCHOOL_SETTINGS.schoolLogo);
+      setPreviewLogo(currentSchool.schoolLogo !== undefined ? currentSchool.schoolLogo : DEFAULT_SCHOOL_SETTINGS.schoolLogo);
       setPreviewStamp(current.schoolStampUrl || currentSchool.stampUrl || DEFAULT_SCHOOL_SETTINGS.stampUrl);
       setPreviewPrincipalSig(
         current.principalSignatureUrl || currentSchool.signatureUrl || DEFAULT_SCHOOL_SETTINGS.signatureUrl
@@ -140,7 +140,7 @@ export const ApprovalAssetsModal: React.FC<ApprovalAssetsModalProps> = ({
         schoolName: schoolName.trim() || undefined,
         principalName: principalName.trim() || undefined,
         vicePrincipalName: vicePrincipalName.trim() || undefined,
-        schoolLogo: previewLogo || undefined,
+        schoolLogo: previewLogo,
         stampUrl: previewStamp,
         signatureUrl: previewPrincipalSig,
         vicePrincipalSignatureUrl: previewViceSig,

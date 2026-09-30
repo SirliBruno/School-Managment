@@ -8,6 +8,7 @@ import {
   updateSchoolSettingsInCloud,
   uploadSchoolAsset,
   DEFAULT_SCHOOL_SETTINGS,
+  SCHOOL_SETTINGS_CACHE_KEY,
 } from "@/lib/schoolSettingsService";
 import {
   getSchoolApprovalSettings,
@@ -155,6 +156,28 @@ describe("Cloud Sync Hardening & Single Source of Truth", () => {
       const approvalSettings = getSchoolApprovalSettings();
       expect(approvalSettings.schoolStampUrl).toBe(updated.stampUrl);
       expect(approvalSettings.principalSignatureUrl).toBe(updated.signatureUrl);
+    });
+
+    it("ensures deleting school logo persists and is not resurrected on page refresh or cloud fetch", async () => {
+      // 1. Delete logo by saving empty string
+      const updated = await updateSchoolSettingsInCloud({
+        schoolLogo: "",
+      });
+      expect(updated.schoolLogo).toBe("");
+      expect(getActiveSchoolSettings().schoolLogo).toBe("");
+
+      // 2. Check local storage cache preserves empty string
+      const cached = localStorage.getItem(SCHOOL_SETTINGS_CACHE_KEY);
+      expect(cached).toBeTruthy();
+      const parsed = JSON.parse(cached!);
+      expect(parsed.schoolLogo).toBe("");
+
+      // 3. Resetting restores default logo
+      const restored = await updateSchoolSettingsInCloud({
+        schoolLogo: DEFAULT_SCHOOL_SETTINGS.schoolLogo,
+      });
+      expect(restored.schoolLogo).toBe(DEFAULT_SCHOOL_SETTINGS.schoolLogo);
+      expect(getActiveSchoolSettings().schoolLogo).toBe(DEFAULT_SCHOOL_SETTINGS.schoolLogo);
     });
 
     it("avoids storing heavy base64 assets in localStorage when cloud is active", () => {

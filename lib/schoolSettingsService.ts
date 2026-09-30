@@ -46,8 +46,26 @@ export const DEFAULT_SCHOOL_SETTINGS: SchoolSettingsData = {
 export const DEFAULT_PRINCIPAL_NAME = DEFAULT_SCHOOL_SETTINGS.principalName;
 export const DEFAULT_VICE_PRINCIPAL_NAME = DEFAULT_SCHOOL_SETTINGS.vicePrincipalName;
 
-// الذاكرة المؤقتة أثناء التشغيل السريع
-let inMemorySettings: SchoolSettingsData = { ...DEFAULT_SCHOOL_SETTINGS };
+export const SCHOOL_SETTINGS_CACHE_KEY = "school_settings_cache_v2";
+
+function loadInitialSchoolSettings(): SchoolSettingsData {
+  if (typeof localStorage !== "undefined") {
+    try {
+      const cached = localStorage.getItem(SCHOOL_SETTINGS_CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return {
+          ...DEFAULT_SCHOOL_SETTINGS,
+          ...parsed,
+        };
+      }
+    } catch {}
+  }
+  return { ...DEFAULT_SCHOOL_SETTINGS };
+}
+
+// الذاكرة المؤقتة أثناء التشغيل السريع مع الكاش المحلي الفوري
+let inMemorySettings: SchoolSettingsData = loadInitialSchoolSettings();
 
 const SETTINGS_CHANGE_EVENT = "school_settings_changed";
 
@@ -86,18 +104,23 @@ export async function fetchSchoolSettingsFromCloud(): Promise<SchoolSettingsData
       inMemorySettings = {
         id: row.id || "current",
         schoolName: row.school_name || inMemorySettings.schoolName,
-        schoolLogo: row.school_logo || inMemorySettings.schoolLogo,
+        schoolLogo: row.school_logo !== undefined && row.school_logo !== null ? row.school_logo : "",
         principalName: row.principal_name || inMemorySettings.principalName,
         vicePrincipalName: row.vice_principal_name || inMemorySettings.vicePrincipalName,
         stampUrl: row.stamp_url || inMemorySettings.stampUrl,
         signatureUrl: row.signature_url || inMemorySettings.signatureUrl,
         vicePrincipalSignatureUrl:
           (row as DbSchoolSettingsRow & { vice_principal_signature_url?: string | null })
-            .vice_principal_signature_url || inMemorySettings.vicePrincipalSignatureUrl,
+            .vice_principal_signature_url ?? inMemorySettings.vicePrincipalSignatureUrl,
         stampEnabled: row.stamp_url !== "" && row.stamp_url !== null,
         signatureEnabled: row.signature_url !== "" && row.signature_url !== null,
         updatedAt: row.updated_at || new Date().toISOString(),
       };
+      if (typeof localStorage !== "undefined") {
+        try {
+          localStorage.setItem(SCHOOL_SETTINGS_CACHE_KEY, JSON.stringify(inMemorySettings));
+        } catch {}
+      }
       broadcastSettingsChange(inMemorySettings);
     }
   } catch (err) {
@@ -120,6 +143,11 @@ export async function updateSchoolSettingsInCloud(
   };
 
   inMemorySettings = updated;
+  if (typeof localStorage !== "undefined") {
+    try {
+      localStorage.setItem(SCHOOL_SETTINGS_CACHE_KEY, JSON.stringify(updated));
+    } catch {}
+  }
   broadcastSettingsChange(updated);
 
   if (isSupabaseConfigured() && supabase) {
@@ -127,12 +155,12 @@ export async function updateSchoolSettingsInCloud(
       const payload: Partial<DbSchoolSettingsRow> & { vice_principal_signature_url?: string | null } = {
         id: "current",
         school_name: updated.schoolName,
-        school_logo: updated.schoolLogo || null,
+        school_logo: updated.schoolLogo !== undefined ? updated.schoolLogo : "",
         principal_name: updated.principalName || null,
         vice_principal_name: updated.vicePrincipalName || null,
         stamp_url: updated.stampEnabled ? updated.stampUrl : "",
         signature_url: updated.signatureEnabled ? updated.signatureUrl : "",
-        vice_principal_signature_url: updated.signatureEnabled ? (updated.vicePrincipalSignatureUrl || null) : "",
+        vice_principal_signature_url: updated.signatureEnabled ? (updated.vicePrincipalSignatureUrl || "") : "",
         updated_at: updated.updatedAt,
       };
 
