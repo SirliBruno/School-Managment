@@ -178,11 +178,11 @@ export default function DelayNoticePage() {
       sortable: true,
       cell: ({ row }) => (
         <div>
-          <span className="font-bold text-slate-900 text-xs block">
+          <span className="font-bold text-slate-900 dark:text-slate-100 text-xs block">
             {row.teacherName}
           </span>
-          <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-2">
-            <span className="font-mono">{row.jobNumber}</span>
+          <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-2">
+            <span className="font-mono tabular-nums">{row.jobNumber}</span>
             <span>•</span>
             <span>{row.specialty || "عام"}</span>
           </div>

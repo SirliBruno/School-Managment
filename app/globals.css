@@ -34,6 +34,54 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Custom Selection Theming — Palette Aligned */
+::selection {
+  background-color: rgba(19, 122, 133, 0.22);
+  color: #0d5f67;
+}
+
+.dark ::selection {
+  background-color: rgba(20, 184, 166, 0.32);
+  color: #5eead4;
+}
+
+/* Form Caret Theming */
+input,
+textarea,
+select,
+[contenteditable] {
+  caret-color: #0f766e;
+}
+
+.dark input,
+.dark textarea,
+.dark select,
+.dark [contenteditable] {
+  caret-color: #2dd4bf;
+}
+
+/* Accessible High-Craft Focus Rings */
+:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+}
+
+.dark :focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 2px;
+}
+
+/* Tabular Numerals for Numerical Stability Across Tables & KPIs */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+}
+
+a {
+  text-underline-offset: 3px;
+}
+
 /* Universal Button Flex Alignment (Prevents Vertical Icon Stacking) */
 @layer base {
   button,
@@ -91,6 +139,43 @@ button svg,
 .animate-page-enter {
   animation: pageEnter 0.12s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: opacity, transform;
+}
+
+/* Global Scrollbars Themed to Platform Tokens */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+}
+
+.dark * {
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.55);
 }
 
 /* Custom subtle scrollbar for sidebar — WebKit */

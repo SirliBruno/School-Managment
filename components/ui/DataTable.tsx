@@ -530,7 +530,7 @@ export function DataTable<T>({
                   </option>
                 ))}
               </select>
-              <span>من أصل <strong className="font-bold text-slate-800 dark:text-slate-100">{totalItems}</strong> سجل</span>
+              <span>من أصل <strong className="font-bold text-slate-800 dark:text-slate-100 tabular-nums">{totalItems}</strong> سجل</span>
             </div>
 
             {totalPages > 1 && (
@@ -546,7 +546,7 @@ export function DataTable<T>({
                   <ChevronRight className="w-4 h-4" />
                 </Button>
 
-                <span className="font-bold text-slate-700 dark:text-slate-200 px-2 font-mono">
+                <span className="font-bold text-slate-700 dark:text-slate-200 px-2 font-mono tabular-nums">
                   {safePage} / {totalPages}
                 </span>
 

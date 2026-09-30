@@ -37,7 +37,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   return (
     <header
       className={cn(
-        "bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20 shadow-2xs transition-colors",
+        "bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-[72px] z-10 shadow-2xs transition-colors",
         className
       )}
     >
