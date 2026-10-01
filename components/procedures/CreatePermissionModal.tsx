@@ -197,7 +197,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descId}
-        className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
       >
         {/* Backdrop */}
         <motion.div
@@ -214,10 +214,10 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 16 }}
           transition={{ duration: 0.2 }}
-          className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full overflow-hidden text-right flex flex-col max-h-[92vh] z-10"
+          className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl max-w-2xl w-full overflow-hidden text-right flex flex-col h-[94vh] sm:h-auto sm:max-h-[92vh] z-10"
         >
           {/* Header */}
-          <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/80 shrink-0">
+          <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/80 shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-teal-50 dark:bg-teal-950/60 border border-teal-200 dark:border-teal-800 text-[#137a85] dark:text-teal-400 flex items-center justify-center shadow-2xs shrink-0">
                 <DoorOpen className="w-5 h-5" />
@@ -235,15 +235,15 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0 touch-target"
               aria-label="إغلاق"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Form Body */}
-          <form onSubmit={handleSubmit} className="overflow-y-auto p-6 space-y-6 flex-1">
+          <form onSubmit={handleSubmit} className="overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6 flex-1">
             {/* Step 1: Teacher Selection */}
             <div className="space-y-3">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
@@ -448,11 +448,11 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
           </form>
 
           {/* Footer Actions */}
-          <div className="px-6 py-4 bg-slate-50/70 dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
+          <div className="px-4 sm:px-6 py-3.5 sm:py-4 pb-safe bg-slate-50/70 dark:bg-slate-900/90 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-end gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer"
+              className="w-full sm:w-auto min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200/80 dark:hover:bg-slate-800 transition-colors whitespace-nowrap cursor-pointer flex items-center justify-center touch-target"
             >
               إلغاء
             </button>
@@ -461,7 +461,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting || !durationCalc.isValid}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center gap-2 px-6 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-[#137a85] text-white hover:bg-teal-700 shadow-2xs transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed touch-target"
             >
               <Sparkles className="w-4 h-4 shrink-0" />
               <span>{isSubmitting ? "جاري الحفظ..." : permissionToEdit ? "تحديث الاستئذان" : "اعتماد وتوثيق الاستئذان"}</span>

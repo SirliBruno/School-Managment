@@ -247,17 +247,17 @@ export const AppHeader: React.FC = () => {
           <button
             type="button"
             onClick={toggleMobileOpen}
-            className="lg:hidden p-2 rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
+            className="md:hidden w-11 h-11 flex items-center justify-center rounded-xl text-white/90 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
             aria-label="فتح القائمة الرئيسية"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Desktop Sidebar Collapse Toggle */}
+          {/* Desktop & Tablet Sidebar Collapse Toggle */}
           <button
             type="button"
             onClick={toggleCollapsed}
-            className="hidden lg:flex p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
+            className="hidden md:flex w-11 h-11 items-center justify-center rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-white/40 cursor-pointer"
             title={isCollapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"}
             aria-label={isCollapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"}
           >
@@ -573,7 +573,7 @@ export const AppHeader: React.FC = () => {
               }
             }}
             className={cn(
-              "relative p-2 rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40",
+              "relative w-11 h-11 flex items-center justify-center rounded-xl text-teal-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/40",
               pendingSyncCount > 0 && "text-white"
             )}
             title={
@@ -585,7 +585,7 @@ export const AppHeader: React.FC = () => {
           >
             <Bell className="w-5 h-5" />
             {pendingSyncCount > 0 && (
-              <span className="absolute top-1 left-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-2xs animate-pulse ring-2 ring-[#137a85]">
+              <span className="absolute top-1.5 left-1.5 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-2xs animate-pulse ring-2 ring-[#137a85]">
                 {pendingSyncCount}
               </span>
             )}
@@ -596,7 +596,7 @@ export const AppHeader: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsQuickActionsOpen(!isQuickActionsOpen)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap bg-white text-[#137a85] hover:bg-teal-50 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+              className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-3.5 h-11 rounded-xl text-xs font-bold whitespace-nowrap bg-white text-[#137a85] hover:bg-teal-50 shadow-2xs transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               aria-expanded={isQuickActionsOpen}
               aria-label="إجراء إداري جديد"
             >

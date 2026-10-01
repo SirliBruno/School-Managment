@@ -527,7 +527,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({ initialSearchQuery =
       teacher.jobTitle && teacher.jobTitle !== "معلم" ? teacher.jobTitle : "معلمة";
 
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs space-y-3">
+      <div data-testid="teacher-card" className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/90 dark:border-slate-800 p-4 shadow-2xs space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             <input

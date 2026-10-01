@@ -22,6 +22,8 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const saved = localStorage.getItem("sidebar_collapsed");
       if (saved !== null) {
         setIsCollapsed(saved === "true");
+      } else if (typeof window !== "undefined" && window.innerWidth < 1024 && window.innerWidth >= 768) {
+        setIsCollapsed(true);
       }
     } catch {
       // Ignore localStorage availability issues

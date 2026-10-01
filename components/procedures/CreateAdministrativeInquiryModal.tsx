@@ -370,7 +370,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+      className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
       dir="rtl"
       role="dialog"
       aria-modal="true"
@@ -381,16 +381,16 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96, y: 15 }}
         transition={{ duration: 0.2 }}
-        className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-6 flex flex-col max-h-[90vh]"
+        className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden my-0 sm:my-6 flex flex-col h-[94vh] sm:h-auto sm:max-h-[90vh]"
       >
         {/* Header */}
-        <div className="relative px-6 py-5 bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 text-white flex items-center justify-between shrink-0">
+        <div className="relative px-4 sm:px-6 py-4 sm:py-5 bg-gradient-to-r from-violet-600 via-indigo-600 to-indigo-700 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-inner">
+            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-inner shrink-0">
               <FileQuestion className="w-5 h-5" />
             </div>
             <div>
-              <h2 id={`${formId}-title`} className="text-xl font-bold tracking-tight">
+              <h2 id={`${formId}-title`} className="text-base sm:text-xl font-bold tracking-tight">
                 {inquiryToEdit ? "تعديل المساءلة الإدارية" : "إصدار مساءلة إدارية خطية"}
               </h2>
               <p className="text-xs text-white/80 mt-0.5">
@@ -401,7 +401,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
           <button
             type="button"
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-white/40"
+            className="w-11 h-11 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-white/40 shrink-0 touch-target"
             aria-label="إغلاق"
           >
             <X className="w-5 h-5" />
@@ -802,7 +802,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 shrink-0">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 pb-safe bg-slate-50 dark:bg-slate-900/80 border-t border-slate-200 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 shrink-0">
           {/* Left: Prev or Cancel */}
           <div className="w-full sm:w-auto flex items-center gap-2">
             {currentStep > 1 ? (
@@ -810,7 +810,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                 type="button"
                 onClick={handlePrevStep}
                 disabled={isProcessing}
-                className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors flex items-center justify-center gap-1.5 focus:outline-none cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors flex items-center justify-center gap-1.5 focus:outline-none cursor-pointer touch-target"
               >
                 <ChevronRight className="w-4 h-4" />
                 <span>السابق</span>
@@ -820,7 +820,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                 type="button"
                 onClick={onClose}
                 disabled={isProcessing}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-700/60 transition-colors focus:outline-none cursor-pointer flex items-center justify-center touch-target"
               >
                 إلغاء
               </button>
@@ -834,7 +834,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                 type="button"
                 onClick={handleNextStep}
                 disabled={currentStep === 1 && !selectedTeacherId}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5 transition-all focus:outline-none disabled:opacity-50 cursor-pointer"
+                className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md shadow-indigo-600/20 flex items-center justify-center gap-1.5 transition-all focus:outline-none disabled:opacity-50 cursor-pointer touch-target"
               >
                 <span>التالي: {STEPS[currentStep].title}</span>
                 <ChevronLeft className="w-4 h-4" />
@@ -845,7 +845,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                   type="button"
                   onClick={() => handleSubmit(false)}
                   disabled={isProcessing || !selectedTeacherId}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-2xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors focus:outline-none disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-2xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold transition-colors focus:outline-none disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer touch-target"
                 >
                   <Save className="w-3.5 h-3.5" />
                   <span>حفظ فقط</span>
@@ -855,7 +855,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                   type="button"
                   onClick={handleCopyLinkAndMessage}
                   disabled={isProcessing || !selectedTeacherId}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-2xl border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-800 dark:text-teal-300 text-xs font-bold transition-all focus:outline-none disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-2xl border border-teal-300 dark:border-teal-700 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/60 text-teal-800 dark:text-teal-300 text-xs font-bold transition-all focus:outline-none disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer touch-target"
                 >
                   {copiedSuccess ? (
                     <>
@@ -874,7 +874,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                   type="button"
                   onClick={() => handleSubmit(true)}
                   disabled={isProcessing || !selectedTeacherId}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all focus:outline-none disabled:opacity-50 cursor-pointer"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all focus:outline-none disabled:opacity-50 cursor-pointer touch-target"
                 >
                   {isProcessing ? (
                     <>

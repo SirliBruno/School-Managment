@@ -51,7 +51,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
       variants={cardItemVariants}
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2 }}
-      className="bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-200 dark:border-slate-800 hover:border-slate-300/80 dark:hover:border-slate-700 flex flex-col justify-between group"
+      className="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow duration-200 cursor-default border border-slate-200 dark:border-slate-800 hover:border-slate-300/80 dark:hover:border-slate-700 flex flex-col justify-between group"
     >
       <div>
         <div className="flex items-start justify-between gap-2">
@@ -63,7 +63,7 @@ const KpiCard: React.FC<KpiCardProps> = ({
               <div className="h-9 w-20 bg-slate-200/70 dark:bg-slate-800 rounded-lg animate-pulse my-1" />
             ) : (
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight tabular-nums font-mono">
+                <span className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight tabular-nums font-mono">
                   {value}
                 </span>
                 {unit && (
@@ -132,7 +132,7 @@ export const KpiCards: React.FC = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5"
     >
       {/* 1. غياب اليوم — الأكثر إلحاحاً صباحاً */}
       <KpiCard

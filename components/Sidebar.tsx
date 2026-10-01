@@ -351,7 +351,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             <button
               type="button"
               onClick={() => setIsMobileOpen(false)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               aria-label="إغلاق القائمة"
             >
               <X className="w-5 h-5" />
@@ -665,11 +665,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
   return (
     <>
-      {/* Desktop Sticky Sidebar */}
+      {/* Desktop & Tablet Collapsible Sticky Sidebar */}
       <aside
         aria-label="شريط القائمة الجانبية"
         className={cn(
-          "hidden lg:block shrink-0 transition-all duration-300 ease-in-out h-[calc(100vh-72px)] sticky top-[72px] z-20",
+          "hidden md:block shrink-0 transition-all duration-300 ease-in-out h-[calc(100vh-72px)] sticky top-[72px] z-20",
           isCollapsed ? "w-20" : "w-72 xl:w-80",
           className
         )}
@@ -680,7 +680,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       {/* Mobile Drawer */}
       <AnimatePresence>
         {isMobileOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden" dir="rtl">
+          <div className="fixed inset-0 z-50 md:hidden" dir="rtl">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -696,7 +696,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 280 }}
-              className="fixed inset-y-0 right-0 w-84 max-w-[88vw] bg-[#f8fafc] dark:bg-slate-950 shadow-2xl z-50 flex flex-col"
+              className="fixed inset-y-0 right-0 w-84 max-w-[88vw] sm:max-w-sm bg-[#f8fafc] dark:bg-slate-950 shadow-2xl z-50 flex flex-col pb-safe"
               {...swipeHandlers}
             >
               {renderSidebarContent(true)}

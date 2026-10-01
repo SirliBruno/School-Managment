@@ -392,7 +392,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="teacher-profile-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
       >
         {/* Animated Backdrop */}
         <motion.div
@@ -412,10 +412,10 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ type: "spring", damping: 26, stiffness: 320 }}
-          className="relative bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10"
+          className="relative bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl max-w-3xl w-full h-[94vh] sm:h-auto sm:max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden z-10"
         >
           {/* Modal Header */}
-          <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 flex items-start justify-between gap-4">
+          <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90 flex items-start justify-between gap-4 shrink-0">
             <div className="flex items-start gap-4">
               <motion.div
                 whileHover={{ scale: 1.05 }}
@@ -503,7 +503,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               type="button"
               ref={closeButtonRef}
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 cursor-pointer"
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 cursor-pointer shrink-0 touch-target"
               aria-label="إغلاق ملف المعلمة"
             >
               <X className="w-5 h-5" aria-hidden="true" />
@@ -517,7 +517,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
               animate={{ opacity: 1, y: 0 }}
               role="alert"
               className={cn(
-                "mx-6 mt-4 p-3 rounded-xl border flex items-center justify-between text-xs",
+                "mx-4 sm:mx-6 mt-4 p-3 rounded-xl border flex items-center justify-between text-xs",
                 feedback.type === "success"
                   ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-800"
                   : "bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-800"
@@ -542,7 +542,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
           )}
 
           {/* Modal Scrollable Body */}
-          <div className="p-6 overflow-y-auto space-y-6">
+          <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 pb-safe">
             {/* Proactive Delay Deduction Banner */}
             {teacherDelaySummary && teacherDelaySummary.status === "due_for_deduction" && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50 to-orange-50 dark:from-rose-950/50 dark:to-amber-950/50 border border-rose-200 dark:border-rose-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
