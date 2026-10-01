@@ -198,7 +198,7 @@ ${schoolTableHtml}
   </div>
   <div class="sg">السلام عليكم ورحمة الله وبركاته ،،، وبعد :</div>
   <div class="sb">
-    إنه في يوم <strong style="color:#0f766e">(${dayName})</strong> الموافق: <strong style="font-family:monospace;color:#0f766e">${dateFormatted} م</strong> اتضح ما يلي :
+    إنه في يوم <strong style="color:#0f766e">(${dayName})</strong> الموافق: <strong style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;color:#0f766e">${dateFormatted} م</strong> اتضح ما يلي :
   </div>
 
   <!-- Only Checked Violations -->

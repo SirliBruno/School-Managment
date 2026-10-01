@@ -73,7 +73,7 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
           />
           <span>{data.name || data.payload.dayName}</span>
         </div>
-        <p className="text-slate-500 dark:text-slate-400 font-mono">
+        <p className="text-slate-500 dark:text-slate-400 tabular-nums">
           العدد:{" "}
           <strong className="text-slate-900 dark:text-slate-100 font-bold text-sm">
             {data.value}
@@ -81,7 +81,7 @@ const CustomChartTooltip = ({ active, payload }: CustomTooltipProps) => {
           حالة
         </p>
         {data.payload.date && (
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">{data.payload.date}</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 tabular-nums">{data.payload.date}</p>
         )}
       </motion.div>
     );
@@ -249,7 +249,8 @@ export const AbsenceCharts: React.FC = () => {
                               <tspan
                                 x={viewBox.cx}
                                 y={(viewBox.cy || 0) - 4}
-                                className="fill-slate-900 dark:fill-slate-100 text-3xl font-black font-mono"
+                                className="fill-slate-900 dark:fill-slate-100 text-3xl font-black tabular-nums"
+                                style={{ fontFamily: "var(--font-cairo), Cairo, sans-serif" }}
                               >
                                 {totalAbsencesCount}
                               </tspan>
@@ -257,6 +258,7 @@ export const AbsenceCharts: React.FC = () => {
                                 x={viewBox.cx}
                                 y={(viewBox.cy || 0) + 16}
                                 className="fill-slate-500 dark:fill-slate-400 text-xs font-bold"
+                                style={{ fontFamily: "var(--font-cairo), Cairo, sans-serif" }}
                               >
                                 حالة
                               </tspan>
@@ -355,14 +357,14 @@ export const AbsenceCharts: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="#94a3b8" strokeOpacity={0.15} vertical={false} />
                   <XAxis
                     dataKey="dayName"
-                    tick={{ fill: "#94a3b8", fontSize: isMobile ? 10 : 11, fontWeight: 600 }}
+                    tick={{ fill: "#94a3b8", fontSize: isMobile ? 10 : 11, fontWeight: 600, fontFamily: "var(--font-cairo), Cairo, sans-serif" }}
                     axisLine={{ stroke: "#475569", strokeOpacity: 0.3 }}
                     tickLine={false}
                   />
                   <YAxis
                     orientation="right"
                     allowDecimals={false}
-                    tick={{ fill: "#94a3b8", fontSize: 11, fontFamily: "monospace" }}
+                    tick={{ fill: "#94a3b8", fontSize: 11, fontWeight: 600, fontFamily: "var(--font-cairo), Cairo, sans-serif" }}
                     axisLine={false}
                     tickLine={false}
                   />
@@ -384,6 +386,7 @@ export const AbsenceCharts: React.FC = () => {
                       fill="#137a85"
                       fontSize={11}
                       fontWeight={800}
+                      fontFamily="var(--font-cairo), Cairo, sans-serif"
                     />
                   </Bar>
                 </BarChart>
@@ -449,7 +452,7 @@ export const AbsenceCharts: React.FC = () => {
                 <LogIn className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>تأخر صباحي</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+              <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[0]?.count ?? 0}
               </span>
             </div>
@@ -459,7 +462,7 @@ export const AbsenceCharts: React.FC = () => {
                 <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>عدم تواجد أثناء الدوام</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+              <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[1]?.count ?? 0}
               </span>
             </div>
@@ -469,7 +472,7 @@ export const AbsenceCharts: React.FC = () => {
                 <LogOut className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>انصراف مبكر</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+              <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[2]?.count ?? 0}
               </span>
             </div>
@@ -479,7 +482,7 @@ export const AbsenceCharts: React.FC = () => {
                 <DoorOpen className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                 <span>خروج وعودة</span>
               </div>
-              <span className="text-xl font-bold font-mono text-slate-900 dark:text-slate-100">
+              <span className="text-xl font-bold tabular-nums text-slate-900 dark:text-slate-100">
                 {stats.delayNoticeBreakdown[3]?.count ?? 0}
               </span>
             </div>

@@ -1,6 +1,7 @@
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { UNIFIED_PRINT_SCRIPT } from "@/lib/pdfTemplateBase";
 import { renderOfficialApprovalFooterHtml } from "@/lib/stampSignatureManager";
+import { CAIRO_EMBEDDED_FONT_FACE_CSS } from "@/lib/cairoFontBase64";
 
 export interface PdfReportPayload {
   reportTitle: string;
@@ -26,10 +27,11 @@ export interface PdfReportPayload {
 }
 
 const REPORT_CSS = `
+${CAIRO_EMBEDDED_FONT_FACE_CSS}
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 @page { size: A4 portrait; margin: 8mm 10mm; }
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-body { font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 8.5pt; line-height: 1.4; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: 'Cairo', sans-serif !important; }
+body { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 8.5pt; line-height: 1.4; }
 .report-page { width: 100%; min-height: 280mm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
 .report-page:last-child { page-break-after: avoid; }
 .report-frame { border: 1.5px solid #0f766e; border-radius: 6px; padding: 8mm 9mm; display: flex; flex-direction: column; height: 100%; }
@@ -43,7 +45,7 @@ body { font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFo
 /* Title bar */
 .title-bar { display: flex; justify-content: space-between; align-items: center; background: #f0fdfa; border: 1.5px solid #0f766e; padding: 6px 14px; border-radius: 4px; margin-bottom: 12px; }
 .title-bar-r { font-size: 11pt; font-weight: 900; color: #0f766e; }
-.title-bar-l { font-size: 8.5pt; font-weight: 800; color: #115e59; direction: ltr; font-family: monospace; }
+.title-bar-l { font-size: 8.5pt; font-weight: 800; color: #115e59; direction: ltr; font-family: 'Cairo', sans-serif; font-variant-numeric: tabular-nums; }
 
 /* Summary Cards */
 .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; margin-bottom: 14px; }
@@ -73,8 +75,12 @@ table.report-table tr:nth-child(even) td { background: #f8fafc; }
 .sig-name { font-weight: 700; color: #334155; }
 
 /* Official Footer */
-.official-footer { font-size: 7.5pt; color: #64748b; border-top: 1px dashed #cbd5e1; padding-top: 6px; margin-top: 10px; display: flex; justify-content: space-between; }
-@media print { body { margin: 0; padding: 0; } }
+@media print {
+  body { margin: 0; padding: 0; }
+  *, *::before, *::after, body, table, th, td, div, span, p {
+    font-family: 'Cairo', sans-serif !important;
+  }
+}
 `;
 
 function esc(s: string | number | undefined | null): string {

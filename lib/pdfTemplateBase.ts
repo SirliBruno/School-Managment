@@ -1,14 +1,16 @@
 import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
+import { CAIRO_EMBEDDED_FONT_FACE_CSS } from "@/lib/cairoFontBase64";
 
 /**
  * الأنماط القياسية الموحدة لجميع استمارات ونماذج الطباعة PDF في المنصة
  */
 export const UNIFIED_PDF_CSS = `
+${CAIRO_EMBEDDED_FONT_FACE_CSS}
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 @page { size: A4; margin: 0; }
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif; }
-body { font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 9pt; line-height: 1.35; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: 'Cairo', sans-serif !important; }
+body { font-family: 'Cairo', sans-serif; direction: rtl; text-align: right; color: #0f172a; background: #fff; font-size: 9pt; line-height: 1.35; }
 .page { width: 210mm; height: 297mm; padding: 7mm 9mm; overflow: hidden; }
 .frame { border: 2px dashed #0f766e; padding: 6mm 7mm; height: 283mm; display: flex; flex-direction: column; }
 .hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f766e; padding-bottom: 8px; margin-bottom: 10px; }
@@ -17,11 +19,11 @@ body { font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFo
 .hdr-l { width: 34%; text-align: left; font-size: 8.5pt; font-weight: bold; line-height: 1.45; color: #334155; }
 .title-bar { display: flex; justify-content: space-between; align-items: center; background: #f0fdfa; border: 1.5px solid #0f766e; padding: 4px 12px; border-radius: 4px; margin-bottom: 10px; }
 .title-bar-r { font-size: 10.5pt; font-weight: 900; color: #0f766e; }
-.title-bar-l { font-size: 8.5pt; font-weight: 800; color: #115e59; direction: ltr; }
+.title-bar-l { font-size: 8.5pt; font-weight: 800; color: #115e59; direction: ltr; font-variant-numeric: tabular-nums; }
 table { width: 100%; table-layout: fixed; border-collapse: collapse; border: 1px solid #0f766e; font-size: 8.5pt; }
 .t1 { margin-bottom: 8px; }
 .t2 { margin-bottom: 10px; }
-th, td { vertical-align: middle; padding: 5px 7px; }
+th, td { vertical-align: middle; padding: 5px 7px; font-family: 'Cairo', sans-serif !important; }
 .hc { background: #f0fdfa; color: #115e59; font-weight: bold; text-align: center; border-left: 1px solid #0f766e; }
 .hc:last-child { border-left: none; }
 .vc { color: #0f172a; font-weight: bold; text-align: center; border-left: 1px solid #0f766e; }
@@ -45,7 +47,11 @@ th, td { vertical-align: middle; padding: 5px 7px; }
 .ftr { border-top: 1px solid #cbd5e1; padding-top: 6px; margin-top: auto; }
 .ft { font-weight: bold; color: #b91c1c; margin-bottom: 2px; font-size: 8pt; }
 .nr { font-size: 7.5pt; color: #64748b; line-height: 1.35; }
-@media print { body { margin: 0; padding: 0; } }
+@media print {
+  *, *::before, *::after, body, table, th, td, div, span, p {
+    font-family: 'Cairo', sans-serif !important;
+  }
+}
 `;
 
 /**
@@ -124,7 +130,7 @@ export function renderSchoolInfoTable(civilRegistry: string, schoolName?: string
   <tbody>
     <tr>
       <td class="vc" style="font-weight:800;color:#0f766e">${resolvedSchoolName}</td>
-      <td class="vc" style="font-family:monospace;font-weight:800;border-left:none">${cleanCivilRegistry}</td>
+      <td class="vc" style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;font-weight:800;border-left:none">${cleanCivilRegistry}</td>
     </tr>
   </tbody>
 </table>
@@ -132,7 +138,7 @@ export function renderSchoolInfoTable(civilRegistry: string, schoolName?: string
 }
 
 /**
- * كود الطباعة التلقائي الموحد للمتصفحات
+ * كود الطباعة التلقائي الموحد للمتصفحات مع التحقق من اكتمال تحميل خط Cairo
  */
 export const UNIFIED_PRINT_SCRIPT = `
 <script>
@@ -154,16 +160,20 @@ window.onafterprint = function() {
     }
   } catch(e) {}
 };
-if (document.fonts && document.fonts.ready) {
-  document.fonts.ready.then(function() {
-    setTimeout(doPrint, 350);
+if (document.fonts) {
+  Promise.all([
+    document.fonts.load("400 12px Cairo"),
+    document.fonts.load("700 12px Cairo"),
+    document.fonts.ready
+  ]).then(function() {
+    setTimeout(doPrint, 250);
   }).catch(function() {
-    setTimeout(doPrint, 500);
+    setTimeout(doPrint, 450);
   });
   setTimeout(doPrint, 1500);
 } else {
   window.onload = function() {
-    setTimeout(doPrint, 500);
+    setTimeout(doPrint, 400);
   };
   setTimeout(doPrint, 1500);
 }

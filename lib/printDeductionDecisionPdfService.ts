@@ -253,7 +253,7 @@ ${UNIFIED_PDF_CSS}
         </div>
         <div class="box-row">
           <div class="box-label">السجل المدني</div>
-          <div class="box-value" style="font-family:monospace;letter-spacing:1px;">${civilId}</div>
+          <div class="box-value" style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;letter-spacing:1px;">${civilId}</div>
         </div>
       </div>
 
@@ -273,7 +273,7 @@ ${UNIFIED_PDF_CSS}
             <td class="vc" style="font-weight:800;color:#0f766e">${teacherName}</td>
             <td class="vc">${specialization}</td>
             <td class="vc">${rank}</td>
-            <td class="vc" style="font-family:monospace">${jobNumber}</td>
+            <td class="vc" style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;">${jobNumber}</td>
             <td class="vc" style="border-left:none">${currentAction}</td>
           </tr>
         </tbody>

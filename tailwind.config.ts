@@ -27,7 +27,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        cairo: ["var(--font-cairo)", "sans-serif"],
+        sans: ["var(--font-cairo)", "Cairo", "sans-serif"],
+        cairo: ["var(--font-cairo)", "Cairo", "sans-serif"],
+        mono: ["var(--font-cairo)", "Cairo", "monospace"],
       },
     },
   },

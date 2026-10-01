@@ -7,6 +7,7 @@ import {
   DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
   DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "@/lib/defaultApprovalAssets";
+import { CAIRO_EMBEDDED_FONT_FACE_CSS } from "@/lib/cairoFontBase64";
 
 export interface PrintPermissionPdfOptions {
   permission: EmployeePermission;
@@ -100,6 +101,7 @@ export function generatePermissionPdfHtml({
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
+    ${CAIRO_EMBEDDED_FONT_FACE_CSS}
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
     @page {
       size: A4 portrait;
@@ -111,9 +113,10 @@ export function generatePermissionPdfHtml({
       padding: 0;
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
+      font-family: 'Cairo', sans-serif !important;
     }
     body {
-      font-family: 'Cairo', 'Segoe UI', Tahoma, -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      font-family: 'Cairo', sans-serif;
       direction: rtl;
       text-align: right;
       color: #0f172a;
@@ -255,7 +258,8 @@ export function generatePermissionPdfHtml({
       font-size: 13pt;
       font-weight: 900;
       color: #115e59;
-      font-family: monospace;
+      font-family: 'Cairo', sans-serif;
+      font-variant-numeric: tabular-nums;
       direction: ltr;
     }
     .reason-box {
@@ -323,6 +327,12 @@ export function generatePermissionPdfHtml({
       display: flex;
       justify-content: space-between;
     }
+    @media print {
+      body { margin: 0; padding: 0; }
+      *, *::before, *::after, body, table, th, td, div, span, p {
+        font-family: 'Cairo', sans-serif !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -363,7 +373,7 @@ export function generatePermissionPdfHtml({
         </div>
         <div class="info-item">
           <span class="info-label">السجل المدني:</span>
-          <span class="info-val" style="font-family: monospace;">${nationalId}</span>
+          <span class="info-val" style="font-family: 'Cairo', sans-serif; font-variant-numeric: tabular-nums;">${nationalId}</span>
         </div>
         <div class="info-item">
           <span class="info-label">المسمى الوظيفي:</span>

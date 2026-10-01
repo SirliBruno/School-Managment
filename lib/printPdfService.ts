@@ -168,7 +168,7 @@ ${schoolTableHtml}
       <td class="vc"></td>
       <td class="vc"></td>
       <td class="vc">${job}</td>
-      <td class="vc" style="font-family:monospace;font-weight:900;color:#be123c;border-left:none">${count}</td>
+      <td class="vc" style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;font-weight:900;color:#be123c;border-left:none">${count}</td>
     </tr>
   </tbody>
 </table>
@@ -181,7 +181,7 @@ ${schoolTableHtml}
   </div>
   <div class="sg">السلام عليكم ورحمة الله وبركاته ،،، وبعد :</div>
   <div class="sb">
-    إنه في يوم <strong style="color:#0f766e">(${dayName})</strong> الموافق: <strong style="font-family:monospace;color:#0f766e">${dateDMY} م</strong> اتضح تغيبكم عن العمل <strong style="color:#0f766e">(نوع الغياب: ${aType})</strong>.
+    إنه في يوم <strong style="color:#0f766e">(${dayName})</strong> الموافق: <strong style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;color:#0f766e">${dateDMY} م</strong> اتضح تغيبكم عن العمل <strong style="color:#0f766e">(نوع الغياب: ${aType})</strong>.
   </div>
   <div class="sb" style="margin-top:4px">
     من خلال متابعة سجل الدوام والعمل تبين غيابكم خلال اليوم الموضح بعاليه، آمل الإفادة عن أسباب ذلك مع إرفاق ما يؤيد عذركم ،،، ولكم تحياتي ..
