@@ -236,4 +236,33 @@ export function openSafeAttachmentUrl(url: string, filename = "attachment"): voi
   window.open(resolvedUrl, "_blank", "noopener,noreferrer");
 }
 
+/**
+ * Converts a base64 Data URL to a native Blob URL for safe inline embedding or preview.
+ * Returns null if not a data URL or if window is undefined.
+ */
+export function createSafeBlobUrl(rawUrl: string): string | null {
+  if (!rawUrl || typeof window === "undefined") return null;
+  const resolvedUrl = resolveAttachmentUrl(rawUrl);
+  if (!resolvedUrl || !resolvedUrl.startsWith("data:")) return null;
+
+  try {
+    const parts = resolvedUrl.split(",");
+    if (parts.length < 2) return null;
+    const mimeMatch = parts[0].match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+    const bstr = atob(parts[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    const blob = new Blob([u8arr], { type: mime });
+    return URL.createObjectURL(blob);
+  } catch (e) {
+    console.error("Failed to create blob URL:", e);
+    return null;
+  }
+}
+
+
 

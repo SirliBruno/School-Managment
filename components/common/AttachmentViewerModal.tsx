@@ -14,7 +14,7 @@ import {
   Maximize2,
   RefreshCw,
 } from "lucide-react";
-import { openSafeAttachmentUrl } from "@/lib/attachments";
+import { openSafeAttachmentUrl, createSafeBlobUrl } from "@/lib/attachments";
 
 interface AttachmentViewerModalProps {
   isOpen: boolean;
@@ -33,6 +33,28 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
 }) => {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+
+  const isPdf =
+    Boolean(url) &&
+    (url!.toLowerCase().includes(".pdf") ||
+      url!.startsWith("data:application/pdf"));
+
+  // Create safe Blob URL for Data URLs when viewing PDF
+  useEffect(() => {
+    let createdUrl: string | null = null;
+    if (isOpen && url && isPdf && url.startsWith("data:")) {
+      createdUrl = createSafeBlobUrl(url);
+      setBlobUrl(createdUrl);
+    } else {
+      setBlobUrl(null);
+    }
+    return () => {
+      if (createdUrl) {
+        URL.revokeObjectURL(createdUrl);
+      }
+    };
+  }, [isOpen, url, isPdf]);
 
   // Reset zoom & rotation when url or open state changes
   useEffect(() => {
@@ -55,9 +77,7 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
 
   if (!isOpen || !url) return null;
 
-  const isPdf =
-    url.toLowerCase().includes(".pdf") ||
-    url.startsWith("data:application/pdf");
+  const displayPdfUrl = blobUrl || url;
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.5));
@@ -165,12 +185,42 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
           {/* Content Preview Area */}
           <div className="flex-1 min-h-[350px] max-h-[75vh] p-4 bg-slate-100 dark:bg-slate-950 flex items-center justify-center overflow-auto custom-scrollbar">
             {isPdf ? (
-              <div className="w-full h-full min-h-[500px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner flex flex-col">
-                <iframe
-                  src={url}
-                  title={title}
-                  className="w-full flex-1 border-0"
-                />
+              <div className="w-full h-full min-h-[520px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-inner flex flex-col relative">
+                <object
+                  data={displayPdfUrl}
+                  type="application/pdf"
+                  className="w-full flex-1 min-h-[500px] border-0"
+                >
+                  <div className="w-full h-full min-h-[420px] flex flex-col items-center justify-center p-6 text-center bg-slate-50 dark:bg-slate-900/50">
+                    <div className="w-14 h-14 rounded-2xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center mb-4 shadow-2xs">
+                      <FileText className="w-7 h-7" />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1.5">
+                      مستند PDF معتمد
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-5 leading-relaxed">
+                      يتطلب متصفحك فتح مستندات PDF في نافذة مستقلة لعرضها بالحجم الكامل والتحكم بخيارات الطباعة والتنزيل.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleOpenSafe}
+                        className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-2 cursor-pointer"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span>فتح المستند في نافذة مستقلة</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOpenSafe}
+                        className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>تحميل المستند</span>
+                      </button>
+                    </div>
+                  </div>
+                </object>
               </div>
             ) : (
               <div className="relative flex items-center justify-center w-full h-full min-h-[320px] overflow-hidden">
