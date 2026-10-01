@@ -57,6 +57,7 @@ export function normalizeNationalId(raw: string | number | undefined | null): st
 export function normalizeArabicName(name: string | undefined | null): string {
   if (!name) return "";
   return String(name)
+    .replace(/[\u200B-\u200D\uFEFF\u200E\u200F]/g, "") // zero-width & bidi control characters
     .trim()
     .replace(/[أإآٱ]/g, "ا")
     .replace(/[ة]/g, "ه")
@@ -64,6 +65,19 @@ export function normalizeArabicName(name: string | undefined | null): string {
     .replace(/[\u064B-\u065F\u0670]/g, "") // tashkeel
     .replace(/\s+/g, " ")
     .toLowerCase();
+}
+
+/**
+ * فحص تطابق اسمين بعد المعالجة وإزالة التشكيل والمسافات الخفية
+ */
+export function areNamesPracticallyIdentical(
+  nameA: string | undefined | null,
+  nameB: string | undefined | null
+): boolean {
+  const normA = normalizeArabicName(nameA);
+  const normB = normalizeArabicName(nameB);
+  if (!normA || !normB) return false;
+  return normA === normB;
 }
 
 /**
@@ -724,18 +738,46 @@ export function cleanAndDeduplicateSystemData(
     };
   }
 
-  // Union-Find data structure for multi-dimensional clustering
+  // Union-Find data structure for multi-dimensional clustering with conflict detection
   const parent = Array.from({ length: n }, (_, i) => i);
+  const clusterNatIds = new Map<number, Set<string>>();
+  for (let i = 0; i < n; i++) {
+    const cid = normalizeNationalId(teachers[i].nationalId || teachers[i].username || teachers[i].jobNumber);
+    const s = new Set<string>();
+    if (cid && cid.length >= 8) s.add(cid);
+    clusterNatIds.set(i, s);
+  }
+
   const find = (i: number): number => {
     if (parent[i] === i) return i;
     parent[i] = find(parent[i]);
     return parent[i];
   };
+
   const union = (i: number, j: number) => {
     const rootI = find(i);
     const rootJ = find(j);
     if (rootI !== rootJ) {
+      // فحص التعارض الأمني: إذا كان لكل من المجموعتين رقم هوية وطنية ساري ومختلف، يمنع الدمج تماماً
+      const setI = Array.from(clusterNatIds.get(rootI) || []);
+      const setJ = Array.from(clusterNatIds.get(rootJ) || []);
+      let hasConflict = false;
+      for (const idI of setI) {
+        for (const idJ of setJ) {
+          if (idI !== idJ) {
+            hasConflict = true;
+            break;
+          }
+        }
+        if (hasConflict) break;
+      }
+      if (hasConflict) {
+        return; // حماية السجلات من التداخل عند تطابق الأسماء مع اختلاف الهوية
+      }
+
       parent[rootI] = rootJ;
+      const mergedSet = new Set<string>([...setI, ...setJ]);
+      clusterNatIds.set(rootJ, mergedSet);
     }
   };
 
