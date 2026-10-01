@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   FileText,
   Users,
@@ -18,7 +19,8 @@ import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
 import { useWhatsAppAbsenceStats } from "@/hooks/useWhatsAppAbsenceStats";
 import { cn } from "@/lib/utils";
 
-export default function AbsenceProcedurePage() {
+function AbsenceProcedureContent() {
+  const searchParams = useSearchParams();
   const {
     totalAbsences,
     whatsappSent,
@@ -30,6 +32,26 @@ export default function AbsenceProcedurePage() {
 
   const [activeTab, setActiveTab] = useState<"whatsapp" | "manual">("whatsapp");
   const [isSendModalOpen, setIsSendModalOpen] = useState(false);
+  const [selectedTeacherId, setSelectedTeacherId] = useState<string>("");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "manual") {
+      setActiveTab("manual");
+    } else if (tabParam === "whatsapp") {
+      setActiveTab("whatsapp");
+    }
+
+    const teacherIdParam = searchParams.get("teacherId");
+    if (teacherIdParam) {
+      setSelectedTeacherId(teacherIdParam);
+    }
+
+    const autoOpen = searchParams.get("autoOpen");
+    if (autoOpen === "true" && tabParam !== "manual") {
+      setIsSendModalOpen(true);
+    }
+  }, [searchParams]);
 
   return (
     <div className="flex-1 flex flex-col min-h-screen">
@@ -157,7 +179,7 @@ export default function AbsenceProcedurePage() {
         ) : (
           <div className="space-y-6">
             <section>
-              <AbsenceForm />
+              <AbsenceForm preselectedTeacherId={selectedTeacherId || undefined} />
             </section>
 
             <section className="pt-2">
@@ -171,8 +193,22 @@ export default function AbsenceProcedurePage() {
       <SendInquiryModal
         isOpen={isSendModalOpen}
         onClose={() => setIsSendModalOpen(false)}
+        preselectedTeacherId={selectedTeacherId || undefined}
       />
     </div>
   );
 }
 
+export default function AbsenceProcedurePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-slate-400 text-xs">
+          جاري تحميل إجراءات الغياب والمساءلات...
+        </div>
+      }
+    >
+      <AbsenceProcedureContent />
+    </Suspense>
+  );
+}

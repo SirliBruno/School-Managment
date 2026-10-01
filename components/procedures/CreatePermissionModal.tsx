@@ -197,7 +197,7 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descId}
-        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
+        className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       >
         {/* Backdrop */}
         <motion.div

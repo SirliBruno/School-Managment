@@ -24,6 +24,8 @@ import { useToast } from "@/context/ToastContext";
 import { Teacher } from "@/types/teacher";
 import { cn } from "@/lib/utils";
 import { formatSaudiMobile, normalizeSaudiMobileInput } from "@/lib/whatsapp";
+import { logAuditEvent } from "@/lib/auditLogger";
+import { useAuth, DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 
 
 interface AddTeacherModalProps {
@@ -65,6 +67,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
 }) => {
   const { addTeacher, updateTeacher } = useTeachers();
   const { showToast } = useToast();
+  const { user } = useAuth();
   const isEditMode = Boolean(teacherToEdit);
 
   const [form, setForm] = useState<FormState>(INITIAL_STATE);
@@ -196,6 +199,35 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
         return;
       }
 
+      logAuditEvent({
+        action: "update",
+        entityType: "teacher",
+        entityId: teacherToEdit.id,
+        details: `تم تعديل بيانات المعلمة: ${result.teacher?.fullName || form.fullName}`,
+        oldValue: {
+          fullName: teacherToEdit.fullName || teacherToEdit.name,
+          nationalId: teacherToEdit.nationalId || teacherToEdit.username || teacherToEdit.jobNumber,
+          mobile: teacherToEdit.mobile,
+          email: teacherToEdit.email,
+          employmentStatus: teacherToEdit.employmentStatus,
+          jobTitle: teacherToEdit.jobTitle,
+          teachingField: teacherToEdit.teachingField,
+          specialty: teacherToEdit.specialty,
+        },
+        newValue: {
+          fullName: form.fullName.trim(),
+          nationalId: form.nationalId.trim(),
+          mobile: formattedMobile,
+          email: cleanEmail,
+          employmentStatus: form.employmentStatus,
+          jobTitle: form.jobTitle.trim() || "معلم",
+          teachingField: form.teachingField.trim() || undefined,
+          specialty: form.specialty.trim() || undefined,
+        },
+        userName: user?.fullName || DEFAULT_ADMIN_NAME,
+        userRole: user?.role || "وكيلة المدرسة",
+      });
+
       showToast({
         message: `تم تحديث بيانات المعلمة (${result.teacher?.fullName || form.fullName}) بنجاح.`,
         type: "success",
@@ -275,7 +307,7 @@ export const AddTeacherModal: React.FC<AddTeacherModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="add-teacher-modal-title"
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4 overflow-y-auto"
       >
         {/* Backdrop */}
         <motion.div

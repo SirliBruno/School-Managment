@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useId, useRef, useMemo } from "react";
+import React, { useState, useId, useRef, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Calendar,
@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 
 interface AbsenceFormProps {
   onSuccess?: () => void;
+  preselectedTeacherId?: string;
 }
 
 const ABSENCE_TYPES: {
@@ -94,7 +95,7 @@ const WIZARD_STEPS = [
   { step: 4, label: "المراجعة والاعتماد", description: "تأكيد الإجراء وحفظه" },
 ];
 
-export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
+export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselectedTeacherId }) => {
   const { teachers, recordAbsence, absenceRecords } = useTeachers();
   const { showToast } = useToast();
 
@@ -104,6 +105,18 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess }) => {
   // Form states
   const [selectedTeacherId, setSelectedTeacherId] = useState("");
   const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+
+  // Sync preselected teacher if provided
+  useEffect(() => {
+    if (preselectedTeacherId && teachers.length > 0) {
+      const found = teachers.find((t) => t.id === preselectedTeacherId);
+      if (found) {
+        setSelectedTeacherId(found.id);
+        setSelectedTeacher(found);
+        setErrors((prev) => ({ ...prev, teacherId: "" }));
+      }
+    }
+  }, [preselectedTeacherId, teachers]);
   const [durationMode, setDurationMode] = useState<"single" | "multiple">("single");
   const [absenceDate, setAbsenceDate] = useState(() => getSaudiToday());
   const [absenceEndDate, setAbsenceEndDate] = useState(() => getSaudiToday());

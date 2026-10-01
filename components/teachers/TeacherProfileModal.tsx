@@ -26,12 +26,21 @@ import {
   Printer,
   ExternalLink,
   FileText,
+  Scale,
+  FilePlus2,
+  BarChart3,
+  Sparkles,
 } from "lucide-react";
 import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision, EmployeePermission } from "@/types/teacher";
 import { formatSaudiMobileDisplay, normalizeSaudiMobile } from "@/lib/teacherDeduplication";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
+import { AddTeacherModal } from "@/components/teachers/AddTeacherModal";
+import { CreateAdministrativeInquiryModal } from "@/components/procedures/CreateAdministrativeInquiryModal";
+import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
+import { CreatePermissionModal } from "@/components/procedures/CreatePermissionModal";
+import { CreateDelayNoticeModal } from "@/components/procedures/CreateDelayNoticeModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
@@ -105,6 +114,16 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   const [recordToDelete, setRecordToDelete] = useState<AbsenceRecord | null>(
     null
   );
+  // Edit teacher states
+  const [isConfirmEditOpen, setIsConfirmEditOpen] = useState(false);
+  const [isEditTeacherModalOpen, setIsEditTeacherModalOpen] = useState(false);
+
+  // Quick action procedure modal states
+  const [isCreateInquiryModalOpen, setIsCreateInquiryModalOpen] = useState(false);
+  const [isSendInquiryModalOpen, setIsSendInquiryModalOpen] = useState(false);
+  const [isCreatePermissionModalOpen, setIsCreatePermissionModalOpen] = useState(false);
+  const [isCreateDelayNoticeOpen, setIsCreateDelayNoticeOpen] = useState(false);
+
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -323,6 +342,37 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     }
   };
 
+  const handlePrintTeacherAbsenceSummary = () => {
+    if (!currentTeacher) return;
+    try {
+      const data = generateReportData(
+        "absence_summary",
+        {
+          teacherId: currentTeacher.id,
+          month: "all",
+          year: "2026",
+          status: "all",
+          specialty: "all",
+          employmentStatus: "all",
+        },
+        teachers,
+        absenceRecords,
+        delayNotices,
+        deductionDecisions,
+        user?.fullName || DEFAULT_ADMIN_NAME,
+        permissions
+      );
+      printReportPdf(data.payload);
+      showToast({
+        message: `تم تجهيز تقرير غياب المعلمة (${currentTeacher.fullName || currentTeacher.name}) للطباعة بنجاح`,
+        type: "success",
+      });
+    } catch (e) {
+      console.error("فشل طباعة تقرير غياب المعلمة:", e);
+      showToast({ message: "تعذر فتح نافذة الطباعة", type: "error" });
+    }
+  };
+
   // Close on Escape key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -391,6 +441,15 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                   >
                     {currentTeacher.employmentStatus || "دائم"}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmEditOpen(true)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-800 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60 transition-all cursor-pointer shadow-2xs group"
+                    title="تعديل بيانات المعلمة الأساسية"
+                  >
+                    <Pencil className="w-3 h-3 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform" />
+                    <span>تعديل البيانات</span>
+                  </button>
                 </div>
                 <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-xs text-slate-600 dark:text-slate-400 font-medium">
                   <span className="flex items-center gap-1 font-mono">
@@ -646,6 +705,247 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                       : "لا يوجد حسم مستحق"}
                   </span>
                 </motion.div>
+              </div>
+            </div>
+
+            {/* Quick Actions & Quick Reports Hub */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Quick Actions Card */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-teal-500/5 via-teal-500/0 to-teal-500/10 border border-teal-200/70 dark:border-teal-900/50 bg-white dark:bg-slate-900 shadow-2xs">
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center shadow-2xs">
+                      <Zap className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>الإجراءات السريعة</span>
+                        <span className="text-[10px] font-medium text-teal-700 dark:text-teal-300 bg-teal-100/70 dark:bg-teal-900/50 px-2 py-0.5 rounded-full">
+                          فوري
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        تنفيذ العمليات الإدارية المباشرة للمعلمة دون مغادرة الملف
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {/* Action 1: تسجيل غياب */}
+                  <Link
+                    href={`/procedures/absence?tab=manual&teacherId=${currentTeacher.id}&autoOpen=true`}
+                    onClick={onClose}
+                    className="p-2.5 rounded-xl border border-teal-200/80 dark:border-teal-800/60 bg-teal-50/40 hover:bg-teal-50 dark:bg-teal-950/20 dark:hover:bg-teal-950/50 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-100/80 dark:bg-teal-900/60 text-[#137a85] dark:text-teal-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <FilePlus2 className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-[#137a85] dark:group-hover:text-teal-300">
+                        تسجيل غياب
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        توثيق غياب مباشر
+                      </span>
+                    </div>
+                  </Link>
+
+                  {/* Action 2: إنشاء مساءلة إدارية */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateInquiryModalOpen(true)}
+                    className="p-2.5 rounded-xl border border-teal-200/80 dark:border-teal-800/60 bg-teal-50/40 hover:bg-teal-50 dark:bg-teal-950/20 dark:hover:bg-teal-950/50 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-100/80 dark:bg-teal-900/60 text-[#137a85] dark:text-teal-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Scale className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-[#137a85] dark:group-hover:text-teal-300">
+                        مساءلة إدارية
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        نموذج مساءلة رسمية
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Action 3: إرسال مساءلة واتساب */}
+                  <button
+                    type="button"
+                    onClick={() => setIsSendInquiryModalOpen(true)}
+                    className="p-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/40 hover:bg-emerald-50 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/50 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-emerald-100/80 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <MessageCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
+                        مساءلة واتساب
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        إرسال رابط الإفادة
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Action 4: إضافة استئذان */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCreatePermissionModalOpen(true)}
+                    className="p-2.5 rounded-xl border border-teal-200/80 dark:border-teal-800/60 bg-teal-50/40 hover:bg-teal-50 dark:bg-teal-950/20 dark:hover:bg-teal-950/50 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-teal-100/80 dark:bg-teal-900/60 text-[#137a85] dark:text-teal-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <DoorOpen className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-[#137a85] dark:group-hover:text-teal-300">
+                        إضافة استئذان
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        إذن خروج مؤقت
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Action 5: إنشاء قرار حسم */}
+                  <Link
+                    href={`/procedures/deduction-hours?teacherId=${currentTeacher.id}&autoFill=true`}
+                    onClick={onClose}
+                    className="p-2.5 rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/40 hover:bg-rose-50 dark:bg-rose-950/20 dark:hover:bg-rose-950/50 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-rose-100/80 dark:bg-rose-900/60 text-rose-700 dark:text-rose-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <ShieldAlert className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-rose-700 dark:group-hover:text-rose-300">
+                        قرار حسم
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        إصدار قرار الحسم
+                      </span>
+                    </div>
+                  </Link>
+
+                  {/* Action 6: تنبيه تأخر */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateDelayNoticeOpen(true)}
+                    className="p-2.5 rounded-xl border border-amber-200/80 dark:border-amber-800/60 bg-amber-50/40 hover:bg-amber-50 dark:bg-amber-950/20 dark:hover:bg-amber-950/50 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-amber-100/80 dark:bg-amber-900/60 text-amber-700 dark:text-amber-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Clock className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-amber-700 dark:group-hover:text-amber-300">
+                        تنبيه تأخر
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        حصر دقائق التأخر
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Reports Card */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                <div className="flex items-center justify-between mb-3.5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center shadow-2xs">
+                      <Printer className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>التقارير السريعة</span>
+                        <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                          PDF رسمي
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        تصدير وطباعة تقارير المعلمة الفورية والمعتمدة
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Report 1: تقرير سجل المعلمة PDF */}
+                  <button
+                    type="button"
+                    onClick={handlePrintTeacherDetailedRecord}
+                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 hover:bg-slate-100/80 dark:bg-slate-850/60 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <FileDown className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-slate-700 dark:group-hover:text-slate-200">
+                        سجل المعلمة PDF
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        البيانات، الغياب، التأخر، القرارات
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Report 2: تقرير الغياب */}
+                  <button
+                    type="button"
+                    onClick={handlePrintTeacherAbsenceSummary}
+                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 hover:bg-slate-100/80 dark:bg-slate-850/60 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <BarChart3 className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-slate-700 dark:group-hover:text-slate-200">
+                        تقرير الغياب
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        إجمالي الغياب والأنواع والتواريخ
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Report 3: سجل الاستئذان المعتمد */}
+                  <button
+                    type="button"
+                    onClick={handlePrintTeacherPermissionsRecord}
+                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 hover:bg-slate-100/80 dark:bg-slate-850/60 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-slate-700 dark:group-hover:text-slate-200">
+                        سجل الاستئذان الرسمي
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        توثيق أذونات الخروج والعودة
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* Report 4: طباعة الملف */}
+                  <button
+                    type="button"
+                    onClick={handlePrintTeacherDetailedRecord}
+                    className="p-2.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-slate-50/60 hover:bg-slate-100/80 dark:bg-slate-850/60 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] flex flex-col justify-between group cursor-pointer text-right"
+                  >
+                    <div className="w-7 h-7 rounded-lg bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Printer className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold block text-slate-900 dark:text-slate-100 group-hover:text-slate-700 dark:group-hover:text-slate-200">
+                        طباعة الملف
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block mt-0.5 truncate">
+                        إخراج نسخة رسمية PDF
+                      </span>
+                    </div>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1285,6 +1585,58 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         onConfirm={confirmDeleteRecord}
         onCancel={() => setRecordToDelete(null)}
       />
+
+      {/* Edit Teacher Protection Confirmation Dialog */}
+      {currentTeacher && (
+        <ConfirmDialog
+          isOpen={isConfirmEditOpen}
+          title="تعديل بيانات المعلمة"
+          message={`أنتِ على وشك تعديل البيانات الأساسية للمعلمة (${currentTeacher.fullName || currentTeacher.name}).\nسيتم تحديث البيانات المستخدمة في السجلات والتقارير المستقبلية مع الحفاظ التام على السجلات التاريخية.\n\nهل أنتِ متأكدة من المتابعة؟`}
+          confirmLabel="متابعة التعديل"
+          cancelLabel="إلغاء"
+          variant="warning"
+          onConfirm={() => {
+            setIsConfirmEditOpen(false);
+            setIsEditTeacherModalOpen(true);
+          }}
+          onCancel={() => setIsConfirmEditOpen(false)}
+        />
+      )}
+
+      {/* Edit Teacher Modal */}
+      {currentTeacher && (
+        <AddTeacherModal
+          isOpen={isEditTeacherModalOpen}
+          onClose={() => setIsEditTeacherModalOpen(false)}
+          teacherToEdit={currentTeacher}
+        />
+      )}
+
+      {/* Procedure Modals Triggered from Quick Actions */}
+      {currentTeacher && (
+        <>
+          <CreateAdministrativeInquiryModal
+            isOpen={isCreateInquiryModalOpen}
+            onClose={() => setIsCreateInquiryModalOpen(false)}
+            preselectedTeacherId={currentTeacher.id}
+          />
+          <SendInquiryModal
+            isOpen={isSendInquiryModalOpen}
+            onClose={() => setIsSendInquiryModalOpen(false)}
+            preselectedTeacherId={currentTeacher.id}
+          />
+          <CreatePermissionModal
+            isOpen={isCreatePermissionModalOpen}
+            onClose={() => setIsCreatePermissionModalOpen(false)}
+            preselectedTeacherId={currentTeacher.id}
+          />
+          <CreateDelayNoticeModal
+            isOpen={isCreateDelayNoticeOpen}
+            onClose={() => setIsCreateDelayNoticeOpen(false)}
+            preselectedTeacherId={currentTeacher.id}
+          />
+        </>
+      )}
     </AnimatePresence>
   );
 };
