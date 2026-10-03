@@ -28,7 +28,6 @@ import { cn } from "@/lib/utils";
 import {
   getSaudiToday,
   calculateTokenExpiry,
-  calculate48HoursExpiry,
   formatSaudiDateTime,
   getLinkExpiryStatus,
   isTokenExpired,

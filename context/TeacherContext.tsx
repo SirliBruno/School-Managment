@@ -57,7 +57,6 @@ import {
 } from "@/types/database";
 import {
   getSaudiToday,
-  calculate48HoursExpiry,
   calculateTokenExpiry,
   formatSaudiDateTime,
   PUBLIC_LINK_EXPIRATION_DAYS,
@@ -1148,7 +1147,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                     : generateSecureToken(16)),
                 tokenExpiresAt:
                   (dn.tokenExpiresAt as string) ||
-                  calculate48HoursExpiry(),
+                  calculateTokenExpiry(),
               })) as DelayNotice[];
             }
           }
@@ -1179,7 +1178,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               const parsed = JSON.parse(storedAdminInquiries);
               if (Array.isArray(parsed)) {
                 localAdminInquiries = parsed.map((inq: Record<string, unknown>) => {
-                  const tokenExpiresAt = String(inq.tokenExpiresAt || inq.token_expires_at || calculate48HoursExpiry());
+                  const tokenExpiresAt = String(inq.tokenExpiresAt || inq.token_expires_at || calculateTokenExpiry());
                   const currentStatus = String(inq.status || "pending_teacher") as AdministrativeInquiryStatus;
                   const isExpired = currentStatus === "pending_teacher" && isTokenExpired(tokenExpiresAt);
                   return {
@@ -6498,7 +6497,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           ? crypto.randomUUID().replace(/-/g, "")
           : generateSecureToken(16));
 
-      const tokenExpiresAt = data.tokenExpiresAt || calculate48HoursExpiry();
+      const tokenExpiresAt = data.tokenExpiresAt || calculateTokenExpiry();
 
       let createdInquiry: AdministrativeInquiry | null = null;
 
