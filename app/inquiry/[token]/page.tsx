@@ -39,6 +39,9 @@ import {
   calculateDaysBetween,
   formatDaysCountArabic,
   parseInquiryMeta,
+  isTokenExpired,
+  formatSaudiDateTime,
+  getLinkExpiryStatus,
 } from "@/lib/timeUtils";
 
 const ABSENCE_TYPES: {
@@ -575,10 +578,9 @@ export default function TeacherInquiryPage() {
     );
   }
 
-  // Check 48-hour expiration
+  // Check 7-day expiration (168 hours)
   const isExpired =
-    inquiry.status === "pending" &&
-    new Date(inquiry.expiresAt).getTime() < Date.now();
+    inquiry.status === "pending" && isTokenExpired(inquiry.expiresAt);
 
   if (isExpired) {
     return (
@@ -589,16 +591,19 @@ export default function TeacherInquiryPage() {
           </div>
           <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">انتهت صلاحية الرابط</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (48 ساعة من تاريخ الإرسال).
+            عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (7 أيام كاملة من تاريخ الإرسال).
           </p>
-          <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 text-right space-y-1">
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 text-right space-y-1.5 font-medium">
             <p>
               تاريخ الغياب:{" "}
               {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
                 ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
                 : inquiry.absenceDate}
             </p>
-            <p>تاريخ الانتهاء: {new Date(inquiry.expiresAt).toLocaleDateString("ar-SA")}</p>
+            {inquiry.createdAt && (
+              <p>تاريخ ووقت الإرسال: {formatSaudiDateTime(inquiry.createdAt)}</p>
+            )}
+            <p>تاريخ ووقت الانتهاء: {formatSaudiDateTime(inquiry.expiresAt)}</p>
           </div>
           <p className="text-xs text-slate-400 dark:text-slate-500">
             يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك الورقية.
@@ -724,6 +729,13 @@ export default function TeacherInquiryPage() {
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             إفادة المعلمة عن سبب الغياب وإرفاق المسوغات الطبية أو النظامية
           </p>
+
+          {inquiry.expiresAt && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mt-3 bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
+              <Clock className="w-3.5 h-3.5" />
+              <span>مهلة تقديم الإفادة (7 أيام): {getLinkExpiryStatus(inquiry.expiresAt).statusLabel}</span>
+            </div>
+          )}
         </header>
 
         {/* Teacher & Absence Details Card */}

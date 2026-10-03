@@ -32,6 +32,7 @@ import {
 import {
   getSaudiToday,
   calculate48HoursExpiry,
+  calculateTokenExpiry,
   generateSecureToken,
   isTokenExpired,
 } from "@/lib/timeUtils";
@@ -320,13 +321,17 @@ describe("Final Production Readiness Audit Suite (فحص الجاهزية الن
       expect(delaySummary.deductionDays).toBe(1); // 7 hours threshold = 1 day
     });
 
-    it("3.2 دورة الـ Token الأمني وصلاحية الـ 48 ساعة", () => {
+    it("3.2 دورة الـ Token الأمني وصلاحية الـ 7 أيام النظامية (168 ساعة)", () => {
       const token = generateSecureToken();
       expect(token).toBeDefined();
       expect(token.length).toBeGreaterThanOrEqual(16);
 
-      const validExpiry = calculate48HoursExpiry();
+      const now = Date.now();
+      const validExpiry = calculateTokenExpiry(new Date(now));
       expect(isTokenExpired(validExpiry)).toBe(false);
+
+      const diffHours = (new Date(validExpiry).getTime() - now) / (1000 * 60 * 60);
+      expect(Math.round(diffHours)).toBe(168);
 
       const pastExpiry = new Date(Date.now() - 3600 * 1000).toISOString();
       expect(isTokenExpired(pastExpiry)).toBe(true);

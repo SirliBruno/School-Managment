@@ -4,6 +4,9 @@ import {
   getSaudiToday,
   getSaudiDateInfo,
   calculate48HoursExpiry,
+  calculateTokenExpiry,
+  formatSaudiDateTime,
+  getLinkExpiryStatus,
   isTokenExpired,
   generateSecureToken,
 } from "../timeUtils";
@@ -79,22 +82,59 @@ describe("timeUtils", () => {
     });
   });
 
-  describe("Token Expiration & 48h Window", () => {
-    it("calculates 48 hours expiry from base date", () => {
-      const base = new Date("2026-09-23T10:00:00.000Z");
+  describe("Token Expiration & 7 Days Window (168 Hours)", () => {
+    it("calculates 7 days (168 hours) expiry accurately from base date", () => {
+      const base = new Date("2026-10-01T10:00:00.000Z");
+      const expiry = calculateTokenExpiry(base);
+      expect(expiry).toBe("2026-10-08T10:00:00.000Z"); // Exactly 7 days (168 hours) later
+    });
+
+    it("ensures calculate48HoursExpiry alias returns 7-day expiry for full platform consistency", () => {
+      const base = new Date("2026-10-01T10:00:00.000Z");
       const expiry = calculate48HoursExpiry(base);
-      expect(expiry).toBe("2026-09-25T10:00:00.000Z");
+      expect(expiry).toBe("2026-10-08T10:00:00.000Z");
     });
 
     it("evaluates expired and non-expired tokens accurately", () => {
       const pastExpiry = new Date(Date.now() - 1000 * 60).toISOString(); // 1 minute ago
       expect(isTokenExpired(pastExpiry)).toBe(true);
 
-      const futureExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(); // 24 hours later
+      const futureExpiry = new Date(Date.now() + 1000 * 60 * 60 * 24 * 6).toISOString(); // 6 days later
       expect(isTokenExpired(futureExpiry)).toBe(false);
 
       expect(isTokenExpired(undefined)).toBe(false);
       expect(isTokenExpired("invalid-date-string")).toBe(false);
+    });
+
+    it("formats Saudi date and time with Asia/Riyadh timezone correctly", () => {
+      const iso = "2026-10-01T07:00:00.000Z"; // 10:00 AM Riyadh
+      const formatted = formatSaudiDateTime(iso);
+      expect(formatted).toContain("2026");
+      expect(formatted).toBeTruthy();
+    });
+
+    it("calculates LinkExpiryStatus remaining time, urgent flags, and badges", () => {
+      // 6 days remaining
+      const sixDaysFuture = new Date(Date.now() + 6 * 24 * 3600 * 1000 + 3600 * 1000).toISOString();
+      const statusActive = getLinkExpiryStatus(sixDaysFuture);
+      expect(statusActive.isExpired).toBe(false);
+      expect(statusActive.isUrgent).toBe(false);
+      expect(statusActive.remainingDays).toBe(6);
+      expect(statusActive.badgeVariant).toBe("emerald");
+
+      // 12 hours remaining (Urgent)
+      const twelveHoursFuture = new Date(Date.now() + 12 * 3600 * 1000).toISOString();
+      const statusUrgent = getLinkExpiryStatus(twelveHoursFuture);
+      expect(statusUrgent.isExpired).toBe(false);
+      expect(statusUrgent.isUrgent).toBe(true);
+      expect(statusUrgent.badgeVariant).toBe("amber");
+
+      // Expired
+      const past = new Date(Date.now() - 5000).toISOString();
+      const statusExpired = getLinkExpiryStatus(past);
+      expect(statusExpired.isExpired).toBe(true);
+      expect(statusExpired.badgeVariant).toBe("rose");
+      expect(statusExpired.statusLabel).toBe("انتهت صلاحية الرابط");
     });
   });
 

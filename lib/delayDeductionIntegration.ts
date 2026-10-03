@@ -353,7 +353,7 @@ export function generateSchoolProactiveAlerts(params: {
     });
   }
 
-  // 4. مساءلات غياب تجاوزت مهلة الـ 48 ساعة دون رد من المعلمة
+  // 4. مساءلات غياب تجاوزت مهلة الـ 7 أيام دون رد من المعلمة
   const pendingInquiries = inquiries.filter(
     (inq) => !inq.isArchived && inq.status === "pending"
   );
@@ -363,8 +363,8 @@ export function generateSchoolProactiveAlerts(params: {
         id: `alert-exp-inq-${inq.id}`,
         type: "expired_inquiry",
         severity: "warning",
-        title: "مساءلة غياب تجاوزت المهلة المحددة (48 ساعة)",
-        description: `المعلمة (${inq.teacherName}) لم تقدم إفادتها لمساءلة غياب تاريخ (${inq.absenceDate}) وانتهت مهلة الـ 48 ساعة النظامية.`,
+        title: "مساءلة غياب تجاوزت المهلة المحددة (7 أيام)",
+        description: `المعلمة (${inq.teacherName}) لم تقدم إفادتها لمساءلة غياب تاريخ (${inq.absenceDate}) وانتهت مهلة الـ 7 أيام (168 ساعة) النظامية.`,
         teacherId: inq.teacherId,
         teacherName: inq.teacherName,
         date: inq.absenceDate,

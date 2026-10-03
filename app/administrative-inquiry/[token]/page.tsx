@@ -24,7 +24,7 @@ import {
 import { AdministrativeInquiry } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useTeachers, mapDbAdminInquiryToInquiry } from "@/context/TeacherContext";
-import { isTokenExpired } from "@/lib/timeUtils";
+import { isTokenExpired, formatSaudiDateTime, getLinkExpiryStatus } from "@/lib/timeUtils";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { cn } from "@/lib/utils";
@@ -321,11 +321,17 @@ export default function AdministrativeInquiryPublicResponsePage() {
           </div>
           <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">انتهت مهلة الرد النظامية</h2>
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            مرحباً أستاذة <strong>{inquiry.teacherName}</strong>، لقد تجاوز هذا الرابط المهلة المحددة نظاماً لتقديم الإفادة الخطية (48 ساعة من تاريخ الإصدار).
+            مرحباً أستاذة <strong>{inquiry.teacherName}</strong>، لقد تجاوز هذا الرابط المهلة المحددة نظاماً لتقديم الإفادة الخطية (7 أيام كاملة من تاريخ الإصدار).
           </p>
-          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 space-y-1.5 text-right font-medium">
             <div>رقم المساءلة: <strong className="font-mono text-slate-700 dark:text-slate-300">{inquiry.inquiryNumber || "—"}</strong></div>
             <div>تاريخ الواقعة: <strong className="font-mono text-slate-700 dark:text-slate-300">{inquiry.incidentDate}</strong></div>
+            {inquiry.createdAt && (
+              <div>تاريخ ووقت الإصدار: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatSaudiDateTime(inquiry.createdAt)}</strong></div>
+            )}
+            {inquiry.tokenExpiresAt && (
+              <div>تاريخ ووقت الانتهاء: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatSaudiDateTime(inquiry.tokenExpiresAt)}</strong></div>
+            )}
           </div>
           <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">
             يرجى مراجعة إدارة المدرسة مباشرة لاستكمال الإجراءات الإدارية.
@@ -506,7 +512,7 @@ export default function AdministrativeInquiryPublicResponsePage() {
             </div>
             <div className="text-left text-[11px] text-white/80">
               <div className="font-semibold">مهلة الرد:</div>
-              <div className="font-mono">48 ساعة</div>
+              <div className="font-mono">7 أيام (168 ساعة)</div>
             </div>
           </div>
 

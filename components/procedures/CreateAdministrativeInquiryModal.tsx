@@ -673,7 +673,7 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
                 </label>
                 <input
                   type="text"
-                  placeholder="مثال: يرجى تقديم الإفادة خلال 48 ساعة من تاريخ الاستلام..."
+                  placeholder="مثال: يرجى تقديم الإفادة خلال 7 أيام من تاريخ الاستلام..."
                   value={vicePrincipalNotes}
                   onChange={(e) => setVicePrincipalNotes(e.target.value)}
                   className="w-full h-11 px-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"

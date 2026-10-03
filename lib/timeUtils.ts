@@ -159,25 +159,225 @@ export function getSaudiDateInfo(targetDate: Date = new Date()): {
 }
 
 /**
- * حساب مهلة انتهاء الصلاحية بعد 48 ساعة بالضبط بصيغة ISO
+ * السياسة المركزية الموحدة لصلاحية الروابط العامة في كامل المنصة
+ * (7 أيام كاملة = 168 ساعة = 604,800,000 مللي ثانية)
  */
-export function calculate48HoursExpiry(baseDate: Date = new Date()): string {
-  return new Date(baseDate.getTime() + 48 * 60 * 60 * 1000).toISOString();
+export const PUBLIC_LINK_EXPIRATION_DAYS = 7;
+export const PUBLIC_LINK_EXPIRATION_HOURS = PUBLIC_LINK_EXPIRATION_DAYS * 24; // 168 hours
+export const PUBLIC_LINK_EXPIRATION_MS = PUBLIC_LINK_EXPIRATION_DAYS * 24 * 60 * 60 * 1000; // 604,800,000 ms
+
+// Aliases for compatibility
+export const TOKEN_EXPIRY_DAYS = PUBLIC_LINK_EXPIRATION_DAYS;
+export const TOKEN_EXPIRY_HOURS = PUBLIC_LINK_EXPIRATION_HOURS;
+export const TOKEN_EXPIRY_MS = PUBLIC_LINK_EXPIRATION_MS;
+
+/**
+ * حساب مهلة انتهاء الصلاحية بدقة (168 ساعة كاملة = 7 أيام من تاريخ الأساس)
+ */
+export function calculateTokenExpiry(
+  baseDate: Date = new Date(),
+  days: number = PUBLIC_LINK_EXPIRATION_DAYS
+): string {
+  return new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString();
 }
 
 /**
- * فحص ما إذا كان الرابط قد تجاوز مهلة الـ 48 ساعة
+ * دالة متوافقة رجعياً تعتمد سياسة المنصة الموحدة (7 أيام)
  */
-export function isTokenExpired(expiresAt?: string): boolean {
+export function calculate48HoursExpiry(baseDate: Date = new Date()): string {
+  return calculateTokenExpiry(baseDate, PUBLIC_LINK_EXPIRATION_DAYS);
+}
+
+/**
+ * فحص ما إذا كان الرابط قد تجاوز مهلة الصلاحية بدقة
+ * @param expiresAt تاريخ انتهاء الصلاحية بصيغة ISO
+ * @param referenceDate تاريخ المقارنة (الافتراضي: الآن)
+ */
+export function isTokenExpired(
+  expiresAt?: string | null,
+  referenceDate: Date = new Date()
+): boolean {
   if (!expiresAt) return false;
   try {
     const expiryTime = new Date(expiresAt).getTime();
     if (isNaN(expiryTime)) return false;
-    return Date.now() > expiryTime;
+    return referenceDate.getTime() >= expiryTime;
   } catch {
     return false;
   }
 }
+
+/**
+ * تنسيق التوقيت الرسمي للمملكة العربية السعودية (توقيت مكة المكرمة)
+ */
+export function formatSaudiDateTime(
+  isoString?: string | null,
+  options?: { dateOnly?: boolean }
+): string {
+  if (!isoString) return "—";
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return String(isoString);
+
+    if (options?.dateOnly) {
+      return date.toLocaleDateString("ar-SA-u-nu-latn", {
+        timeZone: "Asia/Riyadh",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    }
+
+    return date.toLocaleString("ar-SA-u-nu-latn", {
+      timeZone: "Asia/Riyadh",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return String(isoString);
+  }
+}
+
+export interface LinkExpiryStatus {
+  isExpired: boolean;
+  isUrgent: boolean; // أقل من 24 ساعة
+  remainingDays: number;
+  remainingHours: number;
+  remainingMinutes: number;
+  remainingMs: number;
+  daysLeft: number;
+  hoursLeft: number;
+  status: "valid" | "expiring_soon" | "expired";
+  statusLabel: string;
+  badgeText: string;
+  badgeVariant: "emerald" | "amber" | "rose" | "slate";
+}
+
+/**
+ * حساب تفاصيل الوقت المتبقي وحالة الرابط للعرض في الواجهات ولوحة الإدارة
+ */
+export function getLinkExpiryStatus(
+  expiresAt?: string | null,
+  referenceDateOrCompleted?: Date | boolean
+): LinkExpiryStatus {
+  const isCompleted = typeof referenceDateOrCompleted === "boolean" ? referenceDateOrCompleted : false;
+  const now = referenceDateOrCompleted instanceof Date ? referenceDateOrCompleted.getTime() : Date.now();
+
+  if (!expiresAt) {
+    return {
+      isExpired: false,
+      isUrgent: false,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingMs: 0,
+      daysLeft: 0,
+      hoursLeft: 0,
+      status: "expired",
+      statusLabel: "غير محدد",
+      badgeText: "غير محدد",
+      badgeVariant: "slate",
+    };
+  }
+
+  if (isCompleted) {
+    return {
+      isExpired: false,
+      isUrgent: false,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingMs: 0,
+      daysLeft: 0,
+      hoursLeft: 0,
+      status: "valid",
+      statusLabel: "تم تقديم الإفادة بنجاح",
+      badgeText: "مكتمل",
+      badgeVariant: "emerald",
+    };
+  }
+
+  const expiryTime = new Date(expiresAt).getTime();
+  if (isNaN(expiryTime)) {
+    return {
+      isExpired: true,
+      isUrgent: false,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingMs: 0,
+      daysLeft: 0,
+      hoursLeft: 0,
+      status: "expired",
+      statusLabel: "تاريخ غير صالح",
+      badgeText: "غير معروف",
+      badgeVariant: "slate",
+    };
+  }
+
+  const diff = expiryTime - now;
+
+  if (diff <= 0) {
+    return {
+      isExpired: true,
+      isUrgent: false,
+      remainingDays: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingMs: 0,
+      daysLeft: 0,
+      hoursLeft: 0,
+      status: "expired",
+      statusLabel: "انتهت صلاحية الرابط",
+      badgeText: "منتهي الصلاحية",
+      badgeVariant: "rose",
+    };
+  }
+
+  const remainingDays = Math.floor(diff / (24 * 60 * 60 * 1000));
+  const remainingHours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const remainingMinutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+  const totalHoursLeft = Math.ceil(diff / (60 * 60 * 1000));
+  const isUrgent = diff <= 24 * 60 * 60 * 1000;
+
+  let statusLabel = "";
+  if (remainingDays >= 1) {
+    statusLabel =
+      remainingHours > 0
+        ? `متبقي ${remainingDays} ${remainingDays === 1 ? "يوم" : remainingDays === 2 ? "يومان" : "أيام"} و ${remainingHours} ساعة`
+        : `متبقي ${remainingDays} ${remainingDays === 1 ? "يوم" : remainingDays === 2 ? "يومان" : "أيام"}`;
+  } else if (remainingHours >= 1) {
+    statusLabel = `ينتهي قريباً (خلال ${remainingHours} ساعة)`;
+  } else {
+    statusLabel = `ينتهي خلال ${Math.max(1, remainingMinutes)} دقيقة`;
+  }
+
+  const badgeText = isUrgent
+    ? remainingHours >= 1
+      ? `ينتهي خلال ${remainingHours} س`
+      : `ينتهي خلال ${remainingMinutes} د`
+    : `سارٍ (متبقي ${remainingDays} ي)`;
+
+  return {
+    isExpired: false,
+    isUrgent,
+    remainingDays,
+    remainingHours,
+    remainingMinutes,
+    remainingMs: diff,
+    daysLeft: remainingDays > 0 ? remainingDays : (totalHoursLeft > 0 ? 1 : 0),
+    hoursLeft: totalHoursLeft,
+    status: isUrgent ? "expiring_soon" : "valid",
+    statusLabel,
+    badgeText,
+    badgeVariant: isUrgent ? "amber" : "emerald",
+  };
+}
+
 
 /**
  * توليد رمز آمن فريد غير قابل للتخمين للروابط العامة

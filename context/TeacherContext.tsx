@@ -58,6 +58,10 @@ import {
 import {
   getSaudiToday,
   calculate48HoursExpiry,
+  calculateTokenExpiry,
+  formatSaudiDateTime,
+  PUBLIC_LINK_EXPIRATION_DAYS,
+  PUBLIC_LINK_EXPIRATION_MS,
   generateSecureToken,
   isTokenExpired,
   getDatesInRange,
@@ -256,6 +260,15 @@ interface TeacherContextType {
   restoreAdministrativeInquiry: (inquiry: AdministrativeInquiry) => void;
   permanentDeleteAdministrativeInquiry: (id: string) => boolean;
   markAdministrativeInquiryLinkShared: (id: string) => void;
+  renewInquiryLink: (
+    inquiryId: string
+  ) => Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }>;
+  renewDelayNoticeLink: (
+    noticeId: string
+  ) => Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }>;
+  renewAdministrativeInquiryLink: (
+    inquiryId: string
+  ) => Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }>;
   restoreFullSystemSnapshot: (
     snapshotData: SystemBackupData
   ) => Promise<{ success: boolean; message: string; error?: string }>;
@@ -507,7 +520,7 @@ export const mapInquiryToDbRow = (
   absence_date: inq.absenceDate,
   token: inq.token || `inq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
   status: inq.status || "pending",
-  expires_at: inq.expiresAt || new Date(Date.now() + 172800000).toISOString(),
+  expires_at: inq.expiresAt || calculateTokenExpiry(),
   absence_type: inq.absenceType || null,
   teacher_reason: inq.teacherReason || null,
   attachment_url: inq.attachmentUrl || null,
@@ -3825,8 +3838,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           ? crypto.randomUUID().replace(/-/g, "")
           : generateSecureToken(16);
 
-      // 48 hours validity as approved by school administration
-      const expiresAt = calculate48HoursExpiry();
+      // 7 days validity as approved by school administration (168 hours)
+      const expiresAt = calculateTokenExpiry();
       const createdAt = new Date().toISOString();
       const isMulti = Boolean(absenceEndDate && absenceEndDate !== absenceDate);
       const calculatedDays = isMulti ? daysCount || 2 : 1;
@@ -3910,6 +3923,14 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           console.warn("خطأ أثناء الاتصال بسوبابيز للمساءلة:", err);
         }
       }
+
+      logAuditEvent({
+        action: "CREATE",
+        entityType: "inquiry",
+        entityId: newInquiry.id,
+        details: `إنشاء مساءلة غياب للمعلمة (${newInquiry.teacherName}) لتاريخ (${newInquiry.absenceDate}) برابط صالح لمدة 7 أيام حتى ${formatSaudiDateTime(newInquiry.expiresAt)}`,
+        newValue: newInquiry,
+      });
 
       return { success: true, inquiry: newInquiry };
     },
@@ -4185,6 +4206,64 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // 14.1 Renew Absence Inquiry Link (7 days extension)
+  const renewInquiryLink = useCallback(
+    async (
+      inquiryId: string
+    ): Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }> => {
+      const target = inquiries.find((i) => i.id === inquiryId);
+      if (!target) {
+        return { success: false, error: "المساءلة المحددة غير موجودة." };
+      }
+
+      const newExpiresAt = calculateTokenExpiry();
+      const updatedInquiry: AbsenceInquiry = {
+        ...target,
+        expiresAt: newExpiresAt,
+      };
+
+      setInquiries((prev) =>
+        prev.map((i) => (i.id === inquiryId ? updatedInquiry : i))
+      );
+
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("school_admin_inquiries_v1");
+          if (stored) {
+            const list: AbsenceInquiry[] = JSON.parse(stored);
+            const updated = list.map((i) => (i.id === inquiryId ? updatedInquiry : i));
+            localStorage.setItem("school_admin_inquiries_v1", JSON.stringify(updated));
+          }
+        } catch (e) {
+          console.warn("فشل تحديث المساءلة في التخزين المحلي:", e);
+        }
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          await supabase
+            .from("absence_inquiries")
+            .update({ expires_at: newExpiresAt })
+            .eq("id", inquiryId);
+        } catch (cloudErr) {
+          console.warn("فشل تحديث انتهاء صلاحية المساءلة في سوبابيز:", cloudErr);
+        }
+      }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "inquiry",
+        entityId: target.id,
+        details: `تم تجديد رابط مساءلة الغياب للمعلمة (${target.teacherName}) لمدة 7 أيام كاملة حتى ${formatSaudiDateTime(newExpiresAt)}`,
+        oldValue: { expiresAt: target.expiresAt },
+        newValue: { expiresAt: newExpiresAt },
+      });
+
+      return { success: true, newExpiresAt, token: target.token };
+    },
+    [inquiries]
+  );
+
   // 15. Create Delay Notice (Stage 1)
   const createDelayNotice = useCallback(
     (
@@ -4213,9 +4292,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           ? crypto.randomUUID().replace(/-/g, "")
           : generateSecureToken(16));
 
-      // 48 hours validity as approved by school administration
+      // 7 days validity as approved by school administration (168 hours)
       const tokenExpiresAt =
-        data.tokenExpiresAt || calculate48HoursExpiry();
+        data.tokenExpiresAt || calculateTokenExpiry();
 
       const hijriYear = data.hijriYear || "١٤٤٨";
       let createdNotice: DelayNotice | null = null;
@@ -5763,6 +5842,64 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
+  // 21.1 Renew Delay Notice Link (7 days extension)
+  const renewDelayNoticeLink = useCallback(
+    async (
+      noticeId: string
+    ): Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }> => {
+      const target = delayNotices.find((n) => n.id === noticeId);
+      if (!target) {
+        return { success: false, error: "إشعار التأخر المحدد غير موجود." };
+      }
+
+      const newExpiresAt = calculateTokenExpiry();
+      const updatedNotice: DelayNotice = {
+        ...target,
+        tokenExpiresAt: newExpiresAt,
+      };
+
+      setDelayNotices((prev) =>
+        prev.map((n) => (n.id === noticeId ? updatedNotice : n))
+      );
+
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("school_admin_delay_notices_v1");
+          if (stored) {
+            const list: DelayNotice[] = JSON.parse(stored);
+            const updated = list.map((n) => (n.id === noticeId ? updatedNotice : n));
+            localStorage.setItem("school_admin_delay_notices_v1", JSON.stringify(updated));
+          }
+        } catch (e) {
+          console.warn("فشل تحديث إشعار التأخر في التخزين المحلي:", e);
+        }
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          await supabase
+            .from("delay_notices")
+            .update({ token_expires_at: newExpiresAt })
+            .eq("id", noticeId);
+        } catch (cloudErr) {
+          console.warn("فشل تحديث مهلة إشعار التأخر في سوبابيز:", cloudErr);
+        }
+      }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "delay_notice",
+        entityId: target.id,
+        details: `تم تجديد رابط إشعار التأخر للمعلمة (${target.teacherName}) لمدة 7 أيام كاملة حتى ${formatSaudiDateTime(newExpiresAt)}`,
+        oldValue: { tokenExpiresAt: target.tokenExpiresAt },
+        newValue: { tokenExpiresAt: newExpiresAt },
+      });
+
+      return { success: true, newExpiresAt, token: target.shareToken };
+    },
+    [delayNotices]
+  );
+
   // 22. Submit Teacher Response by Public Token
   const submitTeacherResponseByToken = useCallback(
     async (
@@ -6835,6 +6972,63 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, []);
 
+  const renewAdministrativeInquiryLink = useCallback(
+    async (
+      inquiryId: string
+    ): Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }> => {
+      const target = administrativeInquiries.find((i) => i.id === inquiryId);
+      if (!target) {
+        return { success: false, error: "المساءلة الإدارية المحددة غير موجودة." };
+      }
+
+      const newExpiresAt = calculateTokenExpiry();
+      const updatedInquiry: AdministrativeInquiry = {
+        ...target,
+        tokenExpiresAt: newExpiresAt,
+      };
+
+      setAdministrativeInquiries((prev) =>
+        prev.map((i) => (i.id === inquiryId ? updatedInquiry : i))
+      );
+
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY);
+          if (stored) {
+            const list: AdministrativeInquiry[] = JSON.parse(stored);
+            const updated = list.map((i) => (i.id === inquiryId ? updatedInquiry : i));
+            localStorage.setItem(ADMINISTRATIVE_INQUIRIES_STORAGE_KEY, JSON.stringify(updated));
+          }
+        } catch (e) {
+          console.warn("فشل تحديث المساءلة الإدارية في التخزين المحلي:", e);
+        }
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          await supabase
+            .from("administrative_inquiries")
+            .update({ token_expires_at: newExpiresAt })
+            .eq("id", inquiryId);
+        } catch (cloudErr) {
+          console.warn("فشل تحديث مهلة المساءلة الإدارية في سوبابيز:", cloudErr);
+        }
+      }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "administrative_inquiry",
+        entityId: target.id,
+        details: `تم تجديد رابط المساءلة الإدارية للمعلمة (${target.teacherName}) لمدة 7 أيام كاملة حتى ${formatSaudiDateTime(newExpiresAt)}`,
+        oldValue: { tokenExpiresAt: target.tokenExpiresAt },
+        newValue: { tokenExpiresAt: newExpiresAt },
+      });
+
+      return { success: true, newExpiresAt, token: target.token };
+    },
+    [administrativeInquiries]
+  );
+
   // 26. Restore Full System Snapshot (Point-in-Time Disaster Recovery)
   const restoreFullSystemSnapshot = useCallback(
     async (
@@ -7024,6 +7218,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreAdministrativeInquiry,
       permanentDeleteAdministrativeInquiry,
       markAdministrativeInquiryLinkShared,
+      renewInquiryLink,
+      renewDelayNoticeLink,
+      renewAdministrativeInquiryLink,
       pendingSyncCount,
       flushSyncQueue,
     }),
@@ -7093,6 +7290,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreAdministrativeInquiry,
       permanentDeleteAdministrativeInquiry,
       markAdministrativeInquiryLinkShared,
+      renewInquiryLink,
+      renewDelayNoticeLink,
+      renewAdministrativeInquiryLink,
       restoreFullSystemSnapshot,
     ]
   );

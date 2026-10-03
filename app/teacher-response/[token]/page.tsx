@@ -27,7 +27,10 @@ import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { cn } from "@/lib/utils";
 import {
   getSaudiToday,
+  calculateTokenExpiry,
   calculate48HoursExpiry,
+  formatSaudiDateTime,
+  getLinkExpiryStatus,
   isTokenExpired,
 } from "@/lib/timeUtils";
 
@@ -111,7 +114,7 @@ export default function PublicTeacherResponsePage() {
                 shareToken: data.share_token || token,
                 tokenExpiresAt:
                   data.token_expires_at ||
-                  calculate48HoursExpiry(),
+                  calculateTokenExpiry(),
                 teacherResponseSubmittedAt:
                   data.teacher_response_submitted_at || undefined,
                 teacherIpAddress: data.teacher_ip_address || undefined,
@@ -353,8 +356,19 @@ export default function PublicTeacherResponsePage() {
             انتهت صلاحية هذا الرابط
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-            عذراً أستاذة ({notice?.teacherName || "المعلمة"})، لقد انقضت المهلة المحددة للرد على إشعار التنبيه (48 ساعة من تاريخ الإرسال). يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك.
+            عذراً أستاذة ({notice?.teacherName || "المعلمة"})، لقد انقضت المهلة المحددة للرد على إشعار التنبيه (7 أيام كاملة من تاريخ الإرسال). يرجى مراجعة إدارة المدرسة شخصياً لتقديم إفادتك.
           </p>
+          {notice && (
+            <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 text-right space-y-1.5 font-medium">
+              <p>رقم التنبيه: {notice.noticeNumber || "مسجل بالنظام"}</p>
+              {notice.createdAt && (
+                <p>تاريخ ووقت الإرسال: {formatSaudiDateTime(notice.createdAt)}</p>
+              )}
+              {notice.tokenExpiresAt && (
+                <p>تاريخ ووقت الانتهاء: {formatSaudiDateTime(notice.tokenExpiresAt)}</p>
+              )}
+            </div>
+          )}
           <div className="pt-2 text-xs text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-800">
             نظام الإدارة المدرسية الموحد — منصة المتابعة الإدارية
           </div>
@@ -492,6 +506,15 @@ export default function PublicTeacherResponsePage() {
             <div className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-[11px] font-bold border border-slate-200/80 dark:border-slate-700">
               <span>رقم التنبيه:</span>
               <span className="text-[#137a85] dark:text-teal-400">{notice.noticeNumber}</span>
+            </div>
+          )}
+
+          {notice?.tokenExpiresAt && (
+            <div className="mt-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
+                <Clock className="w-3.5 h-3.5" />
+                <span>مهلة تقديم الإفادة (7 أيام): {getLinkExpiryStatus(notice.tokenExpiresAt).statusLabel}</span>
+              </div>
             </div>
           )}
         </header>

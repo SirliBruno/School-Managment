@@ -15,12 +15,18 @@ import {
   Calendar,
   Eye,
   Plus,
+  RefreshCw,
 } from "lucide-react";
 import { AbsenceInquiry } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { InquiryReviewModal } from "@/components/procedures/InquiryReviewModal";
+import {
+  getLinkExpiryStatus,
+  isTokenExpired,
+  formatSaudiDateTime,
+} from "@/lib/timeUtils";
 import {
   generateInquiryMessage,
   getWhatsAppDirectUrl,
@@ -43,7 +49,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
   onOpenNewInquiryModal,
 }) => {
   const router = useRouter();
-  const { inquiries, deleteInquiry } = useTeachers();
+  const { inquiries, deleteInquiry, renewInquiryLink } = useTeachers();
   const { showToast } = useToast();
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -106,8 +112,35 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     }
   };
 
+  // Renew Link Helper (7 Days)
+  const handleRenewLink = async (inq: AbsenceInquiry) => {
+    try {
+      await renewInquiryLink(inq.id);
+      showToast({
+        message: "تم تجديد مهلة الرابط لأسبوع إضافي (7 أيام) بنجاح",
+        type: "success",
+      });
+    } catch (e) {
+      console.error("فشل تجديد الرابط:", e);
+      showToast({ message: "تعذر تجديد مهلة الرابط حالياً", type: "error" });
+    }
+  };
+
   // Resend WhatsApp Helper
-  const handleResendWhatsApp = (inq: AbsenceInquiry) => {
+  const handleResendWhatsApp = async (inq: AbsenceInquiry) => {
+    // If token is expired and inquiry is pending, automatically renew for 7 days
+    if (inq.status === "pending" && isTokenExpired(inq.expiresAt)) {
+      try {
+        await renewInquiryLink(inq.id);
+        showToast({
+          message: "تم تجديد مهلة الرابط تلقائياً لمدة 7 أيام عند إعادة الإرسال",
+          type: "info",
+        });
+      } catch (err) {
+        console.error("فشل تجديد الرابط تلقائياً:", err);
+      }
+    }
+
     const isMulti = Boolean(inq.absenceEndDate && inq.absenceEndDate !== inq.absenceDate);
     const link = getInquiryPublicUrl(inq.token, {
       endDate: isMulti ? inq.absenceEndDate : undefined,
@@ -238,15 +271,46 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     },
     {
       id: "status",
-      header: "حالة المساءلة",
+      header: "حالة المساءلة والصلاحية",
       align: "center",
       sortable: true,
       cell: ({ row }) => {
         if (row.status === "pending") {
+          const expiry = getLinkExpiryStatus(row.expiresAt);
+
+          if (expiry.status === "expired") {
+            return (
+              <div className="flex flex-col items-center gap-1">
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                  <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                  <span>انتهت الصلاحية ({formatSaudiDateTime(row.expiresAt, { dateOnly: true })})</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleRenewLink(row)}
+                  className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-800 dark:hover:text-teal-200 transition-colors cursor-pointer"
+                  title="تمديد الصلاحية 7 أيام إضافية"
+                >
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  <span>تجديد أسبوع</span>
+                </button>
+              </div>
+            );
+          }
+
+          if (expiry.status === "expiring_soon") {
+            return (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 animate-pulse">
+                <Clock className="w-3 h-3" />
+                <span>ينتهي قريباً (خلال {expiry.hoursLeft} س)</span>
+              </span>
+            );
+          }
+
           return (
             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
               <Clock className="w-3 h-3" />
-              <span>بانتظار الرد</span>
+              <span>بانتظار الرد (متبقي {expiry.daysLeft} أيام)</span>
             </span>
           );
         }
@@ -291,6 +355,16 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
             icon: FileCheck2,
             onClick: () => handleOpenReview(row),
           },
+          ...(isPending
+            ? [
+                {
+                  id: "renew-link",
+                  label: "تجديد مهلة الرابط (7 أيام إضافية)",
+                  icon: RefreshCw,
+                  onClick: () => handleRenewLink(row),
+                },
+              ]
+            : []),
           {
             id: "resend-wa",
             label: "إرسال تذكير عبر الواتساب",
@@ -505,9 +579,28 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                 </div>
 
                 {isPending ? (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-                    بانتظار الرد
-                  </span>
+                  (() => {
+                    const expiry = getLinkExpiryStatus(inq.expiresAt);
+                    if (expiry.status === "expired") {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                          انتهت الصلاحية
+                        </span>
+                      );
+                    }
+                    if (expiry.status === "expiring_soon") {
+                      return (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 animate-pulse">
+                          ينتهي ({expiry.hoursLeft}س)
+                        </span>
+                      );
+                    }
+                    return (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                        متبقي {expiry.daysLeft} أيام
+                      </span>
+                    );
+                  })()
                 ) : inq.status === "submitted" ? (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
                     تم الرد
@@ -550,6 +643,14 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
                 <div className="flex items-center gap-1.5">
                   {isPending ? (
                     <>
+                      <button
+                        type="button"
+                        onClick={() => handleRenewLink(inq)}
+                        className="p-1.5 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800/60"
+                        title="تجديد مهلة الرابط (7 أيام إضافية)"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => handleResendWhatsApp(inq)}

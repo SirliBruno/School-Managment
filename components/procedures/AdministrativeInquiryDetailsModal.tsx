@@ -21,13 +21,16 @@ import {
   Eye,
   Maximize2,
   FileText,
+  RefreshCw,
 } from "lucide-react";
 import { AdministrativeInquiry } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
+import { useToast } from "@/context/ToastContext";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { openAdministrativeInquiryWhatsApp } from "@/lib/administrativeInquiryWhatsappService";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
+import { cn } from "@/lib/utils";
 
 interface AdministrativeInquiryDetailsModalProps {
   isOpen: boolean;
@@ -44,8 +47,10 @@ export const AdministrativeInquiryDetailsModal: React.FC<AdministrativeInquiryDe
   onEdit,
   onReview,
 }) => {
-  const { teachers, markAdministrativeInquiryLinkShared } = useTeachers();
+  const { teachers, markAdministrativeInquiryLinkShared, renewAdministrativeInquiryLink } = useTeachers();
+  const { showToast } = useToast();
   const [isViewerOpen, setIsViewerOpen] = React.useState(false);
+  const [isRenewing, setIsRenewing] = React.useState(false);
 
   if (!isOpen || !inquiry) return null;
 
@@ -61,6 +66,22 @@ export const AdministrativeInquiryDetailsModal: React.FC<AdministrativeInquiryDe
     markAdministrativeInquiryLinkShared(inquiry.id);
   };
 
+  const handleRenewLink = async () => {
+    try {
+      setIsRenewing(true);
+      await renewAdministrativeInquiryLink(inquiry.id);
+      showToast({
+        message: "تم تجديد مهلة الرابط لأسبوع إضافي (7 أيام) بنجاح",
+        type: "success",
+      });
+    } catch (e) {
+      console.error("فشل تجديد الرابط:", e);
+      showToast({ message: "تعذر تجديد مهلة الرابط حالياً", type: "error" });
+    } finally {
+      setIsRenewing(false);
+    }
+  };
+
   const isExpired =
     inquiry.status === "pending_teacher" &&
     inquiry.tokenExpiresAt &&
@@ -71,7 +92,7 @@ export const AdministrativeInquiryDetailsModal: React.FC<AdministrativeInquiryDe
       return (
         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
           <Clock className="w-3.5 h-3.5" />
-          منتهية الصلاحية (تجاوزت 48 ساعة)
+          منتهية الصلاحية (تجاوزت 7 أيام)
         </span>
       );
     }
@@ -330,6 +351,18 @@ export const AdministrativeInquiryDetailsModal: React.FC<AdministrativeInquiryDe
               <Share2 className="w-3.5 h-3.5" />
               <span>إرسال الرابط عبر واتساب</span>
             </button>
+
+            {(isExpired || inquiry.status === "pending_teacher") && (
+              <button
+                type="button"
+                onClick={handleRenewLink}
+                disabled={isRenewing}
+                className="px-4 py-2 rounded-2xl border border-teal-200 dark:border-teal-800 bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 text-xs font-semibold hover:bg-teal-100 dark:hover:bg-teal-900/60 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", isRenewing && "animate-spin")} />
+                <span>تجديد مهلة الرابط (7 أيام)</span>
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

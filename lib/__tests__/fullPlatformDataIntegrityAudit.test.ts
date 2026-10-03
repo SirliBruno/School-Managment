@@ -25,7 +25,7 @@ import {
   ArchivedAdministrativeInquiry,
 } from "@/types/teacher";
 import { parseAttachments } from "@/lib/attachments";
-import { isTokenExpired } from "@/lib/timeUtils";
+import { isTokenExpired, calculateTokenExpiry } from "@/lib/timeUtils";
 
 // Mock Database Initial State representing full production data ecosystem
 const MOCK_TEACHERS: Teacher[] = [
@@ -440,8 +440,8 @@ describe("تدقيق سلامة وتكامل بيانات المنصة الشا�
       });
     });
 
-    it("4.2 يتحقق من صلاحية رموز الـ Token ومهلة الـ 48 ساعة النظامية", () => {
-      const freshExpiry = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+    it("4.2 يتحقق من صلاحية رموز الـ Token ومهلة الـ 7 أيام النظامية (168 ساعة)", () => {
+      const freshExpiry = calculateTokenExpiry();
       const pastExpiry = new Date(Date.now() - 3600 * 1000).toISOString();
 
       expect(isTokenExpired(freshExpiry)).toBe(false);

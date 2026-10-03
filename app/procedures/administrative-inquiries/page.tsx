@@ -23,7 +23,9 @@ import {
   MessageSquare,
   FileText,
   Copy,
+  RefreshCw,
 } from "lucide-react";
+import { isTokenExpired } from "@/lib/timeUtils";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import {
@@ -66,6 +68,7 @@ export default function AdministrativeInquiriesPage() {
     teachers,
     deleteAdministrativeInquiry,
     markAdministrativeInquiryLinkShared,
+    renewAdministrativeInquiryLink,
   } = useTeachers();
   const { showToast } = useToast();
 
@@ -170,8 +173,35 @@ export default function AdministrativeInquiriesPage() {
     }
   };
 
+  // Handle Renew Link Helper (7 Days)
+  const handleRenewLink = async (inq: AdministrativeInquiry) => {
+    try {
+      await renewAdministrativeInquiryLink(inq.id);
+      showToast({
+        message: "تم تجديد مهلة الرابط لأسبوع إضافي (7 أيام) بنجاح",
+        type: "success",
+      });
+    } catch (e) {
+      console.error("فشل تجديد مهلة رابط المساءلة الإدارية:", e);
+      showToast({ message: "تعذر تجديد مهلة الرابط حالياً", type: "error" });
+    }
+  };
+
   // Handle Quick WhatsApp Share
-  const handleWhatsAppShare = (inq: AdministrativeInquiry) => {
+  const handleWhatsAppShare = async (inq: AdministrativeInquiry) => {
+    // If token is expired or inquiry is marked expired, auto-renew for 7 days
+    if (inq.status === "expired" || (inq.tokenExpiresAt && isTokenExpired(inq.tokenExpiresAt))) {
+      try {
+        await renewAdministrativeInquiryLink(inq.id);
+        showToast({
+          message: "تم تجديد مهلة الرابط تلقائياً لمدة 7 أيام عند إعادة الإرسال",
+          type: "info",
+        });
+      } catch (err) {
+        console.error("فشل تجديد الرابط تلقائياً:", err);
+      }
+    }
+
     const teacher = teachers.find((t) => t.id === inq.teacherId);
     const phone = inq.teacherPhone || teacher?.mobile || teacher?.phone || "";
     openAdministrativeInquiryWhatsApp(inq, phone);
@@ -345,7 +375,7 @@ export default function AdministrativeInquiriesPage() {
           return (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
               <AlertTriangle className="w-3.5 h-3.5 text-slate-500" />
-              <span>منتهية الصلاحية (48 س)</span>
+              <span>منتهية الصلاحية (7 أيام)</span>
             </span>
           );
         }
@@ -387,6 +417,16 @@ export default function AdministrativeInquiriesPage() {
             icon: Printer,
             onClick: () => handleQuickPrint(row),
           },
+          ...(row.status === "pending_teacher" || row.status === "expired"
+            ? [
+                {
+                  id: "renew",
+                  label: "تجديد مهلة الرابط (7 أيام إضافية)",
+                  icon: RefreshCw,
+                  onClick: () => handleRenewLink(row),
+                },
+              ]
+            : []),
           {
             id: "whatsapp",
             label: "إعادة إرسال الرابط",
@@ -549,7 +589,7 @@ export default function AdministrativeInquiriesPage() {
             <KpiCard
               title="منتهية الصلاحية"
               value={expiredCount}
-              subtitle="تجاوزت مهلة 48 ساعة"
+              subtitle="تجاوزت مهلة 7 أيام"
               icon={<AlertTriangle className="w-5 h-5 text-slate-600 dark:text-slate-400" />}
               variant="slate"
               className={activeTab === "expired" ? "ring-2 ring-slate-600" : ""}
