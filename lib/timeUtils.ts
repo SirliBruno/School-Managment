@@ -445,6 +445,20 @@ export function getDatesInRange(startDateStr: string, endDateStr: string): strin
 }
 
 /**
+ * إضافة عدد محدد من الأيام إلى تاريخ بصيغة YYYY-MM-DD
+ */
+export function addDaysToDateStr(dateStr: string, days: number): string {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  if (isNaN(d.getTime())) return dateStr;
+  d.setDate(d.getDate() + days);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/**
  * ترميز بيانات فترة الغياب المتعددة لحفظها بأمان في admin_notes في سوبابيز كطبقة أمان إضافية
  */
 export function serializeInquiryMeta(

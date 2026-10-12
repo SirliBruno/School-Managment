@@ -96,7 +96,7 @@ export const RecentAbsencesTable: React.FC = () => {
         specialty: record.specialty,
         jobTitle: teacher.jobTitle || "معلم",
         employmentStatus: teacher.employmentStatus || "دائم",
-        absenceCount: teacher.totalAbsences || 1,
+        absenceCount: 1,
         absenceDate: record.date,
         absenceType: record.type,
         absenceReason: record.reason,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -25,6 +25,7 @@ import { printAbsencePdf } from "@/lib/printPdfService";
 import { parseAttachments, openSafeAttachmentUrl } from "@/lib/attachments";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { cn } from "@/lib/utils";
+import { addDaysToDateStr, calculateDaysBetween } from "@/lib/timeUtils";
 
 interface InquiryReviewModalProps {
   inquiry: AbsenceInquiry | null;
@@ -49,6 +50,22 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
     message: string;
   } | null>(null);
 
+  // Admin Duration Adjustment States
+  const [adminDaysCount, setAdminDaysCount] = useState<number>(inquiry?.daysCount || 1);
+  const [adminEndDate, setAdminEndDate] = useState<string>(
+    inquiry?.absenceEndDate || inquiry?.absenceDate || ""
+  );
+  const [isEditingDuration, setIsEditingDuration] = useState(false);
+
+  useEffect(() => {
+    if (inquiry) {
+      setAdminNotes(inquiry.adminNotes || "");
+      setAdminDaysCount(inquiry.daysCount || 1);
+      setAdminEndDate(inquiry.absenceEndDate || inquiry.absenceDate || "");
+      setIsEditingDuration(false);
+    }
+  }, [inquiry]);
+
   if (!isOpen || !inquiry) return null;
 
   const teacher = teachers.find((t) => t.id === inquiry.teacherId);
@@ -57,7 +74,19 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
     setIsProcessing(true);
     setFeedback(null);
     try {
-      const res = await updateInquiryDecision(inquiry.id, status, adminNotes);
+      const isMulti = adminDaysCount > 1 && Boolean(adminEndDate && adminEndDate !== inquiry.absenceDate);
+      const res = await updateInquiryDecision(
+        inquiry.id,
+        status,
+        adminNotes,
+        isEditingDuration || (inquiry.isMultiDay !== isMulti) || (inquiry.daysCount !== adminDaysCount)
+          ? {
+              absenceEndDate: isMulti ? adminEndDate : undefined,
+              daysCount: adminDaysCount,
+              isMultiDay: isMulti,
+            }
+          : undefined
+      );
       if (res.success) {
         setFeedback({
           type: "success",
@@ -91,10 +120,10 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
         specialty: inquiry.specialty || teacher?.specialty || "الكادر التعليمي",
         jobTitle: teacher?.jobTitle || "معلم",
         employmentStatus: teacher?.employmentStatus || "دائم",
-        absenceCount: (teacher?.totalAbsences || 0) + (inquiry.status === "approved" ? 0 : (inquiry.daysCount || 1)),
+        absenceCount: adminDaysCount || inquiry.daysCount || 1,
         absenceDate:
-          inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-            ? `${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+          adminEndDate && adminEndDate !== inquiry.absenceDate
+            ? `${inquiry.absenceDate} إلى ${adminEndDate} (${adminDaysCount || 2} أيام)`
             : inquiry.absenceDate,
         absenceType: inquiry.absenceType || "مرضي",
         absenceReason: inquiry.teacherReason || "إفادة المساءلة الإلكترونية",
@@ -196,13 +225,13 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
               </div>
               <div>
                 <span className="text-slate-400 dark:text-slate-500 block text-[11px]">
-                  {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
+                  {adminEndDate && adminEndDate !== inquiry.absenceDate
                     ? "فترة الغياب"
                     : "تاريخ الغياب"}
                 </span>
                 <span className="font-bold text-[#137a85] dark:text-teal-400 mt-0.5 block font-mono text-xs">
-                  {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                    ? `${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${inquiry.daysCount || 2} أيام)`
+                  {adminEndDate && adminEndDate !== inquiry.absenceDate
+                    ? `${inquiry.absenceDate} إلى ${adminEndDate} (${adminDaysCount} أيام)`
                     : inquiry.absenceDate}
                 </span>
               </div>
@@ -215,6 +244,88 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
                 </span>
               </div>
             </div>
+
+            {/* Multi-day Absence Extension Notice & Admin Editor */}
+            {inquiry.status !== "approved" && inquiry.status !== "rejected" && (
+              <div className="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/60 text-xs space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 text-teal-900 dark:text-teal-200">
+                    <Calendar className="w-4 h-4 text-[#137a85] dark:text-teal-400 shrink-0" />
+                    <span>
+                      {adminDaysCount > 1 ? (
+                        <>
+                          المساءلة تغطي غياباً ممتداً لمدة <strong>({adminDaysCount} أيام)</strong> من{" "}
+                          <strong>{inquiry.absenceDate}</strong> إلى <strong>{adminEndDate}</strong>.
+                        </>
+                      ) : (
+                        <>
+                          المساءلة مسجلة ليوم واحد: <strong>{inquiry.absenceDate}</strong>.
+                        </>
+                      )}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingDuration(!isEditingDuration)}
+                    className="text-[11px] font-bold text-[#137a85] dark:text-teal-400 hover:underline shrink-0 cursor-pointer"
+                  >
+                    {isEditingDuration ? "إغلاق التعديل" : "تعديل مدة الغياب المعتمدة"}
+                  </button>
+                </div>
+
+                {isEditingDuration && (
+                  <div className="pt-2 border-t border-teal-200/60 dark:border-teal-800/40 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        تعديل عدد الأيام المعتمدة (1 إلى 5):
+                      </label>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {[1, 2, 3, 4, 5].map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => {
+                              setAdminDaysCount(d);
+                              setAdminEndDate(
+                                d > 1 ? addDaysToDateStr(inquiry.absenceDate, d - 1) : inquiry.absenceDate
+                              );
+                            }}
+                            className={cn(
+                              "py-1 rounded-lg text-xs font-bold border transition-colors cursor-pointer text-center",
+                              adminDaysCount === d
+                                ? "bg-[#137a85] text-white border-[#137a85]"
+                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-[#137a85]"
+                            )}
+                          >
+                            {d} {d === 1 ? "يوم" : "أيام"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">
+                        تاريخ نهاية الغياب:
+                      </label>
+                      <input
+                        type="date"
+                        value={adminEndDate}
+                        min={inquiry.absenceDate}
+                        max={addDaysToDateStr(inquiry.absenceDate, 4)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAdminEndDate(val);
+                          const days = calculateDaysBetween(inquiry.absenceDate, val);
+                          setAdminDaysCount(Math.min(5, Math.max(1, days)));
+                        }}
+                        className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono font-bold text-slate-800 dark:text-slate-200"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Teacher Response Section */}
             <div className="space-y-3">

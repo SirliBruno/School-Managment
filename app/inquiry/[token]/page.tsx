@@ -42,6 +42,7 @@ import {
   isTokenExpired,
   formatSaudiDateTime,
   getLinkExpiryStatus,
+  addDaysToDateStr,
 } from "@/lib/timeUtils";
 
 const ABSENCE_TYPES: {
@@ -102,6 +103,11 @@ export default function TeacherInquiryPage() {
     >
   >({});
   const [confirmedPledge, setConfirmedPledge] = useState(false);
+
+  // Multi-day Extension States (الغياب الممتد / سكليف عدة أيام)
+  const [isMultiDayExtension, setIsMultiDayExtension] = useState(false);
+  const [extendedDaysCount, setExtendedDaysCount] = useState<number>(1);
+  const [extendedEndDate, setExtendedEndDate] = useState<string>("");
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -226,6 +232,17 @@ export default function TeacherInquiryPage() {
           setErrorMessage("لم يتم العثور على سجل المساءلة المطلوب أو تم إلغاؤه من قبل الإدارة.");
         } else {
           setInquiry(foundInquiry);
+          if (
+            foundInquiry.absenceEndDate &&
+            foundInquiry.absenceEndDate !== foundInquiry.absenceDate
+          ) {
+            setIsMultiDayExtension(true);
+            setExtendedEndDate(foundInquiry.absenceEndDate);
+            setExtendedDaysCount(foundInquiry.daysCount || 2);
+          } else {
+            setExtendedEndDate(foundInquiry.absenceDate);
+            setExtendedDaysCount(1);
+          }
           if (foundInquiry.status !== "pending") {
             setSubmittedSuccess(true);
           }
@@ -355,6 +372,16 @@ export default function TeacherInquiryPage() {
       }
     }
 
+    if (isMultiDayExtension) {
+      if (!extendedEndDate) {
+        errors.extension = "يرجى تحديد تاريخ نهاية الغياب.";
+      } else if (inquiry && extendedEndDate < inquiry.absenceDate) {
+        errors.extension = "تاريخ نهاية الغياب لا يمكن أن يسبق تاريخ بداية الغياب.";
+      } else if (extendedDaysCount > 5) {
+        errors.extension = "الحد الأقصى للمساءلة الواحدة هو 5 أيام دراسية.";
+      }
+    }
+
     if (!confirmedPledge) {
       errors.pledge = "يجب الإقرار بصحة البيانات والمرفقات المقدمة للمتابعة.";
     }
@@ -446,12 +473,19 @@ export default function TeacherInquiryPage() {
 
       const attachmentPayload = JSON.stringify(uploadedAttachments);
 
+      const finalIsMulti = Boolean(isMultiDayExtension && extendedDaysCount > 1);
+      const finalEndDate = finalIsMulti ? extendedEndDate : undefined;
+      const finalDaysCount = finalIsMulti ? extendedDaysCount : 1;
+
       const updatedData: Partial<AbsenceInquiry> = {
         status: "submitted",
         absenceType: finalAbsenceType as AbsenceType,
         teacherReason: reason.trim(),
         attachmentUrl: attachmentPayload,
         submittedAt,
+        absenceEndDate: finalEndDate,
+        daysCount: finalDaysCount,
+        isMultiDay: finalIsMulti,
       };
 
       // 2. Update Supabase with Data Loss Prevention
@@ -465,6 +499,9 @@ export default function TeacherInquiryPage() {
               teacher_reason: reason.trim(),
               attachment_url: attachmentPayload,
               submitted_at: submittedAt,
+              absence_end_date: finalEndDate || null,
+              days_count: finalDaysCount,
+              is_multi_day: finalIsMulti,
             })
             .eq("id", inquiry.id);
 
@@ -891,6 +928,136 @@ export default function TeacherInquiryPage() {
                     <span>{formErrors.customOtherType}</span>
                   </p>
                 )}
+              </div>
+            )}
+          </div>
+
+          {/* Multi-day Absence Extension Option */}
+          <div className="p-4 sm:p-5 rounded-2xl bg-teal-50/60 dark:bg-teal-950/25 border border-teal-200/80 dark:border-teal-800/60 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-teal-100 dark:bg-teal-900/60 text-[#137a85] dark:text-teal-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <label
+                    htmlFor={`${formId}-multi-day-toggle`}
+                    className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 block cursor-pointer"
+                  >
+                    العذر أو الإجازة تغطي عدة أيام متصلة
+                  </label>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">
+                    (تفعيل هذا الخيار في حال كان التقرير الطبي أو العذر يمتد لعدة أيام، مثل سكليف صحتي)
+                  </p>
+                </div>
+              </div>
+
+              {/* Toggle Switch */}
+              <button
+                id={`${formId}-multi-day-toggle`}
+                type="button"
+                role="switch"
+                aria-checked={isMultiDayExtension}
+                onClick={() => {
+                  const next = !isMultiDayExtension;
+                  setIsMultiDayExtension(next);
+                  if (!next) {
+                    setExtendedDaysCount(1);
+                    setExtendedEndDate(inquiry.absenceDate);
+                  } else {
+                    const defaultDays = 2;
+                    setExtendedDaysCount(defaultDays);
+                    setExtendedEndDate(addDaysToDateStr(inquiry.absenceDate, defaultDays - 1));
+                  }
+                  setFormErrors((prev) => ({ ...prev, extension: "" }));
+                }}
+                className={cn(
+                  "w-12 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0",
+                  isMultiDayExtension
+                    ? "bg-[#137a85]"
+                    : "bg-slate-300 dark:bg-slate-700"
+                )}
+              >
+                <span
+                  className={cn(
+                    "w-5 h-5 rounded-full bg-white shadow-xs transform transition-transform absolute top-0.5",
+                    isMultiDayExtension ? "right-1" : "right-6"
+                  )}
+                />
+              </button>
+            </div>
+
+            {isMultiDayExtension && (
+              <div className="pt-3 border-t border-teal-200/60 dark:border-teal-800/40 space-y-3 animate-in fade-in">
+                <div>
+                  <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                    حددي إجمالي مدة الغياب المتصلة (حتى 5 أيام كحد أقصى):
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[2, 3, 4, 5].map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => {
+                          setExtendedDaysCount(d);
+                          setExtendedEndDate(addDaysToDateStr(inquiry.absenceDate, d - 1));
+                          setFormErrors((prev) => ({ ...prev, extension: "" }));
+                        }}
+                        className={cn(
+                          "py-2 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center",
+                          extendedDaysCount === d
+                            ? "bg-[#137a85] text-white border-[#137a85] shadow-xs"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-[#137a85]"
+                        )}
+                      >
+                        {d === 2 ? "يومان" : `${d} أيام`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+                  <div className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-teal-200/50 dark:border-teal-800/40">
+                    <span className="text-slate-400 dark:text-slate-500 block text-[11px]">تاريخ بداية الغياب الأساسي:</span>
+                    <span className="font-extrabold text-slate-800 dark:text-slate-200 mt-0.5 block font-mono text-sm">
+                      {inquiry.absenceDate}
+                    </span>
+                  </div>
+
+                  <div className="bg-white/80 dark:bg-slate-800/80 p-3 rounded-xl border border-teal-200/50 dark:border-teal-800/40">
+                    <label className="text-slate-700 dark:text-slate-300 block text-[11px] font-bold mb-1">
+                      تاريخ نهاية الغياب:
+                    </label>
+                    <input
+                      type="date"
+                      value={extendedEndDate}
+                      min={inquiry.absenceDate}
+                      max={addDaysToDateStr(inquiry.absenceDate, 4)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtendedEndDate(val);
+                        const days = calculateDaysBetween(inquiry.absenceDate, val);
+                        setExtendedDaysCount(Math.min(5, Math.max(1, days)));
+                        setFormErrors((prev) => ({ ...prev, extension: "" }));
+                      }}
+                      className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#137a85]"
+                    />
+                  </div>
+                </div>
+
+                {formErrors.extension && (
+                  <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{formErrors.extension}</span>
+                  </p>
+                )}
+
+                <div className="p-2.5 rounded-xl bg-teal-100/70 dark:bg-teal-950/60 text-[11px] text-teal-800 dark:text-teal-300 flex items-center gap-2 font-medium">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>
+                    ستوثق المساءلة لفترة ({extendedDaysCount} أيام) من {inquiry.absenceDate} إلى {extendedEndDate} بموجب المرفق.
+                  </span>
+                </div>
               </div>
             )}
           </div>

@@ -19,8 +19,8 @@ export interface AbsencePdfData {
   username?: string;
   nationalId?: string;
   specialty: string;
-  jobTitle: string;
-  employmentStatus: string;
+  jobTitle?: string;
+  employmentStatus?: string;
   absenceCount: number;
   absenceDate: string;
   absenceType: string;

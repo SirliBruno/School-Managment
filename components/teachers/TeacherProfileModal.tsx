@@ -266,7 +266,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
         specialty: currentTeacher.specialty || currentTeacher.teachingField || "عام",
         jobTitle: currentTeacher.jobTitle || "معلم",
         employmentStatus: currentTeacher.employmentStatus || "دائم",
-        absenceCount: teacherAbsences.length || 1,
+        absenceCount: 1,
         absenceDate: record.date,
         absenceType: record.type,
         absenceReason: record.reason,

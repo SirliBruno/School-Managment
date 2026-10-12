@@ -160,7 +160,12 @@ interface TeacherContextType {
   updateInquiryDecision: (
     inquiryId: string,
     status: "approved" | "rejected",
-    adminNotes?: string
+    adminNotes?: string,
+    updatedRange?: {
+      absenceEndDate?: string;
+      daysCount?: number;
+      isMultiDay?: boolean;
+    }
   ) => Promise<{ success: boolean; error?: string }>;
   deleteInquiry: (inquiryId: string, archiveReason?: string) => Promise<void>;
   refreshInquiries: () => Promise<void>;
@@ -523,6 +528,9 @@ export const mapInquiryToDbRow = (
   absence_type: inq.absenceType || null,
   teacher_reason: inq.teacherReason || null,
   attachment_url: inq.attachmentUrl || null,
+  absence_end_date: inq.absenceEndDate || null,
+  days_count: inq.daysCount || 1,
+  is_multi_day: Boolean(inq.isMultiDay),
   admin_notes: inq.adminNotes || null,
   submitted_at: inq.submittedAt || null,
   created_at: inq.createdAt || new Date().toISOString(),
@@ -3941,7 +3949,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
     async (
       inquiryId: string,
       status: "approved" | "rejected",
-      adminNotes?: string
+      adminNotes?: string,
+      updatedRange?: {
+        absenceEndDate?: string;
+        daysCount?: number;
+        isMultiDay?: boolean;
+      }
     ): Promise<{ success: boolean; error?: string }> => {
       const existingInquiry = inquiries.find((i) => i.id === inquiryId);
       if (!existingInquiry) {
@@ -3952,40 +3965,50 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         ...existingInquiry,
         status,
         adminNotes: adminNotes !== undefined ? adminNotes : existingInquiry.adminNotes,
+        ...(updatedRange
+          ? {
+              absenceEndDate: updatedRange.absenceEndDate,
+              daysCount: updatedRange.daysCount,
+              isMultiDay: updatedRange.isMultiDay,
+            }
+          : {}),
       };
 
+      const coveredDates =
+        updatedInquiry.isMultiDay && updatedInquiry.absenceEndDate
+          ? getDatesInRange(updatedInquiry.absenceDate, updatedInquiry.absenceEndDate)
+          : [updatedInquiry.absenceDate];
+
       setInquiries((prev) =>
-        prev.map((inq) => (inq.id === inquiryId ? updatedInquiry : inq))
+        prev.map((inq) => {
+          if (inq.id === inquiryId) {
+            return updatedInquiry;
+          }
+          if (
+            status === "approved" &&
+            coveredDates.length > 1 &&
+            inq.teacherId === updatedInquiry.teacherId &&
+            inq.status !== "approved" &&
+            inq.status !== "rejected" &&
+            coveredDates.includes(inq.absenceDate)
+          ) {
+            return {
+              ...inq,
+              status: "approved",
+              adminNotes: inq.adminNotes
+                ? `${inq.adminNotes} (تم الضم والاعتماد آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)})`
+                : `تم الضم والاعتماد آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate}`,
+            };
+          }
+          return inq;
+        })
       );
 
       // If approved, document it in absenceRecords if not recorded already
       if (status === "approved") {
-        if (updatedInquiry.isMultiDay && updatedInquiry.absenceEndDate) {
-          const dates = getDatesInRange(updatedInquiry.absenceDate, updatedInquiry.absenceEndDate);
-          dates.forEach((d, idx) => {
-            const alreadyRecorded = absenceRecords.some(
-              (a) => a.teacherId === updatedInquiry.teacherId && a.date === d
-            );
-
-            if (!alreadyRecorded) {
-              recordAbsence({
-                teacherId: updatedInquiry.teacherId,
-                teacherName: updatedInquiry.teacherName,
-                jobNumber: updatedInquiry.jobNumber,
-                specialty: updatedInquiry.specialty || "عام",
-                date: d,
-                type: updatedInquiry.absenceType || "مرضي",
-                reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد للفترة",
-                notes: adminNotes || updatedInquiry.adminNotes || `مساءلة معتمدة للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate} (اليوم ${idx + 1} من ${dates.length})`,
-                attachmentUrl: updatedInquiry.attachmentUrl || undefined,
-              });
-            }
-          });
-        } else {
+        coveredDates.forEach((d, idx) => {
           const alreadyRecorded = absenceRecords.some(
-            (a) =>
-              a.teacherId === updatedInquiry.teacherId &&
-              a.date === updatedInquiry.absenceDate
+            (a) => a.teacherId === updatedInquiry.teacherId && a.date === d
           );
 
           if (!alreadyRecorded) {
@@ -3994,14 +4017,19 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               teacherName: updatedInquiry.teacherName,
               jobNumber: updatedInquiry.jobNumber,
               specialty: updatedInquiry.specialty || "عام",
-              date: updatedInquiry.absenceDate,
+              date: d,
               type: updatedInquiry.absenceType || "مرضي",
-              reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد من الإدارة",
-              notes: adminNotes || updatedInquiry.adminNotes || "تم الاعتماد عبر المساءلة الإلكترونية",
+              reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد للفترة",
+              notes:
+                adminNotes ||
+                updatedInquiry.adminNotes ||
+                (coveredDates.length > 1
+                  ? `مساءلة معتمدة للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate} (اليوم ${idx + 1} من ${coveredDates.length})`
+                  : "تم الاعتماد عبر المساءلة الإلكترونية"),
               attachmentUrl: updatedInquiry.attachmentUrl || undefined,
             });
           }
-        }
+        });
       }
 
       if (isSupabaseConfigured() && supabase) {
@@ -4010,9 +4038,32 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             .from("absence_inquiries")
             .update({
               status,
-              admin_notes: adminNotes || null,
+              admin_notes: updatedInquiry.adminNotes || null,
+              absence_end_date: updatedInquiry.absenceEndDate || null,
+              days_count: updatedInquiry.daysCount || 1,
+              is_multi_day: Boolean(updatedInquiry.isMultiDay),
             })
             .eq("id", inquiryId);
+
+          if (status === "approved" && coveredDates.length > 1) {
+            const overlappingInquiries = inquiries.filter(
+              (inq) =>
+                inq.id !== inquiryId &&
+                inq.teacherId === updatedInquiry.teacherId &&
+                inq.status !== "approved" &&
+                inq.status !== "rejected" &&
+                coveredDates.includes(inq.absenceDate)
+            );
+            for (const oInq of overlappingInquiries) {
+              await supabase
+                .from("absence_inquiries")
+                .update({
+                  status: "approved",
+                  admin_notes: `تم الضم والاعتماد آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate}`,
+                })
+                .eq("id", oInq.id);
+            }
+          }
         } catch (err) {
           console.warn("فشل تحديث قرار المساءلة في سوبابيز:", err);
         }
