@@ -61,7 +61,7 @@ const VIOLATION_TYPE_OPTIONS: ViolationTypeOption[] = [
     icon: LogIn,
     fromLabel: "بداية الدوام الرسمي (من الساعة):",
     toLabel: "حضوركم الفعلي (الساعة):",
-    defaultFrom: "07:00",
+    defaultFrom: "06:45",
     defaultTo: "08:30",
     badgeLabel: "تأخر من بداية الدوام",
   },
@@ -130,7 +130,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
   // Violation Type dropdown selection & Time range
   const [selectedViolationType, setSelectedViolationType] =
     useState<ViolationTypeKey>("delay_start");
-  const [fromTime, setFromTime] = useState("07:00");
+  const [fromTime, setFromTime] = useState("06:45");
   const [toTime, setToTime] = useState("08:30");
   const [leftSchoolDetails, setLeftSchoolDetails] = useState("");
   const [customOtherReason, setCustomOtherReason] = useState("");

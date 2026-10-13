@@ -528,6 +528,85 @@ export function parseInquiryMeta(rawNotes?: string | null): {
   return { adminNotes: rawNotes };
 }
 
+export interface DelayMetaPayload {
+  delayStartFromTime?: string;
+  earlyDepartureFromTime?: string;
+  leftSchoolFromTime?: string;
+  leftSchoolToTime?: string;
+  calculatedMinutes?: number;
+  calculatedDuration?: string;
+  text?: string;
+}
+
+/**
+ * ترميز بيانات أوقات التأخر الدقيقة والمدة المحسوبة داخل additional_notes لحفظها سحابياً
+ */
+export function serializeDelayMeta(
+  notes?: string | null,
+  meta?: Partial<DelayMetaPayload>
+): string | undefined {
+  if (!meta) return notes || undefined;
+  const hasMeta =
+    Boolean(meta.delayStartFromTime) ||
+    Boolean(meta.earlyDepartureFromTime) ||
+    Boolean(meta.leftSchoolFromTime) ||
+    Boolean(meta.leftSchoolToTime) ||
+    (typeof meta.calculatedMinutes === "number" && meta.calculatedMinutes > 0) ||
+    Boolean(meta.calculatedDuration);
+
+  if (!hasMeta) return notes || undefined;
+
+  const payload: Record<string, unknown> = {
+    _tag: "delay_meta",
+    text: notes || "",
+    ...(meta.delayStartFromTime ? { fromTime: meta.delayStartFromTime } : {}),
+    ...(meta.earlyDepartureFromTime ? { depFrom: meta.earlyDepartureFromTime } : {}),
+    ...(meta.leftSchoolFromTime ? { leftFrom: meta.leftSchoolFromTime } : {}),
+    ...(meta.leftSchoolToTime ? { leftTo: meta.leftSchoolToTime } : {}),
+    ...(typeof meta.calculatedMinutes === "number" ? { mins: meta.calculatedMinutes } : {}),
+    ...(meta.calculatedDuration ? { dur: meta.calculatedDuration } : {}),
+  };
+  return JSON.stringify(payload);
+}
+
+/**
+ * فك ترميز بيانات أوقات التأخر والمدة المحسوبة من additional_notes
+ */
+export function parseDelayMeta(rawNotes?: string | null): {
+  delayStartFromTime?: string;
+  earlyDepartureFromTime?: string;
+  leftSchoolFromTime?: string;
+  leftSchoolToTime?: string;
+  calculatedMinutes?: number;
+  calculatedDuration?: string;
+  text?: string;
+} {
+  if (!rawNotes) return {};
+  try {
+    if (
+      rawNotes.startsWith("{") &&
+      (rawNotes.includes('"_tag":"delay_meta"') ||
+        rawNotes.includes('"fromTime"') ||
+        rawNotes.includes('"mins"') ||
+        rawNotes.includes('"dur"'))
+    ) {
+      const parsed = JSON.parse(rawNotes);
+      return {
+        delayStartFromTime: parsed.fromTime || undefined,
+        earlyDepartureFromTime: parsed.depFrom || undefined,
+        leftSchoolFromTime: parsed.leftFrom || undefined,
+        leftSchoolToTime: parsed.leftTo || undefined,
+        calculatedMinutes: typeof parsed.mins === "number" ? parsed.mins : undefined,
+        calculatedDuration: parsed.dur || undefined,
+        text: parsed.text || undefined,
+      };
+    }
+  } catch {
+    // not JSON
+  }
+  return { text: rawNotes };
+}
+
 // Re-export Hijri & Dual Date utilities
 export {
   getDualDate,

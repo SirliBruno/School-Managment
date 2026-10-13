@@ -67,6 +67,8 @@ import {
   calculateDaysBetween,
   parseInquiryMeta,
   serializeInquiryMeta,
+  parseDelayMeta,
+  serializeDelayMeta,
 } from "@/lib/timeUtils";
 import {
   reconcileWithOfficialTeachers,
@@ -483,42 +485,53 @@ export const mapAbsenceToDbRow = (
 
 export const mapDelayToDbRow = (
   dn: DelayNotice
-): Record<string, unknown> => ({
-  id: dn.id,
-  notice_number: dn.noticeNumber || null,
-  teacher_id: dn.teacherId,
-  teacher_name: dn.teacherName,
-  job_number: dn.jobNumber || dn.teacherId || "1000000000",
-  specialty: dn.specialty || null,
-  notice_date: dn.noticeDate || dn.date,
-  violation_delay_start: Boolean(dn.violationDelayStart),
-  delay_start_time: dn.delayStartTime || null,
-  violation_absent_during: Boolean(dn.violationAbsentDuring),
-  absent_from_time: dn.absentFromTime || null,
-  absent_to_time: dn.absentToTime || null,
-  violation_early_departure: Boolean(dn.violationEarlyDeparture),
-  early_departure_time: dn.earlyDepartureTime || null,
-  violation_left_school: Boolean(dn.violationLeftSchool),
-  left_school_details: dn.leftSchoolDetails || null,
-  additional_notes: dn.additionalNotes || dn.notes || null,
-  status: dn.status,
-  teacher_reason: dn.teacherReason || null,
-  teacher_signature_date: dn.teacherSignatureDate || null,
-  director_opinion: dn.directorOpinion || null,
-  director_notes: dn.directorNotes || null,
-  director_signature_date: dn.directorSignatureDate || null,
-  hijri_year: dn.hijriYear || "١٤٤٨",
-  share_token: dn.shareToken,
-  token_expires_at: dn.tokenExpiresAt,
-  teacher_response_submitted_at: dn.teacherResponseSubmittedAt || null,
-  teacher_ip_address: dn.teacherIpAddress || null,
-  link_shared_at: dn.linkSharedAt || null,
-  created_at: dn.createdAt || new Date().toISOString(),
-  is_archived: Boolean(dn.isArchived),
-  archived_at: dn.archivedAt || null,
-  archive_reason: dn.archiveReason || null,
-  archived_by_cascade: Boolean(dn.archivedByCascade),
-});
+): Record<string, unknown> => {
+  const metaNotes = serializeDelayMeta(dn.additionalNotes || dn.notes, {
+    delayStartFromTime: dn.delayStartFromTime,
+    earlyDepartureFromTime: dn.earlyDepartureFromTime,
+    leftSchoolFromTime: dn.leftSchoolFromTime,
+    leftSchoolToTime: dn.leftSchoolToTime,
+    calculatedMinutes: dn.calculatedMinutes,
+    calculatedDuration: dn.calculatedDuration,
+  });
+
+  return {
+    id: dn.id,
+    notice_number: dn.noticeNumber || null,
+    teacher_id: dn.teacherId,
+    teacher_name: dn.teacherName,
+    job_number: dn.jobNumber || dn.teacherId || "1000000000",
+    specialty: dn.specialty || null,
+    notice_date: dn.noticeDate || dn.date,
+    violation_delay_start: Boolean(dn.violationDelayStart),
+    delay_start_time: dn.delayStartTime || null,
+    violation_absent_during: Boolean(dn.violationAbsentDuring),
+    absent_from_time: dn.absentFromTime || null,
+    absent_to_time: dn.absentToTime || null,
+    violation_early_departure: Boolean(dn.violationEarlyDeparture),
+    early_departure_time: dn.earlyDepartureTime || null,
+    violation_left_school: Boolean(dn.violationLeftSchool),
+    left_school_details: dn.leftSchoolDetails || null,
+    additional_notes: metaNotes || dn.additionalNotes || dn.notes || null,
+    status: dn.status,
+    teacher_reason: dn.teacherReason || null,
+    teacher_signature_date: dn.teacherSignatureDate || null,
+    director_opinion: dn.directorOpinion || null,
+    director_notes: dn.directorNotes || null,
+    director_signature_date: dn.directorSignatureDate || null,
+    hijri_year: dn.hijriYear || "١٤٤٨",
+    share_token: dn.shareToken,
+    token_expires_at: dn.tokenExpiresAt,
+    teacher_response_submitted_at: dn.teacherResponseSubmittedAt || null,
+    teacher_ip_address: dn.teacherIpAddress || null,
+    link_shared_at: dn.linkSharedAt || null,
+    created_at: dn.createdAt || new Date().toISOString(),
+    is_archived: Boolean(dn.isArchived),
+    archived_at: dn.archivedAt || null,
+    archive_reason: dn.archiveReason || null,
+    archived_by_cascade: Boolean(dn.archivedByCascade),
+  };
+};
 
 export const mapInquiryToDbRow = (
   inq: AbsenceInquiry
@@ -1624,14 +1637,17 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           if (!delayErr && dbDelays !== null) {
             cleanDelaysList = (dbDelays as unknown as DbDelayNoticeRow[]).map(
               (dn: DbDelayNoticeRow) => {
+                const delayMeta = parseDelayMeta(dn.additional_notes);
+                const rawNotes = delayMeta.text || dn.additional_notes;
+
                 const isOther = Boolean(
-                  dn.additional_notes?.startsWith("أخرى — ") ||
-                  dn.additional_notes?.startsWith("أخرى - ") ||
+                  rawNotes?.startsWith("أخرى — ") ||
+                  rawNotes?.startsWith("أخرى - ") ||
                   dn.left_school_details?.startsWith("أخرى — ") ||
                   dn.left_school_details?.startsWith("أخرى - ")
                 );
                 const otherReason = isOther
-                  ? (dn.additional_notes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
+                  ? (rawNotes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
                      dn.left_school_details?.replace(/^أخرى\s*[—\-]\s*/, ""))
                   : undefined;
 
@@ -1645,18 +1661,24 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   noticeDate: dn.notice_date,
                   date: dn.notice_date,
                   violationDelayStart: dn.violation_delay_start,
+                  delayStartFromTime: delayMeta.delayStartFromTime || undefined,
                   delayStartTime: dn.delay_start_time || undefined,
                   violationAbsentDuring: dn.violation_absent_during,
                   absentFromTime: dn.absent_from_time || undefined,
                   absentToTime: dn.absent_to_time || undefined,
                   violationEarlyDeparture: dn.violation_early_departure,
+                  earlyDepartureFromTime: delayMeta.earlyDepartureFromTime || undefined,
                   earlyDepartureTime: dn.early_departure_time || undefined,
                   violationLeftSchool: dn.violation_left_school,
+                  leftSchoolFromTime: delayMeta.leftSchoolFromTime || undefined,
+                  leftSchoolToTime: delayMeta.leftSchoolToTime || undefined,
                   leftSchoolDetails: dn.left_school_details || undefined,
                   violationOther: isOther,
                   otherReasonDetails: otherReason || undefined,
-                  additionalNotes: dn.additional_notes || undefined,
-                  notes: dn.additional_notes || undefined,
+                  calculatedMinutes: delayMeta.calculatedMinutes || undefined,
+                  calculatedDuration: delayMeta.calculatedDuration || undefined,
+                  additionalNotes: rawNotes || undefined,
+                  notes: rawNotes || undefined,
                   status: dn.status,
                   teacherReason: dn.teacher_reason || undefined,
                   teacherSignatureDate: dn.teacher_signature_date || undefined,
@@ -2145,6 +2167,20 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const row = payload.new as unknown as DbDelayNoticeRow;
             if (!row || !row.id) return;
+            const delayMeta = parseDelayMeta(row.additional_notes);
+            const rawNotes = delayMeta.text || row.additional_notes;
+
+            const isOther = Boolean(
+              rawNotes?.startsWith("أخرى — ") ||
+              rawNotes?.startsWith("أخرى - ") ||
+              row.left_school_details?.startsWith("أخرى — ") ||
+              row.left_school_details?.startsWith("أخرى - ")
+            );
+            const otherReason = isOther
+              ? (rawNotes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
+                 row.left_school_details?.replace(/^أخرى\s*[—\-]\s*/, ""))
+              : undefined;
+
             const updatedNotice: DelayNotice = {
               id: row.id,
               noticeNumber: row.notice_number || undefined,
@@ -2155,16 +2191,24 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               noticeDate: row.notice_date,
               date: row.notice_date,
               violationDelayStart: row.violation_delay_start,
+              delayStartFromTime: delayMeta.delayStartFromTime || undefined,
               delayStartTime: row.delay_start_time || undefined,
               violationAbsentDuring: row.violation_absent_during,
               absentFromTime: row.absent_from_time || undefined,
               absentToTime: row.absent_to_time || undefined,
               violationEarlyDeparture: row.violation_early_departure,
+              earlyDepartureFromTime: delayMeta.earlyDepartureFromTime || undefined,
               earlyDepartureTime: row.early_departure_time || undefined,
               violationLeftSchool: row.violation_left_school,
+              leftSchoolFromTime: delayMeta.leftSchoolFromTime || undefined,
+              leftSchoolToTime: delayMeta.leftSchoolToTime || undefined,
               leftSchoolDetails: row.left_school_details || undefined,
-              additionalNotes: row.additional_notes || undefined,
-              notes: row.additional_notes || undefined,
+              violationOther: isOther,
+              otherReasonDetails: otherReason || undefined,
+              calculatedMinutes: delayMeta.calculatedMinutes || undefined,
+              calculatedDuration: delayMeta.calculatedDuration || undefined,
+              additionalNotes: rawNotes || undefined,
+              notes: rawNotes || undefined,
               status: row.status,
               teacherReason: row.teacher_reason || undefined,
               teacherSignatureDate: row.teacher_signature_date || undefined,
@@ -4715,6 +4759,15 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (createdNotice) {
         const n: DelayNotice = createdNotice;
+        const metaNotes = serializeDelayMeta(n.additionalNotes || n.notes, {
+          delayStartFromTime: n.delayStartFromTime,
+          earlyDepartureFromTime: n.earlyDepartureFromTime,
+          leftSchoolFromTime: n.leftSchoolFromTime,
+          leftSchoolToTime: n.leftSchoolToTime,
+          calculatedMinutes: n.calculatedMinutes,
+          calculatedDuration: n.calculatedDuration,
+        });
+
         const delayPayload = {
           id: n.id,
           teacher_id: n.teacherId,
@@ -4731,7 +4784,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           early_departure_time: n.earlyDepartureTime || null,
           violation_left_school: n.violationLeftSchool,
           left_school_details: n.leftSchoolDetails || null,
-          additional_notes: n.additionalNotes || null,
+          additional_notes: metaNotes || n.additionalNotes || null,
           status: n.status,
           hijri_year: n.hijriYear,
           created_at: n.createdAt,
@@ -4799,21 +4852,31 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return { success: false, error: "التنبيه غير موجود." };
       }
 
+      const currentUpdated: DelayNotice = updatedNotice;
+      const metaNotes = serializeDelayMeta(currentUpdated.additionalNotes || currentUpdated.notes, {
+        delayStartFromTime: currentUpdated.delayStartFromTime,
+        earlyDepartureFromTime: currentUpdated.earlyDepartureFromTime,
+        leftSchoolFromTime: currentUpdated.leftSchoolFromTime,
+        leftSchoolToTime: currentUpdated.leftSchoolToTime,
+        calculatedMinutes: currentUpdated.calculatedMinutes,
+        calculatedDuration: currentUpdated.calculatedDuration,
+      });
+
       if (isSupabaseConfigured() && supabase) {
         supabase
           .from("delay_notices")
           .update({
-            notice_date: updatedNotice.noticeDate,
-            violation_delay_start: updatedNotice.violationDelayStart,
-            delay_start_time: updatedNotice.delayStartTime || null,
-            violation_absent_during: updatedNotice.violationAbsentDuring,
-            absent_from_time: updatedNotice.absentFromTime || null,
-            absent_to_time: updatedNotice.absentToTime || null,
-            violation_early_departure: updatedNotice.violationEarlyDeparture,
-            early_departure_time: updatedNotice.earlyDepartureTime || null,
-            violation_left_school: updatedNotice.violationLeftSchool,
-            left_school_details: updatedNotice.leftSchoolDetails || null,
-            additional_notes: updatedNotice.additionalNotes || null,
+            notice_date: currentUpdated.noticeDate,
+            violation_delay_start: currentUpdated.violationDelayStart,
+            delay_start_time: currentUpdated.delayStartTime || null,
+            violation_absent_during: currentUpdated.violationAbsentDuring,
+            absent_from_time: currentUpdated.absentFromTime || null,
+            absent_to_time: currentUpdated.absentToTime || null,
+            violation_early_departure: currentUpdated.violationEarlyDeparture,
+            early_departure_time: currentUpdated.earlyDepartureTime || null,
+            violation_left_school: currentUpdated.violationLeftSchool,
+            left_school_details: currentUpdated.leftSchoolDetails || null,
+            additional_notes: metaNotes || currentUpdated.additionalNotes || null,
           })
           .eq("id", id)
           .then(() => {});

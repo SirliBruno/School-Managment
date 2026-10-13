@@ -82,12 +82,32 @@ export function calculateNoticeDurationMinutes(notice: DelayNotice): number {
     return notice.calculatedMinutes;
   }
 
-  // الاحتساب البديل من حقول الوقت في حال عدم حفظ الدقائق مسبقاً (تراكم المخالفات)
+  // الاحتساب البديل من حقول الوقت في حال عدم حفظ الدقائق مسبقاً (تراكم المخالفات والسجلات السحابية)
   let fallbackTotal = 0;
 
-  if (notice.violationDelayStart && notice.delayStartFromTime && notice.delayStartTime) {
-    const diff = calculateTimeDifference(notice.delayStartFromTime, notice.delayStartTime);
-    if (diff.isValid && diff.totalMinutes > 0) fallbackTotal += diff.totalMinutes;
+  if (notice.violationDelayStart && notice.delayStartTime) {
+    let fromTime = notice.delayStartFromTime;
+    if (!fromTime) {
+      // تقدير ذكي لوقت بداية الاصطفاف/الدوام الرسمي عند عدم حفظه في السجلات القديمة
+      const [h, m] = notice.delayStartTime.split(":").map(Number);
+      if (!isNaN(h) && !isNaN(m)) {
+        const totalMinutes = h * 60 + m;
+        if (totalMinutes >= 390 && totalMinutes < 420) {
+          // بين 06:30 و 07:00 (مثل حضور 06:51 أو 06:54): بداية الاصطفاف الصباحي 06:45
+          fromTime = totalMinutes >= 405 ? "06:45" : "06:30";
+        } else if (totalMinutes >= 420 && totalMinutes < 720) {
+          // بعد 07:00 (مثل 07:15 أو 07:45): بداية الدوام الرسمي 07:00
+          fromTime = "07:00";
+        } else if (totalMinutes < 390) {
+          fromTime = "06:30";
+        }
+      }
+    }
+
+    if (fromTime) {
+      const diff = calculateTimeDifference(fromTime, notice.delayStartTime);
+      if (diff.isValid && diff.totalMinutes > 0) fallbackTotal += diff.totalMinutes;
+    }
   }
 
   if (notice.violationAbsentDuring && notice.absentFromTime && notice.absentToTime) {
@@ -95,8 +115,10 @@ export function calculateNoticeDurationMinutes(notice: DelayNotice): number {
     if (diff.isValid && diff.totalMinutes > 0) fallbackTotal += diff.totalMinutes;
   }
 
-  if (notice.violationEarlyDeparture && notice.earlyDepartureFromTime && notice.earlyDepartureTime) {
-    const diff = calculateTimeDifference(notice.earlyDepartureFromTime, notice.earlyDepartureTime);
+  if (notice.violationEarlyDeparture && notice.earlyDepartureTime) {
+    const fromTime = notice.earlyDepartureFromTime || notice.earlyDepartureTime;
+    const toTime = notice.earlyDepartureFromTime ? notice.earlyDepartureTime : "13:30";
+    const diff = calculateTimeDifference(fromTime, toTime);
     if (diff.isValid && diff.totalMinutes > 0) fallbackTotal += diff.totalMinutes;
   }
 

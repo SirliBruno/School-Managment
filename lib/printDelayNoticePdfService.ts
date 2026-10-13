@@ -70,12 +70,25 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
   const dateFormatted = formatDMY(notice.noticeDate);
   const hijriYear = esc(notice.hijriYear || "١٤٤٨");
 
+  const delayMinutes = calculateNoticeDurationMinutes(notice);
+  const delayDurationText =
+    notice.calculatedDuration ||
+    (delayMinutes > 0
+      ? delayMinutes === 1
+        ? "دقيقة واحدة"
+        : delayMinutes === 2
+        ? "دقيقتان"
+        : delayMinutes <= 10
+        ? `${delayMinutes} دقائق`
+        : `${delayMinutes} دقيقة`
+      : "");
+
   // Construct bullet points for checked violations ONLY
   const violationBullets: string[] = [];
 
   if (notice.violationDelayStart) {
     const to = notice.delayStartTime ? esc(notice.delayStartTime) : "................";
-    const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
+    const duration = delayDurationText ? ` [المدة: ${esc(delayDurationText)}]` : "";
     violationBullets.push(
       `تأخركم من بداية الدوام وحضوركم الساعة (${to})${duration}.`
     );
@@ -84,7 +97,7 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
   if (notice.violationAbsentDuring) {
     const from = notice.absentFromTime ? esc(notice.absentFromTime) : "........";
     const to = notice.absentToTime ? esc(notice.absentToTime) : "........";
-    const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
+    const duration = delayDurationText ? ` [المدة: ${esc(delayDurationText)}]` : "";
     violationBullets.push(
       `عدم تواجدكم أثناء الدوام من الساعة (${from}) إلى الساعة (${to})${duration}.`
     );
@@ -92,7 +105,7 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
 
   if (notice.violationEarlyDeparture) {
     const to = notice.earlyDepartureTime ? esc(notice.earlyDepartureTime) : "................";
-    const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
+    const duration = delayDurationText ? ` [المدة: ${esc(delayDurationText)}]` : "";
     violationBullets.push(
       `انصرافكم مبكراً قبل نهاية الدوام من الساعة (${to})${duration}.`
     );
@@ -100,7 +113,7 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
 
   if (notice.violationLeftSchool) {
     const details = notice.leftSchoolDetails ? esc(notice.leftSchoolDetails) : "................";
-    const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
+    const duration = delayDurationText ? ` [المدة: ${esc(delayDurationText)}]` : "";
     violationBullets.push(
       `انصرافكم من غير المدرسة (${details})${duration}.`
     );
@@ -119,13 +132,11 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
       (notice.additionalNotes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
        notice.notes?.replace(/^أخرى\s*[—\-]\s*/, "")) ||
       "";
-    const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
+    const duration = delayDurationText ? ` [المدة: ${esc(delayDurationText)}]` : "";
     violationBullets.push(
       `سبب التأخير: أخرى — ${esc(rawOther)}${duration}.`
     );
   }
-
-  const delayMinutes = calculateNoticeDurationMinutes(notice);
 
   const teacherReasonHtml = notice.teacherReason?.trim()
     ? `<span style="font-weight:bold">${esc(notice.teacherReason)}</span>`
@@ -165,7 +176,7 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
   const headerHtml = renderOfficialHeader({
     formTitle: "تنبيه عن تأخر / انصراف",
     formCode: "و.م.ع.ن - ٠٢ - ٠٢",
-    dateFormatted: dateFormatted,
+    dateFormatted: notice.noticeDate || dateFormatted,
   });
 
   const schoolTableHtml = renderSchoolInfoTable(jobNumber);

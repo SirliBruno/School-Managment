@@ -9,6 +9,8 @@ import {
   getLinkExpiryStatus,
   isTokenExpired,
   generateSecureToken,
+  serializeDelayMeta,
+  parseDelayMeta,
 } from "../timeUtils";
 
 describe("timeUtils", () => {
@@ -148,4 +150,30 @@ describe("timeUtils", () => {
       expect(token1).not.toBe(token2);
     });
   });
+
+  describe("serializeDelayMeta & parseDelayMeta", () => {
+    it("serializes and parses delay metadata correctly", () => {
+      const serialized = serializeDelayMeta("ملاحظات إضافية", {
+        delayStartFromTime: "06:45",
+        calculatedMinutes: 6,
+        calculatedDuration: "6 دقائق",
+      });
+
+      expect(serialized).toContain('"mins":6');
+      expect(serialized).toContain('"fromTime":"06:45"');
+
+      const parsed = parseDelayMeta(serialized);
+      expect(parsed.text).toBe("ملاحظات إضافية");
+      expect(parsed.delayStartFromTime).toBe("06:45");
+      expect(parsed.calculatedMinutes).toBe(6);
+      expect(parsed.calculatedDuration).toBe("6 دقائق");
+    });
+
+    it("gracefully falls back when text is plain string without JSON metadata", () => {
+      const parsed = parseDelayMeta("ظرف طارئ عادي");
+      expect(parsed.text).toBe("ظرف طارئ عادي");
+      expect(parsed.calculatedMinutes).toBeUndefined();
+    });
+  });
 });
+
