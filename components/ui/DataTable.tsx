@@ -42,7 +42,7 @@ export interface DataTableProps<T> {
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: { label: string; onClick: () => void };
-  onExportExcel?: () => void;
+  onExportExcel?: (filteredData: T[]) => void;
   exportLabel?: string;
   filtersSlot?: React.ReactNode;
   actionsSlot?: React.ReactNode;
@@ -53,6 +53,13 @@ export interface DataTableProps<T> {
   className?: string;
   mobileCardRenderer?: (item: T, index: number) => React.ReactNode;
   initialSearchQuery?: string;
+}
+
+// Module-level value extractor helper
+function extractVal<T>(col: ColumnDef<T>, item: T): any {
+  if (col.accessorFn) return col.accessorFn(item);
+  if (col.accessorKey) return item[col.accessorKey];
+  return (item as any)?.[col.id];
 }
 
 export function DataTable<T>({
@@ -134,28 +141,59 @@ export function DataTable<T>({
     if (!targetCol) return filteredData;
 
     return [...filteredData].sort((a, b) => {
-      let aVal: any;
-      let bVal: any;
+      const aVal = extractVal(targetCol, a);
+      const bVal = extractVal(targetCol, b);
 
-      if (targetCol.accessorFn) {
-        aVal = targetCol.accessorFn(a);
-        bVal = targetCol.accessorFn(b);
-      } else if (targetCol.accessorKey) {
-        aVal = a[targetCol.accessorKey];
-        bVal = b[targetCol.accessorKey];
+      // Handle nullish values (nulls/undefined placed consistently at the bottom)
+      const aNil = aVal === null || aVal === undefined || aVal === "";
+      const bNil = bVal === null || bVal === undefined || bVal === "";
+      if (aNil && bNil) return 0;
+      if (aNil) return 1;
+      if (bNil) return -1;
+
+      let comparison = 0;
+
+      // 1. Date comparison (instances of Date or date strings)
+      const isDateA = aVal instanceof Date || (typeof aVal === "string" && /^\d{4}-\d{2}-\d{2}/.test(aVal));
+      const isDateB = bVal instanceof Date || (typeof bVal === "string" && /^\d{4}-\d{2}-\d{2}/.test(bVal));
+      if (isDateA && isDateB) {
+        const timeA = new Date(aVal).getTime();
+        const timeB = new Date(bVal).getTime();
+        if (!isNaN(timeA) && !isNaN(timeB)) {
+          comparison = timeA - timeB;
+        }
       }
 
-      if (aVal === bVal) return 0;
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
+      // 2. Pure Numeric comparison
+      if (comparison === 0) {
+        const numA = typeof aVal === "number" ? aVal : (typeof aVal === "string" && aVal.trim() !== "" && !isNaN(Number(aVal)) ? Number(aVal) : NaN);
+        const numB = typeof bVal === "number" ? bVal : (typeof bVal === "string" && bVal.trim() !== "" && !isNaN(Number(bVal)) ? Number(bVal) : NaN);
 
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+        if (!isNaN(numA) && !isNaN(numB) && typeof aVal !== "boolean" && typeof bVal !== "boolean") {
+          comparison = numA - numB;
+        }
       }
 
-      const strA = String(aVal).toLowerCase();
-      const strB = String(bVal).toLowerCase();
-      return sortDirection === "asc" ? strA.localeCompare(strB, "ar") : strB.localeCompare(strA, "ar");
+      // 3. String / Arabic collation comparison (with numeric natural sorting)
+      if (comparison === 0) {
+        const strA = String(aVal);
+        const strB = String(bVal);
+        comparison = strA.localeCompare(strB, "ar", { numeric: true, sensitivity: "base" });
+      }
+
+      const dirMultiplier = sortDirection === "asc" ? 1 : -1;
+      if (comparison !== 0) {
+        return comparison * dirMultiplier;
+      }
+
+      // 4. Stable secondary tie-breaker using record ID if available
+      const idA = (a as any)?.id;
+      const idB = (b as any)?.id;
+      if (idA !== undefined && idB !== undefined && idA !== idB) {
+        return String(idA).localeCompare(String(idB));
+      }
+
+      return 0;
     });
   }, [filteredData, sortColumnId, sortDirection, columns]);
 
@@ -163,6 +201,13 @@ export function DataTable<T>({
   const totalItems = sortedData.length;
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
   const safePage = Math.min(currentPage, totalPages);
+
+  // Keep currentPage synchronized if dataset shrinks
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (safePage - 1) * pageSize;
@@ -213,7 +258,7 @@ export function DataTable<T>({
                 {onExportExcel && (
                   <button
                     type="button"
-                    onClick={onExportExcel}
+                    onClick={() => onExportExcel(sortedData)}
                     className="inline-flex flex-row items-center justify-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                   >
                     <FileSpreadsheet className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -350,7 +395,7 @@ export function DataTable<T>({
               {onExportExcel && (
                 <button
                   type="button"
-                  onClick={onExportExcel}
+                  onClick={() => onExportExcel(sortedData)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold whitespace-nowrap shadow-2xs transition-colors cursor-pointer"
                 >
                   <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -495,12 +540,7 @@ export function DataTable<T>({
                     className="hover:bg-slate-50/80 dark:hover:bg-slate-800/60 transition-colors duration-150 group"
                   >
                     {activeColumns.map((col) => {
-                      let cellVal: any;
-                      if (col.accessorFn) {
-                        cellVal = col.accessorFn(row);
-                      } else if (col.accessorKey) {
-                        cellVal = row[col.accessorKey];
-                      }
+                      const cellVal = extractVal(col, row);
 
                       return (
                         <td

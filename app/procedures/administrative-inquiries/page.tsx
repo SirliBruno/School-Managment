@@ -263,6 +263,7 @@ export default function AdministrativeInquiriesPage() {
       header: "رقم المساءلة",
       accessorKey: "inquiryNumber",
       align: "right",
+      sortable: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <span className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-800 text-indigo-700 dark:text-indigo-400 flex items-center justify-center shrink-0 font-mono text-xs font-bold">
@@ -282,6 +283,7 @@ export default function AdministrativeInquiriesPage() {
       header: "المعلمة / الموظفة",
       accessorKey: "teacherName",
       align: "right",
+      sortable: true,
       cell: ({ row }) => (
         <div>
           <div className="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
@@ -324,6 +326,7 @@ export default function AdministrativeInquiriesPage() {
       header: "التاريخ",
       accessorKey: "incidentDate",
       align: "center",
+      sortable: true,
       cell: ({ row }) => (
         <div className="flex flex-col items-center justify-center">
           <DualDateBadge date={row.incidentDate} />
@@ -340,6 +343,7 @@ export default function AdministrativeInquiriesPage() {
       header: "الحالة",
       accessorKey: "status",
       align: "center",
+      sortable: true,
       cell: ({ row }) => {
         if (row.status === "completed") {
           const isAccepted = row.directorDecision === "accepted";

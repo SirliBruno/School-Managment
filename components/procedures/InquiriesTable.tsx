@@ -183,6 +183,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     {
       id: "teacherName",
       header: "المعلمة والسجل",
+      accessorKey: "teacherName",
       sortable: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
@@ -208,6 +209,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     {
       id: "absenceDate",
       header: "تاريخ الغياب",
+      accessorKey: "absenceDate",
       sortable: true,
       cell: ({ row }) => (
         <DualDateBadge date={row.absenceDate} endDate={row.absenceEndDate} />
@@ -261,6 +263,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     {
       id: "status",
       header: "حالة المساءلة والصلاحية",
+      accessorKey: "status",
       align: "center",
       sortable: true,
       cell: ({ row }) => {
@@ -547,9 +550,9 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           (item) => item.mobile || "",
           "absenceDate",
         ]}
-        onExportExcel={() => {
+        onExportExcel={(exportData = statusFilteredInquiries) => {
           import("xlsx").then((xlsx) => {
-            const dataToExport = statusFilteredInquiries.map((inq, i) => ({
+            const dataToExport = exportData.map((inq, i) => ({
               "م": i + 1,
               "اسم المعلمة": inq.teacherName,
               "السجل المدني / الرقم الوظيفي": inq.nationalId || inq.jobNumber || "—",

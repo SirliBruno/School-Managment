@@ -140,6 +140,7 @@ export const RecentAbsencesTable: React.FC = () => {
     {
       id: "teacherName",
       header: "اسم المعلمة",
+      accessorKey: "teacherName",
       sortable: true,
       cell: ({ row }) => (
         <div className="flex items-center gap-2.5">
@@ -158,12 +159,14 @@ export const RecentAbsencesTable: React.FC = () => {
     {
       id: "date",
       header: "تاريخ الغياب",
+      accessorKey: "date",
       sortable: true,
       cell: ({ row }) => <DualDateBadge date={row.date} />,
     },
     {
       id: "type",
       header: "نوع الغياب",
+      accessorKey: "type",
       sortable: true,
       cell: ({ row }) => {
         const style = TYPE_STYLES[row.type] || TYPE_STYLES["أخرى"];
@@ -312,9 +315,9 @@ export const RecentAbsencesTable: React.FC = () => {
           "date",
           "reason",
         ]}
-        onExportExcel={() => {
+        onExportExcel={(exportData = activeRecords) => {
           import("xlsx").then((xlsx) => {
-            const dataToExport = activeRecords.map((r, i) => ({
+            const dataToExport = exportData.map((r, i) => ({
               "م": i + 1,
               "اسم المعلمة": r.teacherName,
               "السجل المدني / الرقم الوظيفي": r.nationalId || r.jobNumber,

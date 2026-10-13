@@ -125,9 +125,9 @@ export default function DelayNoticePage() {
   };
 
   // Export to Excel
-  const handleExportExcel = () => {
+  const handleExportExcel = (exportData: DelayNotice[] = filteredNotices) => {
     import("xlsx").then((xlsx) => {
-      const dataToExport = filteredNotices.map((n, i) => ({
+      const dataToExport = exportData.map((n, i) => ({
         "م": i + 1,
         "رقم التنبيه": n.noticeNumber || `ت-${n.id.slice(-4)}`,
         "تاريخ التنبيه": n.noticeDate || n.date,
@@ -164,6 +164,7 @@ export default function DelayNoticePage() {
     {
       id: "noticeNumber",
       header: "رقم وتاريخ التنبيه",
+      accessorFn: (row: DelayNotice) => row.noticeNumber || row.noticeDate || row.date,
       sortable: true,
       cell: ({ row }) => (
         <div className="whitespace-nowrap">
@@ -177,6 +178,7 @@ export default function DelayNoticePage() {
     {
       id: "teacherName",
       header: "المعلمة",
+      accessorKey: "teacherName",
       sortable: true,
       cell: ({ row }) => (
         <div>
@@ -249,6 +251,7 @@ export default function DelayNoticePage() {
     {
       id: "status",
       header: "الحالة والمرحلة",
+      accessorKey: "status",
       align: "center",
       sortable: true,
       cell: ({ row }) => {

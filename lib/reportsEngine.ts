@@ -31,10 +31,14 @@ export function filterByDateRange(
   year?: string
 ): boolean {
   if (!dateStr) return false;
-  const d = dateStr.includes(" ") ? dateStr.split(" ")[0] : dateStr;
+  const match = dateStr.match(/^\d{4}-\d{2}-\d{2}/);
+  const d = match ? match[0] : (dateStr.includes("T") ? dateStr.split("T")[0] : (dateStr.includes(" ") ? dateStr.split(" ")[0] : dateStr));
 
-  if (startDate && d < startDate) return false;
-  if (endDate && d > endDate) return false;
+  const cleanStart = startDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] || startDate;
+  const cleanEnd = endDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0] || endDate;
+
+  if (cleanStart && d < cleanStart) return false;
+  if (cleanEnd && d > cleanEnd) return false;
 
   if (month && month !== "all") {
     const parts = d.split("-");
@@ -121,7 +125,7 @@ export function generateReportData(
       }
 
       return true;
-    });
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     const totalAbsenceDays = filteredAbsences.length;
     const uniqueTeachersCount = new Set(filteredAbsences.map((a) => a.teacherId)).size;

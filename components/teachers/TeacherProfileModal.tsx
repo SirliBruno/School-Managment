@@ -181,36 +181,36 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
     }
   }, [currentTeacher]);
 
-  // Filter absences strictly by immutable teacherId
+  // Filter absences strictly by immutable teacherId and not archived, sorted newest first
   const teacherAbsences = useMemo(() => {
     if (!currentTeacher) return [];
-    return absenceRecords.filter(
-      (record) => record.teacherId === currentTeacher.id
-    );
+    return absenceRecords
+      .filter((record) => record.teacherId === currentTeacher.id && !record.isArchived)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [absenceRecords, currentTeacher]);
 
-  // Filter delay notices strictly by immutable teacherId
+  // Filter delay notices strictly by immutable teacherId and not archived, sorted newest first
   const teacherDelayNotices = useMemo(() => {
     if (!currentTeacher) return [];
-    return delayNotices.filter(
-      (notice) => notice.teacherId === currentTeacher.id
-    );
+    return delayNotices
+      .filter((notice) => notice.teacherId === currentTeacher.id && !notice.isArchived)
+      .sort((a, b) => new Date(b.noticeDate || b.date || "").getTime() - new Date(a.noticeDate || a.date || "").getTime());
   }, [delayNotices, currentTeacher]);
 
-  // Filter deduction decisions strictly by immutable teacherId
+  // Filter deduction decisions strictly by immutable teacherId, sorted newest first
   const teacherDeductions = useMemo(() => {
     if (!currentTeacher) return [];
-    return deductionDecisions.filter(
-      (dec) => dec.teacherId === currentTeacher.id && !dec.isArchived
-    );
+    return deductionDecisions
+      .filter((dec) => dec.teacherId === currentTeacher.id && !dec.isArchived)
+      .sort((a, b) => new Date(b.decisionDate || b.createdAt || "").getTime() - new Date(a.decisionDate || a.createdAt || "").getTime());
   }, [deductionDecisions, currentTeacher]);
 
-  // Filter permissions strictly by immutable teacherId
+  // Filter permissions strictly by immutable teacherId, sorted newest first
   const teacherPermissions = useMemo(() => {
     if (!currentTeacher) return [];
-    return (permissions || []).filter(
-      (perm) => perm.teacherId === currentTeacher.id && !perm.isArchived
-    );
+    return (permissions || [])
+      .filter((perm) => perm.teacherId === currentTeacher.id && !perm.isArchived)
+      .sort((a, b) => new Date(b.permissionDate).getTime() - new Date(a.permissionDate).getTime());
   }, [permissions, currentTeacher]);
 
   const totalPermissionMinutes = useMemo(

@@ -297,6 +297,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({ initialSearchQuery =
     {
       id: "name",
       header: "اسم المعلمة ورقم الهوية",
+      accessorFn: (row: Teacher) => row.fullName || row.name || "",
       sortable: true,
       cell: ({ row }) => {
         const displayJobTitle =
@@ -332,6 +333,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({ initialSearchQuery =
     {
       id: "specialty",
       header: "التخصص والمجال",
+      accessorKey: "specialty",
       sortable: true,
       cell: ({ row }) => {
         const spec = row.specialty?.trim() || "عام";
@@ -356,6 +358,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({ initialSearchQuery =
     {
       id: "employmentStatus",
       header: "حالة التوظيف",
+      accessorKey: "employmentStatus",
       align: "center",
       sortable: true,
       cell: ({ row }) => {
@@ -411,6 +414,7 @@ export const TeacherTable: React.FC<TeacherTableProps> = ({ initialSearchQuery =
     {
       id: "totalAbsences",
       header: "الغياب",
+      accessorKey: "totalAbsences",
       align: "center",
       sortable: true,
       cell: ({ row }) => {

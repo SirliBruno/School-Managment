@@ -123,7 +123,8 @@ export default function PermissionsManagementPage() {
     {
       id: "teacherName",
       header: "اسم الموظفة",
-      accessorKey: "teacherName",
+      accessorFn: (row: EmployeePermission) => teachersMap.get(row.teacherId)?.fullName || row.teacherName || "",
+      sortable: true,
       cell: ({ row }) => {
         const teacher = teachersMap.get(row.teacherId);
         return (
@@ -141,6 +142,7 @@ export default function PermissionsManagementPage() {
       header: "التاريخ",
       accessorKey: "permissionDate",
       align: "center",
+      sortable: true,
       cell: ({ row }) => (
         <div className="flex flex-col items-center justify-center">
           <DualDateBadge date={row.permissionDate} showDayName />
@@ -174,6 +176,7 @@ export default function PermissionsManagementPage() {
       header: "مدة الاستئذان",
       accessorKey: "durationMinutes",
       align: "center",
+      sortable: true,
       cell: ({ row }) => {
         const hrs = Math.floor(row.durationMinutes / 60);
         const mins = row.durationMinutes % 60;
