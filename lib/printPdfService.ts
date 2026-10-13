@@ -14,6 +14,7 @@ import {
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
 import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
+import { parseAttachments } from "@/lib/attachments";
 
 export interface AbsencePdfData {
   teacherName: string;
@@ -115,9 +116,10 @@ export function buildAbsencePdfHtml(data: AbsencePdfData): string {
     ? `<span style="font-weight:bold">${esc(rawReason)}</span>`
     : `<span style="color:#94a3b8">......................................................................................................................................................................</span>`;
 
-  const attachmentHtml = data.attachmentUrl
+  const parsedAtts = data.attachmentUrl ? parseAttachments(data.attachmentUrl) : [];
+  const attachmentHtml = parsedAtts.length > 0
     ? `<div style="margin-top:4px;padding:3px 6px;border-radius:4px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:7.5pt;color:#166534;display:inline-block">
-        ✓ <strong>المرفق الرسمي:</strong> تم إرفاق المستند إلكترونياً بنجاح
+        ✓ <strong>${parsedAtts.length > 1 ? `المرفقات الرسمية (${parsedAtts.length}):` : "المرفق الرسمي:"}</strong> تم إرفاق المستند إلكترونياً بنجاح
        </div>`
     : "";
   const incidentDateText = data.absenceDate && data.absenceDate.includes("إلى")

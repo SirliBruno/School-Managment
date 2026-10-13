@@ -30,6 +30,7 @@ import {
   FilePlus2,
   BarChart3,
   Sparkles,
+  Eye,
 } from "lucide-react";
 import { Teacher, AbsenceRecord, AbsenceType, DelayNotice, DeductionDecision, EmployeePermission } from "@/types/teacher";
 import { formatSaudiMobileDisplay, normalizeSaudiMobile } from "@/lib/teacherDeduplication";
@@ -37,6 +38,8 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { EditAbsenceModal } from "@/components/procedures/EditAbsenceModal";
 import { AddTeacherModal } from "@/components/teachers/AddTeacherModal";
+import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
+import { parseAttachments } from "@/lib/attachments";
 import { CreateAdministrativeInquiryModal } from "@/components/procedures/CreateAdministrativeInquiryModal";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
 import { CreatePermissionModal } from "@/components/procedures/CreatePermissionModal";
@@ -124,6 +127,10 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
   const [isSendInquiryModalOpen, setIsSendInquiryModalOpen] = useState(false);
   const [isCreatePermissionModalOpen, setIsCreatePermissionModalOpen] = useState(false);
   const [isCreateDelayNoticeOpen, setIsCreateDelayNoticeOpen] = useState(false);
+
+  // Attachment viewer states
+  const [selectedAbsenceForAttachment, setSelectedAbsenceForAttachment] = useState<AbsenceRecord | null>(null);
+  const [isAttachmentViewerOpen, setIsAttachmentViewerOpen] = useState(false);
 
   const [feedback, setFeedback] = useState<{
     type: "success" | "error";
@@ -1053,6 +1060,7 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                               <th scope="col" className="py-3 px-4">تاريخ الغياب</th>
                               <th scope="col" className="py-3 px-4">النوع</th>
                               <th scope="col" className="py-3 px-4">السبب المسجل</th>
+                              <th scope="col" className="py-3 px-4 text-center">المرفقات</th>
                               <th scope="col" className="py-3 px-4">الملاحظات</th>
                               <th scope="col" className="py-3 px-4 text-center">الإجراءات والاستمارة</th>
                             </tr>
@@ -1085,6 +1093,30 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                   </td>
                                   <td className="py-3 px-4 text-slate-700 dark:text-slate-300 max-w-xs truncate font-medium">
                                     {rec.reason || "—"}
+                                  </td>
+                                  <td className="py-3 px-4 text-center whitespace-nowrap">
+                                    {rec.attachmentUrl ? (() => {
+                                      const atts = parseAttachments(rec.attachmentUrl);
+                                      if (atts.length === 0) {
+                                        return <span className="text-slate-400 dark:text-slate-500 text-xs">لا يوجد</span>;
+                                      }
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedAbsenceForAttachment(rec);
+                                            setIsAttachmentViewerOpen(true);
+                                          }}
+                                          className="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-900 dark:hover:text-teal-100 bg-teal-50 dark:bg-teal-950/60 px-2 py-0.5 rounded-md border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer"
+                                          title="معاينة المرفق الرسمي"
+                                        >
+                                          <Eye className="w-3 h-3" />
+                                          <span>{atts.length > 1 ? `المرفقات (${atts.length})` : "المرفق"}</span>
+                                        </button>
+                                      );
+                                    })() : (
+                                      <span className="text-slate-400 dark:text-slate-500 text-xs">لا يوجد</span>
+                                    )}
                                   </td>
                                   <td className="py-3 px-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
                                     {rec.notes || "—"}
@@ -1641,6 +1673,21 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
             preselectedTeacherId={currentTeacher.id}
           />
         </>
+      )}
+
+      {/* Attachment Viewer Modal */}
+      {selectedAbsenceForAttachment && selectedAbsenceForAttachment.attachmentUrl && (
+        <AttachmentViewerModal
+          isOpen={isAttachmentViewerOpen}
+          onClose={() => {
+            setIsAttachmentViewerOpen(false);
+            setSelectedAbsenceForAttachment(null);
+          }}
+          url={selectedAbsenceForAttachment.attachmentUrl}
+          attachments={parseAttachments(selectedAbsenceForAttachment.attachmentUrl)}
+          title={`مرفقات غياب المعلمة: ${selectedAbsenceForAttachment.teacherName}`}
+          fileName={`absence_attachment_${selectedAbsenceForAttachment.teacherName}_${selectedAbsenceForAttachment.date}`}
+        />
       )}
     </AnimatePresence>
   );

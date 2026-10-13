@@ -68,6 +68,7 @@ export interface AbsenceRecord {
   reason: string;
   notes?: string;
   attachmentUrl?: string;
+  attachmentUrls?: string[];
   timestamp: string;
 
   // Archive (Soft Delete) metadata

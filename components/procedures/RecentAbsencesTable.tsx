@@ -244,12 +244,11 @@ export const RecentAbsencesTable: React.FC = () => {
             ? [
                 {
                   id: "view-attachment",
-                  label: "معاينة المرفق الطبي",
-                  icon: ExternalLink,
+                  label: "معاينة المرفقات الرسمية",
+                  icon: Eye,
                   onClick: () => {
-                    if (row.attachmentUrl) {
-                      window.open(row.attachmentUrl, "_blank", "noopener,noreferrer");
-                    }
+                    setSelectedAttachmentRecord(row);
+                    setIsViewerOpen(true);
                   },
                 },
               ]
@@ -438,8 +437,9 @@ export const RecentAbsencesTable: React.FC = () => {
             setIsViewerOpen(false);
             setSelectedAttachmentRecord(null);
           }}
-          url={resolveAttachmentUrl(selectedAttachmentRecord.attachmentUrl)}
-          title={`مرفق غياب المعلمة: ${selectedAttachmentRecord.teacherName}`}
+          url={selectedAttachmentRecord.attachmentUrl}
+          attachments={parseAttachments(selectedAttachmentRecord.attachmentUrl)}
+          title={`مرفقات غياب المعلمة: ${selectedAttachmentRecord.teacherName}`}
           fileName={`absence_attachment_${selectedAttachmentRecord.teacherName}_${selectedAttachmentRecord.date}`}
         />
       )}

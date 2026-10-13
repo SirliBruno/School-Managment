@@ -28,12 +28,15 @@ import {
   UserCheck,
   ShieldAlert,
   ArrowRight,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { AbsenceRecord, AbsenceType, Teacher } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { SendInquiryModal } from "@/components/procedures/SendInquiryModal";
+import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
@@ -135,11 +138,20 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
     return formatDaysCountArabic(calculatedDays);
   }, [calculatedDays]);
 
-  // Attachment states
-  const [attachmentFile, setAttachmentFile] = useState<File | null>(null);
-  const [attachmentPreview, setAttachmentPreview] = useState<string | null>(null);
-  const [compressionRatio, setCompressionRatio] = useState<number | null>(null);
-  const [isCompressing, setIsCompressing] = useState(false);
+  // Multi-Attachment states
+  interface PendingAttachment {
+    id: string;
+    file: File;
+    previewUrl: string | null;
+    isPdf: boolean;
+    sizeFormatted: string;
+    isCompressing?: boolean;
+    compressionRatio?: number | null;
+  }
+
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewModalIndex, setPreviewModalIndex] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Validation & UI states
@@ -165,10 +177,26 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
     }
   };
 
-  const removeSelectedFile = () => {
-    setAttachmentFile(null);
-    setAttachmentPreview(null);
-    setCompressionRatio(null);
+  const removeAttachment = (idToRemove: string) => {
+    setAttachments((prev) => {
+      const target = prev.find((a) => a.id === idToRemove);
+      if (target?.previewUrl && target.previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return prev.filter((a) => a.id !== idToRemove);
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const removeAllAttachments = () => {
+    attachments.forEach((a) => {
+      if (a.previewUrl && a.previewUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(a.previewUrl);
+      }
+    });
+    setAttachments([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -183,107 +211,184 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
     setAbsenceType("اضطراري");
     setReason("");
     setNotes("");
-    removeSelectedFile();
+    removeAllAttachments();
     setErrors({});
     setCurrentStep(1);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    const isPdf =
-      file.type === "application/pdf" ||
-      file.name.toLowerCase().endsWith(".pdf");
+    const fileList = Array.from(files);
+    const newItems: PendingAttachment[] = [];
+    const errorMsgs: string[] = [];
 
-    if (isPdf) {
-      const MAX_PDF_SIZE = 3 * 1024 * 1024; // 3MB
-      if (file.size > MAX_PDF_SIZE) {
-        setErrors((prev) => ({
-          ...prev,
-          attachment: `حجم ملف الـ PDF كبير (${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت). الحد الأقصى هو 3 ميغابايت.`,
-        }));
-        return;
+    for (const file of fileList) {
+      const isPdf =
+        file.type === "application/pdf" ||
+        file.name.toLowerCase().endsWith(".pdf");
+      const isImage = file.type.startsWith("image/");
+
+      if (!isPdf && !isImage) {
+        errorMsgs.push(`الملف (${file.name}) غير مدعوم. الصيغ المدعومة هي الصور ومستندات PDF فقط.`);
+        continue;
       }
+
+      if (isPdf) {
+        const MAX_PDF_SIZE = 3 * 1024 * 1024; // 3MB
+        if (file.size > MAX_PDF_SIZE) {
+          errorMsgs.push(`حجم ملف الـ PDF (${file.name}) كبير (${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت). الحد الأقصى هو 3 ميغابايت.`);
+          continue;
+        }
+      }
+
+      if (isImage && file.size > 20 * 1024 * 1024) {
+        errorMsgs.push(`حجم الصورة (${file.name}) كبير جداً. الحد الأقصى المسموح به هو 20 ميغابايت.`);
+        continue;
+      }
+
+      const id = `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      const sizeFormatted = file.size > 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(1)} ميغابايت`
+        : `${(file.size / 1024).toFixed(0)} كيلوبايت`;
+
+      newItems.push({
+        id,
+        file,
+        previewUrl: null,
+        isPdf,
+        sizeFormatted,
+        isCompressing: isImage,
+        compressionRatio: null,
+      });
     }
 
-    if (!isPdf && file.size > 20 * 1024 * 1024) {
+    if (errorMsgs.length > 0) {
       setErrors((prev) => ({
         ...prev,
-        attachment: "حجم الصورة كبير جداً. الحد الأقصى المسموح به هو 20 ميغابايت.",
+        attachment: errorMsgs.join(" • "),
       }));
+    } else {
+      setErrors((prev) => ({ ...prev, attachment: "" }));
+    }
+
+    if (newItems.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
 
-    setErrors((prev) => ({ ...prev, attachment: "" }));
+    // Append new items preserving deterministic user selection order
+    setAttachments((prev) => [...prev, ...newItems]);
 
-    if (file.type.startsWith("image/")) {
-      setIsCompressing(true);
-      try {
-        const compressed = await compressMedicalReportImage(file);
-        setAttachmentFile(compressed.file);
-        setAttachmentPreview(compressed.previewUrl);
-        setCompressionRatio(compressed.compressionRatio);
-      } catch (err) {
-        console.warn("تعذر ضغط الصورة، استخدام الملف الأصلي:", err);
-        setAttachmentFile(file);
-        const reader = new FileReader();
-        reader.onload = () => setAttachmentPreview(reader.result as string);
-        reader.readAsDataURL(file);
-      } finally {
-        setIsCompressing(false);
+    // Asynchronously compress image attachments independently
+    for (const item of newItems) {
+      if (!item.isPdf && item.file.type.startsWith("image/")) {
+        try {
+          const compressed = await compressMedicalReportImage(item.file);
+          setAttachments((prev) =>
+            prev.map((att) =>
+              att.id === item.id
+                ? {
+                    ...att,
+                    file: compressed.file,
+                    previewUrl: compressed.previewUrl,
+                    compressionRatio: compressed.compressionRatio,
+                    isCompressing: false,
+                    sizeFormatted: `${(compressed.file.size / 1024).toFixed(0)} كيلوبايت`,
+                  }
+                : att
+            )
+          );
+        } catch (err) {
+          console.warn("تعذر ضغط الصورة، استخدام الملف الأصلي:", err);
+          const reader = new FileReader();
+          reader.onload = () => {
+            setAttachments((prev) =>
+              prev.map((att) =>
+                att.id === item.id
+                  ? {
+                      ...att,
+                      previewUrl: reader.result as string,
+                      isCompressing: false,
+                    }
+                  : att
+              )
+            );
+          };
+          reader.readAsDataURL(item.file);
+        }
       }
-    } else {
-      setAttachmentFile(file);
-      setAttachmentPreview(null);
-      setCompressionRatio(null);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
-  const uploadAttachment = async (): Promise<string | undefined> => {
-    if (!attachmentFile) return undefined;
+  const uploadAttachments = async (): Promise<string[] | null> => {
+    if (attachments.length === 0) return [];
 
-    let publicUrl = "";
-    if (isSupabaseConfigured() && supabase) {
-      try {
-        const fileExt = attachmentFile.name.split(".").pop() || "jpg";
-        const fileName = `manual_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${fileExt}`;
-        const filePath = `manual-records/${fileName}`;
+    const uploadedUrls: string[] = [];
 
-        const { data: uploadData, error: uploadErr } = await supabase.storage
-          .from("absence-attachments")
-          .upload(filePath, attachmentFile, {
-            cacheControl: "3600",
-            upsert: true,
-          });
+    for (let i = 0; i < attachments.length; i++) {
+      const item = attachments[i];
+      let itemUrl = "";
 
-        if (!uploadErr && uploadData) {
-          const { data: urlData } = supabase.storage
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          const fileExt = item.file.name.split(".").pop() || (item.isPdf ? "pdf" : "jpg");
+          const fileName = `manual_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 7)}.${fileExt}`;
+          const filePath = `manual-records/${fileName}`;
+
+          const { data: uploadData, error: uploadErr } = await supabase.storage
             .from("absence-attachments")
-            .getPublicUrl(filePath);
-          publicUrl = urlData.publicUrl;
+            .upload(filePath, item.file, {
+              cacheControl: "3600",
+              upsert: true,
+            });
+
+          if (!uploadErr && uploadData) {
+            const { data: urlData } = supabase.storage
+              .from("absence-attachments")
+              .getPublicUrl(filePath);
+            itemUrl = urlData.publicUrl;
+          } else if (uploadErr) {
+            console.warn(`فشل رفع المرفق (${item.file.name}) إلى Storage:`, uploadErr);
+          }
+        } catch (e) {
+          console.warn(`خطأ خدمة التخزين أثناء رفع (${item.file.name}):`, e);
         }
-      } catch (e) {
-        console.warn("خطأ خدمة التخزين:", e);
       }
-    }
 
-    if (!publicUrl && attachmentFile) {
-      if (attachmentFile.size <= MAX_FALLBACK_DATA_URL_BYTES) {
-        publicUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = () => resolve("");
-          reader.readAsDataURL(attachmentFile);
+      if (!itemUrl && item.file) {
+        if (item.file.size <= MAX_FALLBACK_DATA_URL_BYTES) {
+          itemUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => resolve("");
+            reader.readAsDataURL(item.file);
+          });
+        } else {
+          console.warn(
+            `حجم المرفق (${(item.file.size / 1024).toFixed(0)}KB) يتجاوز الحد الآمن للحفظ المحلي (750KB). تم تخطي تخزينه محلياً لتفادي امتلاء المتصفح.`
+          );
+        }
+      }
+
+      // If an attachment failed completely to upload
+      if (!itemUrl) {
+        showToast({
+          message: `تعذر رفع المرفق (${item.file.name})، يرجى التحقق من الملف أو حذفه والمحاولة مجدداً.`,
+          type: "error",
         });
-      } else {
-        console.warn(
-          `حجم المرفق (${(attachmentFile.size / 1024).toFixed(0)}KB) يتجاوز الحد الآمن للحفظ المحلي (750KB). تم تخطي تخزينه محلياً لتفادي امتلاء المتصفح.`
-        );
+        return null;
       }
+
+      uploadedUrls.push(itemUrl);
     }
 
-    return publicUrl || undefined;
+    return uploadedUrls;
   };
 
   // Step Validation
@@ -371,7 +476,18 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
       totalAbsences: (selectedTeacher.totalAbsences || 0) + daysCount,
     };
 
-    const attachmentUrl = await uploadAttachment();
+    const uploadedUrls = await uploadAttachments();
+    if (uploadedUrls === null) {
+      return null;
+    }
+
+    const attachmentUrl =
+      uploadedUrls.length === 0
+        ? undefined
+        : uploadedUrls.length === 1
+        ? uploadedUrls[0]
+        : JSON.stringify(uploadedUrls);
+
     let primaryRecord: AbsenceRecord | null = null;
 
     if (durationMode === "multiple") {
@@ -390,6 +506,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
             ? `${notes.trim()} (ضمن فترة غياب ${daysLabel}: من ${absenceDate} إلى ${absenceEndDate})`
             : `ضمن فترة غياب ${daysLabel}: من ${absenceDate} إلى ${absenceEndDate}`,
           attachmentUrl,
+          attachmentUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
         });
         if (index === 0) {
           primaryRecord = rec;
@@ -407,6 +524,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
         reason: reason.trim(),
         notes: notes.trim() || undefined,
         attachmentUrl,
+        attachmentUrls: uploadedUrls.length > 0 ? uploadedUrls : undefined,
       });
     }
 
@@ -420,6 +538,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isSubmitting || isExportingDirect) return;
 
     setIsSubmitting(true);
     try {
@@ -459,6 +578,7 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
 
   const handleSaveAndExportPdf = async () => {
     if (!validateAll() || !selectedTeacher) return;
+    if (isSubmitting || isExportingDirect) return;
 
     setIsExportingDirect(true);
     try {
@@ -1010,27 +1130,28 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
             <div>
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-1">
                 <Paperclip className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
-                <span>الخطوة 3: المرفقات والتوثيق الطبي</span>
+                <span>الخطوة 3: المرفقات والتوثيق الطبي (اختياري)</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                إرفاق التقارير الطبية أو إجازات منصة صحتي (اختياري ولكن يُنصح به لتوثيق العذر رسمياً)
+                إرفاق التقارير الطبية أو إجازات منصة صحتي (اختياري، يمكنك إرفاق مستند واحد أو عدة مستندات لتوثيق العذر رسمياً)
               </p>
             </div>
 
             <input
               ref={fileInputRef}
               type="file"
+              multiple
               accept="image/*,.pdf,application/pdf"
               onChange={handleFileChange}
               className="hidden"
               id={`${formId}-attachment`}
             />
 
-            {!attachmentFile ? (
+            {attachments.length === 0 ? (
               <div
                 tabIndex={0}
                 role="button"
-                aria-label="انقري أو اضغطي Enter لإرفاق تقرير طبي أو مستند عذر"
+                aria-label="انقري أو اضغطي Enter لإرفاق تقارير طبية أو مستندات عذر"
                 onClick={() => fileInputRef.current?.click()}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -1050,78 +1171,114 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-800 dark:text-slate-200 group-hover:text-[#137a85] dark:group-hover:text-teal-400 transition-colors">
-                    انقري هنا لإرفاق تقرير طبي، إجازة صحتي، أو مستند عذر
+                    انقري هنا لاختيار أو إرفاق تقرير طبي، إجازة صحتي، أو مستندات العذر (اختياري)
                   </p>
                   <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
-                    يدعم صور الجوال المباشرة ومستندات PDF حتى 3 ميغابايت • ضغط ذكي تلقائي
+                    يدعم رفع ملف واحد أو عدة ملفات (صور أو مستندات PDF حتى 3 ميغابايت للمستند) • ضغط ذكي تلقائي
                   </p>
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/40 flex items-center justify-between gap-3 max-w-xl">
-                <div className="flex items-center gap-3 min-w-0">
-                  {attachmentPreview ? (
-                    <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-teal-300 dark:border-teal-700 shrink-0 bg-white dark:bg-slate-800 shadow-2xs">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={attachmentPreview}
-                        alt="معاينة المرفق"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-14 h-14 rounded-xl bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0 font-bold text-xs border border-rose-200 dark:border-rose-800">
-                      PDF
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={attachmentFile.name}>
-                      {attachmentFile.name}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                        {(attachmentFile.size / 1024).toFixed(0)} كيلوبايت
-                      </span>
-                      {compressionRatio !== null && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full">
-                          <Sparkles className="w-3 h-3" />
-                          <span>وفرت {compressionRatio}%</span>
-                        </span>
-                      )}
-                    </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <span>المرفقات المحددة ({attachments.length}):</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-teal-50 hover:bg-teal-100 text-[#137a85] dark:bg-teal-950/50 dark:hover:bg-teal-950/80 dark:text-teal-300 border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>إضافة مرفق آخر</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={removeAllAttachments}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900 transition-colors cursor-pointer"
+                      title="مسح جميع المرفقات"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">مسح الكل</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {attachmentPreview && (
-                    <a
-                      href={attachmentPreview}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors"
-                      title="معاينة المرفق بالحجم الكامل"
-                      aria-label="معاينة المرفق بالحجم الكامل"
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {attachments.map((att, idx) => (
+                    <div
+                      key={att.id}
+                      className="p-3.5 rounded-2xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/40 flex items-center justify-between gap-3 shadow-2xs"
                     >
-                      <Eye className="w-4 h-4" />
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    onClick={removeSelectedFile}
-                    className="p-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
-                    title="حذف هذا المرفق"
-                    aria-label="حذف هذا المرفق"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {att.previewUrl ? (
+                          <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-teal-300 dark:border-teal-700 shrink-0 bg-white dark:bg-slate-800 shadow-2xs">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={att.previewUrl}
+                              alt={att.file.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-rose-100 dark:bg-rose-950/70 text-rose-700 dark:text-rose-300 flex items-center justify-center shrink-0 font-bold text-xs border border-rose-200 dark:border-rose-800">
+                            PDF
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate" title={att.file.name}>
+                            {att.file.name}
+                          </p>
+                          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                            <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                              {att.sizeFormatted}
+                            </span>
+                            {att.compressionRatio !== null && att.compressionRatio !== undefined && (
+                              <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/70 px-1.5 py-0.5 rounded-full">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>وفرت {att.compressionRatio}%</span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1 shrink-0">
+                        {att.previewUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreviewModalIndex(idx);
+                              setPreviewModalOpen(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                            title="معاينة المرفق"
+                            aria-label={`معاينة المرفق ${att.file.name}`}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(att.id)}
+                          className="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/50 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800 transition-colors cursor-pointer"
+                          title="حذف هذا المرفق"
+                          aria-label={`حذف المرفق ${att.file.name}`}
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
 
-            {isCompressing && (
+            {attachments.some((a) => a.isCompressing) && (
               <div className="flex items-center gap-2 text-xs text-teal-700 dark:text-teal-300 font-semibold px-1">
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>جاري معالجة وتحسين جودة المستند المرفق...</span>
+                <span>جاري معالجة وتحسين جودة المستندات المرفقة...</span>
               </div>
             )}
 
@@ -1198,13 +1355,17 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
 
                 <div>
                   <span className="text-[11px] text-slate-400 dark:text-slate-500 block mb-0.5">حالة المرفقات</span>
-                  {attachmentFile ? (
+                  {attachments.length > 0 ? (
                     <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
                       <Check className="w-3.5 h-3.5" />
-                      <span>مرفق: {attachmentFile.name}</span>
+                      <span>
+                        {attachments.length === 1
+                          ? `مرفق واحد: ${attachments[0].file.name}`
+                          : `${attachments.length} مرفقات معتمدة`}
+                      </span>
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-400 dark:text-slate-500">بدون مرفقات</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">بدون مرفقات (اختياري)</span>
                   )}
                 </div>
               </div>
@@ -1305,6 +1466,22 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
         onClose={() => setIsInquiryModalOpen(false)}
         preselectedTeacherId={selectedTeacherId || undefined}
       />
+
+      {/* Attachment Preview Modal for pending files */}
+      {previewModalOpen && attachments.length > 0 && (
+        <AttachmentViewerModal
+          isOpen={previewModalOpen}
+          onClose={() => setPreviewModalOpen(false)}
+          attachments={attachments.map((a, i) => ({
+            slotId: a.id,
+            label: a.file.name,
+            url: a.previewUrl || "",
+          }))}
+          initialIndex={previewModalIndex}
+          title="معاينة المستند المرفق"
+          fileName={attachments[previewModalIndex]?.file.name || "attachment"}
+        />
+      )}
     </div>
   );
 };

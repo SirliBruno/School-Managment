@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -13,15 +13,24 @@ import {
   Eye,
   Maximize2,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
-import { openSafeAttachmentUrl, createSafeBlobUrl } from "@/lib/attachments";
+import {
+  openSafeAttachmentUrl,
+  createSafeBlobUrl,
+  parseAttachments,
+  InquiryAttachmentItem,
+} from "@/lib/attachments";
 
 interface AttachmentViewerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  url: string | null;
+  url?: string | null;
   title?: string;
   fileName?: string;
+  attachments?: InquiryAttachmentItem[];
+  initialIndex?: number;
 }
 
 export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
@@ -30,21 +39,41 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
   url,
   title = "معاينة المرفق الرسمي",
   fileName = "attachment",
+  attachments,
+  initialIndex = 0,
 }) => {
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
 
+  // Parse or use provided attachments list
+  const items: InquiryAttachmentItem[] = useMemo(() => {
+    if (attachments && attachments.length > 0) return attachments;
+    if (url) return parseAttachments(url);
+    return [];
+  }, [attachments, url]);
+
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    if (isOpen) {
+      setCurrentIndex(Math.min(Math.max(0, initialIndex), Math.max(0, items.length - 1)));
+    }
+  }, [isOpen, initialIndex, items.length]);
+
+  const activeItem = items[currentIndex] || items[0] || (url ? { slotId: "default", label: "المرفق", url } : null);
+  const currentUrl = activeItem?.url || url || null;
+
   const isPdf =
-    Boolean(url) &&
-    (url!.toLowerCase().includes(".pdf") ||
-      url!.startsWith("data:application/pdf"));
+    Boolean(currentUrl) &&
+    (currentUrl!.toLowerCase().includes(".pdf") ||
+      currentUrl!.startsWith("data:application/pdf"));
 
   // Create safe Blob URL for Data URLs when viewing PDF
   useEffect(() => {
     let createdUrl: string | null = null;
-    if (isOpen && url && isPdf && url.startsWith("data:")) {
-      createdUrl = createSafeBlobUrl(url);
+    if (isOpen && currentUrl && isPdf && currentUrl.startsWith("data:")) {
+      createdUrl = createSafeBlobUrl(currentUrl);
       setBlobUrl(createdUrl);
     } else {
       setBlobUrl(null);
@@ -54,30 +83,37 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
         URL.revokeObjectURL(createdUrl);
       }
     };
-  }, [isOpen, url, isPdf]);
+  }, [isOpen, currentUrl, isPdf]);
 
-  // Reset zoom & rotation when url or open state changes
+  // Reset zoom & rotation when currentUrl or open state changes
   useEffect(() => {
     if (isOpen) {
       setZoom(1);
       setRotation(0);
     }
-  }, [isOpen, url]);
+  }, [isOpen, currentUrl, currentIndex]);
 
-  // Handle ESC key to close
+  // Handle ESC key to close & Arrow keys to navigate attachments
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+      if (!isOpen) return;
+      if (e.key === "Escape") {
         onClose();
+      } else if (items.length > 1) {
+        if (e.key === "ArrowLeft") {
+          setCurrentIndex((prev) => Math.min(items.length - 1, prev + 1));
+        } else if (e.key === "ArrowRight") {
+          setCurrentIndex((prev) => Math.max(0, prev - 1));
+        }
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, items.length]);
 
-  if (!isOpen || !url) return null;
+  if (!isOpen || !currentUrl) return null;
 
-  const displayPdfUrl = blobUrl || url;
+  const displayPdfUrl = blobUrl || currentUrl;
 
   const handleZoomIn = () => setZoom((prev) => Math.min(prev + 0.25, 3));
   const handleZoomOut = () => setZoom((prev) => Math.max(prev - 0.25, 0.5));
@@ -88,7 +124,8 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
   };
 
   const handleOpenSafe = () => {
-    openSafeAttachmentUrl(url, fileName);
+    const downloadName = items.length > 1 ? `${fileName}_${currentIndex + 1}` : fileName;
+    openSafeAttachmentUrl(currentUrl, downloadName);
   };
 
   return (
@@ -164,7 +201,7 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
               <button
                 type="button"
                 onClick={handleOpenSafe}
-                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
                 title="فتح في نافذة مستقلة / تحميل"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -174,13 +211,69 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none"
+                className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors focus:outline-none cursor-pointer"
                 aria-label="إغلاق المعاينة"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
+
+          {/* Multi-Attachment Switcher Bar */}
+          {items.length > 1 && (
+            <div className="px-5 py-2.5 bg-slate-900/95 border-b border-white/10 flex items-center justify-between gap-3 text-white overflow-x-auto custom-scrollbar">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-xs font-bold text-indigo-200 shrink-0">
+                  المرفقات ({items.length}):
+                </span>
+                <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
+                  {items.map((item, idx) => {
+                    const isSelected = idx === currentIndex;
+                    return (
+                      <button
+                        key={item.slotId || idx}
+                        type="button"
+                        onClick={() => setCurrentIndex(idx)}
+                        className={`px-3 py-1 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                          isSelected
+                            ? "bg-indigo-600 text-white shadow-sm ring-1 ring-white/30"
+                            : "bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
+                        }`}
+                      >
+                        {item.label || `مرفق ${idx + 1}`}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  disabled={currentIndex <= 0}
+                  onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-colors cursor-pointer"
+                  title="المرفق السابق"
+                  aria-label="المرفق السابق"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <span className="text-[11px] font-mono text-indigo-200 px-1">
+                  {currentIndex + 1} / {items.length}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentIndex >= items.length - 1}
+                  onClick={() => setCurrentIndex((prev) => Math.min(items.length - 1, prev + 1))}
+                  className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed text-white transition-colors cursor-pointer"
+                  title="المرفق التالي"
+                  aria-label="المرفق التالي"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Content Preview Area */}
           <div className="flex-1 min-h-[350px] max-h-[75vh] p-4 bg-slate-100 dark:bg-slate-950 flex items-center justify-center overflow-auto custom-scrollbar">
@@ -226,7 +319,7 @@ export const AttachmentViewerModal: React.FC<AttachmentViewerModalProps> = ({
               <div className="relative flex items-center justify-center w-full h-full min-h-[320px] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={url}
+                  src={currentUrl}
                   alt={title}
                   style={{
                     transform: `scale(${zoom}) rotate(${rotation}deg)`,
