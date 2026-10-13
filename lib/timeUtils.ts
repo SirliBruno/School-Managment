@@ -459,39 +459,67 @@ export function addDaysToDateStr(dateStr: string, days: number): string {
 }
 
 /**
- * ترميز بيانات فترة الغياب المتعددة لحفظها بأمان في admin_notes في سوبابيز كطبقة أمان إضافية
+ * ترميز بيانات فترة الغياب المتعددة ودورات إعادة الإرسال لحفظها بأمان في admin_notes في سوبابيز كطبقة أمان إضافية
  */
 export function serializeInquiryMeta(
   absenceEndDate?: string,
   daysCount?: number,
-  notes?: string
+  notes?: string,
+  extra?: {
+    rejectionReason?: string;
+    resendRequested?: boolean;
+    previousInquiryId?: string;
+    nextInquiryId?: string;
+    cycleNumber?: number;
+  }
 ): string | undefined {
-  if (!absenceEndDate && !notes) return undefined;
-  if (!absenceEndDate) return notes;
-  const meta = {
-    end: absenceEndDate,
-    days: daysCount || 2,
+  if (!absenceEndDate && !notes && !extra) return undefined;
+  if (!absenceEndDate && !extra) return notes;
+  const meta: Record<string, unknown> = {
+    end: absenceEndDate || null,
+    days: daysCount || (absenceEndDate ? 2 : 1),
     text: notes || "",
+    ...(extra?.rejectionReason ? { rejReason: extra.rejectionReason } : {}),
+    ...(extra?.resendRequested !== undefined ? { resend: extra.resendRequested } : {}),
+    ...(extra?.previousInquiryId ? { prevInq: extra.previousInquiryId } : {}),
+    ...(extra?.nextInquiryId ? { nextInq: extra.nextInquiryId } : {}),
+    ...(extra?.cycleNumber ? { cycle: extra.cycleNumber } : {}),
   };
   return JSON.stringify(meta);
 }
 
 /**
- * فك ترميز بيانات فترة الغياب المتعددة من admin_notes
+ * فك ترميز بيانات فترة الغياب المتعددة ودورات إعادة الإرسال من admin_notes
  */
 export function parseInquiryMeta(rawNotes?: string | null): {
   absenceEndDate?: string;
   daysCount?: number;
   adminNotes?: string;
+  rejectionReason?: string;
+  resendRequested?: boolean;
+  previousInquiryId?: string;
+  nextInquiryId?: string;
+  cycleNumber?: number;
 } {
   if (!rawNotes) return {};
   try {
-    if (rawNotes.startsWith("{") && rawNotes.includes('"end"')) {
+    if (
+      rawNotes.startsWith("{") &&
+      (rawNotes.includes('"end"') ||
+        rawNotes.includes('"rejReason"') ||
+        rawNotes.includes('"prevInq"') ||
+        rawNotes.includes('"text"'))
+    ) {
       const parsed = JSON.parse(rawNotes);
       return {
         absenceEndDate: parsed.end || undefined,
         daysCount: parsed.days ? Number(parsed.days) : undefined,
         adminNotes: parsed.text || undefined,
+        rejectionReason: parsed.rejReason || undefined,
+        resendRequested: parsed.resend !== undefined ? Boolean(parsed.resend) : undefined,
+        previousInquiryId: parsed.prevInq || undefined,
+        nextInquiryId: parsed.nextInq || undefined,
+        cycleNumber: parsed.cycle ? Number(parsed.cycle) : undefined,
       };
     }
   } catch {

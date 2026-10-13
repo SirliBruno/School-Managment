@@ -45,7 +45,8 @@ export function generateInquiryMessage(
   absenceDate: string,
   inquiryUrl: string,
   absenceEndDate?: string,
-  daysCount?: number
+  daysCount?: number,
+  isResendForWrongAttachments?: boolean
 ): string {
   let periodText = `ليوم (${absenceDate})`;
   if (absenceEndDate && absenceEndDate !== absenceDate) {
@@ -54,11 +55,16 @@ export function generateInquiryMessage(
     periodText = `للفترة من (${absenceDate}) إلى (${absenceEndDate}) ولمدة (${daysLabel})`;
   }
 
+  const resendNotice = isResendForWrongAttachments
+    ? `\n*تنبيه: تم رفض الإفادة السابقة لوجود خطأ في المرفقات، نأمل التكرم بإعادة إرفاق المستندات والتقارير الطبية الصحيحة عبر الرابط الجديد.*\n`
+    : "";
+
   return (
     `المكرمة الأستاذة / ${teacherName.trim()} المحترمة\n` +
     `السلام عليكم ورحمة الله وبركاته،،\n\n` +
     `نأمل منكِ التكرم بتقديم الإفادة عن سبب الغياب ${periodText} مع إرفاق التقرير الطبي أو ما يعادله عبر الرابط الإلكتروني التالي:\n` +
-    `${inquiryUrl}\n\n` +
+    `${inquiryUrl}\n` +
+    `${resendNotice}\n` +
     `*ملاحظة: الرابط صالح لمدة أسبوع من تاريخه.*\n` +
     `شاكرين ومقدرين حسن تعاونك.\n` +
     `— إدارة المدرسة`

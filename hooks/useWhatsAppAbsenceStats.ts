@@ -12,14 +12,20 @@ export function useWhatsAppAbsenceStats() {
     const activeTeachers = teachers.filter((t) => !t.isArchived);
 
     // Unapproved active inquiries that do not yet have a corresponding active AbsenceRecord
-    const unapprovedActiveInquiries = activeInquiries.filter(
-      (inq) =>
-        !activeRecords.some(
-          (r) =>
-            r.id === `abs-inq-${inq.id}` ||
-            (r.teacherId === inq.teacherId && r.date === inq.absenceDate)
-        )
-    );
+    // Deduplicate multiple inquiry cycles for the same teacher and absence date so 1 absence case = exactly 1 absence
+    const seenCaseKeys = new Set<string>();
+    const unapprovedActiveInquiries = activeInquiries.filter((inq) => {
+      const caseKey = `${inq.teacherId}_${inq.absenceDate}`;
+      const hasRecord = activeRecords.some(
+        (r) =>
+          r.id === `abs-inq-${inq.id}` ||
+          (r.teacherId === inq.teacherId && r.date === inq.absenceDate)
+      );
+      if (hasRecord) return false;
+      if (seenCaseKeys.has(caseKey)) return false;
+      seenCaseKeys.add(caseKey);
+      return true;
+    });
 
     const totalAbsences = activeRecords.length + unapprovedActiveInquiries.length;
 

@@ -109,6 +109,11 @@ export interface DbAbsenceInquiryRow {
   attachment_url: string | null;
   admin_notes: string | null;
   submitted_at: string | null;
+  rejection_reason?: string | null;
+  resend_requested?: boolean | null;
+  previous_inquiry_id?: string | null;
+  next_inquiry_id?: string | null;
+  cycle_number?: number | null;
   created_at: string;
   is_archived?: boolean | null;
   archived_at?: string | null;

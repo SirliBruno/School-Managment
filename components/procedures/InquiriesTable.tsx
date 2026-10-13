@@ -84,6 +84,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       pending: activeInquiries.filter((i) => i.status === "pending").length,
       submitted: activeInquiries.filter((i) => i.status === "submitted").length,
       approved: activeInquiries.filter((i) => i.status === "approved").length,
+      rejected: activeInquiries.filter((i) => i.status === "rejected").length,
     };
   }, [activeInquiries]);
 
@@ -189,7 +190,14 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
             {row.teacherName.charAt(0)}
           </div>
           <div>
-            <span className="font-bold text-slate-900 dark:text-slate-100 block">{row.teacherName}</span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-slate-900 dark:text-slate-100 block">{row.teacherName}</span>
+              {row.cycleNumber && row.cycleNumber > 1 && (
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-md bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
+                  دورة بديلة #{row.cycleNumber}
+                </span>
+              )}
+            </div>
             <span className="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
               {row.nationalId || row.jobNumber || "—"}
             </span>
@@ -314,12 +322,24 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           );
         }
 
-        return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-            <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
-            <span>مرفوضة</span>
-          </span>
-        );
+        if (row.status === "rejected") {
+          return (
+            <div className="flex flex-col items-center gap-1">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
+                <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                <span>
+                  مرفوضة {row.rejectionReason ? `(${row.rejectionReason})` : ""}
+                </span>
+              </span>
+              {row.resendRequested && (
+                <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200 dark:border-teal-800/60">
+                  <RefreshCw className="w-2.5 h-2.5" />
+                  <span>أعيد الإرسال</span>
+                </span>
+              )}
+            </div>
+          );
+        }
       },
     },
     {
@@ -494,6 +514,22 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           <span>معتمدة</span>
           <span className="bg-emerald-200/60 dark:bg-emerald-800/60 px-1.5 py-0.2 rounded-md text-[10px]">
             {counts.approved}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setStatusFilter("rejected")}
+          className={cn(
+            "px-3 py-1.5 rounded-xl font-bold transition-colors cursor-pointer flex items-center gap-1.5",
+            statusFilter === "rejected"
+              ? "bg-rose-600 dark:bg-rose-500 text-white shadow-2xs"
+              : "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/60"
+          )}
+        >
+          <span>مرفوضة</span>
+          <span className="bg-rose-200/60 dark:bg-rose-800/60 px-1.5 py-0.2 rounded-md text-[10px]">
+            {counts.rejected}
           </span>
         </button>
       </div>

@@ -102,6 +102,13 @@ export interface AbsenceInquiry {
   submittedAt?: string;
   createdAt: string;
 
+  // Sprint 3: Rejection & Resend Cycles
+  rejectionReason?: string;
+  resendRequested?: boolean;
+  previousInquiryId?: string;
+  nextInquiryId?: string;
+  cycleNumber?: number;
+
   // Archive (Soft Delete) metadata
   isArchived?: boolean;
   archivedAt?: string;

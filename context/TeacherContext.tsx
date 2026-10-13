@@ -167,6 +167,14 @@ interface TeacherContextType {
       isMultiDay?: boolean;
     }
   ) => Promise<{ success: boolean; error?: string }>;
+  rejectInquiryWithOptionalResend: (
+    inquiryId: string,
+    options: {
+      rejectionReason: string;
+      resendRequested: boolean;
+      adminNotes?: string;
+    }
+  ) => Promise<{ success: boolean; newInquiry?: AbsenceInquiry; error?: string }>;
   deleteInquiry: (inquiryId: string, archiveReason?: string) => Promise<void>;
   refreshInquiries: () => Promise<void>;
   // === Delay Notices (تنبيه عن تأخر / انصراف) ===
@@ -514,27 +522,47 @@ export const mapDelayToDbRow = (
 
 export const mapInquiryToDbRow = (
   inq: AbsenceInquiry
-): Record<string, unknown> => ({
-  id: inq.id,
-  teacher_id: inq.teacherId,
-  teacher_name: inq.teacherName,
-  job_number: inq.jobNumber || inq.nationalId || inq.teacherId || "1000000000",
-  specialty: inq.specialty || null,
-  mobile: inq.mobile || null,
-  absence_date: inq.absenceDate,
-  token: inq.token || `inq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-  status: inq.status || "pending",
-  expires_at: inq.expiresAt || calculateTokenExpiry(),
-  absence_type: inq.absenceType || null,
-  teacher_reason: inq.teacherReason || null,
-  attachment_url: inq.attachmentUrl || null,
-  absence_end_date: inq.absenceEndDate || null,
-  days_count: inq.daysCount || 1,
-  is_multi_day: Boolean(inq.isMultiDay),
-  admin_notes: inq.adminNotes || null,
-  submitted_at: inq.submittedAt || null,
-  created_at: inq.createdAt || new Date().toISOString(),
-});
+): Record<string, unknown> => {
+  const metaNotes = serializeInquiryMeta(
+    inq.absenceEndDate,
+    inq.daysCount,
+    inq.adminNotes,
+    {
+      rejectionReason: inq.rejectionReason,
+      resendRequested: inq.resendRequested,
+      previousInquiryId: inq.previousInquiryId,
+      nextInquiryId: inq.nextInquiryId,
+      cycleNumber: inq.cycleNumber,
+    }
+  );
+
+  return {
+    id: inq.id,
+    teacher_id: inq.teacherId,
+    teacher_name: inq.teacherName,
+    job_number: inq.jobNumber || inq.nationalId || inq.teacherId || "1000000000",
+    specialty: inq.specialty || null,
+    mobile: inq.mobile || null,
+    absence_date: inq.absenceDate,
+    token: inq.token || `inq_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    status: inq.status || "pending",
+    expires_at: inq.expiresAt || calculateTokenExpiry(),
+    absence_type: inq.absenceType || null,
+    teacher_reason: inq.teacherReason || null,
+    attachment_url: inq.attachmentUrl || null,
+    absence_end_date: inq.absenceEndDate || null,
+    days_count: inq.daysCount || 1,
+    is_multi_day: Boolean(inq.isMultiDay),
+    admin_notes: metaNotes || inq.adminNotes || null,
+    submitted_at: inq.submittedAt || null,
+    rejection_reason: inq.rejectionReason || null,
+    resend_requested: inq.resendRequested ?? null,
+    previous_inquiry_id: inq.previousInquiryId || null,
+    next_inquiry_id: inq.nextInquiryId || null,
+    cycle_number: inq.cycleNumber || null,
+    created_at: inq.createdAt || new Date().toISOString(),
+  };
+};
 
 export const mapDbDeductionToDecision = (
   d: DbDeductionDecisionRow
@@ -1553,6 +1581,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   adminNotes: meta.adminNotes,
                   submittedAt: inq.submitted_at || undefined,
                   createdAt: inq.created_at,
+                  rejectionReason: inq.rejection_reason || meta.rejectionReason || undefined,
+                  resendRequested: inq.resend_requested !== undefined && inq.resend_requested !== null ? Boolean(inq.resend_requested) : meta.resendRequested,
+                  previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
+                  nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
+                  cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
                   isArchived: Boolean(inq.is_archived),
                 };
               }
@@ -2240,6 +2273,11 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               adminNotes: meta.adminNotes,
               submittedAt: inq.submitted_at || undefined,
               createdAt: inq.created_at,
+              rejectionReason: inq.rejection_reason || meta.rejectionReason || undefined,
+              resendRequested: inq.resend_requested !== undefined && inq.resend_requested !== null ? Boolean(inq.resend_requested) : meta.resendRequested,
+              previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
+              nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
+              cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
               isArchived: Boolean(inq.is_archived),
             };
             setInquiries((prev) => {
@@ -4119,6 +4157,250 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return { success: true };
+    },
+    [inquiries, absenceRecords, recordAbsence, updateAbsenceRecord]
+  );
+
+  // 12.1. Reject Inquiry with Optional Resend (Sprint 3: Wrong Attachments Rejection & Resend)
+  const rejectInquiryWithOptionalResend = useCallback(
+    async (
+      inquiryId: string,
+      options: {
+        rejectionReason: string;
+        resendRequested: boolean;
+        adminNotes?: string;
+      }
+    ): Promise<{ success: boolean; newInquiry?: AbsenceInquiry; error?: string }> => {
+      const existingInquiry = inquiries.find((i) => i.id === inquiryId);
+      if (!existingInquiry) {
+        return { success: false, error: "لم يتم العثور على المساءلة المحددة." };
+      }
+
+      // Idempotency / Double submit guard: if already rejected and resend was already processed
+      if (existingInquiry.status === "rejected" && existingInquiry.nextInquiryId) {
+        const alreadyCreated = inquiries.find((i) => i.id === existingInquiry.nextInquiryId);
+        if (alreadyCreated) {
+          return { success: true, newInquiry: alreadyCreated };
+        }
+      }
+
+      const now = new Date().toISOString();
+
+      if (options.resendRequested) {
+        const newId =
+          typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `inq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
+        const newToken =
+          typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID().replace(/-/g, "")
+            : generateSecureToken(16);
+
+        const currentCycle = existingInquiry.cycleNumber || 1;
+        const newCycle = currentCycle + 1;
+        // Strictly 7 full days = 168 hours from creation
+        const newExpiresAt = calculateTokenExpiry();
+
+        const serializedNewNotes = serializeInquiryMeta(
+          existingInquiry.absenceEndDate,
+          existingInquiry.daysCount,
+          undefined,
+          {
+            previousInquiryId: existingInquiry.id,
+            cycleNumber: newCycle,
+          }
+        );
+
+        const newInquiry: AbsenceInquiry = {
+          id: newId,
+          teacherId: existingInquiry.teacherId,
+          teacherName: existingInquiry.teacherName,
+          nationalId: existingInquiry.nationalId,
+          jobNumber: existingInquiry.jobNumber,
+          specialty: existingInquiry.specialty,
+          mobile: existingInquiry.mobile,
+          absenceDate: existingInquiry.absenceDate,
+          absenceEndDate: existingInquiry.absenceEndDate,
+          daysCount: existingInquiry.daysCount,
+          isMultiDay: existingInquiry.isMultiDay,
+          token: newToken,
+          status: "pending",
+          expiresAt: newExpiresAt,
+          createdAt: now,
+          previousInquiryId: existingInquiry.id,
+          cycleNumber: newCycle,
+          adminNotes: serializedNewNotes,
+        };
+
+        const serializedUpdatedExistingNotes = serializeInquiryMeta(
+          existingInquiry.absenceEndDate,
+          existingInquiry.daysCount,
+          options.adminNotes || existingInquiry.adminNotes,
+          {
+            rejectionReason: options.rejectionReason,
+            resendRequested: true,
+            nextInquiryId: newId,
+            cycleNumber: currentCycle,
+          }
+        );
+
+        const updatedExisting: AbsenceInquiry = {
+          ...existingInquiry,
+          status: "rejected",
+          rejectionReason: options.rejectionReason,
+          resendRequested: true,
+          nextInquiryId: newId,
+          adminNotes: serializedUpdatedExistingNotes,
+        };
+
+        // Atomically update state: prepend new inquiry and update existing
+        setInquiries((prev) => [
+          newInquiry,
+          ...prev.map((i) => (i.id === inquiryId ? updatedExisting : i)),
+        ]);
+
+        // Sync with Supabase
+        if (isSupabaseConfigured() && supabase) {
+          try {
+            await supabase
+              .from("absence_inquiries")
+              .update({
+                status: "rejected",
+                rejection_reason: options.rejectionReason,
+                resend_requested: true,
+                next_inquiry_id: newId,
+                admin_notes: serializedUpdatedExistingNotes,
+              })
+              .eq("id", inquiryId);
+
+            const insertPayload = mapInquiryToDbRow(newInquiry);
+            const { error: insErr } = await supabase
+              .from("absence_inquiries")
+              .insert(insertPayload);
+
+            if (insErr && (insErr.code === "PGRST204" || insErr.message?.includes("column"))) {
+              await supabase.from("absence_inquiries").insert({
+                id: newInquiry.id,
+                teacher_id: newInquiry.teacherId,
+                teacher_name: newInquiry.teacherName,
+                job_number: newInquiry.jobNumber,
+                specialty: newInquiry.specialty || null,
+                mobile: newInquiry.mobile || null,
+                absence_date: newInquiry.absenceDate,
+                token: newInquiry.token,
+                status: newInquiry.status,
+                expires_at: newInquiry.expiresAt,
+                admin_notes: serializedNewNotes || null,
+                created_at: newInquiry.createdAt,
+              });
+            }
+          } catch (syncErr) {
+            console.warn("خطأ أثناء مزامنة إعادة الإرسال في سوبابيز:", syncErr);
+          }
+        }
+
+        logAuditEvent({
+          action: "REJECT",
+          entityType: "inquiry",
+          entityId: existingInquiry.id,
+          details: `رفض إفادة المساءلة للمعلمة (${existingInquiry.teacherName}) بسبب (${options.rejectionReason}) مع طلب إعادة الإرسال برابط جديد`,
+          oldValue: existingInquiry,
+          newValue: updatedExisting,
+        });
+
+        logAuditEvent({
+          action: "CREATE",
+          entityType: "inquiry",
+          entityId: newInquiry.id,
+          details: `إنشاء استفسار بديل (دورة ${newCycle}) للمعلمة (${newInquiry.teacherName}) برابط جديد صالح لمدة 7 أيام بدلاً من المساءلة السابقة #${existingInquiry.id.slice(-6)}`,
+          newValue: newInquiry,
+        });
+
+        return { success: true, newInquiry };
+      } else {
+        // No resend requested: reject normally and record as unexcused absence
+        const serializedNotes = serializeInquiryMeta(
+          existingInquiry.absenceEndDate,
+          existingInquiry.daysCount,
+          options.adminNotes || existingInquiry.adminNotes,
+          {
+            rejectionReason: options.rejectionReason,
+            resendRequested: false,
+          }
+        );
+
+        const updatedExisting: AbsenceInquiry = {
+          ...existingInquiry,
+          status: "rejected",
+          rejectionReason: options.rejectionReason,
+          resendRequested: false,
+          adminNotes: serializedNotes,
+        };
+
+        setInquiries((prev) =>
+          prev.map((i) => (i.id === inquiryId ? updatedExisting : i))
+        );
+
+        const coveredDates =
+          existingInquiry.isMultiDay && existingInquiry.absenceEndDate
+            ? getDatesInRange(existingInquiry.absenceDate, existingInquiry.absenceEndDate)
+            : [existingInquiry.absenceDate];
+
+        coveredDates.forEach((d) => {
+          const existingRecord = absenceRecords.find(
+            (a) => a.teacherId === existingInquiry.teacherId && a.date === d
+          );
+
+          if (!existingRecord) {
+            recordAbsence({
+              teacherId: existingInquiry.teacherId,
+              teacherName: existingInquiry.teacherName,
+              jobNumber: existingInquiry.jobNumber,
+              specialty: existingInquiry.specialty || "عام",
+              date: d,
+              type: "بدون عذر",
+              reason: `عذر مرفوض (${options.rejectionReason})`,
+              notes:
+                options.adminNotes ||
+                `تم رفض العذر (${options.rejectionReason}) واحتساب الغياب بدون عذر`,
+              attachmentUrl: existingInquiry.attachmentUrl || undefined,
+            });
+          } else if (existingRecord.type !== "بدون عذر") {
+            updateAbsenceRecord(existingRecord.id, {
+              type: "بدون عذر",
+              notes: `تم رفض العذر (${options.rejectionReason}) واحتساب الغياب بدون عذر`,
+            });
+          }
+        });
+
+        if (isSupabaseConfigured() && supabase) {
+          try {
+            await supabase
+              .from("absence_inquiries")
+              .update({
+                status: "rejected",
+                rejection_reason: options.rejectionReason,
+                resend_requested: false,
+                admin_notes: serializedNotes,
+              })
+              .eq("id", inquiryId);
+          } catch (syncErr) {
+            console.warn("خطأ أثناء تسجيل رفض المساءلة في سوبابيز:", syncErr);
+          }
+        }
+
+        logAuditEvent({
+          action: "REJECT",
+          entityType: "inquiry",
+          entityId: existingInquiry.id,
+          details: `رفض إفادة المساءلة للمعلمة (${existingInquiry.teacherName}) نهائياً بسبب (${options.rejectionReason}) بدون إعادة إرسال`,
+          oldValue: existingInquiry,
+          newValue: updatedExisting,
+        });
+
+        return { success: true };
+      }
     },
     [inquiries, absenceRecords, recordAbsence, updateAbsenceRecord]
   );
@@ -7284,6 +7566,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreAbsenceRecord,
       createInquiry,
       updateInquiryDecision,
+      rejectInquiryWithOptionalResend,
       deleteInquiry,
       refreshInquiries,
       createDelayNotice,
@@ -7356,6 +7639,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       restoreAbsenceRecord,
       createInquiry,
       updateInquiryDecision,
+      rejectInquiryWithOptionalResend,
       deleteInquiry,
       refreshInquiries,
       createDelayNotice,
