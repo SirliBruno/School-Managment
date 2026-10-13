@@ -38,7 +38,8 @@ export type ViolationTypeKey =
   | "delay_start"
   | "absent_during"
   | "early_departure"
-  | "left_school";
+  | "left_school"
+  | "other";
 
 interface ViolationTypeOption {
   id: ViolationTypeKey;
@@ -97,6 +98,17 @@ const VIOLATION_TYPE_OPTIONS: ViolationTypeOption[] = [
     defaultTo: "11:00",
     badgeLabel: "انصراف من غير المدرسة",
   },
+  {
+    id: "other",
+    title: "أخرى",
+    subtitle: "تسجيل سبب تأخر أو انصراف آخر وتحديده يدوياً",
+    icon: Sparkles,
+    fromLabel: "بداية الفترة (من الساعة):",
+    toLabel: "نهاية الفترة (إلى الساعة):",
+    defaultFrom: "07:00",
+    defaultTo: "08:30",
+    badgeLabel: "أخرى",
+  },
 ];
 
 export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
@@ -121,6 +133,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
   const [fromTime, setFromTime] = useState("07:00");
   const [toTime, setToTime] = useState("08:30");
   const [leftSchoolDetails, setLeftSchoolDetails] = useState("");
+  const [customOtherReason, setCustomOtherReason] = useState("");
 
   const [notes, setNotes] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -165,27 +178,52 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
       setSelectedTeacher(found || null);
       setNoticeDate(noticeToEdit.noticeDate || noticeToEdit.date || "");
 
-      if (noticeToEdit.violationAbsentDuring) {
+      const isOther = Boolean(
+        noticeToEdit.violationOther ||
+        noticeToEdit.otherReasonDetails ||
+        (noticeToEdit.additionalNotes && (noticeToEdit.additionalNotes.startsWith("أخرى — ") || noticeToEdit.additionalNotes.startsWith("أخرى - "))) ||
+        (noticeToEdit.notes && (noticeToEdit.notes.startsWith("أخرى — ") || noticeToEdit.notes.startsWith("أخرى - ")))
+      );
+
+      if (isOther) {
+        setSelectedViolationType("other");
+        const extracted =
+          noticeToEdit.otherReasonDetails ||
+          (noticeToEdit.additionalNotes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
+           noticeToEdit.notes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
+           "");
+        setCustomOtherReason(extracted);
+        setFromTime(noticeToEdit.delayStartFromTime || "07:00");
+        setToTime(noticeToEdit.delayStartTime || "08:30");
+      } else if (noticeToEdit.violationAbsentDuring) {
         setSelectedViolationType("absent_during");
+        setCustomOtherReason("");
         setFromTime(noticeToEdit.absentFromTime || "08:00");
         setToTime(noticeToEdit.absentToTime || "10:00");
       } else if (noticeToEdit.violationEarlyDeparture) {
         setSelectedViolationType("early_departure");
+        setCustomOtherReason("");
         setFromTime(noticeToEdit.earlyDepartureFromTime || "11:30");
         setToTime(noticeToEdit.earlyDepartureTime || "13:30");
       } else if (noticeToEdit.violationLeftSchool) {
         setSelectedViolationType("left_school");
+        setCustomOtherReason("");
         setFromTime(noticeToEdit.leftSchoolFromTime || "09:00");
         setToTime(noticeToEdit.leftSchoolToTime || "11:00");
         setLeftSchoolDetails(noticeToEdit.leftSchoolDetails || "");
       } else {
         // Default delay_start
         setSelectedViolationType("delay_start");
+        setCustomOtherReason("");
         setFromTime(noticeToEdit.delayStartFromTime || "07:00");
         setToTime(noticeToEdit.delayStartTime || "08:30");
       }
 
-      setNotes(noticeToEdit.additionalNotes || noticeToEdit.notes || "");
+      setNotes(
+        isOther
+          ? ""
+          : (noticeToEdit.additionalNotes || noticeToEdit.notes || "")
+      );
     } else {
       // Create mode
       if (preselectedTeacherId) {
@@ -200,6 +238,7 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
       }
       setNoticeDate(getSaudiToday());
       setSelectedViolationType("delay_start");
+      setCustomOtherReason("");
       setFromTime("07:00");
       setToTime("08:30");
       setLeftSchoolDetails("");
@@ -243,12 +282,18 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
       return false;
     }
 
+    if (selectedViolationType === "other" && !customOtherReason.trim()) {
+      setErrorMsg("يرجى كتابة سبب التأخير.");
+      return false;
+    }
+
     setErrorMsg(null);
     return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProcessing) return;
     if (!validate() || !selectedTeacher) return;
 
     setIsProcessing(true);
@@ -257,6 +302,11 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
       const isAbsentDuring = selectedViolationType === "absent_during";
       const isEarlyDeparture = selectedViolationType === "early_departure";
       const isLeftSchool = selectedViolationType === "left_school";
+      const isOther = selectedViolationType === "other";
+
+      const formattedOtherNotes = isOther
+        ? (notes.trim() ? `أخرى — ${customOtherReason.trim()} (${notes.trim()})` : `أخرى — ${customOtherReason.trim()}`)
+        : (notes.trim() || undefined);
 
       const payload = {
         teacherId: selectedTeacher.id,
@@ -272,8 +322,8 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
         date: noticeDate,
 
         violationDelayStart: isDelayStart,
-        delayStartFromTime: isDelayStart ? fromTime : undefined,
-        delayStartTime: isDelayStart ? toTime : undefined,
+        delayStartFromTime: isDelayStart || isOther ? fromTime : undefined,
+        delayStartTime: isDelayStart || isOther ? toTime : undefined,
 
         violationAbsentDuring: isAbsentDuring,
         absentFromTime: isAbsentDuring ? fromTime : undefined,
@@ -291,11 +341,14 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             `انصراف من غير المدرسة من الساعة ${fromTime} إلى الساعة ${toTime}`
           : undefined,
 
+        violationOther: isOther,
+        otherReasonDetails: isOther ? customOtherReason.trim() : undefined,
+
         calculatedDuration: timeResult.formattedDuration,
         calculatedMinutes: timeResult.totalMinutes,
 
-        additionalNotes: notes.trim() || undefined,
-        notes: notes.trim() || undefined,
+        additionalNotes: formattedOtherNotes,
+        notes: formattedOtherNotes,
       };
 
       if (isEditing && noticeToEdit) {
@@ -465,6 +518,29 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
                 </div>
                 <span className="leading-normal">{activeOption.subtitle}</span>
               </div>
+
+              {/* Extra input for Other Violation */}
+              {selectedViolationType === "other" && (
+                <div className="space-y-1.5 pt-1 animate-in fade-in">
+                  <label
+                    htmlFor={`${formId}-custom-reason`}
+                    className="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+                  >
+                    اذكر السبب: <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    id={`${formId}-custom-reason`}
+                    rows={2}
+                    value={customOtherReason}
+                    onChange={(e) => {
+                      setCustomOtherReason(e.target.value);
+                      setErrorMsg(null);
+                    }}
+                    placeholder="يرجى كتابة سبب التأخير..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 dark:border-amber-800/80 text-xs sm:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30 shadow-2xs resize-none"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Time Selection & Automatic Duration Calculation Box */}

@@ -1205,6 +1205,11 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                           خروج وعودة
                                         </span>
                                       )}
+                                      {(notice.violationOther || notice.otherReasonDetails || notice.additionalNotes?.startsWith("أخرى — ") || notice.additionalNotes?.startsWith("أخرى - ")) && (
+                                        <span className="text-[10px] bg-purple-50 text-purple-800 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60 px-1.5 py-0.5 rounded">
+                                          أخرى ({notice.otherReasonDetails || (notice.additionalNotes?.replace(/^أخرى\s*[—\-]\s*/, "") || notice.additionalNotes)})
+                                        </span>
+                                      )}
                                     </div>
                                   </td>
 

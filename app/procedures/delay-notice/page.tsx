@@ -18,6 +18,7 @@ import {
   DoorOpen,
   Share2,
   FileDown,
+  Sparkles,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -136,6 +137,9 @@ export default function DelayNoticePage() {
         "تأخر بداية الدوام": n.violationDelayStart ? `${n.delayStartTime || "نعم"}` : "لا",
         "عدم تواجد أثناء الدوام": n.violationAbsentDuring ? `${n.absentFromTime} - ${n.absentToTime}` : "لا",
         "انصراف مبكر": n.violationEarlyDeparture ? `${n.earlyDepartureTime || "نعم"}` : "لا",
+        "سبب التأخير (أخرى)": (n.violationOther || n.otherReasonDetails || n.additionalNotes?.startsWith("أخرى — "))
+          ? (n.otherReasonDetails ? `أخرى — ${n.otherReasonDetails}` : n.additionalNotes || "أخرى")
+          : "—",
         "المدة المحتسبة": n.calculatedDuration || "—",
         "حالة التنبيه":
           n.status === "completed"
@@ -214,6 +218,24 @@ export default function DelayNoticePage() {
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 text-[10px] font-semibold">
               <DoorOpen className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
               <span>خروج دون إذن</span>
+            </span>
+          )}
+          {(row.violationOther || row.otherReasonDetails || row.additionalNotes?.startsWith("أخرى — ") || row.additionalNotes?.startsWith("أخرى - ")) && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 dark:bg-purple-950/50 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800/60 text-[10px] font-semibold"
+              title={
+                row.otherReasonDetails ||
+                (row.additionalNotes?.replace(/^أخرى\s*[—\-]\s*/, "") || row.additionalNotes)
+              }
+            >
+              <Sparkles className="w-3 h-3 text-purple-600 dark:text-purple-400 shrink-0" />
+              <span>
+                {row.otherReasonDetails
+                  ? `أخرى — ${row.otherReasonDetails}`
+                  : row.additionalNotes?.startsWith("أخرى — ") || row.additionalNotes?.startsWith("أخرى - ")
+                  ? row.additionalNotes
+                  : "أخرى"}
+              </span>
             </span>
           )}
           {row.calculatedDuration && (

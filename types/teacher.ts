@@ -143,6 +143,9 @@ export interface DelayNotice {
   leftSchoolToTime?: string;          // وقت العودة
   leftSchoolDetails?: string;         // تفاصيل الانصراف
 
+  violationOther?: boolean;           // أخرى
+  otherReasonDetails?: string;        // تفاصيل سبب التأخير (أخرى)
+
   calculatedDuration?: string;        // المدة المحتسبة نصياً (مثال: ساعتان)
   calculatedMinutes?: number;         // إجمالي المدة بالدقائق
 

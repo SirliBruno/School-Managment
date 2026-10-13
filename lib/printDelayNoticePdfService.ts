@@ -14,6 +14,7 @@ import {
   DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "@/lib/defaultApprovalAssets";
 import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
+import { calculateNoticeDurationMinutes } from "@/lib/delayDeductionIntegration";
 
 export interface DelayNoticePdfData {
   notice: DelayNotice;
@@ -104,6 +105,27 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
       `انصرافكم من غير المدرسة (${details})${duration}.`
     );
   }
+
+  const isOther = Boolean(
+    notice.violationOther ||
+    notice.otherReasonDetails ||
+    (notice.additionalNotes && (notice.additionalNotes.startsWith("أخرى — ") || notice.additionalNotes.startsWith("أخرى - "))) ||
+    (notice.notes && (notice.notes.startsWith("أخرى — ") || notice.notes.startsWith("أخرى - ")))
+  );
+
+  if (isOther) {
+    const rawOther =
+      notice.otherReasonDetails ||
+      (notice.additionalNotes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
+       notice.notes?.replace(/^أخرى\s*[—\-]\s*/, "")) ||
+      "";
+    const duration = notice.calculatedDuration ? ` [المدة: ${esc(notice.calculatedDuration)}]` : "";
+    violationBullets.push(
+      `سبب التأخير: أخرى — ${esc(rawOther)}${duration}.`
+    );
+  }
+
+  const delayMinutes = calculateNoticeDurationMinutes(notice);
 
   const teacherReasonHtml = notice.teacherReason?.trim()
     ? `<span style="font-weight:bold">${esc(notice.teacherReason)}</span>`
@@ -220,6 +242,16 @@ ${schoolTableHtml}
         : `<div style="color:#64748b;font-style:italic">لم يتم تحديد أي بند مخالفة.</div>`
     }
   </div>
+
+  ${
+    delayMinutes > 0
+      ? `
+  <div style="margin-top:6px;margin-bottom:6px;padding:6px 14px;background:#f0fdfa;border:1.5px solid #0f766e;border-radius:4px;display:flex;align-items:center;justify-content:space-between;font-family:'Cairo',sans-serif;">
+    <span style="font-weight:800;color:#115e59;font-size:9.5pt;">دقائق التأخير :</span>
+    <span style="font-weight:900;color:#0f766e;font-size:11pt;">${delayMinutes} دقيقة</span>
+  </div>`
+      : ""
+  }
 
   <div class="sb" style="margin-top:4px">
     عليه نأمل توضيح أسباب ذلك مع إرفاق ما يؤيد عذركِ ،،، ولكم تحياتي ..

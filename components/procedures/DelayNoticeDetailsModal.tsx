@@ -21,10 +21,12 @@ import {
   Check,
   Ban,
   Share2,
+  Sparkles,
 } from "lucide-react";
 import { DelayNotice } from "@/types/teacher";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { calculateNoticeDurationMinutes } from "@/lib/delayDeductionIntegration";
 import { cn } from "@/lib/utils";
 
 interface DelayNoticeDetailsModalProps {
@@ -335,7 +337,46 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
                   </div>
                 )}
 
-                {notice.notes && (
+                {(notice.violationOther || notice.otherReasonDetails || notice.notes?.startsWith("أخرى — ") || notice.notes?.startsWith("أخرى - ")) && (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      <span>سبب التأخر (أخرى):</span>
+                    </span>
+                    <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
+                      <span className="text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                        {notice.otherReasonDetails
+                          ? `أخرى — ${notice.otherReasonDetails}`
+                          : notice.notes?.startsWith("أخرى — ") || notice.notes?.startsWith("أخرى - ")
+                          ? notice.notes
+                          : "أخرى"}
+                      </span>
+                      {notice.calculatedDuration && (
+                        <span className="text-[11px] font-bold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2 py-0.5 rounded border border-teal-200 dark:border-teal-800/60">
+                          المدة: {notice.calculatedDuration}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {(() => {
+                  const delayMinutes = calculateNoticeDurationMinutes(notice);
+                  if (delayMinutes <= 0) return null;
+                  return (
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 text-xs">
+                      <span className="font-bold text-teal-900 dark:text-teal-300 flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                        <span>دقائق التأخير المحتسبة:</span>
+                      </span>
+                      <span className="font-mono font-black text-sm text-[#137a85] dark:text-teal-400">
+                        {delayMinutes} دقيقة
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                {notice.notes && !notice.notes.startsWith("أخرى — ") && (
                   <div className="mt-2 text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
                     <strong className="text-slate-700 dark:text-slate-300 block mb-0.5">ملاحظات وكيلة المدرسة:</strong>
                     <span>{notice.notes}</span>

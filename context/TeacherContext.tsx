@@ -1590,44 +1590,59 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           let cleanDelaysList: DelayNotice[] = localDelayNotices;
           if (!delayErr && dbDelays !== null) {
             cleanDelaysList = (dbDelays as unknown as DbDelayNoticeRow[]).map(
-              (dn: DbDelayNoticeRow) => ({
-                id: dn.id,
-                noticeNumber: dn.notice_number || undefined,
-                teacherId: dn.teacher_id,
-                teacherName: dn.teacher_name,
-                jobNumber: dn.job_number,
-                specialty: dn.specialty || undefined,
-                noticeDate: dn.notice_date,
-                date: dn.notice_date,
-                violationDelayStart: dn.violation_delay_start,
-                delayStartTime: dn.delay_start_time || undefined,
-                violationAbsentDuring: dn.violation_absent_during,
-                absentFromTime: dn.absent_from_time || undefined,
-                absentToTime: dn.absent_to_time || undefined,
-                violationEarlyDeparture: dn.violation_early_departure,
-                earlyDepartureTime: dn.early_departure_time || undefined,
-                violationLeftSchool: dn.violation_left_school,
-                leftSchoolDetails: dn.left_school_details || undefined,
-                additionalNotes: dn.additional_notes || undefined,
-                notes: dn.additional_notes || undefined,
-                status: dn.status,
-                teacherReason: dn.teacher_reason || undefined,
-                teacherSignatureDate: dn.teacher_signature_date || undefined,
-                directorOpinion: dn.director_opinion || null,
-                directorNotes: dn.director_notes || undefined,
-                directorSignatureDate: dn.director_signature_date || undefined,
-                hijriYear: dn.hijri_year || "١٤٤٨",
-                shareToken: dn.share_token,
-                tokenExpiresAt: dn.token_expires_at,
-                teacherResponseSubmittedAt: dn.teacher_response_submitted_at || undefined,
-                teacherIpAddress: dn.teacher_ip_address || undefined,
-                linkSharedAt: dn.link_shared_at || undefined,
-                createdAt: dn.created_at,
-                isArchived: Boolean(dn.is_archived),
-                archivedAt: dn.archived_at || undefined,
-                archiveReason: dn.archive_reason || undefined,
-                archivedByCascade: Boolean(dn.archived_by_cascade),
-              })
+              (dn: DbDelayNoticeRow) => {
+                const isOther = Boolean(
+                  dn.additional_notes?.startsWith("أخرى — ") ||
+                  dn.additional_notes?.startsWith("أخرى - ") ||
+                  dn.left_school_details?.startsWith("أخرى — ") ||
+                  dn.left_school_details?.startsWith("أخرى - ")
+                );
+                const otherReason = isOther
+                  ? (dn.additional_notes?.replace(/^أخرى\s*[—\-]\s*/, "") ||
+                     dn.left_school_details?.replace(/^أخرى\s*[—\-]\s*/, ""))
+                  : undefined;
+
+                return {
+                  id: dn.id,
+                  noticeNumber: dn.notice_number || undefined,
+                  teacherId: dn.teacher_id,
+                  teacherName: dn.teacher_name,
+                  jobNumber: dn.job_number,
+                  specialty: dn.specialty || undefined,
+                  noticeDate: dn.notice_date,
+                  date: dn.notice_date,
+                  violationDelayStart: dn.violation_delay_start,
+                  delayStartTime: dn.delay_start_time || undefined,
+                  violationAbsentDuring: dn.violation_absent_during,
+                  absentFromTime: dn.absent_from_time || undefined,
+                  absentToTime: dn.absent_to_time || undefined,
+                  violationEarlyDeparture: dn.violation_early_departure,
+                  earlyDepartureTime: dn.early_departure_time || undefined,
+                  violationLeftSchool: dn.violation_left_school,
+                  leftSchoolDetails: dn.left_school_details || undefined,
+                  violationOther: isOther,
+                  otherReasonDetails: otherReason || undefined,
+                  additionalNotes: dn.additional_notes || undefined,
+                  notes: dn.additional_notes || undefined,
+                  status: dn.status,
+                  teacherReason: dn.teacher_reason || undefined,
+                  teacherSignatureDate: dn.teacher_signature_date || undefined,
+                  directorOpinion: dn.director_opinion || null,
+                  directorNotes: dn.director_notes || undefined,
+                  directorSignatureDate: dn.director_signature_date || undefined,
+                  hijriYear: dn.hijri_year || "١٤٤٨",
+                  shareToken: dn.share_token,
+                  tokenExpiresAt: dn.token_expires_at,
+                  teacherResponseSubmittedAt: dn.teacher_response_submitted_at || undefined,
+                  teacherIpAddress: dn.teacher_ip_address || undefined,
+                  linkSharedAt: dn.link_shared_at || undefined,
+                  createdAt: dn.created_at,
+                  isArchived: Boolean(dn.is_archived),
+                  archivedAt: dn.archived_at || undefined,
+                  archiveReason: dn.archive_reason || undefined,
+                  archivedByCascade: Boolean(dn.archived_by_cascade),
+                };
+              }
             );
           }
 

@@ -271,6 +271,10 @@ export function generateReportData(
       if (d.violationEarlyDeparture) violationDesc.push("خروج مبكر");
       if (d.violationAbsentDuring) violationDesc.push("خروج أثناء الدوام");
       if (d.violationLeftSchool) violationDesc.push("انصراف من غير المدرسة");
+      if (d.violationOther || (d.additionalNotes && (d.additionalNotes.startsWith("أخرى — ") || d.additionalNotes.startsWith("أخرى - ")))) {
+        const text = d.otherReasonDetails || (d.additionalNotes?.replace(/^أخرى\s*[—\-]\s*/, "") || d.additionalNotes);
+        violationDesc.push(text ? `أخرى (${text})` : "أخرى");
+      }
 
       const decisionStr =
         d.directorOpinion === "accepted"
