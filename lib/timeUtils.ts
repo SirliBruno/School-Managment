@@ -499,3 +499,15 @@ export function parseInquiryMeta(rawNotes?: string | null): {
   }
   return { adminNotes: rawNotes };
 }
+
+// Re-export Hijri & Dual Date utilities
+export {
+  getDualDate,
+  getHijriPartsFromDate,
+  hijriToGregorianIso,
+  formatOfficialHeaderDate,
+  formatOfficialIncidentDate,
+  formatOfficialDateRange,
+  HIJRI_MONTH_NAMES,
+} from "./hijriDateService";
+export type { DualDateInfo, HijriDateParts } from "./hijriDateService";

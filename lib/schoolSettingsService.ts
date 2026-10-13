@@ -26,6 +26,7 @@ export interface SchoolSettingsData {
   vicePrincipalSignatureUrl?: string;
   stampEnabled: boolean;
   signatureEnabled: boolean;
+  hijriDateOffset?: number;
   updatedAt?: string;
 }
 
@@ -40,6 +41,7 @@ export const DEFAULT_SCHOOL_SETTINGS: SchoolSettingsData = {
   vicePrincipalSignatureUrl: DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
   stampEnabled: true,
   signatureEnabled: true,
+  hijriDateOffset: 0,
   updatedAt: new Date().toISOString(),
 };
 

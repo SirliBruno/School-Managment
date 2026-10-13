@@ -32,6 +32,7 @@ import { useToast } from "@/context/ToastContext";
 import { Teacher, AdministrativeInquiry, AdministrativeInquiryType } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { getSaudiToday } from "@/lib/timeUtils";
+import { DualDateInput } from "@/components/ui/DualDateInput";
 import { cn } from "@/lib/utils";
 import { formatSaudiMobile, normalizeSaudiMobileInput } from "@/lib/whatsapp";
 import { openAdministrativeInquiryWhatsApp, generateAdministrativeInquiryWhatsAppMessage } from "@/lib/administrativeInquiryWhatsappService";
@@ -637,18 +638,13 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
               </div>
 
               {/* Incident Date */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-indigo-500" />
-                  تاريخ الواقعة <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={incidentDate}
-                  onChange={(e) => setIncidentDate(e.target.value)}
-                  className="w-full h-11 px-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
-                />
-              </div>
+              <DualDateInput
+                label="تاريخ الواقعة"
+                required
+                maxDate={getSaudiToday()}
+                value={incidentDate}
+                onChange={(val) => setIncidentDate(val)}
+              />
 
               {/* Description / Violation Details */}
               <div className="space-y-1.5">

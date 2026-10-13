@@ -10,6 +10,7 @@ import {
   DEFAULT_STAMP_BASE64,
   DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "@/lib/defaultApprovalAssets";
+import { formatOfficialHeaderDate } from "@/lib/hijriDateService";
 
 export interface DeductionDecisionPdfData {
   teacherName: string;
@@ -49,7 +50,10 @@ export function buildDeductionDecisionHtml(data: DeductionDecisionPdfData): stri
   const delayHours = esc(String(data.delayHours));
   const deductionDays = esc(String(data.deductionDays));
   const decisionNumber = esc(data.decisionNumber || "....................");
-  const decisionDate = esc(data.decisionDate || "..../..../١٤.. هـ");
+  const rawDecisionDate = data.decisionDate || new Date().toISOString();
+  const decisionDate = data.decisionDate && (data.decisionDate.includes("هـ") || data.decisionDate.includes("م"))
+    ? data.decisionDate
+    : formatOfficialHeaderDate(rawDecisionDate);
 
   const settings = getSchoolApprovalSettings();
   const showStamp = settings.stampEnabled;

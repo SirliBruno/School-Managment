@@ -27,6 +27,7 @@ import { useTeachers, mapDbAdminInquiryToInquiry } from "@/context/TeacherContex
 import { isTokenExpired, formatSaudiDateTime, getLinkExpiryStatus } from "@/lib/timeUtils";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import { cn } from "@/lib/utils";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
@@ -110,7 +111,7 @@ export default function AdministrativeInquiryPublicResponsePage() {
 
         setInquiry(foundInquiry);
 
-        // Check 48h token expiration
+        // Check 7 days token expiration
         if (
           foundInquiry.status === "pending_teacher" &&
           foundInquiry.tokenExpiresAt &&
@@ -325,7 +326,10 @@ export default function AdministrativeInquiryPublicResponsePage() {
           </p>
           <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 space-y-1.5 text-right font-medium">
             <div>رقم المساءلة: <strong className="font-mono text-slate-700 dark:text-slate-300">{inquiry.inquiryNumber || "—"}</strong></div>
-            <div>تاريخ الواقعة: <strong className="font-mono text-slate-700 dark:text-slate-300">{inquiry.incidentDate}</strong></div>
+            <div className="flex items-center justify-between">
+              <span>تاريخ الواقعة:</span>
+              <DualDateBadge date={inquiry.incidentDate} compact />
+            </div>
             {inquiry.createdAt && (
               <div>تاريخ ووقت الإصدار: <strong className="font-mono text-slate-700 dark:text-slate-300">{formatSaudiDateTime(inquiry.createdAt)}</strong></div>
             )}
@@ -380,7 +384,7 @@ export default function AdministrativeInquiryPublicResponsePage() {
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 block mb-0.5">تاريخ الواقعة:</span>
-                  <strong className="font-mono text-slate-900 dark:text-slate-100">{inquiry.incidentDate}</strong>
+                  <DualDateBadge date={inquiry.incidentDate} compact />
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-slate-400 block mb-0.5">نوع المساءلة:</span>
@@ -540,7 +544,7 @@ export default function AdministrativeInquiryPublicResponsePage() {
               </div>
               <div>
                 <span className="text-slate-500 dark:text-slate-400 block mb-0.5">تاريخ الواقعة:</span>
-                <strong className="font-mono text-slate-800 dark:text-slate-200">{inquiry.incidentDate}</strong>
+                <DualDateBadge date={inquiry.incidentDate} showDayName compact />
               </div>
             </div>
 

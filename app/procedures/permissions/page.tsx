@@ -21,6 +21,7 @@ import { useToast } from "@/context/ToastContext";
 import { EmployeePermission, Teacher } from "@/types/teacher";
 import { DataTable, ColumnDef } from "@/components/ui/DataTable";
 import { ActionMenu, ActionMenuItem } from "@/components/ui/ActionMenu";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import { PageHeader, KpiCard, Button } from "@/components/ui";
 import { CreatePermissionModal } from "@/components/procedures/CreatePermissionModal";
 import { printPermissionPdf } from "@/lib/printPermissionPdfService";
@@ -140,18 +141,11 @@ export default function PermissionsManagementPage() {
       header: "التاريخ",
       accessorKey: "permissionDate",
       align: "center",
-      cell: ({ row }) => {
-        let dayName = "";
-        try {
-          dayName = new Date(row.permissionDate).toLocaleDateString("ar-SA", { weekday: "short" });
-        } catch {}
-        return (
-          <div className="text-center font-mono">
-            <span className="font-bold text-slate-800 dark:text-slate-200 block text-xs">{row.permissionDate}</span>
-            {dayName && <span className="text-[10px] text-teal-700 dark:text-teal-400 block font-sans">{dayName}</span>}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <div className="flex flex-col items-center justify-center">
+          <DualDateBadge date={row.permissionDate} showDayName />
+        </div>
+      ),
     },
     {
       id: "exitTime",

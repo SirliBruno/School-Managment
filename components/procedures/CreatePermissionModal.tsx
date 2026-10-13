@@ -19,6 +19,7 @@ import { useAuth, DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { Teacher, EmployeePermission } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { calculateTimeDifference, getSaudiToday } from "@/lib/timeUtils";
+import { DualDateInput } from "@/components/ui/DualDateInput";
 import { cn } from "@/lib/utils";
 
 interface CreatePermissionModalProps {
@@ -286,42 +287,37 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
             </div>
 
             {/* Step 2: Date & Times */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Date */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                  <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                  <span>تاريخ الاستئذان</span>
-                  <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={permissionDate}
-                  onChange={(e) => setPermissionDate(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-bold bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
-                />
-                {formErrors.date && (
-                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.date}</p>
-                )}
-              </div>
+            <div className="space-y-4">
+              <DualDateInput
+                label="تاريخ الاستئذان"
+                required
+                maxDate={getSaudiToday()}
+                value={permissionDate}
+                onChange={(val) => {
+                  setPermissionDate(val);
+                  setFormErrors((prev) => ({ ...prev, date: "" }));
+                }}
+                error={formErrors.date}
+              />
 
-              {/* Exit Time */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                  <span>وقت الخروج (HH:MM)</span>
-                  <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="time"
-                  value={exitTime}
-                  onChange={(e) => setExitTime(e.target.value)}
-                  className="w-full px-3 py-2 text-xs font-bold font-mono text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
-                />
-                {formErrors.exitTime && (
-                  <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.exitTime}</p>
-                )}
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Exit Time */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                    <span>وقت الخروج (HH:MM)</span>
+                    <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={exitTime}
+                    onChange={(e) => setExitTime(e.target.value)}
+                    className="w-full px-3 py-2 text-xs font-bold font-mono text-center bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137a85]"
+                  />
+                  {formErrors.exitTime && (
+                    <p className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">{formErrors.exitTime}</p>
+                  )}
+                </div>
 
               {/* Return Time */}
               <div className="space-y-1.5">
@@ -403,8 +399,9 @@ export const CreatePermissionModal: React.FC<CreatePermissionModalProps> = ({
                 </span>
               )}
             </div>
+          </div>
 
-            {/* Step 3: Reason & Justifications */}
+          {/* Step 3: Reason & Justifications */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                 <FileText className="w-4 h-4 text-[#137a85] dark:text-teal-400" />

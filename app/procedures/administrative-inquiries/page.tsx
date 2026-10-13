@@ -39,6 +39,7 @@ import { AdministrativeInquiryDetailsModal } from "@/components/procedures/Admin
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { openAdministrativeInquiryWhatsApp, generateAdministrativeInquiryWhatsAppMessage } from "@/lib/administrativeInquiryWhatsappService";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import {
   PageHeader,
   KpiCard,
@@ -324,14 +325,13 @@ export default function AdministrativeInquiriesPage() {
       accessorKey: "incidentDate",
       align: "center",
       cell: ({ row }) => (
-        <div className="text-center font-mono text-xs text-slate-700 dark:text-slate-300">
-          <div className="flex items-center justify-center gap-1">
-            <Calendar className="w-3 h-3 text-slate-400" />
-            <span>{row.incidentDate}</span>
-          </div>
-          <span className="text-[10px] text-slate-400 block mt-0.5">
-            حررت: {row.inquiryDate || row.incidentDate}
-          </span>
+        <div className="flex flex-col items-center justify-center">
+          <DualDateBadge date={row.incidentDate} />
+          {row.inquiryDate && row.inquiryDate !== row.incidentDate && (
+            <span className="text-[10px] text-slate-400 block mt-0.5">
+              حررت: {row.inquiryDate}
+            </span>
+          )}
         </div>
       ),
     },
@@ -394,8 +394,12 @@ export default function AdministrativeInquiriesPage() {
       accessorKey: "createdAt",
       align: "center",
       cell: ({ row }) => (
-        <div className="text-center font-mono text-xs text-slate-500 dark:text-slate-400">
-          <span>{row.createdAt ? row.createdAt.split("T")[0] : "—"}</span>
+        <div className="flex flex-col items-center justify-center">
+          {row.createdAt ? (
+            <DualDateBadge date={row.createdAt.split("T")[0]} compact />
+          ) : (
+            <span className="text-slate-400">—</span>
+          )}
         </div>
       ),
     },

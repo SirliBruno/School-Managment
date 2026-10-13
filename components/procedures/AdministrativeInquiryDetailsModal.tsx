@@ -30,6 +30,7 @@ import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryP
 import { openAdministrativeInquiryWhatsApp } from "@/lib/administrativeInquiryWhatsappService";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
+import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
 import { cn } from "@/lib/utils";
 
 interface AdministrativeInquiryDetailsModalProps {
@@ -150,7 +151,7 @@ export const AdministrativeInquiryDetailsModal: React.FC<AdministrativeInquiryDe
             <div>
               <h2 className="text-xl font-bold tracking-tight">تفاصيل المساءلة الإدارية</h2>
               <p className="text-xs text-white/80 mt-0.5">
-                رقم المساءلة: {inquiry.inquiryNumber || "—"} | تاريخ الواقعة: {inquiry.incidentDate}
+                رقم المساءلة: {inquiry.inquiryNumber || "—"} | {formatOfficialIncidentDate(inquiry.incidentDate)}
               </p>
             </div>
           </div>

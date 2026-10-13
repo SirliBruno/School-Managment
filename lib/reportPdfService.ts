@@ -2,6 +2,7 @@ import { MOE_LOGO_BASE64 } from "@/lib/moeLogo";
 import { UNIFIED_PRINT_SCRIPT } from "@/lib/pdfTemplateBase";
 import { renderOfficialApprovalFooterHtml } from "@/lib/stampSignatureManager";
 import { CAIRO_EMBEDDED_FONT_FACE_CSS } from "@/lib/cairoFontBase64";
+import { formatOfficialHeaderDate } from "@/lib/hijriDateService";
 
 export interface PdfReportPayload {
   reportTitle: string;
@@ -178,7 +179,7 @@ ${REPORT_CSS}
         <img src="${MOE_LOGO_BASE64}" alt="وزارة التعليم" style="height: 52px; width: auto; object-fit: contain; margin-bottom: 2px;" />
       </div>
       <div class="hdr-l">
-        <div>تاريخ الإصدار: ${dateFormatted}</div>
+        <div>${formatOfficialHeaderDate(payload.dateFormatted)}</div>
         <div>الفترة: ${periodText}</div>
         <div>المرجع الإداري: إلكتروني موثق</div>
       </div>

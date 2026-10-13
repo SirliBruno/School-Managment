@@ -13,6 +13,7 @@ import {
 } from "@/lib/defaultApprovalAssets";
 import { DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
 import { SCHOOL_CONFIG } from "@/lib/appConfig";
+import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
 
 export interface AbsencePdfData {
   teacherName: string;
@@ -119,6 +120,9 @@ export function buildAbsencePdfHtml(data: AbsencePdfData): string {
         ✓ <strong>المرفق الرسمي:</strong> تم إرفاق المستند إلكترونياً بنجاح
        </div>`
     : "";
+  const incidentDateText = data.absenceDate && data.absenceDate.includes("إلى")
+    ? esc(data.absenceDate)
+    : formatOfficialIncidentDate(data.absenceDate);
 
   const headerHtml = renderOfficialHeader({
     formTitle: "مساءلة غياب",
@@ -181,7 +185,7 @@ ${schoolTableHtml}
   </div>
   <div class="sg">السلام عليكم ورحمة الله وبركاته ،،، وبعد :</div>
   <div class="sb">
-    إنه في يوم <strong style="color:#0f766e">(${dayName})</strong> الموافق: <strong style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;color:#0f766e">${dateDMY} م</strong> اتضح تغيبكم عن العمل <strong style="color:#0f766e">(نوع الغياب: ${aType})</strong>.
+    إنه في <strong style="color:#0f766e">${incidentDateText}</strong> اتضح تغيبكم عن العمل <strong style="color:#0f766e">(نوع الغياب: ${aType})</strong>.
   </div>
   <div class="sb" style="margin-top:4px">
     من خلال متابعة سجل الدوام والعمل تبين غيابكم خلال اليوم الموضح بعاليه، آمل الإفادة عن أسباب ذلك مع إرفاق ما يؤيد عذركم ،،، ولكم تحياتي ..

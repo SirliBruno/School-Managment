@@ -22,6 +22,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { resolveAttachmentUrl, parseAttachments } from "@/lib/attachments";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import {
   DataTable,
   ColumnDef,
@@ -158,12 +159,7 @@ export const RecentAbsencesTable: React.FC = () => {
       id: "date",
       header: "تاريخ الغياب",
       sortable: true,
-      cell: ({ row }) => (
-        <div className="flex items-center gap-1.5 font-mono text-slate-700 dark:text-slate-300">
-          <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-          <span>{row.date}</span>
-        </div>
-      ),
+      cell: ({ row }) => <DualDateBadge date={row.date} />,
     },
     {
       id: "type",

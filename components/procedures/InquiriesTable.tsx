@@ -32,6 +32,7 @@ import {
   getWhatsAppDirectUrl,
 } from "@/lib/whatsapp";
 import { getInquiryPublicUrl } from "@/lib/appConfig";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import {
   DataTable,
   ColumnDef,
@@ -200,29 +201,9 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       id: "absenceDate",
       header: "تاريخ الغياب",
       sortable: true,
-      cell: ({ row }) => {
-        const isMulti = Boolean(row.absenceEndDate && row.absenceEndDate !== row.absenceDate);
-
-        return (
-          <div className="font-mono text-slate-700 dark:text-slate-300">
-            {isMulti ? (
-              <div className="flex flex-col gap-1 items-start">
-                <span className="text-xs">
-                  {row.absenceDate} إلى {row.absenceEndDate}
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/60 px-1.5 py-0.5 rounded-md border border-teal-200 dark:border-teal-800">
-                  {row.daysCount || 2} أيام
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                <span>{row.absenceDate}</span>
-              </div>
-            )}
-          </div>
-        );
-      },
+      cell: ({ row }) => (
+        <DualDateBadge date={row.absenceDate} endDate={row.absenceEndDate} />
+      ),
     },
     {
       id: "mobile",

@@ -26,6 +26,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { PageHeader, KpiCard, Button } from "@/components/ui";
+import { getDualDate, formatOfficialIncidentDate } from "@/lib/hijriDateService";
 import { cn } from "@/lib/utils";
 
 type ArchiveTab = "all" | "teachers" | "absences" | "delays" | "deductions" | "permissions" | "administrative_inquiries";
@@ -49,16 +50,13 @@ const formatArabicArchiveDate = (isoDate: string): string => {
   try {
     const date = new Date(isoDate);
     if (isNaN(date.getTime())) return isoDate;
-    const datePart = new Intl.DateTimeFormat("ar-SA", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(date);
+    const ymd = date.toISOString().split("T")[0];
+    const dual = getDualDate(ymd);
     const timePart = new Intl.DateTimeFormat("ar-SA", {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date);
-    return `${datePart} - ${timePart}`;
+    return `${dual.hijriShort}هـ (${dual.gregorianShort}م) - ${timePart}`;
   } catch {
     return isoDate;
   }
@@ -146,7 +144,7 @@ export default function ArchivePage() {
         type: "absence",
         entityId: r.id,
         title: `${r.teacherName || "معلمة"} — غياب (${r.type || "اضطراري"})`,
-        subtitle: `تاريخ الغياب: ${r.date} • رقم الهوية: ${r.nationalId || r.jobNumber || "—"} • التخصص: ${r.specialty || "عام"}`,
+        subtitle: `${formatOfficialIncidentDate(r.date)} • رقم الهوية: ${r.nationalId || r.jobNumber || "—"} • التخصص: ${r.specialty || "عام"}`,
         details: r.reason ? `السبب المسجل: ${r.reason}` : "",
         archivedAt: aa.archivedAt || r.archivedAt || new Date().toISOString(),
         archiveReason: aa.archiveReason || r.archiveReason,
@@ -170,7 +168,7 @@ export default function ArchivePage() {
         type: "delay",
         entityId: n.id,
         title: `${n.teacherName || "معلمة"} — تنبيه تأخر رقم (${displayNum})`,
-        subtitle: `تاريخ التنبيه: ${n.noticeDate || n.date || "—"} • رقم الهوية: ${n.nationalId || n.jobNumber || "—"} • الحالة: ${statusLabel}`,
+        subtitle: `${formatOfficialIncidentDate(n.noticeDate || n.date || "")} • رقم الهوية: ${n.nationalId || n.jobNumber || "—"} • الحالة: ${statusLabel}`,
         details: n.calculatedDuration
           ? `المدة المحتسبة: ${n.calculatedDuration}`
           : n.additionalNotes || "",
@@ -189,7 +187,7 @@ export default function ArchivePage() {
         type: "deduction",
         entityId: dec.id,
         title: `${dec.teacherName || "معلمة"} — قرار حسم رقم (${dec.decisionNumber || "—"})`,
-        subtitle: `تاريخ القرار: ${dec.decisionDate || "—"} • رقم الهوية: ${dec.civilId || "—"} • ساعات التأخر: ${dec.delayHours} س • أيام الحسم: ${dec.deductionDays} يوم`,
+        subtitle: `${formatOfficialIncidentDate(dec.decisionDate || "")} • رقم الهوية: ${dec.civilId || "—"} • ساعات التأخر: ${dec.delayHours} س • أيام الحسم: ${dec.deductionDays} يوم`,
         details: dec.notes ? `الملاحظات: ${dec.notes}` : `قرار حسم ساعات معتمد بالمدرسة (نموذج 19) استناداً للمادة 21`,
         archivedAt: add.archivedAt || dec.archivedAt || new Date().toISOString(),
         archiveReason: add.archiveReason || dec.archiveReason,
@@ -208,7 +206,7 @@ export default function ArchivePage() {
         type: "permission",
         entityId: perm.id,
         title: `${perm.teacherName || "معلمة"} — سجل استئذان رسمي`,
-        subtitle: `التاريخ: ${perm.permissionDate} • وقت الخروج: ${perm.exitTime} • وقت العودة: ${perm.returnTime} • مدة الاستئذان: ${perm.durationMinutes} دقيقة`,
+        subtitle: `${formatOfficialIncidentDate(perm.permissionDate)} • وقت الخروج: ${perm.exitTime} • وقت العودة: ${perm.returnTime} • مدة الاستئذان: ${perm.durationMinutes} دقيقة`,
         details: perm.notes
           ? `مبررات الخروج: ${perm.reason} • ملاحظات: ${perm.notes}`
           : `مبررات الخروج: ${perm.reason}`,
@@ -244,7 +242,7 @@ export default function ArchivePage() {
         type: "administrative_inquiry",
         entityId: inq.id,
         title: `${inq.teacherName || "معلمة"} — مساءلة إدارية (${inq.inquiryNumber || "—"})`,
-        subtitle: `تاريخ الواقعة: ${inq.incidentDate || "—"} • نوع المخالفة: ${inqTypeDisplay} • الحالة: ${statusLabel}`,
+        subtitle: `${formatOfficialIncidentDate(inq.incidentDate || "")} • نوع المخالفة: ${inqTypeDisplay} • الحالة: ${statusLabel}`,
         details: inq.description || inq.incidentDescription
           ? `الوصف: ${inq.description || inq.incidentDescription}`
           : inq.vicePrincipalNotes || "",

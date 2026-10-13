@@ -29,6 +29,8 @@ import { getSaudiToday } from "@/lib/timeUtils";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { DualDateInput } from "@/components/ui/DualDateInput";
 
 interface AdministrativeInquiryReviewModalProps {
   isOpen: boolean;
@@ -192,9 +194,8 @@ export const AdministrativeInquiryReviewModal: React.FC<AdministrativeInquiryRev
                   ({inquiry.specialty || "عام"})
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                <Calendar className="w-3.5 h-3.5" />
-                <span>تاريخ الواقعة: {inquiry.incidentDate}</span>
+              <div className="flex items-center gap-1.5">
+                <DualDateBadge date={inquiry.incidentDate} showDayName compact />
               </div>
             </div>
 
@@ -391,11 +392,9 @@ export const AdministrativeInquiryReviewModal: React.FC<AdministrativeInquiryRev
                 <Calendar className="w-3.5 h-3.5 text-indigo-500" />
                 تاريخ اعتماد القرار
               </label>
-              <input
-                type="date"
+              <DualDateInput
                 value={decisionDate}
-                onChange={(e) => setDecisionDate(e.target.value)}
-                className="w-full h-10 px-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                onChange={(val) => setDecisionDate(val)}
               />
             </div>
           </div>

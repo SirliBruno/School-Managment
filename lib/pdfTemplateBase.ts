@@ -67,10 +67,13 @@ export function esc(s: string | number | undefined | null): string {
     .replace(/'/g, "&#039;");
 }
 
+import { formatOfficialHeaderDate } from "@/lib/hijriDateService";
+
 export interface OfficialHeaderProps {
   formTitle: string;
   formCode: string;
   dateFormatted: string;
+  hijriDateFormatted?: string;
   numberFormatted?: string;
   attachmentsFormatted?: string;
 }
@@ -82,9 +85,23 @@ export function renderOfficialHeader({
   formTitle,
   formCode,
   dateFormatted,
+  hijriDateFormatted,
   numberFormatted = "....................",
   attachmentsFormatted = "....................",
 }: OfficialHeaderProps): string {
+  let displayDateStr = "";
+  if (hijriDateFormatted) {
+    displayDateStr = `${esc(hijriDateFormatted)} هـ الموافق ${esc(dateFormatted)} م`;
+  } else if (dateFormatted && (dateFormatted.includes("الموافق") || dateFormatted.includes("هـ"))) {
+    displayDateStr = esc(dateFormatted);
+  } else {
+    try {
+      displayDateStr = formatOfficialHeaderDate(dateFormatted);
+    } catch {
+      displayDateStr = `${esc(dateFormatted)} م`;
+    }
+  }
+
   return `
 <!-- Header -->
 <div class="hdr">
@@ -97,7 +114,7 @@ export function renderOfficialHeader({
     <img src="${MOE_LOGO_BASE64}" alt="وزارة التعليم" style="height: 52px; width: auto; object-fit: contain; margin-bottom: 2px;" />
   </div>
   <div class="hdr-l">
-    <div>التاريخ : ${esc(dateFormatted)} م</div>
+    <div>التاريخ : ${displayDateStr}</div>
     <div>الرقم : ${esc(numberFormatted)}</div>
     <div>المشفوعات : ${esc(attachmentsFormatted)}</div>
   </div>

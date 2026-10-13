@@ -50,6 +50,7 @@ import { generateReportData } from "@/lib/reportsEngine";
 import { printReportPdf } from "@/lib/reportPdfService";
 import { getTeacherDelaySummary } from "@/lib/delayDeductionIntegration";
 import { useAuth, DEFAULT_ADMIN_NAME } from "@/context/AuthContext";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import { cn } from "@/lib/utils";
 
 interface TeacherProfileModalProps {
@@ -1067,11 +1068,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                   key={rec.id}
                                   className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-150"
                                 >
-                                  <td className="py-3 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                                    <div className="flex items-center gap-1.5">
-                                      <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-                                      <span>{rec.date}</span>
-                                    </div>
+                                  <td className="py-3 px-4 whitespace-nowrap">
+                                    <DualDateBadge date={rec.date} />
                                   </td>
                                   <td className="py-3 px-4 whitespace-nowrap">
                                     <span
@@ -1180,8 +1178,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                     <div className="font-mono font-bold text-[#137a85] dark:text-teal-400">
                                       {notice.noticeNumber || `ت-${notice.id.slice(-4)}`}
                                     </div>
-                                    <div className="text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
-                                      {notice.noticeDate || notice.date}
+                                    <div className="mt-1">
+                                      <DualDateBadge date={notice.noticeDate || notice.date} compact />
                                     </div>
                                   </td>
 
@@ -1306,7 +1304,9 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                 <td className="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-slate-100">
                                   {dec.decisionNumber}
                                 </td>
-                                <td className="py-3.5 px-4 text-slate-600 dark:text-slate-400">{dec.decisionDate}</td>
+                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                  <DualDateBadge date={dec.decisionDate} compact />
+                                </td>
                                 <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200">
                                   {dec.delayHours} س
                                 </td>
@@ -1395,8 +1395,8 @@ export const TeacherProfileModal: React.FC<TeacherProfileModalProps> = ({
                                 key={perm.id}
                                 className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors duration-150"
                               >
-                                <td className="py-3.5 px-4 font-mono font-semibold text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                                  {perm.permissionDate}
+                                <td className="py-3.5 px-4 whitespace-nowrap">
+                                  <DualDateBadge date={perm.permissionDate} compact />
                                 </td>
                                 <td className="py-3.5 px-4 font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
                                   {perm.exitTime}

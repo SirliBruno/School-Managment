@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { DelayNotice } from "@/types/teacher";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import { cn } from "@/lib/utils";
 
 interface DelayNoticeDetailsModalProps {
@@ -225,9 +226,9 @@ export const DelayNoticeDetailsModal: React.FC<DelayNoticeDetailsModalProps> = (
               </div>
               <div>
                 <span className="text-slate-400 dark:text-slate-500 block text-[11px]">تاريخ المخالفة</span>
-                <span className="font-bold text-[#137a85] dark:text-teal-400 mt-0.5 block font-mono">
-                  {notice.date}
-                </span>
+                <div className="mt-0.5">
+                  <DualDateBadge date={notice.date} compact />
+                </div>
               </div>
             </div>
 

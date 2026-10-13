@@ -13,6 +13,7 @@ import {
   DEFAULT_PRINCIPAL_SIGNATURE_BASE64,
   DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "@/lib/defaultApprovalAssets";
+import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
 
 export interface DelayNoticePdfData {
   notice: DelayNotice;
@@ -147,6 +148,8 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
 
   const schoolTableHtml = renderSchoolInfoTable(jobNumber);
 
+  const incidentDateText = formatOfficialIncidentDate(notice.noticeDate || notice.date || "");
+
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -198,7 +201,7 @@ ${schoolTableHtml}
   </div>
   <div class="sg">السلام عليكم ورحمة الله وبركاته ،،، وبعد :</div>
   <div class="sb">
-    إنه في يوم <strong style="color:#0f766e">(${dayName})</strong> الموافق: <strong style="font-family:'Cairo',sans-serif;font-variant-numeric:tabular-nums;color:#0f766e">${dateFormatted} م</strong> اتضح ما يلي :
+    إنه في <strong style="color:#0f766e">${incidentDateText}</strong> اتضح ما يلي :
   </div>
 
   <!-- Only Checked Violations -->

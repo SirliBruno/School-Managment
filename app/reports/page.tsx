@@ -36,6 +36,8 @@ import { generateReportData, ReportGeneratedData } from "@/lib/reportsEngine";
 import { printReportPdf } from "@/lib/reportPdfService";
 import { getSaudiToday } from "@/lib/timeUtils";
 import { PageHeader, Button } from "@/components/ui";
+import { DualDateInput } from "@/components/ui/DualDateInput";
+import { formatOfficialHeaderDate } from "@/lib/hijriDateService";
 import { cn } from "@/lib/utils";
 import {
   DEFAULT_STAMP_BASE64,
@@ -746,22 +748,18 @@ export default function ReportsCenterPage() {
                 {/* Start Date */}
                 <div className="space-y-1.5">
                   <label className="text-slate-700 dark:text-slate-300">من تاريخ (اختياري)</label>
-                  <input
-                    type="date"
+                  <DualDateInput
                     value={filters.startDate || ""}
-                    onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                    onChange={(val) => setFilters({ ...filters, startDate: val })}
                   />
                 </div>
 
                 {/* End Date */}
                 <div className="space-y-1.5">
                   <label className="text-slate-700 dark:text-slate-300">إلى تاريخ (اختياري)</label>
-                  <input
-                    type="date"
+                  <DualDateInput
                     value={filters.endDate || ""}
-                    onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                    className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 text-xs focus:ring-2 focus:ring-[#137a85]/40 outline-none"
+                    onChange={(val) => setFilters({ ...filters, endDate: val })}
                   />
                 </div>
 
@@ -926,7 +924,7 @@ export default function ReportsCenterPage() {
                     <div className="text-[10px] text-slate-500">Ministry of Education</div>
                   </div>
                   <div className="text-left font-bold text-slate-600 space-y-0.5" dir="ltr">
-                    <div>تاريخ الإصدار: {reportData.payload.dateFormatted}</div>
+                    <div>{formatOfficialHeaderDate(reportData.payload.dateFormatted)}</div>
                     <div>الفترة: {reportData.payload.periodText}</div>
                     <div>وثيقة إدارية رسمية</div>
                   </div>

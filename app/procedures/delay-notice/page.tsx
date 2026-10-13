@@ -29,6 +29,7 @@ import { DelayNoticeDetailsModal } from "@/components/procedures/DelayNoticeDeta
 import { ShareDelayNoticeModal } from "@/components/procedures/ShareDelayNoticeModal";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import {
   PageHeader,
   KpiCard,
@@ -162,13 +163,10 @@ export default function DelayNoticePage() {
       sortable: true,
       cell: ({ row }) => (
         <div className="whitespace-nowrap">
-          <span className="font-mono font-bold text-[#137a85] text-xs block">
+          <span className="font-mono font-bold text-[#137a85] text-xs block mb-0.5">
             {row.noticeNumber || `ت-${row.id.slice(-4)}`}
           </span>
-          <div className="flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
-            <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
-            <span className="font-mono">{row.noticeDate || row.date}</span>
-          </div>
+          <DualDateBadge date={row.noticeDate || row.date} compact />
         </div>
       ),
     },

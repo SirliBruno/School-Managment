@@ -24,6 +24,7 @@ import { useTeachers } from "@/context/TeacherContext";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { parseAttachments, openSafeAttachmentUrl } from "@/lib/attachments";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import { cn } from "@/lib/utils";
 import { addDaysToDateStr, calculateDaysBetween } from "@/lib/timeUtils";
 
@@ -229,11 +230,18 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
                     ? "فترة الغياب"
                     : "تاريخ الغياب"}
                 </span>
-                <span className="font-bold text-[#137a85] dark:text-teal-400 mt-0.5 block font-mono text-xs">
-                  {adminEndDate && adminEndDate !== inquiry.absenceDate
-                    ? `${inquiry.absenceDate} إلى ${adminEndDate} (${adminDaysCount} أيام)`
-                    : inquiry.absenceDate}
-                </span>
+                <div className="mt-0.5">
+                  <DualDateBadge
+                    date={inquiry.absenceDate}
+                    endDate={adminEndDate && adminEndDate !== inquiry.absenceDate ? adminEndDate : undefined}
+                    compact
+                  />
+                  {adminEndDate && adminEndDate !== inquiry.absenceDate && (
+                    <span className="text-[10px] text-teal-700 dark:text-teal-300 font-bold block mt-0.5">
+                      ({adminDaysCount} أيام)
+                    </span>
+                  )}
+                </div>
               </div>
               <div>
                 <span className="text-slate-400 dark:text-slate-500 block text-[11px]">تاريخ تقديم الرد</span>

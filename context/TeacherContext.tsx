@@ -3985,7 +3985,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             return updatedInquiry;
           }
           if (
-            status === "approved" &&
+            (status === "approved" || status === "rejected") &&
             coveredDates.length > 1 &&
             inq.teacherId === updatedInquiry.teacherId &&
             inq.status !== "approved" &&
@@ -3994,47 +3994,53 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           ) {
             return {
               ...inq,
-              status: "approved",
+              status,
               adminNotes: inq.adminNotes
-                ? `${inq.adminNotes} (تم الضم والاعتماد آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)})`
-                : `تم الضم والاعتماد آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate}`,
+                ? `${inq.adminNotes} (تم الضم واتخاذ القرار آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)})`
+                : `تم الضم واتخاذ القرار آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate}`,
             };
           }
           return inq;
         })
       );
 
-      // If approved, document it in absenceRecords if not recorded already
-      if (status === "approved") {
-        coveredDates.forEach((d, idx) => {
-          const alreadyRecorded = absenceRecords.some(
-            (a) => a.teacherId === updatedInquiry.teacherId && a.date === d
-          );
+      // Document in absenceRecords for covered dates (both approved and rejected)
+      const isRejected = status === "rejected";
+      coveredDates.forEach((d, idx) => {
+        const existingRecord = absenceRecords.find(
+          (a) => a.teacherId === updatedInquiry.teacherId && a.date === d
+        );
 
-          if (!alreadyRecorded) {
-            recordAbsence({
-              teacherId: updatedInquiry.teacherId,
-              teacherName: updatedInquiry.teacherName,
-              jobNumber: updatedInquiry.jobNumber,
-              specialty: updatedInquiry.specialty || "عام",
-              date: d,
-              type: updatedInquiry.absenceType || "مرضي",
-              reason: updatedInquiry.teacherReason || "عذر مقبول ومعتمد للفترة",
-              notes:
-                adminNotes ||
-                updatedInquiry.adminNotes ||
-                (coveredDates.length > 1
-                  ? `مساءلة معتمدة للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate} (اليوم ${idx + 1} من ${coveredDates.length})`
-                  : "تم الاعتماد عبر المساءلة الإلكترونية"),
-              attachmentUrl: updatedInquiry.attachmentUrl || undefined,
-            });
-          }
-        });
-      }
+        if (!existingRecord) {
+          recordAbsence({
+            teacherId: updatedInquiry.teacherId,
+            teacherName: updatedInquiry.teacherName,
+            jobNumber: updatedInquiry.jobNumber,
+            specialty: updatedInquiry.specialty || "عام",
+            date: d,
+            type: isRejected ? "بدون عذر" : (updatedInquiry.absenceType || "مرضي"),
+            reason: isRejected
+              ? (adminNotes || "عذر مرفوض - غياب بدون عذر مقبول")
+              : (updatedInquiry.teacherReason || "عذر مقبول ومعتمد للفترة"),
+            notes:
+              adminNotes ||
+              updatedInquiry.adminNotes ||
+              (coveredDates.length > 1
+                ? `${isRejected ? "مساءلة مرفوضة" : "مساءلة معتمدة"} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate} (اليوم ${idx + 1} من ${coveredDates.length})`
+                : (isRejected ? "تم رفض العذر واحتسابه غياب بدون عذر" : "تم الاعتماد عبر المساءلة الإلكترونية")),
+            attachmentUrl: updatedInquiry.attachmentUrl || undefined,
+          });
+        } else if (isRejected && existingRecord.type !== "بدون عذر") {
+          updateAbsenceRecord(existingRecord.id, {
+            type: "بدون عذر",
+            notes: adminNotes || "تم رفض العذر من قبل الإدارة واحتسابه بدون عذر",
+          });
+        }
+      });
 
       if (isSupabaseConfigured() && supabase) {
         try {
-          await supabase
+          const { error: updateErr } = await supabase
             .from("absence_inquiries")
             .update({
               status,
@@ -4045,7 +4051,27 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
             })
             .eq("id", inquiryId);
 
-          if (status === "approved" && coveredDates.length > 1) {
+          if (
+            updateErr &&
+            (updateErr.code === "PGRST204" ||
+              updateErr.message?.includes("column") ||
+              updateErr.message?.includes("absence_end_date"))
+          ) {
+            const serializedNotes = serializeInquiryMeta(
+              updatedInquiry.absenceEndDate,
+              updatedInquiry.daysCount,
+              updatedInquiry.adminNotes
+            );
+            await supabase
+              .from("absence_inquiries")
+              .update({
+                status,
+                admin_notes: serializedNotes || updatedInquiry.adminNotes || null,
+              })
+              .eq("id", inquiryId);
+          }
+
+          if ((status === "approved" || status === "rejected") && coveredDates.length > 1) {
             const overlappingInquiries = inquiries.filter(
               (inq) =>
                 inq.id !== inquiryId &&
@@ -4058,8 +4084,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               await supabase
                 .from("absence_inquiries")
                 .update({
-                  status: "approved",
-                  admin_notes: `تم الضم والاعتماد آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate}`,
+                  status,
+                  admin_notes: `تم الضم واتخاذ القرار آلياً ضمن المساءلة الممتدة #${updatedInquiry.id.slice(-6)} للفترة من ${updatedInquiry.absenceDate} إلى ${updatedInquiry.absenceEndDate}`,
                 })
                 .eq("id", oInq.id);
             }
@@ -4079,7 +4105,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { success: true };
     },
-    [inquiries, absenceRecords, recordAbsence]
+    [inquiries, absenceRecords, recordAbsence, updateAbsenceRecord]
   );
 
   // 13. Delete Inquiry (Soft Delete to Archive & Sync Linked AbsenceRecord)

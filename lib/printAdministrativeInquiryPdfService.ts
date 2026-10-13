@@ -40,6 +40,11 @@ function getArabicDayName(dateStr: string): string {
   return "................";
 }
 
+import {
+  formatOfficialHeaderDate,
+  formatOfficialIncidentDate,
+} from "@/lib/hijriDateService";
+
 function formatDMY(dateStr?: string | null): string {
   if (!dateStr) return ".... / .... / ........";
   const p = dateStr.split("T")[0].split("-");
@@ -69,9 +74,8 @@ export function buildAdministrativeInquiryPdfHtml(
     inquiry.specialty || teacher.specialty || teacher.teachingField || "عام"
   );
 
-  const incidentDay = getArabicDayName(inquiry.incidentDate);
-  const incidentDateFormatted = formatDMY(inquiry.incidentDate);
-  const createdDateFormatted = formatDMY(inquiry.createdAt);
+  const incidentStatement = formatOfficialIncidentDate(inquiry.incidentDate);
+  const createdDateFormatted = formatOfficialHeaderDate(inquiry.createdAt);
   const responseDateFormatted = formatDMY(inquiry.responseDate);
   const decisionDateFormatted = formatDMY(inquiry.decisionDate);
 
@@ -299,7 +303,7 @@ ${UNIFIED_PDF_CSS}
   </div>
 
   <div class="incident-statement">
-    إنه في يوم <strong>${incidentDay}</strong> الموافق <strong>${incidentDateFormatted}</strong> اتضح ما يلي :
+    إنه في <strong>${incidentStatement}</strong> اتضح ما يلي :
   </div>
 
   <!-- قائمة الخيارات الأربعة مع الدوائر -->

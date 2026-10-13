@@ -8,6 +8,10 @@ import {
   DEFAULT_VICE_PRINCIPAL_SIGNATURE_BASE64,
 } from "@/lib/defaultApprovalAssets";
 import { CAIRO_EMBEDDED_FONT_FACE_CSS } from "@/lib/cairoFontBase64";
+import {
+  formatOfficialHeaderDate,
+  formatOfficialIncidentDate,
+} from "@/lib/hijriDateService";
 
 export interface PrintPermissionPdfOptions {
   permission: EmployeePermission;
@@ -352,7 +356,7 @@ export function generatePermissionPdfHtml({
           </td>
           <td class="hdr-left" dir="ltr">
             <div>الرقم المرجعي: ${esc(permission.id.slice(0, 10))}</div>
-            <div>التاريخ: ${esc(permission.permissionDate)}</div>
+            <div>التاريخ: ${formatOfficialHeaderDate(permission.permissionDate)}</div>
             <div>سجل استئذان رسمي</div>
           </td>
         </tr>
@@ -397,7 +401,7 @@ export function generatePermissionPdfHtml({
       <div class="section-title">تفاصيل الاستئذان والتوقيت</div>
       <div class="permission-card">
         <div style="display: flex; justify-content: space-between; font-size: 9.5pt; font-weight: 700; margin-bottom: 6px;">
-          <span>تاريخ الاستئذان: <strong>${esc(permission.permissionDate)}</strong> (${dayName})</span>
+          <span>تاريخ الاستئذان: <strong>${formatOfficialIncidentDate(permission.permissionDate)}</strong></span>
           <span>الحالة: <strong style="color: #0f766e;">موثق ومعتمد رسمياً</strong></span>
         </div>
 

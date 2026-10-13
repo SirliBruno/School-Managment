@@ -24,6 +24,7 @@ import { useToast } from "@/context/ToastContext";
 import { Teacher, DelayNotice } from "@/types/teacher";
 import { TeacherCombobox } from "@/components/procedures/TeacherCombobox";
 import { calculateTimeDifference, getSaudiToday } from "@/lib/timeUtils";
+import { DualDateInput } from "@/components/ui/DualDateInput";
 import { cn } from "@/lib/utils";
 
 interface CreateDelayNoticeModalProps {
@@ -413,27 +414,14 @@ export const CreateDelayNoticeModal: React.FC<CreateDelayNoticeModalProps> = ({
             </div>
 
             {/* Notice Date */}
-            <div className="space-y-1.5">
-              <label
-                htmlFor={`${formId}-date`}
-                className="block text-xs font-bold text-slate-700 dark:text-slate-300"
-              >
-                تاريخ حدوث المخالفة <span className="text-rose-500">*</span>
-              </label>
-              <div className="relative">
-                <Calendar
-                  className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none"
-                  aria-hidden="true"
-                />
-                <input
-                  id={`${formId}-date`}
-                  type="date"
-                  value={noticeDate}
-                  onChange={(e) => setNoticeDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-2xs"
-                />
-              </div>
-            </div>
+            <DualDateInput
+              id={`${formId}-date`}
+              label="تاريخ حدوث المخالفة"
+              required
+              maxDate={getSaudiToday()}
+              value={noticeDate}
+              onChange={(val) => setNoticeDate(val)}
+            />
 
             {/* Dropdown List for Violation Types */}
             <div className="space-y-2 pt-1">

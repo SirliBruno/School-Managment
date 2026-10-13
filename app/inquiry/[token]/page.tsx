@@ -27,6 +27,7 @@ import {
 import { AbsenceInquiry, AbsenceType } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
 import { cn } from "@/lib/utils";
 import {
   getAttachmentSlotsForType,
@@ -39,6 +40,7 @@ import {
   calculateDaysBetween,
   formatDaysCountArabic,
   parseInquiryMeta,
+  serializeInquiryMeta,
   isTokenExpired,
   formatSaudiDateTime,
   getLinkExpiryStatus,
@@ -488,10 +490,10 @@ export default function TeacherInquiryPage() {
         isMultiDay: finalIsMulti,
       };
 
-      // 2. Update Supabase with Data Loss Prevention
+      // 2. Update Supabase with Data Loss Prevention & Graceful Schema Fallback
       if (isSupabaseConfigured() && supabase) {
         try {
-          const { error: dbUpdateErr } = await supabase
+          let { error: dbUpdateErr } = await supabase
             .from("absence_inquiries")
             .update({
               status: "submitted",
@@ -504,6 +506,36 @@ export default function TeacherInquiryPage() {
               is_multi_day: finalIsMulti,
             })
             .eq("id", inquiry.id);
+
+          // Graceful fallback if production schema lacks absence_end_date / days_count columns (PGRST204)
+          if (
+            dbUpdateErr &&
+            (dbUpdateErr.code === "PGRST204" ||
+              dbUpdateErr.message?.includes("column") ||
+              dbUpdateErr.message?.includes("absence_end_date"))
+          ) {
+            console.warn(
+              "الأعمدة الجديدة غير متوفرة في سوبابيز، جاري الحفظ التوافقي في admin_notes:",
+              dbUpdateErr.message
+            );
+            const serializedNotes = serializeInquiryMeta(
+              finalEndDate,
+              finalDaysCount,
+              inquiry.adminNotes
+            );
+            const fallbackResult = await supabase
+              .from("absence_inquiries")
+              .update({
+                status: "submitted",
+                absence_type: finalAbsenceType,
+                teacher_reason: reason.trim(),
+                attachment_url: attachmentPayload,
+                submitted_at: submittedAt,
+                admin_notes: serializedNotes || inquiry.adminNotes || null,
+              })
+              .eq("id", inquiry.id);
+            dbUpdateErr = fallbackResult.error;
+          }
 
           if (dbUpdateErr) {
             console.error("فشل تسجيل الإفادة في سوبابيز:", dbUpdateErr);
@@ -631,12 +663,14 @@ export default function TeacherInquiryPage() {
             عذراً أستاذة ({inquiry.teacherName})، لقد انقضت المهلة المحددة للرد على هذه المساءلة (7 أيام كاملة من تاريخ الإرسال).
           </p>
           <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-800 dark:text-amber-300 text-right space-y-1.5 font-medium">
-            <p>
-              تاريخ الغياب:{" "}
-              {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
-                : inquiry.absenceDate}
-            </p>
+            <div className="flex items-center justify-between">
+              <span>تاريخ الغياب:</span>
+              <DualDateBadge
+                date={inquiry.absenceDate}
+                endDate={inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate ? inquiry.absenceEndDate : undefined}
+                compact
+              />
+            </div>
             {inquiry.createdAt && (
               <p>تاريخ ووقت الإرسال: {formatSaudiDateTime(inquiry.createdAt)}</p>
             )}
@@ -679,11 +713,10 @@ export default function TeacherInquiryPage() {
           <div className="bg-slate-50 dark:bg-slate-850 rounded-2xl p-4 text-right text-xs space-y-2.5 border border-slate-100 dark:border-slate-800">
             <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
               <span className="text-slate-500 dark:text-slate-400">تاريخ الغياب المعني:</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200">
-                {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
-                  : inquiry.absenceDate}
-              </span>
+              <DualDateBadge
+                date={inquiry.absenceDate}
+                endDate={inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate ? inquiry.absenceEndDate : undefined}
+              />
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
               <span className="text-slate-500 dark:text-slate-400">نوع الغياب المختار:</span>
@@ -805,7 +838,7 @@ export default function TeacherInquiryPage() {
             </div>
 
             <div className="bg-teal-50/70 dark:bg-teal-950/40 p-3 rounded-2xl border border-teal-200 dark:border-teal-800/60">
-              <span className="text-[#137a85] dark:text-teal-400 block text-[11px] font-semibold flex items-center gap-1">
+              <span className="text-[#137a85] dark:text-teal-400 block text-[11px] font-semibold flex items-center gap-1 mb-1">
                 <Calendar className="w-3 h-3" />
                 <span>
                   {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
@@ -813,11 +846,11 @@ export default function TeacherInquiryPage() {
                     : "تاريخ الغياب المطلوب"}
                 </span>
               </span>
-              <span className="font-extrabold text-[#137a85] dark:text-teal-300 text-sm mt-0.5 block">
-                {inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate
-                  ? `من ${inquiry.absenceDate} إلى ${inquiry.absenceEndDate} (${formatDaysCountArabic(inquiry.daysCount || 2)})`
-                  : inquiry.absenceDate}
-              </span>
+              <DualDateBadge
+                date={inquiry.absenceDate}
+                endDate={inquiry.absenceEndDate && inquiry.absenceEndDate !== inquiry.absenceDate ? inquiry.absenceEndDate : undefined}
+                showDayName
+              />
             </div>
           </div>
         </section>

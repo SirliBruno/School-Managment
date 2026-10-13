@@ -44,6 +44,7 @@ import {
   getDatesInRange,
 } from "@/lib/timeUtils";
 import { MAX_FALLBACK_DATA_URL_BYTES } from "@/lib/attachments";
+import { DualDateInput } from "@/components/ui/DualDateInput";
 import { cn } from "@/lib/utils";
 
 interface AbsenceFormProps {
@@ -797,53 +798,26 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
 
             {/* Date Pickers */}
             {durationMode === "single" ? (
-              <div className="space-y-1.5 max-w-md">
-                <label
-                  htmlFor={`${formId}-date`}
-                  className="block text-xs font-bold text-slate-700 dark:text-slate-300"
-                >
-                  تاريخ الغياب <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative">
-                  <Calendar
-                    className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                    aria-hidden="true"
-                  />
-                  <input
-                    id={`${formId}-date`}
-                    type="date"
-                    max={getSaudiToday()}
-                    value={absenceDate}
-                    onChange={(e) => {
-                      setAbsenceDate(e.target.value);
-                      setErrors((prev) => ({ ...prev, date: "" }));
-                    }}
-                    aria-invalid={!!errors.date}
-                    aria-describedby={errors.date ? `${formId}-date-error` : undefined}
-                    className={cn(
-                      "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-2xs",
-                      errors.date
-                        ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
-                        : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
-                    )}
-                  />
-                </div>
-                {errors.date && (
-                  <p
-                    id={`${formId}-date-error`}
-                    className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1"
-                  >
-                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                    <span>{errors.date}</span>
-                  </p>
-                )}
+              <div className="max-w-xl">
+                <DualDateInput
+                  id={`${formId}-date`}
+                  label="تاريخ الغياب"
+                  required
+                  maxDate={getSaudiToday()}
+                  value={absenceDate}
+                  onChange={(val) => {
+                    setAbsenceDate(val);
+                    setErrors((prev) => ({ ...prev, date: "" }));
+                  }}
+                  error={errors.date}
+                />
               </div>
             ) : (
-              <div className="space-y-3 p-4 rounded-xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-800/60 max-w-2xl">
+              <div className="space-y-4 p-4 rounded-2xl bg-teal-50/50 dark:bg-teal-950/30 border border-teal-100 dark:border-teal-800/60 max-w-2xl">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-teal-900 dark:text-teal-200 flex items-center gap-1.5">
                     <Calendar className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
-                    <span>تحديد فترة الغياب الممتدة</span>
+                    <span>تحديد فترة الغياب الممتدة (هجري وميلادي)</span>
                   </span>
                   {calculatedDays > 0 && (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-[#137a85] dark:bg-teal-600 text-white shadow-2xs">
@@ -852,84 +826,36 @@ export const AbsenceForm: React.FC<AbsenceFormProps> = ({ onSuccess, preselected
                     </span>
                   )}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`${formId}-start-date`}
-                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
-                    >
-                      من تاريخ (بداية الغياب) <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Calendar
-                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                        aria-hidden="true"
-                      />
-                      <input
-                        id={`${formId}-start-date`}
-                        type="date"
-                        max={getSaudiToday()}
-                        value={absenceDate}
-                        onChange={(e) => {
-                          setAbsenceDate(e.target.value);
-                          if (e.target.value > absenceEndDate) {
-                            setAbsenceEndDate(e.target.value);
-                          }
-                          setErrors((prev) => ({ ...prev, date: "" }));
-                        }}
-                        className={cn(
-                          "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-2xs",
-                          errors.date
-                            ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
-                            : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
-                        )}
-                      />
-                    </div>
-                    {errors.date && (
-                      <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>{errors.date}</span>
-                      </p>
-                    )}
-                  </div>
+                <div className="space-y-3">
+                  <DualDateInput
+                    id={`${formId}-start-date`}
+                    label="من تاريخ (بداية الغياب)"
+                    required
+                    maxDate={getSaudiToday()}
+                    value={absenceDate}
+                    onChange={(val) => {
+                      setAbsenceDate(val);
+                      if (val > absenceEndDate) {
+                        setAbsenceEndDate(val);
+                      }
+                      setErrors((prev) => ({ ...prev, date: "" }));
+                    }}
+                    error={errors.date}
+                  />
 
-                  <div className="space-y-1.5">
-                    <label
-                      htmlFor={`${formId}-end-date`}
-                      className="block text-xs font-bold text-slate-700 dark:text-slate-300"
-                    >
-                      إلى تاريخ (نهاية الغياب) <span className="text-rose-500">*</span>
-                    </label>
-                    <div className="relative">
-                      <Calendar
-                        className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                        aria-hidden="true"
-                      />
-                      <input
-                        id={`${formId}-end-date`}
-                        type="date"
-                        min={absenceDate}
-                        max={getSaudiToday()}
-                        value={absenceEndDate}
-                        onChange={(e) => {
-                          setAbsenceEndDate(e.target.value);
-                          setErrors((prev) => ({ ...prev, endDate: "" }));
-                        }}
-                        className={cn(
-                          "w-full px-3.5 py-2.5 min-h-[46px] rounded-xl border text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 transition-all shadow-2xs",
-                          errors.endDate
-                            ? "border-rose-400 focus:ring-rose-200 dark:focus:ring-rose-900"
-                            : "border-slate-200 dark:border-slate-700 focus:border-[#137a85] dark:focus:border-teal-400 focus:ring-[#137a85]/20 dark:focus:ring-teal-400/20"
-                        )}
-                      />
-                    </div>
-                    {errors.endDate && (
-                      <p className="text-[11px] font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-1">
-                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                        <span>{errors.endDate}</span>
-                      </p>
-                    )}
-                  </div>
+                  <DualDateInput
+                    id={`${formId}-end-date`}
+                    label="إلى تاريخ (نهاية الغياب)"
+                    required
+                    minDate={absenceDate}
+                    maxDate={getSaudiToday()}
+                    value={absenceEndDate}
+                    onChange={(val) => {
+                      setAbsenceEndDate(val);
+                      setErrors((prev) => ({ ...prev, endDate: "" }));
+                    }}
+                    error={errors.endDate}
+                  />
                 </div>
               </div>
             )}

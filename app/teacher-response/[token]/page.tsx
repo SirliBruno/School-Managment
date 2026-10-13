@@ -24,6 +24,8 @@ import { DelayNotice } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useTeachers } from "@/context/TeacherContext";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
+import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
 import { cn } from "@/lib/utils";
 import {
   getSaudiToday,
@@ -415,9 +417,7 @@ export default function PublicTeacherResponsePage() {
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-800">
               <span className="text-slate-500 dark:text-slate-400">تاريخ التنبيه:</span>
-              <span className="font-bold text-slate-800 dark:text-slate-200 font-mono">
-                {notice?.noticeDate || notice?.date}
-              </span>
+              <DualDateBadge date={notice?.noticeDate || notice?.date || ""} />
             </div>
             {violationsList.length > 0 && (
               <div className="py-1 border-b border-slate-200/60 dark:border-slate-800">
@@ -548,13 +548,11 @@ export default function PublicTeacherResponsePage() {
             </div>
 
             <div className="bg-teal-50/70 dark:bg-teal-950/40 p-3.5 rounded-2xl border border-teal-200 dark:border-teal-800/60">
-              <span className="text-[#137a85] dark:text-teal-400 block text-[11px] font-semibold flex items-center gap-1">
+              <span className="text-[#137a85] dark:text-teal-400 block text-[11px] font-semibold flex items-center gap-1 mb-1">
                 <Calendar className="w-3 h-3" />
                 <span>تاريخ التنبيه</span>
               </span>
-              <span className="font-extrabold text-[#137a85] dark:text-teal-300 text-sm mt-0.5 block font-mono">
-                {notice?.noticeDate || notice?.date}
-              </span>
+              <DualDateBadge date={notice?.noticeDate || notice?.date || ""} showDayName />
             </div>
           </div>
         </section>
@@ -566,9 +564,7 @@ export default function PublicTeacherResponsePage() {
               <FileText className="w-4 h-4 text-[#137a85] dark:text-teal-400" />
               <span>( ١ ) وقائع التنبيه المسجلة من إدارة المدرسة</span>
             </h2>
-            <span className="text-xs font-mono text-slate-500 dark:text-slate-400 font-medium">
-              {notice?.noticeDate || notice?.date} م
-            </span>
+            <DualDateBadge date={notice?.noticeDate || notice?.date || ""} compact />
           </div>
 
           {/* Teacher Greeting */}
@@ -584,7 +580,7 @@ export default function PublicTeacherResponsePage() {
               السلام عليكم ورحمة الله وبركاته، وبعد:
             </p>
             <p className="text-slate-700 dark:text-slate-300 text-xs pt-1">
-              إنه في تاريخ (<span className="font-mono font-bold text-[#137a85] dark:text-teal-400">{notice?.noticeDate || notice?.date}</span>) اتضح ما يلي:
+              إنه في {formatOfficialIncidentDate(notice?.noticeDate || notice?.date || "")} اتضح ما يلي:
             </p>
           </div>
 
