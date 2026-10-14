@@ -178,11 +178,11 @@ function AbsenceProcedureContent() {
           </section>
         ) : (
           <div className="space-y-6">
-            <section>
+            <section className="relative z-20">
               <AbsenceForm preselectedTeacherId={selectedTeacherId || undefined} />
             </section>
 
-            <section className="pt-2">
+            <section className="pt-2 relative z-10">
               <RecentAbsencesTable />
             </section>
           </div>

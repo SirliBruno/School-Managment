@@ -264,5 +264,83 @@ export function createSafeBlobUrl(rawUrl: string): string | null {
   }
 }
 
+/**
+ * يفحص ما إذا كانت الحاوية السحابية خاصة (Private) وتتطلب صلاحيات إدارية
+ */
+export function isPrivateStorageBucket(bucket: string): boolean {
+  return bucket === "absence-attachments";
+}
 
+/**
+ * يستخرج الحاوية والمسار النسبي من أي رابط مرفق سحابي
+ */
+export function getAttachmentBucketAndPath(rawUrl: string): {
+  bucket: "absence-attachments" | "school-assets" | "external" | "data_url";
+  path: string;
+} {
+  if (!rawUrl) return { bucket: "external", path: "" };
+  const trimmed = rawUrl.trim();
+  if (trimmed.startsWith("data:")) return { bucket: "data_url", path: "" };
 
+  if (trimmed.includes("absence-attachments")) {
+    const idx = trimmed.indexOf("absence-attachments");
+    return {
+      bucket: "absence-attachments",
+      path: trimmed.substring(idx + "absence-attachments/".length),
+    };
+  }
+
+  if (trimmed.includes("school-assets")) {
+    const idx = trimmed.indexOf("school-assets");
+    return {
+      bucket: "school-assets",
+      path: trimmed.substring(idx + "school-assets/".length),
+    };
+  }
+
+  return { bucket: "external", path: trimmed };
+}
+
+/**
+ * فحص تكامل المرفقات والتحقق من صلاحية الوصول وصحة الهيكل
+ */
+export function auditAttachmentIntegrity(items: InquiryAttachmentItem[]): {
+  totalCount: number;
+  validCount: number;
+  dataUrlCount: number;
+  cloudStorageCount: number;
+  warnings: string[];
+} {
+  const warnings: string[] = [];
+  let validCount = 0;
+  let dataUrlCount = 0;
+  let cloudStorageCount = 0;
+
+  for (const item of items) {
+    if (!item.url || !item.url.trim()) {
+      warnings.push(`مرفق فارغ في الخانة: ${item.slotId} (${item.label})`);
+      continue;
+    }
+
+    const { bucket } = getAttachmentBucketAndPath(item.url);
+    if (bucket === "data_url") {
+      dataUrlCount++;
+      validCount++;
+    } else if (bucket === "absence-attachments" || bucket === "school-assets") {
+      cloudStorageCount++;
+      validCount++;
+    } else if (item.url.startsWith("http://") || item.url.startsWith("https://")) {
+      validCount++;
+    } else {
+      warnings.push(`مسار مرفق غير معترف به: ${item.url}`);
+    }
+  }
+
+  return {
+    totalCount: items.length,
+    validCount,
+    dataUrlCount,
+    cloudStorageCount,
+    warnings,
+  };
+}

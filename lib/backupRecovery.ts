@@ -26,6 +26,14 @@ import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
 export const BACKUP_VERSION = "2.0.0";
 export const BACKUP_STORAGE_KEY = "school_admin_latest_backup_v1";
 
+export interface AttachmentManifestItem {
+  id: string;
+  entityType: "absence" | "inquiry" | "administrative_inquiry" | "school_asset";
+  entityId: string;
+  storageType: "supabase_storage" | "data_url" | "external_url";
+  url: string;
+}
+
 export interface SystemBackupMetadata {
   version: string;
   timestamp: string;
@@ -46,7 +54,10 @@ export interface SystemBackupMetadata {
     archivedPermissions: number;
     archivedAdministrativeInquiries?: number;
     auditLogs: number;
+    adminCredentials?: number;
+    attachmentsCount?: number;
   };
+  attachmentsManifest?: AttachmentManifestItem[];
   checksum: string;
 }
 
@@ -65,6 +76,7 @@ export interface SystemBackupData {
   archivedPermissions: ArchivedEmployeePermission[];
   archivedAdministrativeInquiries?: ArchivedAdministrativeInquiry[];
   schoolSettings?: Record<string, unknown>;
+  adminCredentials?: Array<Record<string, unknown>>;
   auditLogs: AuditLog[];
 }
 
@@ -83,6 +95,105 @@ export function calculateChecksum(content: string): string {
     hash = Math.imul(hash, 16777619);
   }
   return `chk_${(hash >>> 0).toString(16).padStart(8, "0")}_${content.length}`;
+}
+
+/**
+ * فهرسة واستخراج جميع المرفقات والأصول السحابية من لقطة البيانات
+ */
+export function buildAttachmentsManifest(data: Partial<SystemBackupData>): AttachmentManifestItem[] {
+  const manifest: AttachmentManifestItem[] = [];
+
+  // 1. Absence records
+  (data.absenceRecords || []).forEach((rec) => {
+    if (rec.attachmentUrl && rec.attachmentUrl.trim()) {
+      manifest.push({
+        id: `att_abs_${rec.id}_primary`,
+        entityType: "absence",
+        entityId: rec.id,
+        storageType: rec.attachmentUrl.startsWith("data:")
+          ? "data_url"
+          : rec.attachmentUrl.includes("supabase.co/storage") || rec.attachmentUrl.startsWith("absence-attachments")
+          ? "supabase_storage"
+          : "external_url",
+        url: rec.attachmentUrl,
+      });
+    }
+    if (Array.isArray(rec.attachmentUrls)) {
+      rec.attachmentUrls.forEach((url, idx) => {
+        if (url && url.trim()) {
+          manifest.push({
+            id: `att_abs_${rec.id}_slot_${idx}`,
+            entityType: "absence",
+            entityId: rec.id,
+            storageType: url.startsWith("data:")
+              ? "data_url"
+              : url.includes("supabase.co/storage") || url.startsWith("absence-attachments")
+              ? "supabase_storage"
+              : "external_url",
+            url,
+          });
+        }
+      });
+    }
+  });
+
+  // 2. Inquiries
+  (data.inquiries || []).forEach((inq) => {
+    if (inq.attachmentUrl && inq.attachmentUrl.trim()) {
+      manifest.push({
+        id: `att_inq_${inq.id}`,
+        entityType: "inquiry",
+        entityId: inq.id,
+        storageType: inq.attachmentUrl.startsWith("data:")
+          ? "data_url"
+          : inq.attachmentUrl.includes("supabase.co/storage") || inq.attachmentUrl.startsWith("absence-attachments")
+          ? "supabase_storage"
+          : "external_url",
+        url: inq.attachmentUrl,
+      });
+    }
+  });
+
+  // 3. Administrative Inquiries
+  (data.administrativeInquiries || []).forEach((ai) => {
+    const url = ai.attachmentUrl || (ai as unknown as Record<string, unknown>).attachment_url;
+    if (typeof url === "string" && url.trim()) {
+      manifest.push({
+        id: `att_admin_inq_${ai.id}`,
+        entityType: "administrative_inquiry",
+        entityId: ai.id,
+        storageType: url.startsWith("data:")
+          ? "data_url"
+          : url.includes("supabase.co/storage") || url.startsWith("absence-attachments")
+          ? "supabase_storage"
+          : "external_url",
+        url,
+      });
+    }
+  });
+
+  // 4. School Assets
+  const settings = data.schoolSettings;
+  if (settings && typeof settings === "object") {
+    ["school_logo", "stamp_url", "signature_url", "schoolLogo", "stampUrl", "signatureUrl"].forEach((key) => {
+      const val = (settings as Record<string, unknown>)[key];
+      if (typeof val === "string" && val.trim()) {
+        manifest.push({
+          id: `asset_${key}`,
+          entityType: "school_asset",
+          entityId: "current",
+          storageType: val.startsWith("data:")
+            ? "data_url"
+            : val.includes("supabase.co/storage") || val.startsWith("school-assets")
+            ? "supabase_storage"
+            : "external_url",
+          url: val,
+        });
+      }
+    });
+  }
+
+  return manifest;
 }
 
 /**
@@ -108,8 +219,11 @@ export function createDatabaseBackupSnapshot(
     archivedPermissions: state.archivedPermissions || [],
     archivedAdministrativeInquiries: state.archivedAdministrativeInquiries || [],
     schoolSettings: state.schoolSettings || (typeof window !== "undefined" ? (getActiveSchoolSettings() as unknown as Record<string, unknown>) : undefined),
+    adminCredentials: state.adminCredentials || [],
     auditLogs,
   };
+
+  const attachmentsManifest = buildAttachmentsManifest(data);
 
   const counts = {
     teachers: data.teachers.length,
@@ -126,6 +240,8 @@ export function createDatabaseBackupSnapshot(
     archivedPermissions: data.archivedPermissions.length,
     archivedAdministrativeInquiries: (data.archivedAdministrativeInquiries || []).length,
     auditLogs: data.auditLogs.length,
+    adminCredentials: (data.adminCredentials || []).length,
+    attachmentsCount: attachmentsManifest.length,
   };
 
   const serializedData = JSON.stringify(data);
@@ -138,6 +254,7 @@ export function createDatabaseBackupSnapshot(
     exportedAt: now.toLocaleString("ar-SA"),
     source: "منصة الإدارة المدرسية - النسخ الاحتياطي الشامل",
     counts,
+    attachmentsManifest,
     checksum,
   };
 
@@ -166,6 +283,54 @@ export function createDatabaseBackupSnapshot(
 }
 
 export const generateDatabaseBackupSnapshot = createDatabaseBackupSnapshot;
+
+/**
+ * التحقق المنطقي المتقدم من سلامة العلاقات والمفاتيح الخارجية وعدم وجود سجلات يتيمة
+ */
+export function validateSnapshotIntegrity(snapshot: SystemBackupSnapshot): {
+  valid: boolean;
+  warnings: string[];
+  orphanCount: number;
+} {
+  const warnings: string[] = [];
+  let orphanCount = 0;
+
+  const validTeacherIds = new Set<string>();
+  (snapshot.data.teachers || []).forEach((t) => validTeacherIds.add(t.id));
+  (snapshot.data.archivedTeachers || []).forEach((at) => {
+    if (at.teacher?.id) validTeacherIds.add(at.teacher.id);
+  });
+
+  // Check absence records foreign keys
+  (snapshot.data.absenceRecords || []).forEach((rec) => {
+    if (rec.teacherId && !validTeacherIds.has(rec.teacherId)) {
+      orphanCount++;
+      warnings.push(`سجل غياب (${rec.id}) يشير لمعلمة غير موجودة (${rec.teacherId})`);
+    }
+  });
+
+  // Check inquiries foreign keys
+  (snapshot.data.inquiries || []).forEach((inq) => {
+    if (inq.teacherId && !validTeacherIds.has(inq.teacherId)) {
+      orphanCount++;
+      warnings.push(`مساءلة غياب (${inq.id}) تشير لمعلمة غير موجودة (${inq.teacherId})`);
+    }
+  });
+
+  // Check delay notices foreign keys
+  (snapshot.data.delayNotices || []).forEach((notice) => {
+    if (notice.teacherId && !validTeacherIds.has(notice.teacherId)) {
+      orphanCount++;
+      warnings.push(`إشعار تأخر (${notice.id}) يشير لمعلمة غير موجودة (${notice.teacherId})`);
+    }
+  });
+
+  return {
+    valid: orphanCount === 0,
+    warnings,
+    orphanCount,
+  };
+}
 
 /**
  * التحقق الصارم من سلامة وهيكل النسخة الاحتياطية

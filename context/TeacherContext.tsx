@@ -45,7 +45,11 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { fetchSchoolSettingsFromCloud } from "@/lib/schoolSettingsService";
 import { DEFAULT_ADMIN_NAME, useOptionalAuth } from "@/context/AuthContext";
-import type { SystemBackupData } from "@/lib/backupRecovery";
+import {
+  type SystemBackupData,
+  validateSnapshotIntegrity,
+  type SystemBackupSnapshot,
+} from "@/lib/backupRecovery";
 import {
   DbTeacherRow,
   DbAbsenceRecordRow,
@@ -284,8 +288,13 @@ interface TeacherContextType {
     inquiryId: string
   ) => Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }>;
   restoreFullSystemSnapshot: (
-    snapshotData: SystemBackupData
-  ) => Promise<{ success: boolean; message: string; error?: string }>;
+    snapshotData: SystemBackupData,
+    options?: {
+      targetEnvironment?: "isolated" | "production";
+      dryRun?: boolean;
+      bypassSafetyConfirmation?: boolean;
+    }
+  ) => Promise<{ success: boolean; message: string; error?: string; audit?: Record<string, unknown> }>;
 }
 
 const TEACHERS_STORAGE_KEY = "school_admin_teachers_v1";
@@ -7468,14 +7477,62 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
   // 26. Restore Full System Snapshot (Point-in-Time Disaster Recovery)
   const restoreFullSystemSnapshot = useCallback(
     async (
-      snapshotData: SystemBackupData
-    ): Promise<{ success: boolean; message: string; error?: string }> => {
+      snapshotData: SystemBackupData,
+      options?: {
+        targetEnvironment?: "isolated" | "production";
+        dryRun?: boolean;
+        bypassSafetyConfirmation?: boolean;
+      }
+    ): Promise<{ success: boolean; message: string; error?: string; audit?: Record<string, unknown> }> => {
       try {
         if (!snapshotData || !Array.isArray(snapshotData.teachers)) {
           return {
             success: false,
             message: "فشل التحقق",
             error: "بيانات النسخة الاحتياطية غير صالحة",
+          };
+        }
+
+        // Integrity validation
+        const mockSnapshot: SystemBackupSnapshot = {
+          metadata: {
+            version: "2.0.0",
+            timestamp: new Date().toISOString(),
+            exportedAt: new Date().toLocaleString("ar-SA"),
+            source: "Restore Validation",
+            counts: {
+              teachers: snapshotData.teachers.length,
+              absenceRecords: (snapshotData.absenceRecords || []).length,
+              delayNotices: (snapshotData.delayNotices || []).length,
+              inquiries: (snapshotData.inquiries || []).length,
+              deductionDecisions: (snapshotData.deductionDecisions || []).length,
+              permissions: (snapshotData.permissions || []).length,
+              archivedTeachers: (snapshotData.archivedTeachers || []).length,
+              archivedAbsences: (snapshotData.archivedAbsences || []).length,
+              archivedDelayNotices: (snapshotData.archivedDelayNotices || []).length,
+              archivedDeductions: (snapshotData.archivedDeductionDecisions || []).length,
+              archivedPermissions: (snapshotData.archivedPermissions || []).length,
+              auditLogs: (snapshotData.auditLogs || []).length,
+            },
+            checksum: "validation_pass",
+          },
+          data: snapshotData,
+        };
+
+        const integrity = validateSnapshotIntegrity(mockSnapshot);
+        if (!integrity.valid) {
+          return {
+            success: false,
+            message: "فشل التحقق من تكامل اللقطة لوجود سجلات يتيمة.",
+            error: integrity.warnings.join(" | "),
+          };
+        }
+
+        if (options?.dryRun) {
+          return {
+            success: true,
+            message: `محاكاة الاستعادة (Dry Run) ناجحة بنجاح بدون تعديل البيانات (${snapshotData.teachers.length} معلمة، ${(snapshotData.absenceRecords || []).length} سجل غياب).`,
+            audit: { orphanCount: 0, validatedTeachers: snapshotData.teachers.length },
           };
         }
 
@@ -7513,7 +7570,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         }
 
-        if (isSupabaseConfigured() && supabase) {
+        if (options?.targetEnvironment !== "isolated" && isSupabaseConfigured() && supabase) {
           try {
             // 1. First restore teachers (active + archived) so foreign keys exist
             const allTeachers = [
@@ -7576,6 +7633,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         return {
           success: true,
           message: `تم استعادة النظام بنجاح (${snapshotData.teachers.length} معلمة، ${(snapshotData.absenceRecords || []).length} سجل غياب)`,
+          audit: { orphanCount: 0, restoredTeachers: snapshotData.teachers.length },
         };
       } catch (err) {
         return {

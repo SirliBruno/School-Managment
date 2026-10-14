@@ -143,7 +143,10 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
   };
 
   return (
-    <div ref={containerRef} className={cn("relative w-full space-y-1.5", className)}>
+    <div
+      ref={containerRef}
+      className={cn("relative w-full space-y-1.5", isOpen ? "z-50" : "z-10", className)}
+    >
       {label && (
         <label id="teacher-combobox-label" className="block text-xs font-bold text-slate-700 dark:text-slate-300">
           {label} {required && <span className="text-rose-500">*</span>}
@@ -251,7 +254,7 @@ export const TeacherCombobox: React.FC<TeacherComboboxProps> = ({
           id="teacher-combobox-listbox"
           role="listbox"
           aria-label="قائمة المعلمات المتاحة"
-          className="absolute top-full right-0 left-0 mt-1.5 z-40 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
+          className="absolute top-full right-0 left-0 mt-1.5 z-50 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150"
         >
           {/* Search Box */}
           <div className="p-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90">
