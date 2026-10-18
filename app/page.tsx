@@ -1389,13 +1389,12 @@ export default function DashboardPage() {
               <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">آخر العمليات</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">تسلسل زمني لآخر الأنشطة والإجراءات المنفذة</p>
             </div>
-            <button
-              type="button"
-              onClick={() => setActiveTab("records")}
+            <Link
+              href="/procedures/list"
               className="text-xs font-bold text-[#137a85] dark:text-teal-400 hover:text-[#0c5961] dark:hover:text-teal-300 hover:underline cursor-pointer"
             >
               عرض جميع العمليات ←
-            </button>
+            </Link>
           </div>
 
           {timelineActivities.length === 0 ? (

@@ -78,4 +78,10 @@ describe("Sprint: Administrative Navigation & Sidebar UX Redesign", () => {
     expect(globalsCode).toContain(".animate-page-enter");
     expect(globalsCode).toContain("overscroll-behavior: contain");
   });
+
+  it("12. Dashboard 'آخر العمليات' contains functional Link to /procedures/list", () => {
+    const dashboardPath = path.join(process.cwd(), "app/page.tsx");
+    const dashboardCode = fs.readFileSync(dashboardPath, "utf-8");
+    expect(dashboardCode).toMatch(/href="\/procedures\/list"[\s\S]*?عرض جميع العمليات/);
+  });
 });
