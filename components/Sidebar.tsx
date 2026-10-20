@@ -159,6 +159,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
             icon: DoorOpen,
             href: "/procedures/permissions",
           },
+          {
+            id: "administrative-calendar",
+            label: "التقويم الإداري",
+            description: "استعراض زمني شامل للإجراءات والعمليات",
+            icon: Calendar,
+            href: "/calendar",
+          },
         ],
       },
       {

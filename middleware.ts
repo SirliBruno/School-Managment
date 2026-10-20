@@ -56,5 +56,6 @@ export const config = {
     "/procedures/:path*",
     "/reports/:path*",
     "/archive/:path*",
+    "/calendar/:path*",
   ],
 };
