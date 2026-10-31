@@ -76,6 +76,7 @@ export function buildAdministrativeInquiryPdfHtml(
 
   const incidentStatement = formatOfficialIncidentDate(inquiry.incidentDate);
   const createdDateFormatted = formatOfficialHeaderDate(inquiry.createdAt);
+  const createdDateShort = formatDMY(inquiry.createdAt);
   const responseDateFormatted = formatDMY(inquiry.responseDate);
   const decisionDateFormatted = formatDMY(inquiry.decisionDate);
 
@@ -269,6 +270,8 @@ ${UNIFIED_PDF_CSS}
   max-height: 48px;
   max-width: 140px;
   object-fit: contain;
+  vertical-align: middle;
+  display: inline-block;
 }
 
 .stamp-overlay {
@@ -366,7 +369,7 @@ ${UNIFIED_PDF_CSS}
   <div class="sig-row" style="margin-bottom: 6px;">
     <div style="flex: 1 1 auto; text-align: right; white-space: nowrap;">قائدة المدرسة : <span style="font-weight:700">${principalName}</span></div>
     <div style="flex: 0 0 auto; text-align: center; white-space: nowrap; padding: 0 8px;">التوقيع : <span>${showSignatures && principalSig ? `<img src="${principalSig}" class="sig-img" alt="توقيع" />` : "...................."}</span></div>
-    <div style="flex: 0 0 auto; text-align: left; white-space: nowrap;">التاريخ : <span>${createdDateFormatted}</span></div>
+    <div style="flex: 0 0 auto; text-align: left; white-space: nowrap;">التاريخ : <span>${createdDateShort}</span></div>
   </div>
 
   <!-- خط النجوم الفاصل -->

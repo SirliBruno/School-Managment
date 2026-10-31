@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { buildAdministrativeInquiryPdfHtml } from "../printAdministrativeInquiryPdfService";
 import { buildAbsencePdfHtml } from "../printPdfService";
 import { buildDelayNoticePdfHtml } from "../printDelayNoticePdfService";
-import { AdministrativeInquiry, Teacher } from "@/types/teacher";
+import { AdministrativeInquiry, DelayNotice, Teacher } from "@/types/teacher";
 
 describe("Electronic Signature & Date Row Layout Stability", () => {
   const dummyTeacher: Teacher = {
@@ -26,6 +26,8 @@ describe("Electronic Signature & Date Row Layout Stability", () => {
     incidentDate: "2026-10-27",
     inquiryType: "الامتناع عن دخول حصص الانتظار",
     status: "pending_director",
+    token: "mock-token-xyz",
+    tokenExpiresAt: "2026-11-03T07:35:11.352Z",
     createdAt: "2026-10-27T07:35:11.352Z",
     teacherResponse: "لم يصلني اشعار بإسناد الحصة سواء على تطبيق مدرسي او ورقيا",
     responseDate: "2026-10-27",
@@ -41,7 +43,6 @@ describe("Electronic Signature & Date Row Layout Stability", () => {
     expect(html).toContain("sig-electronic-badge");
     expect(html).toContain("تم التوقيع والمصادقة إلكترونياً");
     expect(html).toContain("27 / 10 / 2026 م");
-    // Ensure the container prevents wrapping
     expect(html).toContain("white-space: nowrap");
   });
 
@@ -49,7 +50,7 @@ describe("Electronic Signature & Date Row Layout Stability", () => {
     const html = buildAbsencePdfHtml({
       teacherName: dummyTeacher.fullName,
       nationalId: dummyTeacher.nationalId,
-      specialty: dummyTeacher.specialty,
+      specialty: dummyTeacher.specialty || "عام",
       absenceDate: "2026-10-27",
       absenceType: "غياب بدون عذر",
       isElectronicallySigned: true,
@@ -63,19 +64,25 @@ describe("Electronic Signature & Date Row Layout Stability", () => {
   });
 
   it("renders delay notice signature row with white-space: nowrap", () => {
+    const delayNotice: DelayNotice = {
+      id: "delay-1",
+      noticeNumber: "ت-001",
+      teacherId: dummyTeacher.id,
+      teacherName: dummyTeacher.fullName,
+      noticeDate: "2026-10-27",
+      calculatedMinutes: 30,
+      violationDelayStart: true,
+      violationAbsentDuring: false,
+      violationEarlyDeparture: false,
+      violationLeftSchool: false,
+      status: "pending_director",
+      createdAt: "2026-10-27T07:00:00Z",
+      teacherReason: "ظرف طارئ في الطريق",
+      teacherResponseSubmittedAt: "2026-10-27T08:00:00Z",
+    };
+
     const html = buildDelayNoticePdfHtml({
-      notice: {
-        id: "delay-1",
-        teacherId: dummyTeacher.id,
-        teacherName: dummyTeacher.fullName,
-        date: "2026-10-27",
-        type: "morning_delay",
-        minutes: 30,
-        status: "pending_director",
-        createdAt: "2026-10-27T07:00:00Z",
-        teacherReason: "ظرف طارئ في الطريق",
-        teacherResponseSubmittedAt: "2026-10-27T08:00:00Z",
-      },
+      notice: delayNotice,
       teacher: dummyTeacher,
     });
 
