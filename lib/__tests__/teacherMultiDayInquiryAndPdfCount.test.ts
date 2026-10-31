@@ -65,6 +65,24 @@ describe("Production Safe Feature: Multi-Day Inquiry Extension & PDF Absence Cou
       expect(html).toContain("عدد الغياب");
       expect(html).toContain(`>3</td>`);
       expect(html).toContain("2026-10-07 إلى 2026-10-09 (3 أيام)");
+      expect(html).toContain("تم التوقيع والمصادقة إلكترونياً");
+    });
+
+    it("renders manual dotted signature placeholder when no electronic response is submitted", () => {
+      const pdfData: AbsencePdfData = {
+        teacherName: "طرفه عمر عمر هوساوي",
+        nationalId: "1071632648",
+        specialty: "قراءات",
+        absenceCount: 1,
+        absenceDate: "2026-10-07",
+        absenceType: "اضطراري",
+        absenceReason: "",
+        isElectronicallySigned: false,
+      };
+
+      const html = buildAbsencePdfHtml(pdfData);
+      expect(html).toContain("....................");
+      expect(html).not.toContain("تم التوقيع والمصادقة إلكترونياً");
     });
   });
 

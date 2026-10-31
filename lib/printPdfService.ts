@@ -31,6 +31,8 @@ export interface AbsencePdfData {
   directManagerName?: string;
   principalName?: string;
   schoolName?: string;
+  responseDate?: string;
+  isElectronicallySigned?: boolean;
 }
 
 const ARABIC_DAYS = [
@@ -86,6 +88,16 @@ export function buildAbsencePdfHtml(data: AbsencePdfData): string {
   const count = data.absenceCount;
   const aType = esc(data.absenceType || "مرضي");
   const rawReason = data.absenceReason?.trim() || "";
+  const isElectronicallySigned = Boolean(
+    data.isElectronicallySigned ??
+      (rawReason &&
+        rawReason !== "لم تقدم المعلمة الإفادة رسمياً" &&
+        rawReason !== "مساءلة غياب رسمية" &&
+        !rawReason.includes("................"))
+  );
+  const formattedResponseDate = data.responseDate
+    ? formatDMY(data.responseDate)
+    : dateDMY;
 
   const settings = getSchoolApprovalSettings();
   const schoolSettings = getActiveSchoolSettings();
@@ -207,9 +219,9 @@ ${schoolTableHtml}
   <div class="rbox">${reasonHtml}</div>
   ${attachmentHtml}
   <div class="sig">
-    <div style="width:40%;text-align:right">اسم الموظفة : <strong>${name}</strong></div>
-    <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ..../ ..../ ١٤٤٨ هـ</div>
+    <div style="width:36%;text-align:right">اسم الموظفة : <strong>${name}</strong></div>
+    <div style="width:36%;text-align:center">التوقيع : <span>${isElectronicallySigned ? "تم التوقيع والمصادقة إلكترونياً" : "...................."}</span></div>
+    <div style="width:28%;text-align:left">التاريخ : <span>${isElectronicallySigned ? `${formattedResponseDate} م` : "..../ ..../ ١٤٤٨ هـ"}</span></div>
   </div>
 </div>
 

@@ -297,6 +297,8 @@ export default function ProceduresListPage() {
         absenceType: inq.absenceType || "اضطراري",
         absenceReason: inq.teacherReason || "مساءلة غياب رسمية",
         attachmentUrl: inq.attachmentUrl,
+        responseDate: inq.responseDate || inq.submittedAt?.split("T")[0] || inq.createdAt?.split("T")[0],
+        isElectronicallySigned: Boolean(inq.teacherReason || inq.status === "submitted" || inq.status === "approved" || inq.status === "rejected"),
       });
     } else if (item.type === "administrative_inquiry") {
       printAdministrativeInquiryPdf(item.rawItem as AdministrativeInquiry);

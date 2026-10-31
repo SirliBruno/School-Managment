@@ -236,6 +236,15 @@ describe("SPRINT 1: Delay Notice PDF & 'أخرى' Reason Improvements", () => {
       expect(html).toContain("2026/10/13");
       expect(html).not.toContain("1919");
       expect(html).not.toContain("1337/07/17");
+      // Electronic signature verification
+      expect(html).toContain("تم التوقيع والمصادقة إلكترونياً");
+      expect(html).toContain("13-10-2026 م");
+
+      // Dotted manual fallback when no response
+      const unrespondedNotice = { ...realNotice, teacherReason: undefined, teacherSignatureDate: undefined };
+      const unrespondedHtml = buildDelayNoticePdfHtml({ notice: unrespondedNotice, teacher: dummyTeacher });
+      expect(unrespondedHtml).toContain("....................");
+      expect(unrespondedHtml).not.toContain("تم التوقيع والمصادقة إلكترونياً");
     });
   });
 });

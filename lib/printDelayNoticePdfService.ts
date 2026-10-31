@@ -142,9 +142,20 @@ export function buildDelayNoticePdfHtml(data: DelayNoticePdfData): string {
     ? `<span style="font-weight:bold">${esc(notice.teacherReason)}</span>`
     : `<span style="color:#94a3b8">......................................................................................................................................................................</span>`;
 
+  const isTeacherElectronicallySigned = Boolean(
+    notice.teacherResponseSubmittedAt ||
+      (notice.teacherReason && notice.teacherReason.trim().length > 0)
+  );
+
   const teacherSigDate = notice.teacherSignatureDate
     ? formatDMY(notice.teacherSignatureDate)
     : dateFormatted;
+
+  const formattedTeacherResponseDate = notice.teacherSignatureDate
+    ? teacherSigDate + " م"
+    : notice.teacherResponseSubmittedAt
+    ? formatDMY(notice.teacherResponseSubmittedAt.split("T")[0]) + " م"
+    : `..../ ..../ ${hijriYear} هـ`;
 
   const directorSigDate = notice.directorSignatureDate
     ? formatDMY(notice.directorSignatureDate)
@@ -281,9 +292,9 @@ ${schoolTableHtml}
   </div>
   <div class="rbox">${teacherReasonHtml}</div>
   <div class="sig">
-    <div style="width:40%;text-align:right">اسم الموظفة : <strong>${teacherName}</strong></div>
-    <div style="width:32%;text-align:center">التوقيع : ........................</div>
-    <div style="width:28%;text-align:left">التاريخ : ${notice.teacherSignatureDate ? teacherSigDate + " م" : `..../ ..../ ${hijriYear} هـ`}</div>
+    <div style="width:36%;text-align:right">اسم الموظفة : <strong>${teacherName}</strong></div>
+    <div style="width:36%;text-align:center">التوقيع : <span>${isTeacherElectronicallySigned ? "تم التوقيع والمصادقة إلكترونياً" : "...................."}</span></div>
+    <div style="width:28%;text-align:left">التاريخ : <span>${isTeacherElectronicallySigned ? formattedTeacherResponseDate : `..../ ..../ ${hijriYear} هـ`}</span></div>
   </div>
   ${
     notice.teacherResponseSubmittedAt

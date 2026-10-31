@@ -292,6 +292,8 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
         absenceType: inquiry.absenceType || "مرضي",
         absenceReason: inquiry.teacherReason || "إفادة المساءلة الإلكترونية",
         attachmentUrl: inquiry.attachmentUrl,
+        responseDate: inquiry.responseDate || inquiry.submittedAt?.split("T")[0] || inquiry.createdAt?.split("T")[0],
+        isElectronicallySigned: Boolean(inquiry.teacherReason || inquiry.status === "submitted" || inquiry.status === "approved" || inquiry.status === "rejected"),
       });
     } catch (err) {
       console.error("فشل طباعة الاستمارة:", err);

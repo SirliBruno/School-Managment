@@ -208,6 +208,7 @@ describe("SCHOOL STAMP & SIGNATURE MANAGEMENT SYSTEM", () => {
       expect(html).toContain("الثانوية الخامسة مسارات");
       expect(html).toContain("أحلام صالح الضبيبي");
       expect(html).toContain("فاطمة فلاتة");
+      expect(html).toContain("تم التوثيق والمصادقة إلكترونياً");
       expect(html).toContain("alt=\"ختم المدرسة\"");
       expect(html).toContain("alt=\"توقيع الوكيلة\"");
       expect(html).toContain("alt=\"توقيع المديرة\"");

@@ -446,7 +446,9 @@ export function generatePermissionPdfHtml({
         <div class="sig-block" style="flex: 1; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">الموظفة المستأذنة</div>
           <div class="sig-name">${teacherName}</div>
-          <div style="height: 38px; display: flex; align-items: flex-end; justify-content: center; color: #94a3b8; font-size: 8pt;">....................</div>
+          <div style="min-height: 38px; display: flex; align-items: center; justify-content: center; font-size: 8pt; font-weight: 700; color: #0f766e;">
+            تم التوثيق والمصادقة إلكترونياً
+          </div>
         </div>
         <div class="sig-block" style="flex: 1; text-align: center;">
           <div class="sig-role" style="margin-bottom: 4px;">وكيلة المدرسة</div>

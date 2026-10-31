@@ -100,6 +100,7 @@ export interface AbsenceInquiry {
   attachmentUrl?: string;
   adminNotes?: string;
   submittedAt?: string;
+  responseDate?: string;
   createdAt: string;
 
   // Sprint 3: Rejection & Resend Cycles
