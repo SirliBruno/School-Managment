@@ -65,6 +65,7 @@ export const RemainingTimeBadge: React.FC<RemainingTimeBadgeProps> = ({
 
   return (
     <span
+      suppressHydrationWarning
       className={cn(
         "inline-flex items-center font-bold rounded-full border transition-colors select-none shrink-0 shadow-2xs",
         sizeClasses[size],
@@ -74,7 +75,7 @@ export const RemainingTimeBadge: React.FC<RemainingTimeBadgeProps> = ({
       title={`صلاحية الرابط: ${details.formattedExact}`}
     >
       {showIcon && <span className="shrink-0">{iconNode}</span>}
-      <span>
+      <span suppressHydrationWarning>
         {prefix ? `${prefix} ` : ""}
         {label}
       </span>

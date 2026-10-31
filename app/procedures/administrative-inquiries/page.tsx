@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Scale,
@@ -63,7 +63,7 @@ const VIOLATION_TYPE_FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: "أخرى", label: "أخرى (مخالفة مخصصة)" },
 ];
 
-export default function AdministrativeInquiriesPage() {
+function AdministrativeInquiriesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const {
@@ -800,5 +800,22 @@ export default function AdministrativeInquiriesPage() {
         onCancel={() => setInquiryToDelete(null)}
       />
     </div>
+  );
+}
+
+export default function AdministrativeInquiriesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex-1 min-h-screen flex items-center justify-center p-8 text-center text-slate-500">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            <span className="text-xs font-semibold">جاري تحميل المسائلات الإدارية...</span>
+          </div>
+        </div>
+      }
+    >
+      <AdministrativeInquiriesContent />
+    </Suspense>
   );
 }

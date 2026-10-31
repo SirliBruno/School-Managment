@@ -582,7 +582,7 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
                             onClick={() => {
                               onClose();
                               router.push(
-                                `/procedures/administrative-inquiries?action=create&teacherId=${inquiry.teacherId}&source=absence_inquiry&absenceId=${inquiry.id}&absenceDate=${inquiry.absenceDate}`
+                                `/procedures/administrative-inquiries?action=create&teacherId=${encodeURIComponent(inquiry.teacherId)}&source=absence_inquiry&absenceId=${encodeURIComponent(inquiry.id)}&absenceDate=${encodeURIComponent(inquiry.absenceDate)}`
                               );
                             }}
                             className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
