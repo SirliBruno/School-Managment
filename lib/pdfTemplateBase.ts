@@ -39,7 +39,8 @@ th, td { vertical-align: middle; padding: 5px 7px; font-family: 'Cairo', sans-se
 .bullet-item { display: flex; align-items: flex-start; gap: 6px; font-weight: 700; color: #0f172a; margin-bottom: 3px; }
 .bullet-dot { color: #0f766e; font-size: 12pt; line-height: 1; }
 .rbox { border: 1px solid #cbd5e1; background: #fafafa; border-radius: 4px; padding: 6px 10px; min-height: 38px; margin: 4px 0; }
-.sig { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 8px; font-size: 8.5pt; font-weight: bold; }
+.sig { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-top: 8px; font-size: 8.5pt; font-weight: bold; box-sizing: border-box; gap: 8px; }
+.sig > div { white-space: nowrap; }
 .decision-box { border: 1px solid #0f766e; background: #f0fdfa; border-radius: 4px; padding: 6px 10px; margin-top: 6px; }
 .cr { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 8.5pt; font-weight: bold; color: #1e293b; }
 .cb { width: 14px; height: 14px; border: 1.5px solid #0f766e; border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; font-size: 10pt; color: #0f766e; font-weight: 900; background: #fff; flex-shrink: 0; }

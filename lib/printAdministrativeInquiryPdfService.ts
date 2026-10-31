@@ -231,9 +231,21 @@ ${UNIFIED_PDF_CSS}
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
   margin-top: 8px;
-  font-size: 9pt;
+  font-size: 8.5pt;
   font-weight: bold;
+  box-sizing: border-box;
+  gap: 8px;
+}
+
+.sig-row > div {
+  white-space: nowrap;
+}
+
+.sig-electronic-badge {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 .footer-roles-grid {
@@ -352,9 +364,9 @@ ${UNIFIED_PDF_CSS}
 
   <!-- توقيع القسم الأول -->
   <div class="sig-row" style="margin-bottom: 6px;">
-    <div>قائدة المدرسة : <span style="font-weight:700">${principalName}</span></div>
-    <div>التوقيع : <span>${showSignatures && principalSig ? `<img src="${principalSig}" class="sig-img" alt="توقيع" />` : "...................."}</span></div>
-    <div>التاريخ : <span>${createdDateFormatted}</span></div>
+    <div style="flex: 1 1 auto; text-align: right; white-space: nowrap;">قائدة المدرسة : <span style="font-weight:700">${principalName}</span></div>
+    <div style="flex: 0 0 auto; text-align: center; white-space: nowrap; padding: 0 8px;">التوقيع : <span>${showSignatures && principalSig ? `<img src="${principalSig}" class="sig-img" alt="توقيع" />` : "...................."}</span></div>
+    <div style="flex: 0 0 auto; text-align: left; white-space: nowrap;">التاريخ : <span>${createdDateFormatted}</span></div>
   </div>
 
   <!-- خط النجوم الفاصل -->
@@ -380,9 +392,9 @@ ${UNIFIED_PDF_CSS}
   </div>
 
   <div class="sig-row" style="margin-bottom: 8px;">
-    <div>اسم الموظفة : <span style="font-weight:700">${teacherName}</span></div>
-    <div>التوقيع : <span>${inquiry.teacherResponse ? "تم التوقيع والمصادقة إلكترونياً" : "...................."}</span></div>
-    <div>التاريخ : <span>${inquiry.responseDate ? responseDateFormatted : ".... / .... / ........"}</span></div>
+    <div style="flex: 1 1 auto; text-align: right; white-space: nowrap;">اسم الموظفة : <span style="font-weight:700">${teacherName}</span></div>
+    <div style="flex: 0 0 auto; text-align: center; white-space: nowrap; padding: 0 8px;">التوقيع : <span class="sig-electronic-badge">${inquiry.teacherResponse ? "تم التوقيع والمصادقة إلكترونياً" : "...................."}</span></div>
+    <div style="flex: 0 0 auto; text-align: left; white-space: nowrap;">التاريخ : <span>${inquiry.responseDate ? responseDateFormatted : ".... / .... / ........"}</span></div>
   </div>
 
   <!-- القسم الثالث: رأي قائدة المدرسة -->
@@ -414,9 +426,9 @@ ${UNIFIED_PDF_CSS}
     }
 
     <div class="sig-row">
-      <div>مديرة المدرسة : <span style="font-weight:700">${principalName}</span></div>
-      <div>التوقيع : <span>${showSignatures && isAccepted || isRejected ? `<img src="${principalSig}" class="sig-img" alt="توقيع" />` : "...................."}</span></div>
-      <div>التاريخ : <span>${inquiry.decisionDate ? decisionDateFormatted : ".... / .... / ........"}</span></div>
+      <div style="flex: 1 1 auto; text-align: right; white-space: nowrap;">مديرة المدرسة : <span style="font-weight:700">${principalName}</span></div>
+      <div style="flex: 0 0 auto; text-align: center; white-space: nowrap; padding: 0 8px;">التوقيع : <span>${showSignatures && isAccepted || isRejected ? `<img src="${principalSig}" class="sig-img" alt="توقيع" />` : "...................."}</span></div>
+      <div style="flex: 0 0 auto; text-align: left; white-space: nowrap;">التاريخ : <span>${inquiry.decisionDate ? decisionDateFormatted : ".... / .... / ........"}</span></div>
     </div>
   </div>
 

@@ -292,9 +292,9 @@ ${schoolTableHtml}
   </div>
   <div class="rbox">${teacherReasonHtml}</div>
   <div class="sig">
-    <div style="width:36%;text-align:right">اسم الموظفة : <strong>${teacherName}</strong></div>
-    <div style="width:36%;text-align:center">التوقيع : <span>${isTeacherElectronicallySigned ? "تم التوقيع والمصادقة إلكترونياً" : "...................."}</span></div>
-    <div style="width:28%;text-align:left">التاريخ : <span>${isTeacherElectronicallySigned ? formattedTeacherResponseDate : `..../ ..../ ${hijriYear} هـ`}</span></div>
+    <div style="flex:1 1 auto;text-align:right;white-space:nowrap">اسم الموظفة : <strong>${teacherName}</strong></div>
+    <div style="flex:0 0 auto;text-align:center;white-space:nowrap;padding:0 8px">التوقيع : <span style="white-space:nowrap">${isTeacherElectronicallySigned ? "تم التوقيع والمصادقة إلكترونياً" : "...................."}</span></div>
+    <div style="flex:0 0 auto;text-align:left;white-space:nowrap">التاريخ : <span style="white-space:nowrap">${isTeacherElectronicallySigned ? formattedTeacherResponseDate : `..../ ..../ ${hijriYear} هـ`}</span></div>
   </div>
   ${
     notice.teacherResponseSubmittedAt

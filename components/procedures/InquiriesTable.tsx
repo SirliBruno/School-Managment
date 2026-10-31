@@ -215,11 +215,22 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
     },
     {
       id: "absenceDate",
-      header: "تاريخ الغياب",
+      header: "تاريخ الغياب والإرسال",
       accessorKey: "absenceDate",
       sortable: true,
       cell: ({ row }) => (
-        <DualDateBadge date={row.absenceDate} endDate={row.absenceEndDate} />
+        <div className="flex flex-col items-start gap-1">
+          <DualDateBadge date={row.absenceDate} endDate={row.absenceEndDate} />
+          {row.createdAt && (
+            <div
+              className="inline-flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-mono"
+              title={`تاريخ ووقت إرسال المساءلة للمعلمة: ${formatSaudiDateTime(row.createdAt)}`}
+            >
+              <Send className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+              <span>أُرسلت: {formatSaudiDateTime(row.createdAt)}</span>
+            </div>
+          )}
+        </div>
       ),
     },
     {
