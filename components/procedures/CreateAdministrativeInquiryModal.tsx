@@ -26,6 +26,7 @@ import {
   Phone,
   Copy,
   Check,
+  Scale,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -42,6 +43,14 @@ interface CreateAdministrativeInquiryModalProps {
   onClose: () => void;
   inquiryToEdit?: AdministrativeInquiry | null;
   preselectedTeacherId?: string;
+  initialInquiryType?: AdministrativeInquiryType;
+  initialCustomType?: string;
+  initialIncidentDate?: string;
+  initialDescription?: string;
+  initialVicePrincipalNotes?: string;
+  initialStep?: StepNumber;
+  sourceAbsenceId?: string;
+  onSuccessCreated?: (inquiry: AdministrativeInquiry) => void;
 }
 
 interface InquiryTypeOption {
@@ -99,8 +108,23 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
   onClose,
   inquiryToEdit,
   preselectedTeacherId,
+  initialInquiryType,
+  initialCustomType,
+  initialIncidentDate,
+  initialDescription,
+  initialVicePrincipalNotes,
+  initialStep,
+  sourceAbsenceId,
+  onSuccessCreated,
 }) => {
-  const { teachers, updateTeacher, createAdministrativeInquiry, updateAdministrativeInquiry, markAdministrativeInquiryLinkShared } = useTeachers();
+  const {
+    teachers,
+    updateTeacher,
+    createAdministrativeInquiry,
+    updateAdministrativeInquiry,
+    markAdministrativeInquiryLinkShared,
+    linkAbsenceInquiryToMahdar,
+  } = useTeachers();
   const { showToast } = useToast();
   const formId = useId();
 
@@ -132,27 +156,38 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
       setVicePrincipalNotes(inquiryToEdit.vicePrincipalNotes || "");
       setCurrentStep(1);
     } else {
-      const initialTeacherId = preselectedTeacherId || "";
-      setSelectedTeacherId(initialTeacherId);
-      if (initialTeacherId) {
-        const t = teachers.find((tch) => tch.id === initialTeacherId) || null;
+      const targetTeacherId = preselectedTeacherId || "";
+      setSelectedTeacherId(targetTeacherId);
+      if (targetTeacherId) {
+        const t = teachers.find((tch) => tch.id === targetTeacherId) || null;
         setSelectedTeacher(t);
         setMobileInput(t?.mobile || t?.phone || "");
       } else {
         setSelectedTeacher(null);
         setMobileInput("");
       }
-      setIncidentDate(getSaudiToday());
-      setInquiryType("التأخير عن دخول الحصص");
-      setCustomType("");
-      setDescription("");
-      setVicePrincipalNotes("");
-      setCurrentStep(1);
+      setIncidentDate(initialIncidentDate || getSaudiToday());
+      setInquiryType(initialInquiryType || "التأخير عن دخول الحصص");
+      setCustomType(initialCustomType || "");
+      setDescription(initialDescription || "");
+      setVicePrincipalNotes(initialVicePrincipalNotes || "");
+      setCurrentStep(initialStep || (targetTeacherId ? 3 : 1));
     }
     setSaveMobileToProfile(false);
     setCopiedSuccess(false);
     setErrorMsg(null);
-  }, [inquiryToEdit, preselectedTeacherId, teachers, isOpen]);
+  }, [
+    inquiryToEdit,
+    preselectedTeacherId,
+    initialInquiryType,
+    initialCustomType,
+    initialIncidentDate,
+    initialDescription,
+    initialVicePrincipalNotes,
+    initialStep,
+    teachers,
+    isOpen,
+  ]);
 
   const handleTeacherChange = (teacher: Teacher | null) => {
     setSelectedTeacher(teacher);
@@ -273,6 +308,10 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
         });
 
         if (res.success && res.inquiry) {
+          if (sourceAbsenceId) {
+            await linkAbsenceInquiryToMahdar(sourceAbsenceId, res.inquiry.id);
+          }
+          onSuccessCreated?.(res.inquiry);
           if (openWhatsApp) {
             openAdministrativeInquiryWhatsApp(res.inquiry, targetPhone);
             markAdministrativeInquiryLinkShared(res.inquiry.id);
@@ -335,6 +374,10 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
         });
         if (res.success && res.inquiry) {
           inquiryObj = res.inquiry;
+          if (sourceAbsenceId) {
+            await linkAbsenceInquiryToMahdar(sourceAbsenceId, res.inquiry.id);
+          }
+          onSuccessCreated?.(res.inquiry);
         } else {
           setErrorMsg(res.error || "فشل إنشاء المساءلة.");
           setIsProcessing(false);
@@ -698,6 +741,12 @@ export const CreateAdministrativeInquiryModal: React.FC<CreateAdministrativeInqu
 
               {/* Summary Card */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                {sourceAbsenceId && (
+                  <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 flex items-center gap-2 text-indigo-900 dark:text-indigo-200 text-xs font-semibold mb-2">
+                    <Scale className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span>محضر تصعيدي لمساءلة غياب منتهية الصلاحية دون رد (7 أيام)</span>
+                  </div>
+                )}
                 <div className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
                   ملخص بيانات المساءلة الخطية:
                 </div>

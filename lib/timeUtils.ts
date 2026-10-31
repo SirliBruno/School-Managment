@@ -378,6 +378,158 @@ export function getLinkExpiryStatus(
   };
 }
 
+export function formatArabicDays(days: number): string {
+  if (days <= 0) return "";
+  if (days === 1) return "يوم واحد";
+  if (days === 2) return "يومان";
+  if (days >= 3 && days <= 10) return `${days} أيام`;
+  return `${days} يوماً`;
+}
+
+export function formatArabicHours(hours: number): string {
+  if (hours <= 0) return "";
+  if (hours === 1) return "ساعة واحدة";
+  if (hours === 2) return "ساعتان";
+  if (hours >= 3 && hours <= 10) return `${hours} ساعات`;
+  return `${hours} ساعة`;
+}
+
+export function formatArabicMinutes(minutes: number): string {
+  if (minutes <= 0) return "";
+  if (minutes === 1) return "دقيقة واحدة";
+  if (minutes === 2) return "دقيقتان";
+  if (minutes >= 3 && minutes <= 10) return `${minutes} دقائق`;
+  return `${minutes} دقيقة`;
+}
+
+export interface RemainingCountdown {
+  isExpired: boolean;
+  isUrgent: boolean; // <= 24 hours
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  totalMs: number;
+  totalRemainingSeconds: number;
+  formattedExact: string; // e.g. "متبقي 4 أيام و 7 ساعات و 15 دقيقة"
+  formattedShort: string; // e.g. "4 ي و 7 س"
+  statusLabel?: string;
+  badgeVariant: "emerald" | "amber" | "rose" | "slate";
+}
+
+/**
+ * حساب الوقت المتبقي الحي بدقة بالأيام والساعات والدقائق والثواني
+ */
+export function calculateRemainingCountdown(
+  expiresAt?: string | null,
+  referenceDate: Date = new Date(),
+  fallbackDays: number = PUBLIC_LINK_EXPIRATION_DAYS,
+  baseDate?: Date
+): RemainingCountdown {
+  const effectiveExpiry = expiresAt || (baseDate ? calculateTokenExpiry(baseDate, fallbackDays) : null);
+
+  if (!effectiveExpiry) {
+    return {
+      isExpired: false,
+      isUrgent: false,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalMs: 0,
+      totalRemainingSeconds: 0,
+      formattedExact: "غير محدد",
+      formattedShort: "غير محدد",
+      statusLabel: "غير محدد",
+      badgeVariant: "slate",
+    };
+  }
+
+  const expiryTime = new Date(effectiveExpiry).getTime();
+  if (isNaN(expiryTime)) {
+    return {
+      isExpired: true,
+      isUrgent: false,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalMs: 0,
+      totalRemainingSeconds: 0,
+      formattedExact: "تاريخ غير صالح",
+      formattedShort: "غير صالح",
+      statusLabel: "تاريخ غير صالح",
+      badgeVariant: "slate",
+    };
+  }
+
+  const now = referenceDate.getTime();
+  const diff = expiryTime - now;
+
+  if (diff <= 0) {
+    return {
+      isExpired: true,
+      isUrgent: false,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalMs: 0,
+      totalRemainingSeconds: 0,
+      formattedExact: "انتهت المهلة",
+      formattedShort: "انتهت المهلة",
+      statusLabel: "انتهت المهلة المحددة",
+      badgeVariant: "rose",
+    };
+  }
+
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+  const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((diff % (60 * 1000)) / 1000);
+  const isUrgent = diff <= 24 * 60 * 60 * 1000;
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(formatArabicDays(days));
+  if (hours > 0) parts.push(formatArabicHours(hours));
+  if (minutes > 0) parts.push(formatArabicMinutes(minutes));
+
+  let formattedExact = "";
+  if (parts.length > 0) {
+    formattedExact = `متبقي ${parts.join(" و ")}`;
+  } else if (seconds > 0) {
+    formattedExact = `متبقي ${seconds === 1 ? "ثانية واحدة" : seconds === 2 ? "ثانيتان" : seconds <= 10 ? `${seconds} ثوانٍ` : `${seconds} ثانية`}`;
+  } else {
+    formattedExact = "متبقي أقل من دقيقة";
+  }
+
+  let formattedShort = "";
+  if (days > 0) {
+    formattedShort = hours > 0 ? `${days} ي و ${hours} س` : `${days} ي`;
+  } else if (hours > 0) {
+    formattedShort = minutes > 0 ? `${hours} س و ${minutes} د` : `${hours} س`;
+  } else if (minutes > 0) {
+    formattedShort = `${minutes} د`;
+  } else {
+    formattedShort = "أقل من دقيقة";
+  }
+
+  return {
+    isExpired: false,
+    isUrgent,
+    days,
+    hours,
+    minutes,
+    seconds,
+    totalMs: diff,
+    totalRemainingSeconds: Math.max(0, Math.floor(diff / 1000)),
+    formattedExact,
+    formattedShort,
+    statusLabel: formattedExact,
+    badgeVariant: isUrgent ? "amber" : "emerald",
+  };
+}
+
 
 /**
  * توليد رمز آمن فريد غير قابل للتخمين للروابط العامة
@@ -471,6 +623,8 @@ export function serializeInquiryMeta(
     previousInquiryId?: string;
     nextInquiryId?: string;
     cycleNumber?: number;
+    escalatedMahdarId?: string;
+    mahdarDate?: string;
   }
 ): string | undefined {
   if (!absenceEndDate && !notes && !extra) return undefined;
@@ -484,22 +638,27 @@ export function serializeInquiryMeta(
     ...(extra?.previousInquiryId ? { prevInq: extra.previousInquiryId } : {}),
     ...(extra?.nextInquiryId ? { nextInq: extra.nextInquiryId } : {}),
     ...(extra?.cycleNumber ? { cycle: extra.cycleNumber } : {}),
+    ...(extra?.escalatedMahdarId ? { mahdarId: extra.escalatedMahdarId } : {}),
+    ...(extra?.mahdarDate ? { mahdarDate: extra.mahdarDate } : {}),
   };
   return JSON.stringify(meta);
 }
 
 /**
- * فك ترميز بيانات فترة الغياب المتعددة ودورات إعادة الإرسال من admin_notes
+ * فك ترميز بيانات فترة الغياب المتعددة ودورات إعادة الإرسال والتصعيد من admin_notes
  */
 export function parseInquiryMeta(rawNotes?: string | null): {
   absenceEndDate?: string;
   daysCount?: number;
   adminNotes?: string;
+  text?: string;
   rejectionReason?: string;
   resendRequested?: boolean;
   previousInquiryId?: string;
   nextInquiryId?: string;
   cycleNumber?: number;
+  escalatedMahdarId?: string;
+  mahdarDate?: string;
 } {
   if (!rawNotes) return {};
   try {
@@ -508,6 +667,7 @@ export function parseInquiryMeta(rawNotes?: string | null): {
       (rawNotes.includes('"end"') ||
         rawNotes.includes('"rejReason"') ||
         rawNotes.includes('"prevInq"') ||
+        rawNotes.includes('"mahdarId"') ||
         rawNotes.includes('"text"'))
     ) {
       const parsed = JSON.parse(rawNotes);
@@ -515,17 +675,91 @@ export function parseInquiryMeta(rawNotes?: string | null): {
         absenceEndDate: parsed.end || undefined,
         daysCount: parsed.days ? Number(parsed.days) : undefined,
         adminNotes: parsed.text || undefined,
+        text: parsed.text || undefined,
         rejectionReason: parsed.rejReason || undefined,
         resendRequested: parsed.resend !== undefined ? Boolean(parsed.resend) : undefined,
         previousInquiryId: parsed.prevInq || undefined,
         nextInquiryId: parsed.nextInq || undefined,
         cycleNumber: parsed.cycle ? Number(parsed.cycle) : undefined,
+        escalatedMahdarId: parsed.mahdarId || undefined,
+        mahdarDate: parsed.mahdarDate || undefined,
       };
     }
   } catch {
     // not JSON
   }
-  return { adminNotes: rawNotes };
+  return { adminNotes: rawNotes, text: rawNotes };
+}
+
+/**
+ * التحقق مما إذا كانت مساءلة الغياب قد تم تصعيدها برفع محضر إداري لمنع التكرار
+ */
+export function isAbsenceEscalatedToMahdar(
+  inquiry: {
+    id: string;
+    teacherId: string;
+    absenceDate: string;
+    escalatedMahdarId?: string;
+    adminNotes?: string;
+    notes?: string;
+  },
+  administrativeInquiries?: Array<{
+    id: string;
+    teacherId: string;
+    inquiryNumber?: string;
+    incidentDate?: string;
+    description?: string;
+    incidentDescription?: string;
+    vicePrincipalNotes?: string;
+    violationTypeArabic?: string;
+    isArchived?: boolean;
+  }>
+): { isEscalated: boolean; mahdarId?: string; mahdarItem?: any } {
+  // 1. فحص الحقل المباشر أو الملاحظات المشفرة
+  const rawNotes = inquiry.adminNotes || inquiry.notes;
+  const meta = parseInquiryMeta(rawNotes);
+  const targetMahdarId = inquiry.escalatedMahdarId || meta.escalatedMahdarId;
+
+  if (targetMahdarId) {
+    if (administrativeInquiries && administrativeInquiries.length > 0) {
+      const match = administrativeInquiries.find((ai) => ai.id === targetMahdarId);
+      if (match) {
+        if (!match.isArchived) {
+          return { isEscalated: true, mahdarId: targetMahdarId, mahdarItem: match };
+        }
+        // إذا كان المحضر المرتبط مؤرشفاً أو محذوفاً، لا يُعتبر مصعداً نشطاً
+        return { isEscalated: false };
+      }
+    }
+    return { isEscalated: true, mahdarId: targetMahdarId };
+  }
+
+  // 2. فحص سجل المسائلات الإدارية المباشرة
+  if (administrativeInquiries && administrativeInquiries.length > 0) {
+    const match = administrativeInquiries.find((ai) => {
+      if (ai.isArchived) return false;
+      if (ai.vicePrincipalNotes?.includes(inquiry.id)) return true;
+      const desc = ai.incidentDescription || ai.description || "";
+      if (desc.includes(inquiry.id)) return true;
+      if (
+        ai.teacherId === inquiry.teacherId &&
+        ai.incidentDate === inquiry.absenceDate &&
+        (desc.includes(inquiry.id) ||
+          desc.includes("تخلفت المعلمة عن تقديم إفادتها") ||
+          desc.includes("تخلفت المعلمة") ||
+          ai.violationTypeArabic?.includes("تخلف عن تقديم إفادة غياب"))
+      ) {
+        return true;
+      }
+      return false;
+    });
+
+    if (match) {
+      return { isEscalated: true, mahdarId: match.id, mahdarItem: match };
+    }
+  }
+
+  return { isEscalated: false };
 }
 
 export interface DelayMetaPayload {

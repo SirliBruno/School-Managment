@@ -12,10 +12,14 @@ import {
   ExternalLink,
   Trash2,
   Send,
-  Calendar,
   Eye,
   Plus,
   RefreshCw,
+  Scale,
+  ArrowUpRight,
+  AlertCircle,
+  Calendar,
+  FileEdit,
 } from "lucide-react";
 import { AbsenceInquiry } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
@@ -26,6 +30,8 @@ import {
   getLinkExpiryStatus,
   isTokenExpired,
   formatSaudiDateTime,
+  calculateRemainingCountdown,
+  isAbsenceEscalatedToMahdar,
 } from "@/lib/timeUtils";
 import {
   generateInquiryMessage,
@@ -33,6 +39,7 @@ import {
 } from "@/lib/whatsapp";
 import { getInquiryPublicUrl } from "@/lib/appConfig";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import {
   DataTable,
   ColumnDef,
@@ -50,7 +57,7 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
   onOpenNewInquiryModal,
 }) => {
   const router = useRouter();
-  const { inquiries, deleteInquiry, renewInquiryLink } = useTeachers();
+  const { inquiries, administrativeInquiries, deleteInquiry, renewInquiryLink } = useTeachers();
   const { showToast } = useToast();
 
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -271,39 +278,76 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
           const expiry = getLinkExpiryStatus(row.expiresAt);
 
           if (expiry.status === "expired") {
+            const escalation = isAbsenceEscalatedToMahdar(row, administrativeInquiries);
+
+            if (escalation.isEscalated) {
+              return (
+                <div className="flex flex-col items-center gap-1.5 py-1">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/60 shadow-2xs">
+                    <Scale className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
+                    <span>تم رفع محضر إداري</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/procedures/administrative-inquiries`)}
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  >
+                    <span>عرض المحضر</span>
+                    <ArrowUpRight className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              );
+            }
+
             return (
-              <div className="flex flex-col items-center gap-1">
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60">
-                  <XCircle className="w-3 h-3 text-rose-600 dark:text-rose-400" />
-                  <span>انتهت الصلاحية ({formatSaudiDateTime(row.expiresAt, { dateOnly: true })})</span>
+              <div className="flex flex-col items-center gap-1.5 p-2 rounded-xl bg-rose-50/70 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 max-w-[240px] text-center shadow-2xs">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 dark:text-rose-300">
+                  <AlertCircle className="w-3 h-3 text-rose-600 dark:text-rose-400 shrink-0" />
+                  <span>لم ترسل المعلمة إفادتها خلال 7 أيام والمساءلة انتهت</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleRenewLink(row)}
-                  className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 dark:text-teal-300 hover:text-teal-800 dark:hover:text-teal-200 transition-colors cursor-pointer"
-                  title="تمديد الصلاحية 7 أيام إضافية"
-                >
-                  <RefreshCw className="w-2.5 h-2.5" />
-                  <span>تجديد أسبوع</span>
-                </button>
+                <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium">
+                  هل تريد رفع محضر؟
+                </span>
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      router.push(
+                        `/procedures/administrative-inquiries?action=create&teacherId=${encodeURIComponent(row.teacherId)}&source=absence_inquiry&absenceId=${encodeURIComponent(row.id)}&absenceDate=${encodeURIComponent(row.absenceDate)}`
+                      );
+                    }}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-2xs transition-colors cursor-pointer"
+                    title="رفع محضر إداري للمساءلات الإدارية"
+                  >
+                    <Scale className="w-2.5 h-2.5" />
+                    <span>رفع محضر إداري</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleRenewLink(row)}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    title="تمديد الصلاحية 7 أيام إضافية"
+                  >
+                    <RefreshCw className="w-2.5 h-2.5" />
+                    <span>تجديد أسبوع</span>
+                  </button>
+                </div>
               </div>
             );
           }
 
-          if (expiry.status === "expiring_soon") {
-            return (
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 animate-pulse">
-                <Clock className="w-3 h-3" />
-                <span>ينتهي قريباً (خلال {expiry.hoursLeft} س)</span>
-              </span>
-            );
-          }
-
           return (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
-              <Clock className="w-3 h-3" />
-              <span>بانتظار الرد (متبقي {expiry.daysLeft} أيام)</span>
-            </span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
+                <FileEdit className="w-3 h-3 text-sky-600 dark:text-sky-400" />
+                <span>بانتظار إفادة المعلمة</span>
+              </span>
+              <RemainingTimeBadge
+                expiresAt={row.expiresAt}
+                size="xs"
+                variantFormat="exact"
+              />
+            </div>
           );
         }
 
@@ -351,6 +395,8 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
       align: "center",
       cell: ({ row }) => {
         const isPending = row.status === "pending";
+        const isExp = isPending && isTokenExpired(row.expiresAt);
+        const escalation = isAbsenceEscalatedToMahdar(row, administrativeInquiries);
 
         const menuItems: ActionMenuItem[] = [
           {
@@ -359,6 +405,32 @@ export const InquiriesTable: React.FC<InquiriesTableProps> = ({
             icon: FileCheck2,
             onClick: () => handleOpenReview(row),
           },
+          ...(isPending && isExp && !escalation.isEscalated
+            ? [
+                {
+                  id: "escalate-mahdar",
+                  label: "رفع محضر إداري (تخلف عن الرد)",
+                  icon: Scale,
+                  onClick: () => {
+                    router.push(
+                      `/procedures/administrative-inquiries?action=create&teacherId=${encodeURIComponent(row.teacherId)}&source=absence_inquiry&absenceId=${encodeURIComponent(row.id)}&absenceDate=${encodeURIComponent(row.absenceDate)}`
+                    );
+                  },
+                },
+              ]
+            : []),
+          ...(escalation.isEscalated
+            ? [
+                {
+                  id: "view-mahdar",
+                  label: "عرض المحضر الإداري المرفوع",
+                  icon: Scale,
+                  onClick: () => {
+                    router.push(`/procedures/administrative-inquiries`);
+                  },
+                },
+              ]
+            : []),
           ...(isPending
             ? [
                 {

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Scale,
   Plus,
@@ -40,6 +40,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { openAdministrativeInquiryWhatsApp, generateAdministrativeInquiryWhatsAppMessage } from "@/lib/administrativeInquiryWhatsappService";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import {
   PageHeader,
   KpiCard,
@@ -64,6 +65,7 @@ const VIOLATION_TYPE_FILTER_OPTIONS: { value: string; label: string }[] = [
 
 export default function AdministrativeInquiriesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const {
     administrativeInquiries,
     teachers,
@@ -85,6 +87,48 @@ export default function AdministrativeInquiriesPage() {
   const [selectedInquiryForReview, setSelectedInquiryForReview] =
     useState<AdministrativeInquiry | null>(null);
   const [inquiryToDelete, setInquiryToDelete] = useState<AdministrativeInquiry | null>(null);
+
+  // Prefilled escalation state from absence inquiry
+  const [prefilledData, setPrefilledData] = useState<{
+    teacherId?: string;
+    inquiryType?: AdministrativeInquiryType;
+    customType?: string;
+    incidentDate?: string;
+    description?: string;
+    vicePrincipalNotes?: string;
+    sourceAbsenceId?: string;
+    step?: 1 | 2 | 3 | 4;
+  } | null>(null);
+
+  // Listen to URL search parameters for automatic modal opening
+  useEffect(() => {
+    const action = searchParams?.get("action");
+    if (action === "create") {
+      const teacherId = searchParams.get("teacherId") || "";
+      const source = searchParams.get("source");
+      const absenceId = searchParams.get("absenceId") || "";
+      const absenceDate = searchParams.get("absenceDate") || "";
+
+      if (source === "absence_inquiry") {
+        setPrefilledData({
+          teacherId,
+          inquiryType: "أخرى",
+          customType: "تخلف عن تقديم إفادة غياب",
+          incidentDate: absenceDate || undefined,
+          description: `تخلفت المعلمة عن تقديم إفادتها النظامية حيال مساءلة الغياب لتاريخ (${absenceDate}) خلال المهلة المحددة نظاماً (7 أيام كاملة)، وانتهت صلاحية الرابط دون إبداء عذر أو إرفاق تقرير.`,
+          vicePrincipalNotes: `إجراء تصعيدي آلي: محضر عدم تقديم إفادة غياب (معرف المساءلة: ${absenceId}).`,
+          sourceAbsenceId: absenceId,
+          step: 4,
+        });
+      } else if (teacherId) {
+        setPrefilledData({
+          teacherId,
+        });
+      }
+      setIsCreateModalOpen(true);
+      router.replace("/procedures/administrative-inquiries");
+    }
+  }, [searchParams, router]);
 
   // Active records
   const activeInquiries = useMemo(
@@ -375,20 +419,37 @@ export default function AdministrativeInquiriesPage() {
           );
         }
 
-        if (row.status === "expired") {
+        if (row.status === "expired" || isTokenExpired(row.tokenExpiresAt)) {
           return (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
-              <AlertTriangle className="w-3.5 h-3.5 text-slate-500" />
-              <span>منتهية الصلاحية (7 أيام)</span>
-            </span>
+            <div className="flex flex-col items-center gap-1">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
+                <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                <span>منتهية الصلاحية (7 أيام)</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => handleRenewLink(row)}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 dark:text-indigo-400 hover:underline cursor-pointer"
+              >
+                <RefreshCw className="w-2.5 h-2.5" />
+                <span>تجديد أسبوع</span>
+              </button>
+            </div>
           );
         }
 
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
-            <FileEdit className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-            <span>بانتظار إفادة المعلمة</span>
-          </span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
+              <FileEdit className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+              <span>بانتظار إفادة المعلمة</span>
+            </span>
+            <RemainingTimeBadge
+              expiresAt={row.tokenExpiresAt}
+              size="xs"
+              variantFormat="exact"
+            />
+          </div>
         );
       },
     },
@@ -526,6 +587,7 @@ export default function AdministrativeInquiriesPage() {
               variant="primary"
               onClick={() => {
                 setInquiryToEdit(null);
+                setPrefilledData(null);
                 setIsCreateModalOpen(true);
               }}
               className="gap-2 shadow-xs cursor-pointer"
@@ -689,8 +751,17 @@ export default function AdministrativeInquiriesPage() {
         onClose={() => {
           setIsCreateModalOpen(false);
           setInquiryToEdit(null);
+          setPrefilledData(null);
         }}
         inquiryToEdit={inquiryToEdit}
+        preselectedTeacherId={prefilledData?.teacherId}
+        initialInquiryType={prefilledData?.inquiryType}
+        initialCustomType={prefilledData?.customType}
+        initialIncidentDate={prefilledData?.incidentDate}
+        initialDescription={prefilledData?.description}
+        initialVicePrincipalNotes={prefilledData?.vicePrincipalNotes}
+        initialStep={prefilledData?.step}
+        sourceAbsenceId={prefilledData?.sourceAbsenceId}
       />
 
       {/* Review Modal */}

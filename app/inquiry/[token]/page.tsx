@@ -28,6 +28,7 @@ import { AbsenceInquiry, AbsenceType } from "@/types/teacher";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import { cn } from "@/lib/utils";
 import {
   getAttachmentSlotsForType,
@@ -801,9 +802,13 @@ export default function TeacherInquiryPage() {
           </p>
 
           {inquiry.expiresAt && (
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold mt-3 bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
-              <Clock className="w-3.5 h-3.5" />
-              <span>مهلة تقديم الإفادة (7 أيام): {getLinkExpiryStatus(inquiry.expiresAt).statusLabel}</span>
+            <div className="mt-3 flex justify-center">
+              <RemainingTimeBadge
+                expiresAt={inquiry.expiresAt}
+                prefix="مهلة تقديم الإفادة:"
+                size="sm"
+                variantFormat="exact"
+              />
             </div>
           )}
         </header>

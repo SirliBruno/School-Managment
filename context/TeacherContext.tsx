@@ -281,6 +281,10 @@ interface TeacherContextType {
   renewInquiryLink: (
     inquiryId: string
   ) => Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }>;
+  linkAbsenceInquiryToMahdar: (
+    absenceInquiryId: string,
+    mahdarId: string
+  ) => Promise<{ success: boolean; error?: string }>;
   renewDelayNoticeLink: (
     noticeId: string
   ) => Promise<{ success: boolean; newExpiresAt?: string; token?: string; error?: string }>;
@@ -555,6 +559,8 @@ export const mapInquiryToDbRow = (
       previousInquiryId: inq.previousInquiryId,
       nextInquiryId: inq.nextInquiryId,
       cycleNumber: inq.cycleNumber,
+      escalatedMahdarId: inq.escalatedMahdarId,
+      mahdarDate: inq.mahdarDate,
     }
   );
 
@@ -1608,6 +1614,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
                   previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
                   nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
                   cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
+                  escalatedMahdarId: meta.escalatedMahdarId,
+                  mahdarDate: meta.mahdarDate,
                   isArchived: Boolean(inq.is_archived),
                 };
               }
@@ -2331,6 +2339,8 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
               nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
               cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
+              escalatedMahdarId: meta.escalatedMahdarId,
+              mahdarDate: meta.mahdarDate,
               isArchived: Boolean(inq.is_archived),
             };
             setInquiries((prev) => {
@@ -4686,6 +4696,84 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       return { success: true, newExpiresAt, token: target.token };
+    },
+    [inquiries]
+  );
+
+  // 14.2 Link Absence Inquiry to Escalated Mahdar (Administrative Inquiry)
+  const linkAbsenceInquiryToMahdar = useCallback(
+    async (
+      absenceInquiryId: string,
+      mahdarId: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      const target = inquiries.find((i) => i.id === absenceInquiryId);
+      if (!target) {
+        return { success: false, error: "مساءلة الغياب المحددة غير موجودة." };
+      }
+
+      const mahdarDate = new Date().toISOString();
+      const serializedNotes = serializeInquiryMeta(
+        target.absenceEndDate,
+        target.daysCount,
+        target.adminNotes,
+        {
+          rejectionReason: target.rejectionReason,
+          resendRequested: target.resendRequested,
+          previousInquiryId: target.previousInquiryId,
+          nextInquiryId: target.nextInquiryId,
+          cycleNumber: target.cycleNumber,
+          escalatedMahdarId: mahdarId,
+          mahdarDate,
+        }
+      );
+
+      const updatedInquiry: AbsenceInquiry = {
+        ...target,
+        escalatedMahdarId: mahdarId,
+        mahdarDate,
+        adminNotes: serializedNotes || target.adminNotes,
+      };
+
+      setInquiries((prev) =>
+        prev.map((i) => (i.id === absenceInquiryId ? updatedInquiry : i))
+      );
+
+      if (typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("school_admin_inquiries_v1");
+          if (stored) {
+            const list: AbsenceInquiry[] = JSON.parse(stored);
+            const updated = list.map((i) =>
+              i.id === absenceInquiryId ? updatedInquiry : i
+            );
+            localStorage.setItem("school_admin_inquiries_v1", JSON.stringify(updated));
+          }
+        } catch (e) {
+          console.warn("فشل تحديث مساءلة الغياب في التخزين المحلي:", e);
+        }
+      }
+
+      if (isSupabaseConfigured() && supabase) {
+        try {
+          await supabase
+            .from("absence_inquiries")
+            .update({ admin_notes: serializedNotes || null })
+            .eq("id", absenceInquiryId);
+        } catch (cloudErr) {
+          console.warn("فشل تحديث ربط المحضر في سوبابيز:", cloudErr);
+        }
+      }
+
+      logAuditEvent({
+        action: "UPDATE",
+        entityType: "inquiry",
+        entityId: target.id,
+        details: `تم رفع وتوثيق محضر إداري عن مساءلة الغياب للمعلمة (${target.teacherName}) برقم مرجعي: ${mahdarId}`,
+        oldValue: { escalatedMahdarId: target.escalatedMahdarId },
+        newValue: { escalatedMahdarId: mahdarId, mahdarDate },
+      });
+
+      return { success: true };
     },
     [inquiries]
   );
@@ -7714,6 +7802,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       permanentDeleteAdministrativeInquiry,
       markAdministrativeInquiryLinkShared,
       renewInquiryLink,
+      linkAbsenceInquiryToMahdar,
       renewDelayNoticeLink,
       renewAdministrativeInquiryLink,
       pendingSyncCount,
@@ -7787,6 +7876,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       permanentDeleteAdministrativeInquiry,
       markAdministrativeInquiryLinkShared,
       renewInquiryLink,
+      linkAbsenceInquiryToMahdar,
       renewDelayNoticeLink,
       renewAdministrativeInquiryLink,
       restoreFullSystemSnapshot,

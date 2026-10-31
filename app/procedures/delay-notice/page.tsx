@@ -19,6 +19,8 @@ import {
   Share2,
   FileDown,
   Sparkles,
+  XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
@@ -31,6 +33,8 @@ import { ShareDelayNoticeModal } from "@/components/procedures/ShareDelayNoticeM
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
+import { isTokenExpired } from "@/lib/timeUtils";
 import {
   PageHeader,
   KpiCard,
@@ -46,8 +50,20 @@ type FilterTab = "all" | DelayNoticeStatus;
 
 export default function DelayNoticePage() {
   const router = useRouter();
-  const { delayNotices, teachers, deleteDelayNotice } = useTeachers();
+  const { delayNotices, teachers, deleteDelayNotice, renewDelayNoticeLink } = useTeachers();
   const { showToast } = useToast();
+
+  const handleRenewLink = async (notice: DelayNotice) => {
+    try {
+      await renewDelayNoticeLink(notice.id);
+      showToast({
+        message: "تم تجديد مهلة الرابط لأسبوع إضافي (7 أيام) بنجاح",
+        type: "success",
+      });
+    } catch {
+      showToast({ message: "تعذر تجديد مهلة الرابط حالياً", type: "error" });
+    }
+  };
 
   const [activeTab, setActiveTab] = useState<FilterTab>("all");
 
@@ -271,11 +287,39 @@ export default function DelayNoticePage() {
             </span>
           );
         }
+        if (row.tokenExpiresAt && isTokenExpired(row.tokenExpiresAt)) {
+          return (
+            <div className="flex flex-col items-center gap-1">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800/80">
+                <XCircle className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                <span>انتهت الصلاحية</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => handleRenewLink(row)}
+                className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-700 dark:text-teal-400 hover:underline cursor-pointer"
+              >
+                <RefreshCw className="w-2.5 h-2.5" />
+                <span>تجديد أسبوع</span>
+              </button>
+            </div>
+          );
+        }
+
         return (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
-            <FileEdit className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-            <span>بانتظار إفادة المعلمة</span>
-          </span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-sky-50 dark:bg-sky-950/60 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/80">
+              <FileEdit className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+              <span>بانتظار إفادة المعلمة</span>
+            </span>
+            {row.tokenExpiresAt && (
+              <RemainingTimeBadge
+                expiresAt={row.tokenExpiresAt}
+                size="xs"
+                variantFormat="exact"
+              />
+            )}
+          </div>
         );
       },
     },

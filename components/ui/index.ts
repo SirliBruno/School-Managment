@@ -11,3 +11,4 @@ export * from "./Modal";
 export * from "./DataTable";
 export * from "./ActionMenu";
 export * from "./ThemeToggle";
+export * from "./RemainingTimeBadge";

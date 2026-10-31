@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -26,6 +27,8 @@ import {
   History,
   FileQuestion,
   RefreshCw,
+  Scale,
+  ArrowUpRight,
 } from "lucide-react";
 import { AbsenceInquiry, Teacher } from "@/types/teacher";
 import { useTeachers } from "@/context/TeacherContext";
@@ -33,8 +36,15 @@ import { printAbsencePdf } from "@/lib/printPdfService";
 import { parseAttachments, openSafeAttachmentUrl } from "@/lib/attachments";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import { cn } from "@/lib/utils";
-import { addDaysToDateStr, calculateDaysBetween, formatSaudiDateTime } from "@/lib/timeUtils";
+import {
+  addDaysToDateStr,
+  calculateDaysBetween,
+  formatSaudiDateTime,
+  isTokenExpired,
+  isAbsenceEscalatedToMahdar,
+} from "@/lib/timeUtils";
 import { generateInquiryMessage, getWhatsAppDirectUrl } from "@/lib/whatsapp";
 import { getInquiryPublicUrl } from "@/lib/appConfig";
 
@@ -53,11 +63,24 @@ const REJECTION_REASONS = [
 ] as const;
 
 export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
-  inquiry,
+  inquiry: initialInquiry,
   isOpen,
   onClose,
 }) => {
-  const { teachers, inquiries, updateInquiryDecision, rejectInquiryWithOptionalResend } = useTeachers();
+  const router = useRouter();
+  const {
+    teachers,
+    inquiries,
+    administrativeInquiries,
+    updateInquiryDecision,
+    rejectInquiryWithOptionalResend,
+    renewInquiryLink,
+  } = useTeachers();
+
+  const inquiry = useMemo(() => {
+    if (!initialInquiry) return null;
+    return inquiries.find((i) => i.id === initialInquiry.id) || initialInquiry;
+  }, [inquiries, initialInquiry]);
 
   const [adminNotes, setAdminNotes] = useState(inquiry?.adminNotes || "");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -505,6 +528,97 @@ export const InquiryReviewModal: React.FC<InquiryReviewModalProps> = ({
                     )}
                   </div>
                 )}
+
+                {/* Pending Inquiry Expiration & Escalation Alert */}
+                {inquiry.status === "pending" && (() => {
+                  const isExp = isTokenExpired(inquiry.expiresAt);
+                  if (isExp) {
+                    const escalation = isAbsenceEscalatedToMahdar(inquiry, administrativeInquiries);
+                    if (escalation.isEscalated) {
+                      return (
+                        <div className="p-4 rounded-2xl bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                          <div className="flex items-center gap-2.5 text-indigo-900 dark:text-indigo-200 font-bold">
+                            <Scale className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                            <div>
+                              <p>تم رفع محضر إداري عن هذه المساءلة لتجاوز مهلة الـ 7 أيام</p>
+                              <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 font-normal mt-0.5">
+                                المعاملة موثقة في سجل المسائلات الإدارية المستقلة لمنع التكرار.
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              router.push("/procedures/administrative-inquiries");
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0"
+                          >
+                            <span>عرض المساءلات الإدارية</span>
+                            <ArrowUpRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="p-4 sm:p-5 rounded-2xl bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs sm:text-sm font-bold text-rose-900 dark:text-rose-100">
+                              لم ترسل المعلمة إفادتها خلال 7 أيام والمساءلة انتهت
+                            </h4>
+                            <p className="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
+                              هل تريد رفع محضر إداري وإحالة الواقعة للمسائلات الإدارية؟
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              router.push(
+                                `/procedures/administrative-inquiries?action=create&teacherId=${inquiry.teacherId}&source=absence_inquiry&absenceId=${inquiry.id}&absenceDate=${inquiry.absenceDate}`
+                              );
+                            }}
+                            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+                          >
+                            <Scale className="w-4 h-4" />
+                            <span>رفع محضر إداري</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              await renewInquiryLink(inquiry.id);
+                              setFeedback({
+                                type: "success",
+                                message: "تم تجديد مهلة الرابط لأسبوع إضافي (7 أيام) بنجاح.",
+                              });
+                            }}
+                            className="px-4 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-100 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-bold text-xs flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <RefreshCw className="w-3.5 h-3.5 text-teal-600" />
+                            <span>تجديد أسبوع (تمديد المهلة)</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-3.5 rounded-2xl bg-teal-50/70 dark:bg-teal-950/30 border border-teal-200/80 dark:border-teal-800/60 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 text-teal-900 dark:text-teal-200 font-semibold">
+                        <Clock className="w-4 h-4 text-[#137a85]" />
+                        <span>الوقت المتبقي لانتهاء مهلة المساءلة:</span>
+                      </div>
+                      <RemainingTimeBadge expiresAt={inquiry.expiresAt} size="xs" variantFormat="exact" />
+                    </div>
+                  );
+                })()}
 
                 {/* Teacher Info Card */}
                 <div className="bg-slate-50/80 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">

@@ -25,6 +25,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import { useTeachers } from "@/context/TeacherContext";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
 import { cn } from "@/lib/utils";
 import {
@@ -509,11 +510,13 @@ export default function PublicTeacherResponsePage() {
           )}
 
           {notice?.tokenExpiresAt && (
-            <div className="mt-2">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-teal-50 dark:bg-teal-950/60 text-[#137a85] dark:text-teal-300 border border-teal-200/60 dark:border-teal-800/60">
-                <Clock className="w-3.5 h-3.5" />
-                <span>مهلة تقديم الإفادة (7 أيام): {getLinkExpiryStatus(notice.tokenExpiresAt).statusLabel}</span>
-              </div>
+            <div className="mt-2 flex justify-center">
+              <RemainingTimeBadge
+                expiresAt={notice.tokenExpiresAt}
+                prefix="مهلة تقديم الإفادة:"
+                size="sm"
+                variantFormat="exact"
+              />
             </div>
           )}
         </header>

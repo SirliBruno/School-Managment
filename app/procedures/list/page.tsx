@@ -20,18 +20,18 @@ import {
   ExternalLink,
   ShieldCheck,
   Building2,
-  Users,
   Scale,
 } from "lucide-react";
 import { useTeachers } from "@/context/TeacherContext";
 import { useToast } from "@/context/ToastContext";
-import { PageHeader, Card, Button, Badge, KpiCard } from "@/components/ui";
+import { PageHeader, Card, Button, Badge, KpiCard, RemainingTimeBadge } from "@/components/ui";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { AbsenceInquiry, DeductionDecision, DelayNotice, AdministrativeInquiry } from "@/types/teacher";
 import { printDeductionDecisionPdf } from "@/lib/printDeductionDecisionPdfService";
 import { printDelayNoticePdf } from "@/lib/printDelayNoticePdfService";
 import { printAbsencePdf } from "@/lib/printPdfService";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
+import { isAbsenceEscalatedToMahdar, isTokenExpired } from "@/lib/timeUtils";
 
 type ProcedureTab = "all" | "inquiry" | "deduction" | "delay" | "administrative_inquiry";
 
@@ -117,6 +117,15 @@ export default function ProceduresListPage() {
       } else if (inq.status === "submitted") {
         statusLabel = "تم تقديم العذر";
         statusVariant = "info";
+      } else if (inq.status === "pending") {
+        const escalation = isAbsenceEscalatedToMahdar(inq, activeAdminInquiries);
+        if (escalation.isEscalated) {
+          statusLabel = "تم رفع محضر إداري";
+          statusVariant = "info";
+        } else if (isTokenExpired(inq.expiresAt)) {
+          statusLabel = "منتهية دون رد";
+          statusVariant = "error";
+        }
       }
 
       list.push({
@@ -542,9 +551,36 @@ export default function ProceduresListPage() {
 
                       {/* Status */}
                       <td className="py-3.5 px-4">
-                        <Badge variant={item.statusBadge.variant}>
-                          {item.statusBadge.label}
-                        </Badge>
+                        <div className="flex flex-col items-start gap-1">
+                          <Badge variant={item.statusBadge.variant}>
+                            {item.statusBadge.label}
+                          </Badge>
+                          {item.type === "inquiry" &&
+                            (item.rawItem as AbsenceInquiry).status === "pending" &&
+                            !isAbsenceEscalatedToMahdar(item.rawItem as AbsenceInquiry, activeAdminInquiries).isEscalated && (
+                              <RemainingTimeBadge
+                                expiresAt={(item.rawItem as AbsenceInquiry).expiresAt}
+                                variantFormat="exact"
+                                size="xs"
+                              />
+                            )}
+                          {item.type === "administrative_inquiry" &&
+                            (item.rawItem as AdministrativeInquiry).status === "pending_teacher" && (
+                              <RemainingTimeBadge
+                                expiresAt={(item.rawItem as AdministrativeInquiry).tokenExpiresAt}
+                                variantFormat="exact"
+                                size="xs"
+                              />
+                            )}
+                          {item.type === "delay" &&
+                            (item.rawItem as DelayNotice).status === "pending_teacher" && (
+                              <RemainingTimeBadge
+                                expiresAt={(item.rawItem as DelayNotice).tokenExpiresAt}
+                                variantFormat="exact"
+                                size="xs"
+                              />
+                            )}
+                        </div>
                       </td>
 
                       {/* Actions */}

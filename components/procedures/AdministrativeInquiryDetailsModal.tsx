@@ -31,6 +31,7 @@ import { openAdministrativeInquiryWhatsApp } from "@/lib/administrativeInquiryWh
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
 import { formatOfficialIncidentDate } from "@/lib/hijriDateService";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import { cn } from "@/lib/utils";
 
 interface AdministrativeInquiryDetailsModalProps {
@@ -100,10 +101,19 @@ export const AdministrativeInquiryDetailsModal: React.FC<AdministrativeInquiryDe
     switch (inquiry.status) {
       case "pending_teacher":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-            <Clock className="w-3.5 h-3.5" />
-            بانتظار إفادة المعلمة
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+              <Clock className="w-3.5 h-3.5" />
+              بانتظار إفادة المعلمة
+            </span>
+            {inquiry.tokenExpiresAt && (
+              <RemainingTimeBadge
+                expiresAt={inquiry.tokenExpiresAt}
+                size="xs"
+                variantFormat="exact"
+              />
+            )}
+          </div>
         );
       case "pending_director":
         return (

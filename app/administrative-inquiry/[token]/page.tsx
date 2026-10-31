@@ -28,6 +28,7 @@ import { isTokenExpired, formatSaudiDateTime, getLinkExpiryStatus } from "@/lib/
 import { compressMedicalReportImage } from "@/lib/imageCompressor";
 import { printAdministrativeInquiryPdf } from "@/lib/printAdministrativeInquiryPdfService";
 import { DualDateBadge } from "@/components/ui/DualDateBadge";
+import { RemainingTimeBadge } from "@/components/ui/RemainingTimeBadge";
 import { cn } from "@/lib/utils";
 import { AttachmentViewerModal } from "@/components/common/AttachmentViewerModal";
 import { openSafeAttachmentUrl } from "@/lib/attachments";
@@ -514,9 +515,13 @@ export default function AdministrativeInquiryPublicResponsePage() {
                 </div>
               </div>
             </div>
-            <div className="text-left text-[11px] text-white/80">
-              <div className="font-semibold">مهلة الرد:</div>
-              <div className="font-mono">7 أيام (168 ساعة)</div>
+            <div className="shrink-0 flex items-center">
+              <RemainingTimeBadge
+                expiresAt={inquiry.tokenExpiresAt}
+                size="sm"
+                variantFormat="exact"
+                className="shadow-sm"
+              />
             </div>
           </div>
 

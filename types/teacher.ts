@@ -109,6 +109,10 @@ export interface AbsenceInquiry {
   nextInquiryId?: string;
   cycleNumber?: number;
 
+  // Escalation to Administrative Inquiry (Mahdar)
+  escalatedMahdarId?: string;
+  mahdarDate?: string;
+
   // Archive (Soft Delete) metadata
   isArchived?: boolean;
   archivedAt?: string;
@@ -175,6 +179,7 @@ export interface DelayNotice {
   // === Public Sharing Link & Security (مشاركة الرابط العام) ===
   shareToken: string;                 // رمز آمن فريد للرابط العام
   tokenExpiresAt: string;             // تاريخ ووقت انتهاء صلاحية الرابط (ISO)
+  expiresAt?: string;                 // حقل بديل اختياري للتوافق الموحد
   teacherResponseSubmittedAt?: string;// وقت إرسال المعلمة للرد إلكترونياً
   teacherIpAddress?: string;          // عنوان IP للمعلمة عند الإرسال للتدقيق
   linkSharedAt?: string;              // وقت مشاركة الرابط أو إرساله للمعلمة
@@ -434,6 +439,7 @@ export interface AdministrativeInquiry {
 
   token: string;
   tokenExpiresAt: string;
+  expiresAt?: string;
 
   teacherResponse?: string;
   responseDate?: string;
