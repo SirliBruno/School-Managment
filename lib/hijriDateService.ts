@@ -246,7 +246,11 @@ export function formatOfficialDateRange(
   const endDual = getDualDate(endDateStr, offsetDays);
 
   const gregorianRange = `من ${startDual.gregorianIso} إلى ${endDual.gregorianIso}`;
-  const hijriRange = `من ${startDual.hijriParts.day} ${startDual.hijriParts.monthName} إلى ${endDual.hijriParts.day} ${endDual.hijriParts.monthName} ${endDual.hijriParts.year}هـ`;
+  const startYearPart =
+    startDual.hijriParts.year !== endDual.hijriParts.year
+      ? ` ${startDual.hijriParts.year}هـ`
+      : "";
+  const hijriRange = `من ${startDual.hijriParts.day} ${startDual.hijriParts.monthName}${startYearPart} إلى ${endDual.hijriParts.day} ${endDual.hijriParts.monthName} ${endDual.hijriParts.year}هـ`;
   const dualFullRange = `${hijriRange} (الموافق ${gregorianRange}م)`;
 
   return {

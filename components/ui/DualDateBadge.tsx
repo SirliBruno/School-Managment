@@ -3,6 +3,7 @@
 import React from "react";
 import { Calendar } from "lucide-react";
 import { getDualDate, formatOfficialDateRange } from "@/lib/hijriDateService";
+import { getActiveSchoolSettings } from "@/lib/schoolSettingsService";
 import { cn } from "@/lib/utils";
 
 export interface DualDateBadgeProps {
@@ -22,10 +23,17 @@ export const DualDateBadge: React.FC<DualDateBadgeProps> = ({
 }) => {
   if (!date) return <span className="text-slate-400">—</span>;
 
+  let offsetDays = 0;
+  try {
+    offsetDays = getActiveSchoolSettings().hijriDateOffset || 0;
+  } catch {
+    offsetDays = 0;
+  }
+
   const isRange = Boolean(endDate && endDate !== date);
 
   if (isRange && endDate) {
-    const range = formatOfficialDateRange(date, endDate);
+    const range = formatOfficialDateRange(date, endDate, offsetDays);
     return (
       <div className={cn("inline-flex flex-col text-right", className)}>
         <span
@@ -49,7 +57,7 @@ export const DualDateBadge: React.FC<DualDateBadgeProps> = ({
     );
   }
 
-  const dual = getDualDate(date);
+  const dual = getDualDate(date, offsetDays);
 
   return (
     <div className={cn("inline-flex flex-col text-right", className)}>

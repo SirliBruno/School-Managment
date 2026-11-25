@@ -154,17 +154,17 @@ export default function TeacherInquiryPage() {
             if (!error && data) {
               const meta = parseInquiryMeta(data.admin_notes);
               const resolvedEndDate =
-                urlEndDate ||
                 data.absence_end_date ||
                 meta.absenceEndDate ||
+                urlEndDate ||
                 undefined;
               const isMulti = Boolean(
                 resolvedEndDate && resolvedEndDate !== data.absence_date
               );
               const resolvedDays =
-                urlDays ||
                 data.days_count ||
                 meta.daysCount ||
+                urlDays ||
                 (isMulti && resolvedEndDate
                   ? calculateDaysBetween(data.absence_date, resolvedEndDate)
                   : 1);
@@ -205,17 +205,17 @@ export default function TeacherInquiryPage() {
             if (match) {
               const meta = parseInquiryMeta(match.adminNotes);
               const resolvedEndDate =
-                urlEndDate ||
                 match.absenceEndDate ||
                 meta.absenceEndDate ||
+                urlEndDate ||
                 undefined;
               const isMulti = Boolean(
                 resolvedEndDate && resolvedEndDate !== match.absenceDate
               );
               const resolvedDays =
-                urlDays ||
                 match.daysCount ||
                 meta.daysCount ||
+                urlDays ||
                 (isMulti && resolvedEndDate
                   ? calculateDaysBetween(match.absenceDate, resolvedEndDate)
                   : 1);
@@ -376,12 +376,13 @@ export default function TeacherInquiryPage() {
     }
 
     if (isMultiDayExtension) {
+      const maxAllowedDays = Math.max(5, inquiry?.daysCount || 1);
       if (!extendedEndDate) {
         errors.extension = "يرجى تحديد تاريخ نهاية الغياب.";
       } else if (inquiry && extendedEndDate < inquiry.absenceDate) {
         errors.extension = "تاريخ نهاية الغياب لا يمكن أن يسبق تاريخ بداية الغياب.";
-      } else if (extendedDaysCount > 5) {
-        errors.extension = "الحد الأقصى للمساءلة الواحدة هو 5 أيام دراسية.";
+      } else if (extendedDaysCount > maxAllowedDays) {
+        errors.extension = `الحد الأقصى للمساءلة الواحدة هو ${maxAllowedDays} أيام دراسية.`;
       }
     }
 
@@ -1025,14 +1026,17 @@ export default function TeacherInquiryPage() {
               </button>
             </div>
 
-            {isMultiDayExtension && (
+            {isMultiDayExtension && (() => {
+              const maxAllowedDays = Math.max(5, inquiry.daysCount || 1);
+              const dayOptions = maxAllowedDays > 5 ? [2, 3, 4, 5, maxAllowedDays] : [2, 3, 4, 5];
+              return (
               <div className="pt-3 border-t border-teal-200/60 dark:border-teal-800/40 space-y-3 animate-in fade-in">
                 <div>
                   <label className="block text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
-                    حددي إجمالي مدة الغياب المتصلة (حتى 5 أيام كحد أقصى):
+                    حددي إجمالي مدة الغياب المتصلة (حتى {maxAllowedDays} أيام كحد أقصى):
                   </label>
-                  <div className="grid grid-cols-4 gap-2">
-                    {[2, 3, 4, 5].map((d) => (
+                  <div className={cn("grid gap-2", dayOptions.length > 4 ? "grid-cols-5" : "grid-cols-4")}>
+                    {dayOptions.map((d) => (
                       <button
                         key={d}
                         type="button"
@@ -1070,12 +1074,12 @@ export default function TeacherInquiryPage() {
                       type="date"
                       value={extendedEndDate}
                       min={inquiry.absenceDate}
-                      max={addDaysToDateStr(inquiry.absenceDate, 4)}
+                      max={addDaysToDateStr(inquiry.absenceDate, maxAllowedDays - 1)}
                       onChange={(e) => {
                         const val = e.target.value;
                         setExtendedEndDate(val);
                         const days = calculateDaysBetween(inquiry.absenceDate, val);
-                        setExtendedDaysCount(Math.min(5, Math.max(1, days)));
+                        setExtendedDaysCount(Math.min(maxAllowedDays, Math.max(1, days)));
                         setFormErrors((prev) => ({ ...prev, extension: "" }));
                       }}
                       className="w-full p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-[#137a85]"
@@ -1097,7 +1101,8 @@ export default function TeacherInquiryPage() {
                   </span>
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
 
           {/* 2. Reason for Absence */}
