@@ -1012,6 +1012,49 @@ export const auditAndMigrateData = (
   };
 };
 
+function mapDbInquiryRowToAbsenceInquiry(inq: DbAbsenceInquiryRow): AbsenceInquiry {
+  const meta = parseInquiryMeta(inq.admin_notes);
+  const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
+  const isMulti = Boolean(endDate && endDate !== inq.absence_date);
+  const days =
+    inq.days_count ||
+    meta.daysCount ||
+    (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
+
+  return {
+    id: inq.id,
+    teacherId: inq.teacher_id,
+    teacherName: inq.teacher_name,
+    jobNumber: inq.job_number,
+    specialty: inq.specialty || undefined,
+    mobile: inq.mobile || undefined,
+    absenceDate: inq.absence_date,
+    absenceEndDate: isMulti ? endDate : undefined,
+    daysCount: days,
+    isMultiDay: isMulti,
+    token: inq.token,
+    status: inq.status,
+    expiresAt: inq.expires_at,
+    absenceType: inq.absence_type || undefined,
+    teacherReason: inq.teacher_reason || undefined,
+    attachmentUrl: inq.attachment_url || undefined,
+    adminNotes: meta.adminNotes,
+    submittedAt: inq.submitted_at || undefined,
+    createdAt: inq.created_at,
+    rejectionReason: inq.rejection_reason || meta.rejectionReason || undefined,
+    resendRequested:
+      inq.resend_requested !== undefined && inq.resend_requested !== null
+        ? Boolean(inq.resend_requested)
+        : meta.resendRequested,
+    previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
+    nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
+    cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
+    escalatedMahdarId: meta.escalatedMahdarId,
+    mahdarDate: meta.mahdarDate,
+    isArchived: Boolean(inq.is_archived),
+  };
+}
+
 const TeacherContext = createContext<TeacherContextType | undefined>(undefined);
 
 export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -1583,42 +1626,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           let cleanInquiriesList: AbsenceInquiry[] = localInquiries;
           if (!inqErr && dbInquiries !== null) {
             cleanInquiriesList = (dbInquiries as unknown as DbAbsenceInquiryRow[]).map(
-              (inq: DbAbsenceInquiryRow) => {
-                const meta = parseInquiryMeta(inq.admin_notes);
-                const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
-                const isMulti = Boolean(endDate && endDate !== inq.absence_date);
-                const days = inq.days_count || meta.daysCount || (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
-
-                return {
-                  id: inq.id,
-                  teacherId: inq.teacher_id,
-                  teacherName: inq.teacher_name,
-                  jobNumber: inq.job_number,
-                  specialty: inq.specialty || undefined,
-                  mobile: inq.mobile || undefined,
-                  absenceDate: inq.absence_date,
-                  absenceEndDate: isMulti ? endDate : undefined,
-                  daysCount: days,
-                  isMultiDay: isMulti,
-                  token: inq.token,
-                  status: inq.status,
-                  expiresAt: inq.expires_at,
-                  absenceType: inq.absence_type || undefined,
-                  teacherReason: inq.teacher_reason || undefined,
-                  attachmentUrl: inq.attachment_url || undefined,
-                  adminNotes: meta.adminNotes,
-                  submittedAt: inq.submitted_at || undefined,
-                  createdAt: inq.created_at,
-                  rejectionReason: inq.rejection_reason || meta.rejectionReason || undefined,
-                  resendRequested: inq.resend_requested !== undefined && inq.resend_requested !== null ? Boolean(inq.resend_requested) : meta.resendRequested,
-                  previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
-                  nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
-                  cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
-                  escalatedMahdarId: meta.escalatedMahdarId,
-                  mahdarDate: meta.mahdarDate,
-                  isArchived: Boolean(inq.is_archived),
-                };
-              }
+              mapDbInquiryRowToAbsenceInquiry
             );
 
             // Reconcile approved inquiries with absences in memory if not already present
@@ -2309,40 +2317,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
           if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
             const inq = payload.new as unknown as DbAbsenceInquiryRow;
             if (!inq || !inq.id) return;
-            const meta = parseInquiryMeta(inq.admin_notes);
-            const endDate = inq.absence_end_date || meta.absenceEndDate || undefined;
-            const isMulti = Boolean(endDate && endDate !== inq.absence_date);
-            const days = inq.days_count || meta.daysCount || (isMulti ? calculateDaysBetween(inq.absence_date, endDate!) : 1);
-
-            const updatedInq: AbsenceInquiry = {
-              id: inq.id,
-              teacherId: inq.teacher_id,
-              teacherName: inq.teacher_name,
-              jobNumber: inq.job_number,
-              specialty: inq.specialty || undefined,
-              mobile: inq.mobile || undefined,
-              absenceDate: inq.absence_date,
-              absenceEndDate: isMulti ? endDate : undefined,
-              daysCount: days,
-              isMultiDay: isMulti,
-              token: inq.token,
-              status: inq.status,
-              expiresAt: inq.expires_at,
-              absenceType: inq.absence_type || undefined,
-              teacherReason: inq.teacher_reason || undefined,
-              attachmentUrl: inq.attachment_url || undefined,
-              adminNotes: meta.adminNotes,
-              submittedAt: inq.submitted_at || undefined,
-              createdAt: inq.created_at,
-              rejectionReason: inq.rejection_reason || meta.rejectionReason || undefined,
-              resendRequested: inq.resend_requested !== undefined && inq.resend_requested !== null ? Boolean(inq.resend_requested) : meta.resendRequested,
-              previousInquiryId: inq.previous_inquiry_id || meta.previousInquiryId || undefined,
-              nextInquiryId: inq.next_inquiry_id || meta.nextInquiryId || undefined,
-              cycleNumber: inq.cycle_number || meta.cycleNumber || undefined,
-              escalatedMahdarId: meta.escalatedMahdarId,
-              mahdarDate: meta.mahdarDate,
-              isArchived: Boolean(inq.is_archived),
-            };
+            const updatedInq = mapDbInquiryRowToAbsenceInquiry(inq);
             setInquiries((prev) => {
               const exists = prev.some((i) => i.id === updatedInq.id);
               if (exists) {
@@ -3965,7 +3940,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       const expiresAt = calculateTokenExpiry();
       const createdAt = new Date().toISOString();
       const isMulti = Boolean(absenceEndDate && absenceEndDate !== absenceDate);
-      const calculatedDays = isMulti ? daysCount || 2 : 1;
+      const calculatedDays = isMulti ? daysCount || calculateDaysBetween(absenceDate, absenceEndDate!) : 1;
       const serializedNotes = serializeInquiryMeta(
         isMulti ? absenceEndDate : undefined,
         calculatedDays,
@@ -3994,31 +3969,31 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
       setInquiries((prev) => [newInquiry, ...prev]);
 
       if (isSupabaseConfigured() && supabase) {
-        try {
-          const insertPayload: Record<string, unknown> = {
-            id: newInquiry.id,
-            teacher_id: newInquiry.teacherId,
-            teacher_name: newInquiry.teacherName,
-            job_number: newInquiry.jobNumber,
-            specialty: newInquiry.specialty || null,
-            mobile: newInquiry.mobile || null,
-            absence_date: newInquiry.absenceDate,
-            token: newInquiry.token,
-            status: newInquiry.status,
-            expires_at: newInquiry.expiresAt,
-            admin_notes: serializedNotes || null,
-            created_at: newInquiry.createdAt,
-          };
-          if (newInquiry.absenceEndDate) {
-            insertPayload.absence_end_date = newInquiry.absenceEndDate;
-          }
-          if (newInquiry.daysCount) {
-            insertPayload.days_count = newInquiry.daysCount;
-          }
-          if (newInquiry.isMultiDay !== undefined) {
-            insertPayload.is_multi_day = newInquiry.isMultiDay;
-          }
+        const insertPayload: Record<string, unknown> = {
+          id: newInquiry.id,
+          teacher_id: newInquiry.teacherId,
+          teacher_name: newInquiry.teacherName,
+          job_number: newInquiry.jobNumber,
+          specialty: newInquiry.specialty || null,
+          mobile: newInquiry.mobile || null,
+          absence_date: newInquiry.absenceDate,
+          token: newInquiry.token,
+          status: newInquiry.status,
+          expires_at: newInquiry.expiresAt,
+          admin_notes: serializedNotes || null,
+          created_at: newInquiry.createdAt,
+        };
+        if (newInquiry.absenceEndDate) {
+          insertPayload.absence_end_date = newInquiry.absenceEndDate;
+        }
+        if (newInquiry.daysCount) {
+          insertPayload.days_count = newInquiry.daysCount;
+        }
+        if (newInquiry.isMultiDay !== undefined) {
+          insertPayload.is_multi_day = newInquiry.isMultiDay;
+        }
 
+        try {
           const { error } = await supabase.from("absence_inquiries").insert(insertPayload);
 
           if (error) {
@@ -4040,10 +4015,12 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
               });
             } else {
               console.warn("تنبيه حفظ المساءلة في سوبابيز:", error.message);
+              queueSyncOperation({ table: "absence_inquiries", action: "insert", data: insertPayload });
             }
           }
         } catch (err) {
           console.warn("خطأ أثناء الاتصال بسوبابيز للمساءلة:", err);
+          queueSyncOperation({ table: "absence_inquiries", action: "insert", data: insertPayload });
         }
       }
 
@@ -4057,7 +4034,7 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
 
       return { success: true, inquiry: newInquiry };
     },
-    [teachers]
+    [teachers, queueSyncOperation]
   );
 
   // 12. Update Inquiry Decision
@@ -4617,24 +4594,9 @@ export const TeacherProvider: React.FC<{ children: React.ReactNode }> = ({
         .order("created_at", { ascending: false });
 
       if (!error && data) {
-        const mapped: AbsenceInquiry[] = data.map((inq: any) => ({
-          id: inq.id,
-          teacherId: inq.teacher_id,
-          teacherName: inq.teacher_name,
-          jobNumber: inq.job_number,
-          specialty: inq.specialty || undefined,
-          mobile: inq.mobile || undefined,
-          absenceDate: inq.absence_date,
-          token: inq.token,
-          status: inq.status,
-          expiresAt: inq.expires_at,
-          absenceType: inq.absence_type || undefined,
-          teacherReason: inq.teacher_reason || undefined,
-          attachmentUrl: inq.attachment_url || undefined,
-          adminNotes: inq.admin_notes || undefined,
-          submittedAt: inq.submitted_at || undefined,
-          createdAt: inq.created_at,
-        }));
+        const mapped: AbsenceInquiry[] = (data as unknown as DbAbsenceInquiryRow[]).map(
+          mapDbInquiryRowToAbsenceInquiry
+        );
         setInquiries(mapped);
       }
     } catch (err) {
