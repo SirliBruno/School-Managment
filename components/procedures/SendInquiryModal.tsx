@@ -30,6 +30,7 @@ import {
   getSaudiToday,
   calculateDaysBetween,
   formatDaysCountArabic,
+  addDaysToDateStr,
 } from "@/lib/timeUtils";
 
 interface SendInquiryModalProps {
@@ -72,8 +73,15 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
     return formatDaysCountArabic(calculatedDays);
   }, [calculatedDays]);
 
-  // Sync preselected teacher if provided
+  // Reset modal state on open/close and sync preselected teacher if provided
   useEffect(() => {
+    const today = getSaudiToday();
+    setDurationMode("single");
+    setAbsenceDate(today);
+    setAbsenceEndDate(today);
+    setErrorMsg(null);
+    setCopiedSuccess(false);
+
     if (preselectedTeacherId) {
       const found = teachers.find((t) => t.id === preselectedTeacherId);
       if (found) {
@@ -81,8 +89,19 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
         setSelectedTeacher(found);
         setManualMobile(found.mobile || "");
       }
+    } else {
+      setSelectedTeacherId("");
+      setSelectedTeacher(null);
+      setManualMobile("");
     }
-  }, [preselectedTeacherId, teachers]);
+  }, [isOpen, preselectedTeacherId, teachers]);
+
+  // Keep absenceEndDate synced to absenceDate in single-day mode
+  useEffect(() => {
+    if (durationMode === "single") {
+      setAbsenceEndDate(absenceDate);
+    }
+  }, [durationMode, absenceDate]);
 
   const handleTeacherSelect = (teacher: Teacher | null) => {
     setSelectedTeacher(teacher);
@@ -340,9 +359,7 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                   onClick={() => {
                     setDurationMode("multiple");
                     if (absenceEndDate <= absenceDate) {
-                      const next = new Date(absenceDate);
-                      next.setDate(next.getDate() + 1);
-                      setAbsenceEndDate(next.toISOString().split("T")[0]);
+                      setAbsenceEndDate(addDaysToDateStr(absenceDate, 1));
                     }
                   }}
                   className={cn(
@@ -376,7 +393,11 @@ export const SendInquiryModal: React.FC<SendInquiryModalProps> = ({
                     id={`${formId}-date`}
                     type="date"
                     value={absenceDate}
-                    onChange={(e) => setAbsenceDate(e.target.value)}
+                    onChange={(e) => {
+                      const nextDate = e.target.value;
+                      setAbsenceDate(nextDate);
+                      setAbsenceEndDate(nextDate);
+                    }}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs md:text-sm bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-[#137a85]/20 focus:border-[#137a85] transition-all shadow-sm"
                   />
                 </div>
